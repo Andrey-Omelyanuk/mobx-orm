@@ -1,145 +1,191 @@
+import "reflect-metadata"
+// ------------------------------------------------------------------------------------------------
+// Store
 
 let store = {
-	models: {
-
-	}
+	models: {},
+	history: []
 };
+
+
+function history(model_name: string, property_key: string, old_value, new_value) {
+	store.history.push([model_name, property_key, old_value, new_value]);
+}
+
+function fixModelInStore(model_name) {
+	if (! store.models[model_name]) {
+		store.models[model_name] = {fields: [], objects: {}};
+	}
+}
+
+function getType(target, key){
+	let type = Reflect.getMetadata("design:type", target, key);
+	return type ? type.prototype.constructor.name : undefined;
+}
+
 
 // ------------------------------------------------------------------------------------------------
 // Model
 
 class Model {
-	async save()   { (<any>this).id = Math.random().toString(36).substring(7); }
+	async save()   {
+		let model_name = this.constructor.name;
+		let id = Math.random().toString(36).substring(7);
+		history(model_name, 'id', (<any>this).__data['id'], id);
+		(<any>this).__data['id'] = id;
+		store.models[model_name].objects[id] = this;
+	}
 	async delete() { (<any>this).id = undefined; }
 	static filter (where?, orderBy? : string[], limit? : number, offset? : number) : any {
-
 	}
 }
 
-function registerModel(target: any) {
-	// 1. Register model in store
-	// 2. Wrap fields of model using Field.setup
+function registerModel(cls: Function) {
+	// Decorate class for:
+	// 1. add __data for store original values
+	// 2. Wrap fields of object
 
 	// the new constructor behaviour
 	let f : any = function (...args) {
-		let c : any = function () { return target.apply(this, args); };
-		c.prototype = target.prototype;
+		let c : any = function () { return cls.apply(this, args); };
+		c.prototype = cls.prototype;
 		let obj = new c();
 
-		// 2. Wrap fields of model using Field.setup
 		obj.__data = {};
-		for (let field_name of Object.getOwnPropertyNames(obj)) {
-			if (obj[field_name] instanceof Field) {
-				obj[field_name].setup(obj, field_name);
-			}
-		}
+		for (let field_wrapper of store.models[cls.name].fields) { field_wrapper(obj); }
+
 		return obj;
 	};
-	// 1. Register model in store
-	if (target.name in store.models) { throw new Error('Model already registered!'); }
-	store.models[target.name] = {};
 
-	f.prototype = target.prototype;   // copy prototype so intanceof operator still works
-	return f;                         // return new constructor (will override original)
+	f.prototype = cls.prototype;   // copy prototype so intanceof operator still works
+	return f;                      // return new constructor (will override original)
 }
 
 // ------------------------------------------------------------------------------------------------
 // Fields
+//
+// id             - only read, save() method should setup this field
+// field          -
+// key            - only read, can be setup using according foreign field
+// foreign        -
+//
+// one            -
+// many           -
+// many_to_many   -
 
-class Field {
-	setup(obj, field_name) {}
+
+
+function id(cls: any, field_key: string) {
+	let model_name = cls.constructor.name;
+	fixModelInStore(model_name);
+	store.models[model_name].fields.push((obj) => {
+		obj.__data[field_key] = obj[field_key];
+		Object.defineProperty (obj, field_key, {
+			get: () => obj.__data[field_key],
+			set: (new_value) => { throw new Error(`You cannot change id.`) }
+		});
+	});
 }
 
-class FieldPrimaryKey extends Field {
-	setup(obj, id_field_name) {
-		Object.defineProperty (obj, id_field_name, {
-			get: function () {
-				return obj.__data[id_field_name];
-			},
-			set: function (new_id) {
-				if (store.models[obj.constructor.name][new_id]) {
-					throw new Error(`Object ${obj.constructor.name} with id ${new_id} already exist.`);
-				}
-				obj.__data[id_field_name] = new_id;
-				store.models[obj.constructor.name][new_id] = obj;
+
+function field(cls: any, field_key: string) {
+	let model_name = cls.constructor.name;
+	fixModelInStore(model_name);
+	store.models[model_name].fields.push((obj) => {
+		obj.__data[field_key] = obj[field_key];
+		Object.defineProperty (obj, field_key, {
+			get: () => obj.__data[field_key],
+			set: (new_value) => {
+				history(model_name, field_key, obj.__data[field_key], new_value);
+				obj.__data[field_key] = new_value;
 			}
 		});
-	}
+	})
 }
 
-class FieldForeignKey extends Field {
-	model_name: string;
-	name_of_id: string;
-	setup(obj, field_name) {
-		if (!this.name_of_id) {
-			this.name_of_id = field_name+'_id';
-		}
-		Object.defineProperty (obj, field_name, {
-			get: () => {
-				debugger;
-				if (store.models[this.model_name] && obj.__data[this.name_of_id]){
-					return store.models[this.model_name][obj.__data[this.name_of_id]];
-				}
-				return undefined;
-			},
-			set: (new_obj) => {
-				if (new_obj.constructor.name != this.model_name) {
-					throw new Error(`You can set only instance of "${new_obj.constructor.name}"`);
-				}
-				if (!new_obj.id) {
-					throw new Error(`Your instance should have id`);
-				}
-				obj.__data[this.name_of_id] = new_obj.id;
-			}
-		})
-	}
 
-	constructor(model_name: string, name_of_id? : string){
-		super();
-		this.model_name = model_name;
-		this.name_of_id = name_of_id;
-	}
+function key(cls: any, field_key: string) {
+	let model_name = cls.constructor.name;
+	fixModelInStore(model_name);
+	store.models[model_name].fields.push((obj) => {
+		obj.__data[field_key] = obj[field_key];
+		Object.defineProperty (obj, field_key, {
+			get: (         ) =>   obj.__data[field_key],
+			set: (new_value) => { throw new Error(`Your cannot set key manually, use foreign filed instead`); }
+		});
+	})
 }
 
-class FieldString extends Field {
-	setup(obj, id_field_name) {
-		Object.defineProperty (obj, id_field_name, {
-			get: function () {
-				return obj.__data[id_field_name];
-			},
-			set: function (new_string) {
-				obj.__data[id_field_name] = new_string;
+function foreign(key?: string) {
+	return function (cls: any, field_key: string) {
+		if (!key) { key = `${field_key}_id`; }
+		let type = getType(cls, field_key);
+		let model_name = cls.constructor.name;
+		fixModelInStore(model_name);
+		store.models[model_name].fields.push((obj) => {
+			if(obj[field_key]) {
+				obj.__data[key] = obj[field_key].id;
 			}
-		})
-	}
-}
-
-class FieldNumber extends Field {
-	setup(obj, id_field_name) {
-		Object.defineProperty (obj, id_field_name, {
-			get: function () {
-				return obj.__data[id_field_name];
-			},
-			set: function (new_number) {
-				obj.__data[id_field_name] = new_number;
-			}
+			Object.defineProperty (obj, field_key, {
+				get: () => {
+					if (!type) {
+						type = getType(cls, field_key);
+					}
+					let model = store.models[type];
+					let id = obj.__data[key];
+					return (model && id) ? model.objects[id] : undefined;
+				},
+				set: (new_obj) => {
+					if (new_obj.constructor.name != type) {
+						throw new Error(`You can set only instance of "${type}"`);
+					}
+					if (!new_obj.id) {
+						throw new Error(`Your instance should have id`);
+					}
+					history(model_name, field_key, obj.__data[key], new_obj.id);
+					obj.__data[key] = new_obj.id;
+				}
+			});
 		})
 	}
 }
 
 
-namespace F {
-	export function ID() : any { return new FieldPrimaryKey }
-	export function String()     : any { return new FieldString     }
-	export function Number()     : any { return new FieldNumber     }
-	export function Computed(getter, setter?) : any {}
-	export function Foreign(model, foreign_field_id?) : any {
-		return new FieldForeignKey(model.prototype.constructor.name, foreign_field_id)
-	}
-	export function ManyToMany(model, throughModel) : any {}
-	export function OneToOne(config) : any {}
-	export function Relation(model, field_name) : any {}
+function one(cls: any, field_key: string) {
+	fixModelInStore(cls.constructor.name);
+	store.models[cls.constructor.name].fields.push((obj) => {
+		obj.__data[field_key] = obj[field_key];
+		Object.defineProperty (obj, field_key, {
+			get: (         ) =>   obj.__data[field_key],
+			set: (new_value) => { obj.__data[field_key] = new_value; }
+		});
+	})
 }
+
+function many(cls: any, field_key: string) {
+	fixModelInStore(cls.constructor.name);
+	store.models[cls.constructor.name].fields.push((obj) => {
+		obj.__data[field_key] = obj[field_key];
+		Object.defineProperty (obj, field_key, {
+			get: (         ) =>   obj.__data[field_key],
+			set: (new_value) => { obj.__data[field_key] = new_value; }
+		});
+	})
+}
+
+function many_to_many(cls: any, field_key: string) {
+	fixModelInStore(cls.constructor.name);
+	store.models[cls.constructor.name].fields.push((obj) => {
+		obj.__data[field_key] = obj[field_key];
+		Object.defineProperty (obj, field_key, {
+			get: (         ) =>   obj.__data[field_key],
+			set: (new_value) => { obj.__data[field_key] = new_value; }
+		});
+	})
+}
+
+
+
 
 
 // ------------------------------------------------------------------------------------------------
@@ -155,56 +201,71 @@ class Query {
 
 @registerModel
 class Skill extends Model {
-	id     : number = F.ID();
-	users  : User[] = F.ManyToMany(User, UserSkill);
-	name   : string = String();
+	@id     id    : number;
+	@field  name  : string;
+
+	@many_to_many users  : User[];
+
+	constructor (name?) {
+		super();
+		this.name = name;
+	}
 }
 
 @registerModel
 class UserSkill extends Model {
-	id      : number = F.ID();
-	user    : User   = F.Foreign(User);
-	skill   : Skill  = F.Foreign(Skill);
+	@id       id        : number;
+	@key      user_id   : number;
+	@key      skill_id  : number;
+
+	@foreign() user : User;
+	@foreign() skill: Skill;
 }
 
 @registerModel
 class User extends Model {
-	id          : number = F.ID();
-	first_name   : string = F.String();
-	second_name  : string = F.String();
+	@id       id            : number;
+	@field    first_name    : string;
+	@field    second_name   : string;
 
-	skills    : Skill[]     = F.ManyToMany(Skill, UserSkill);
-	profile   : UserProfile = F.Relation(UserProfile, 'user');
+	@one          profile   : UserProfile;
+	@many_to_many skills    : Skill[];
 
 	get fullname() { return `${this.first_name} ${this.second_name}`; };
+
+	constructor(first_name, second_name) {
+		super();
+		this.first_name = first_name;
+		this.second_name = second_name;
+	}
 }
 
 @registerModel
 class UserProfile extends Model {
-	id          : number = F.ID();
-	user        : User   = F.Foreign(User, 'user_id');
-	location    : string = F.String();
+	@id       id          : number;
+	@key      user_id     : number;
+	@field    location    : string;
 
-	// Don't use constructor for init property! it is js problem :(
-	// constructor(user, location) {
-	// 	super();
-	// 	debugger;
-	// 	this.user = user;
-	// 	this.location = location;
-	// }
+	@foreign() user: User;
+
+	constructor(user, location) {
+		super();
+		this.user = user;
+		this.location = location;
+	}
 }
 
 
 // -------------------------------------------------------------------------------------------------------
 // test cases
 
-let skillA  = new Skill(); skillA.name = 'A'; skillA.save();
-let skillB  = new Skill(); skillB.name = 'B'; skillB.save();
-let user    = new User(); user.first_name = 'first'; user.second_name = 'second'; user.save();
-let profile = new UserProfile(); profile.user = user; profile.location = 'X'; profile.save();
+let skillA  = new Skill('A'); skillA.save();
+let skillB  = new Skill('B'); skillB.save();
+let user    = new User('first', 'second'); user.save();
+let profile = new UserProfile(user, 'X'); profile.save();
 
 // user.skills.push(skillA, skillB);
-
+console.log(skillA.id);
 console.log("store", store);
 
 

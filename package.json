@@ -4,7 +4,8 @@
   "license": "MIT",
   "repository": "https://bitbucket.org/__Andrey/z-data",
   "dependencies": {
-    "core-js": "2.5.3"
+    "core-js": "2.5.3",
+    "reflect-metadata": "0.1.10"
   },
   "scripts": {
     "serve": "./node_modules/.bin/webpack-dev-server --progress --inline",
