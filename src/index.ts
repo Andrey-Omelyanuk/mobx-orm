@@ -3,36 +3,67 @@ import "reflect-metadata"
 // Store
 
 let store = {
-	// models {
-	//  <class>: {
-	//    fileds: ...
-	//    objects: {
-	//      <id>: <object>
-	//    }
-	//  }
-	// }
-	models: {},
+	history: {
+		// <class_name>: {
+		//    <id>: Map(<transaction>,<new_changes>)
+		// }
+	},
+	objects: {
+		// <class_name>: {
+		//    <id>: {<current state>}
+		// }
+	},
+	models: {
+		// <class_name>: {
+		// 	  fileds: { <field_name>: <type>???},
+		// }
+	},
 	transaction: {
 		history: [],
 		root: null,
 		current: null
+	},
+	dependencies: {
+
 	}
 };
 
 
-function history(model_name: string, id, obj) {
-	if (store.transaction.current == null) {
-		throw new Error(`You cannot change data without transaction.`);
+function history(model_name: string, id, prev_state, new_changes) {
+	let transaction_current = store.transaction.current;
+
+	if (!store.history[model_name]    ) { store.history[model_name] = {}; }
+	if (!store.history[model_name][id]) { store.history[model_name][id] = new Map(); }
+	let history = store.history[model_name][id];
+
+	// История может вестись только в контексте транзакции.
+	if (transaction_current == null) { throw new Error(`You cannot change data without transaction.`); }
+
+
+	// Вычисляем суммарные изменения в этой транзакции
+	let current = null;
+	if (history.size) {
+		let history_prev = Array.from(history.entries()).pop();
+		// предыдущая история это все еще наша транзакция? тогда делаем merge в предыдущею историю
+		if (history_prev[0] === transaction_current) { current = Object.assign(history_prev[1], new_changes); }
+		// предыдущея история из другой транзакции
+		else { current = new_changes; }
 	}
-	let history = store.transaction.current.history;
-	if (!history[model_name]    ) { history[model_name] = {}; }
-	if (!history[model_name][id]) { history[model_name][id] = {}; }
-	Object.assign(history[model_name][id], obj);
+	else { current = new_changes; }
+
+	// В current должны находиться суммарные изменения по транзакции
+	history.set(transaction_current, current);
+
+	// сохраняем историю в самой транзакции
+	if (!transaction_current.history[model_name]        ) { transaction_current.history[model_name]         = {}; }
+	if (!transaction_current.history[model_name][id]    ) { transaction_current.history[model_name][id]     = {old: null, new: null}; }
+	if (!transaction_current.history[model_name][id].old) { transaction_current.history[model_name][id].old = prev_state; }
+	transaction_current.history[model_name][id].new = current;
 }
 
 function fixModelInStore(model_name) {
 	if (! store.models[model_name]) {
-		store.models[model_name] = {fields: [], objects: {}};
+		store.models[model_name] = {fields: []};
 	}
 }
 
@@ -51,19 +82,15 @@ class Transaction {
 	private parent: Transaction = null;
 	// history = {
 	//    <class>: {
-	//      <id>: new_value
+	//      <id>: {old: <old_state>, new: <new_changes> }
 	// }
 	public  history = {};
 
 	constructor(name?: string) {
 		this.name = name;
 		this.parent = store.transaction.current;
-		if (this.parent == null) {
-			store.transaction.history.push(this);
-		}
-		else {
-			this.parent.children.push(this);
-		}
+		if (this.parent == null) { store.transaction.history.push(this); }
+		else                     { this.parent.children.push(this);	}
 		store.transaction.current = this;
 	}
 
@@ -95,13 +122,16 @@ function transaction() {
 // Model
 
 class Model {
+
 	async save()   {
 		let t = new Transaction('save');
 		let model_name = this.constructor.name;
 		let id = Math.random().toString(36).substring(7);
 		(<any>this).__data['id'] = id;
-		store.models[model_name].objects[id] = this;
-		history(model_name, id, (<any>this).__data);
+		if(!store.objects[model_name]    ) { store.objects[model_name] = {}; }
+		if(!store.objects[model_name][id]) { store.objects[model_name][id] = {}; }
+		store.objects[model_name][id] = this;
+		history(model_name, id, null, (<any>this).__data);
 		t.commit();
 	}
 	async delete() { (<any>this).id = undefined; }
@@ -171,7 +201,9 @@ function field(cls: any, field_key: string) {
 		Object.defineProperty (obj, field_key, {
 			get: () => obj.__data[field_key],
 			set: (new_value) => {
-				history(model_name, obj.__data.id, ({}[field_key] = new_value) );
+				let old_values = {}; old_values[field_key] = obj.__data[field_key];
+				let new_values = {}; new_values[field_key] = new_value;
+				history(model_name, obj.__data.id, old_values, new_values );
 				obj.__data[field_key] = new_value;
 			}
 		});
@@ -217,7 +249,7 @@ function foreign(key?: string) {
 					if (!new_obj.id) {
 						throw new Error(`Your instance should have id`);
 					}
-					history(model_name, obj.__data.id, ({}[field_key] = new_obj.id) );
+					history(model_name, obj.__data.id, ({}[field_key] = obj.__data[key]), ({}[field_key] = new_obj.id) );
 					obj.__data[key] = new_obj.id;
 				}
 			});
@@ -351,3 +383,26 @@ console.log("store", store);
 // let profiles_with_skill_a : UserProfile[] = UserProfile.filter((profile) => {
 //   return profile.user.skills.name == 'A'
 // });
+
+
+
+import Vue from 'vue'
+
+new Vue({
+	el: '#app',
+	data: function () {
+		return {
+			user:  user,
+		};
+	},
+	methods: {
+		test: function () {
+			let t = new Transaction('first name');
+			this.user.first_name = this.user.first_name + 'test';
+			t.commit();
+		},
+		storePrint: function () {
+			console.log(store);
+		}
+	}
+});

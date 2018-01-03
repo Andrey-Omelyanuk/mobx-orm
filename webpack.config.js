@@ -17,7 +17,12 @@ module.exports = function (env) {
         //{ test: /\.styl$/, loader: 'stylint-loader', exclude: /node_modules/, enforce: 'pre' },
         //{ test: /\.ts$/  , loader: 'tslint-loader' , exclude: /node_modules/, enforce: 'pre' },
 
-        { test: /\.ts$/, loader: 'ts-loader', exclude: /node_modules\/src/ }
+				//
+				{ test: /\.vue$/, loader: 'vue-loader' },
+				//
+				{ test: /\.ts$/   , loader: 'ts-loader', exclude: /node_modules|vue\/src/,  options: { appendTsSuffixTo: [/\.vue$/] } },
+				{ test: /\.html$/ , loader: 'html-loader' },
+				{ test: /\.pug$/  , loader: 'pug-loader' },
       ]
     },
 
@@ -31,7 +36,11 @@ module.exports = function (env) {
     ],
     resolve: {
       modules: ['node_modules'],
-      extensions: ['.js', '.ts']
+      extensions: ['.js', '.ts', '.vue'],
+			alias: {
+				vue: 'vue/dist/vue.js',
+				medusa: path.resolve(__dirname, 'src/medusa/'),
+			}
     },
     devServer: {
       contentBase: path.join(__dirname, "dist"),
