@@ -1,27 +1,65 @@
 import "reflect-metadata"
+
+
+
+/*
+Все как в SQL
+- таблицы/модели
+- поля и relations
+- транзакции
+
++ на все можно подписаться
+- на изменения в таблице/списке
+- на отдельные переменные объектов (но только те которые были объявлены в моделях,
+на динамические переменные это не распростроняется)
+
+Одиночки?
+
+Сущьности:
+
+Model:
+
+Entry:
+
+Field:
+
+Transaction:
+
+Query:
+	- сортированный список объектов
+	- самообновляемый на основании указанного фильтра
+	- может направлять запрос на api для предзагрузки данных
+
+ */
+
+
+
+
+
+
 // ------------------------------------------------------------------------------------------------
 // Store
 
 let store = {
 	history: {
-		// <class_name>: {
+		// <model_name>: {
 		//    <id>: Map(<transaction>,<new_changes>)
 		// }
 	},
-	objects: {
-		// <class_name>: {
-		//    <id>: {<current state>}
+	objects: {					// all objects
+		// <model_name>: {
+		//    <id>: {<object>}
 		// }
 	},
 	models: {
-		// <class_name>: {
+		// <model_name>: {
 		// 	  fileds: { <field_name>: <type>???},
 		// }
 	},
-	transaction: {
-		history: [],
-		root: null,
-		current: null
+	transactions: {
+		history	: [],		  // all history transactions
+		root		: null,		// root of current transaction
+		current	: null		// current transaction
 	},
 	dependencies: {
 
@@ -30,7 +68,7 @@ let store = {
 
 
 function history(model_name: string, id, prev_state, new_changes) {
-	let transaction_current = store.transaction.current;
+	let transaction_current = store.transactions.current;
 
 	if (!store.history[model_name]    ) { store.history[model_name] = {}; }
 	if (!store.history[model_name][id]) { store.history[model_name][id] = new Map(); }
@@ -88,10 +126,10 @@ class Transaction {
 
 	constructor(name?: string) {
 		this.name = name;
-		this.parent = store.transaction.current;
-		if (this.parent == null) { store.transaction.history.push(this); }
+		this.parent = store.transactions.current;
+		if (this.parent == null) { store.transactions.history.push(this); }
 		else                     { this.parent.children.push(this);	}
-		store.transaction.current = this;
+		store.transactions.current = this;
 	}
 
 	public commit() {
@@ -101,7 +139,7 @@ class Transaction {
 				obj.transaction_commit();
 			}
 		}
-		store.transaction.current = this.parent;
+		store.transactions.current = this.parent;
 	}
 
 	public rollback() {
@@ -341,6 +379,7 @@ class User extends Model {
 	get fullname() { return `${this.first_name} ${this.second_name}`; };
 
 	constructor(first_name, second_name) {
+		// тут я это не просто так сделал!
 		super();
 		this.first_name = first_name;
 		this.second_name = second_name;
