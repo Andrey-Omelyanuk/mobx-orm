@@ -56,3 +56,25 @@ Fields:
 	- связывание состояний
 3. query
 4. transaction
+
+
+Синхронизация с удаленным хранилищем
+---
+
+CRUD:
+C - save on instance (if pk on exist)
+R - Query
+U - save on instance (if pk exist)
+D - delete on instance (should exist pk)
+
+
+async Query.loadAll()
+async Query.loadPage(N)   	- так же устанавливает текущую страницу в N
+async Query.loadNextPage()
+async Query.loadPrevPage()
+
+
+users.loadAll()
+users.loadPage(N)
+
+все в одном!

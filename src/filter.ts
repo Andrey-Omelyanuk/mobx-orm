@@ -3,17 +3,18 @@
 	Эти фильтры организуються в дерево
 	и вставлять в Filter можно только корневой.
  */
+import Model from './model'
 
 
 export default class Filter<T> extends Array<T> {
 
-	private _source : Filter<T>
+	private _source : Filter<T> | Model
 	private _where
 	private _orderBy: string[]
 	private _limit	: number
 	private _offset : number
 
-	constructor(source : Filter<T> = null, where = null, orderBy : string[] = null, limit : number = null, offset : number = null) {
+	constructor(source : Filter<T> | Model = null, where = null, orderBy : string[] = null, limit : number = null, offset : number = null) {
 		super()
 		this._source 	= source
 		this._where  	= where
@@ -27,7 +28,35 @@ export default class Filter<T> extends Array<T> {
 		console.log('push', item)
 		return super.push(item)
 	}
-	zFilter(source : Filter<T>, where, orderBy, limit, offset) {
-		return new Filter<T>(source, where, orderBy, limit, offset)
+	newFilter(where, orderBy, limit, offset) {
+		return new Filter<T>(this._source, where, orderBy, limit, offset)
+	}
+
+	//
+
+	async loadAll() {
+
+	}
+
+	async loadPage(N) {
+
+	}
+
+	async loadNextPage() {
+
+	}
+
+	async loadPrevPage() {
+
+	}
+
+	_getModel() {
+		// Only root Filter store Model,
+		// not root Filter store parent Filter in this._source
+		return (this._source instanceof Model) ? this._source : (<Filter<T>>this._source)._getModel()
+	}
+
+	_getFullFilter() {
+		// TODO: ???
 	}
 }
