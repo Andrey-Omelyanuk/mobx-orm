@@ -9,14 +9,14 @@ many_to_many
 
 */
 
-
+// TODO: не доделано!!! только регистрируеться в модели и все.
 export default function many_to_many(cls: any, field_key: string) {
 	// createModelInStore(cls.constructor.name);
-	store.models[cls.constructor.name].fields.push((obj) => {
-		obj.__data[field_key] = obj[field_key];
-		Object.defineProperty (obj, field_key, {
-			get: (         ) =>   obj.__data[field_key],
-			set: (new_value) => { obj.__data[field_key] = new_value; }
-		});
-	})
+	// store.models[cls.constructor.name].fields.push((obj) => {
+	// 	obj.__data[field_key] = obj[field_key];
+	// 	Object.defineProperty (obj, field_key, {
+	// 		get: (         ) =>   obj.__data[field_key],
+	// 		set: (new_value) => { obj.__data[field_key] = new_value; }
+	// 	});
+	// })
 }

@@ -8,9 +8,9 @@ one
 	cannot be setup ???
 */
 
-// TODO: не доделано!!! только регистрируеться в модели и все.
-export default function one(cls: any, field_key: string) {
-	function one (obj) {
+// TODO: не доделано!!! только регистрируеться в модели и все. текущий код был скопирован с field
+export default function computed(cls: any, field_key: string) {
+	function computed (obj) {
 		obj.__data[field_key] = obj[field_key]
 		Object.defineProperty (obj, field_key, {
 			get: () => obj.__data[field_key],
@@ -22,5 +22,5 @@ export default function one(cls: any, field_key: string) {
 			}
 		})
 	}
-	store.registerModelComputedField(cls, field_key, one)
+	store.registerModelComputedField(cls, field_key, computed)
 }

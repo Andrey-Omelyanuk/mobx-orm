@@ -5,27 +5,30 @@
 let store = {
 	// зарегистрированные модели
 	// тут храниться вся структура данных, с которыми мы работаем
+	// Note: ни каких составных ключей! в жопу их, они все только усложняют и это плохая практика!
 	models: {
-		// <model_name>: {
-		//    pk: <field key> or [<field key>, ...] for composite primary key,
+		// <model name>: {
+		//    pk: <field name>,
 		//		keys: {
-		//			<local field key>: { model: model, fieldKey: field }
+		//			<local field name>: { model: model, fieldKey: field }
 		//		},
+		//		// БАЗОВЫЕ поля такие как: pk, key, field
 		// 	  fields: {
-		//			тут находяться все поля на которых были установленны декораторы
-		//			т.е. все pk, key, field, one, many etc должны быть тут
-		//			это информация используеться во время создания объекта что бы обернуть поля в getter/setter
-		//			формат хранения:
 		//      <field name>: function(obj) // функция которая оборачивает в getter и setter
-		//    }
+		//    },
+		//		// все ПРОИЗВОДНЫЕ поля от БАЗОВЫХ такие как foreignObject, one, many, manyToMany, computed
+		//		computed: {
+		//			<field name>: function(obj) // функция которая оборачивает в getter и setter
+		//		}
 		// }
 	},
   history: {
     // <model name>: {
-    //    <id>: Map(<transaction>,<new_changes>)
+    //    <id>: Map(<transaction>,<new changes>)
     // }
   },
-  objects: {					// all objects
+	// тут храняться все объекты моделей
+  objects: {
     // <model name>: {
     //    <id>: {<object>}
     // }
@@ -47,78 +50,88 @@ let store = {
 
 		// the new constructor behaviour
 		let f : any = function (...args) {
-			let c : any = function () { return cls.apply(this, args); };
-			c.prototype = cls.prototype;
-			let obj = new c();
+			let c : any = function () { return cls.apply(this, args) }
+			c.prototype = cls.prototype
+			let obj = new c()
 
-			obj.__data = {};
-			for (let fieldWrapper of store.models[cls.name].fields) { fieldWrapper(obj); }
+			obj.__data = {}
+			for (let fieldWrapper of store.models[cls.name].fields) { fieldWrapper(obj) }
 
-			return obj;
-		};
+			return obj
+		}
 
-		f.prototype = cls.prototype;   // copy prototype so intanceof operator still works
-		return f;                      // return new constructor (will override original)
+		f.prototype = cls.prototype   // copy prototype so intanceof operator still works
+		return f                      // return new constructor (will override original)
 	},
 
 	// register model in store if not registered yet
 	registerModel: (cls) => {
 		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name;
+		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
 		if (!store.models[model_name]) {
-			store.models[model_name] = {
-				pk			: null,
-				keys		: {},
-				fields	: {}
-			}
+			store.models[model_name] = {}
 		}
 	},
 
 	//
 	registerModelPk: (cls, fieldKey) => {
-		store.registerModel(cls);
+		store.registerModel(cls)
 		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name;
-		let model = store.models[model_name];
-		if (model.pk) {	// case for composite pk
-			if (Array.isArray(model.pk)) 	model.pk.push(fieldKey);
-			else													model.pk = [model.pk, fieldKey];
+		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
+		let model = store.models[model_name]
+		store.models[cls.constructor.name].pk = fieldKey
+	},
+
+	//
+	registerModelRelation: (modelA, fieldA, modelB, fieldB='id') => {
+		store.registerModel(modelA)
+		store.registerModel(modelB)
+		// It can be wrong name "Function" because we wrapped class in decorator before.
+		let modelA_name = modelA.constructor.name == "Function" ? modelA.prototype.constructor.name : modelA.constructor.name
+		if (!store.models[modelA_name].keys) {
+			store.models[modelA_name].keys = {}
+		}
+		if (!store.models[modelA_name].keys[fieldA]) {
+			// It can be wrong name "Function" because we wrapped class in decorator before.
+			let modelB_name =  modelB.constructor.name == "Function" ? modelB.prototype.constructor.name : modelB.constructor.name
+			store.models[modelA_name].keys[fieldA] = {model: modelB_name, fieldKey: fieldB}
 		}
 		else {
-			store.models[cls.constructor.name].pk = fieldKey;
+			throw 'Key already registered.'
 		}
 	},
 
 	//
 	registerModelField: (cls, fieldKey, fieldWrapper) => {
-		store.registerModel(cls);
+		store.registerModel(cls)
 		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name;
+		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
+		if(!store.models[model_name].fields){
+			store.models[model_name].fields = {}
+		}
 		if (!store.models[model_name].fields[fieldKey]) {
-			store.models[model_name].fields[fieldKey] = fieldWrapper;
+			store.models[model_name].fields[fieldKey] = fieldWrapper
 		}
 		else {
 			throw 'Field already registered.'
 		}
 	},
 
-	//
-	registerModelRelation: (modelA, fieldA, modelB, fieldB='id') => {
-		store.registerModel(modelA);
-		store.registerModel(modelB);
+	registerModelComputedField: (cls, fieldKey, fieldWrapper) => {
+		store.registerModel(cls)
 		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let modelA_name = modelA.constructor.name == "Function" ? modelA.prototype.constructor.name : modelA.constructor.name;
-		if (!store.models[modelA_name].keys[fieldA]) {
-			// It can be wrong name "Function" because we wrapped class in decorator before.
-			let modelB_name =  modelB.constructor.name == "Function" ? modelB.prototype.constructor.name : modelB.constructor.name;
-			store.models[modelA_name].keys[fieldA] = {model: modelB_name, fieldKey: fieldB};
+		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
+		if(!store.models[model_name].computed){
+			store.models[model_name].computed = {}
+		}
+		if (!store.models[model_name].computed[fieldKey]) {
+			store.models[model_name].computed[fieldKey] = fieldWrapper
 		}
 		else {
-			throw 'Key already registered.'
+			throw 'Field already registered.'
 		}
-
 	}
-};
+}
 
-export default store;
+export default store
 

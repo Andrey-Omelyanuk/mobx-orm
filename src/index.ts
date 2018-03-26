@@ -8,6 +8,7 @@ import foreignKey 		from './fields/foreign-key'
 import foreignObject 	from './fields/foreign-object'
 import one  					from './fields/one'
 import many 					from './fields/many'
+import computed				from './fields/computed'
 
 
 @store.model
@@ -17,7 +18,7 @@ class User extends Model {
 	@field    secondName	: string
 	@one			profile			: UserProfile
 
-	get fullname() { return `${this.firstName} ${this.secondName}` }
+	@computed get fullName() : string { console.log('calc'); return `${this.firstName} ${this.secondName}` }
 }
 
 @store.model
@@ -54,11 +55,20 @@ userA.firstName  = 'A'
 userA.secondName = 'user'
 userA.save()
 
+let userProfileA = new UserProfile()
+userProfileA.userId = userA.id
+userProfileA.save()
+
 let userB = new User()
 userB.firstName  = 'B'
 userB.secondName = 'user'
 userB.save()
 
+let userProfileB = new UserProfile()
+userProfileB.userId = userB.id
+userProfileB.save()
+
+// user C have no profile
 let userC = new User()
 userC.firstName  = 'C'
 userC.secondName = 'user'
@@ -72,14 +82,23 @@ channelA.save()
 let channelB = new Channel()
 channelB.save()
 
-// Messages for ChannelA
+let message
+for (let i = 0; i < 50; i++) {
+	message = new ChannelMessage()
+	message.channelId = channelA
+	message.userId = userA.id
+	message.text = "channel A - message " + i
+	message.save()
+}
 
-// Messages for ChannelB
-
-
-
+// ----------------------------------------------------------------------------
+let fullName: string = userA.fullName
+console.log('UserA fullName: '+fullName)
+userA.firstName = 'test'
+console.log('UserA fullName (firstName was changed to test): '+userA.fullName)
 // dump store
 console.log("store", store)
+
 
 // -------------------------------------------------------------------------------------------------------
 import Vue from 'vue'
@@ -98,7 +117,7 @@ new Vue({
 			// t.commit();
 		},
 		storePrint: function () {
-			console.log(store)
+			//console.log(store)
 		}
 	}
 })
