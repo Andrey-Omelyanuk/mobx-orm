@@ -1,24 +1,14 @@
-node_modules/
-dist/
 .idea/
 .tmp/
 .DS_Store
+
+node_modules/
+dist/
+
 npm-debug.log
 debug.log
 package-lock.json
-src/config.js
+yarn.lock
 
-# cordova
-cordova/node_modules/
-cordova/platforms/
-cordova/plugins/
-cordova/www/
-cordova/package-lock.json
-
-# electron
-electron/*
-!electron/build.js
-!electron/main.js
-!electron/package.json
 
 

@@ -2,6 +2,30 @@
   Everything you can find in store.
  */
 
+/*
+Структура данных хранилища:
+
+store
+	models
+		objects		- <id>: {<object>}
+		fields		- <field name>: function(obj)  функция которая оборачивает в getter и setter БАЗОВЫЕ поля такие как: pk, key, field
+		relations ???
+		computed  ???
+	transactions
+		current
+		history
+
+Функции хранилища:
+	Note: all functions return nothing, you can catch errors in exception
+
+	model 										 (cls) -
+	registerModel 						 (cls) - register model in store if not registered yet
+	registerModelPk						 (cls, fieldKey)	-
+	registerModelField 				 (cls, fieldKey, fieldWrapper) -
+	registerModelComputedField (cls, fieldKey, fieldWrapper) -
+
+*/
+
 let store = {
 	// зарегистрированные модели
 	// тут храниться вся структура данных, с которыми мы работаем
@@ -12,10 +36,7 @@ let store = {
 		//		keys: {
 		//			<local field name>: { model: model, fieldKey: field }
 		//		},
-		//		// БАЗОВЫЕ поля такие как: pk, key, field
-		// 	  fields: {
-		//      <field name>: function(obj) // функция которая оборачивает в getter и setter
-		//    },
+		//		//
 		//		// все ПРОИЗВОДНЫЕ поля от БАЗОВЫХ такие как foreignObject, one, many, manyToMany, computed
 		//		computed: {
 		//			<field name>: function(obj) // функция которая оборачивает в getter и setter
@@ -32,15 +53,6 @@ let store = {
     // <model name>: {
     //    <id>: {<object>}
     // }
-  },
-  transactions: {
-    history	: [],		  // all history transactions
-    root		: null,		// root of current transaction
-    current	: null		// current transaction
-  },
-	// ???? для чего это нам???
-  dependencies: {
-
   },
 
 	model: (cls) => {
@@ -64,7 +76,7 @@ let store = {
 		return f                      // return new constructor (will override original)
 	},
 
-	// register model in store if not registered yet
+
 	registerModel: (cls) => {
 		// It can be wrong name "Function" because we wrapped class in decorator before.
 		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
