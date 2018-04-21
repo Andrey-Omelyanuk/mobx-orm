@@ -40,7 +40,6 @@ Query:
 Field - декоратор оборачивает свойство в getter и setter, и в __data храним значение.
 Fields:
  - pk
- - key
  - field
  - foreign
  - one

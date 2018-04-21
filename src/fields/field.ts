@@ -7,7 +7,7 @@ import store from '../store'
 */
 
 export default function field(cls: any, field_key: string) {
-	function field (obj) {
+	store.registerModelField(cls, field_key, (obj) => {
 		obj.__data[field_key] = obj[field_key]
 		Object.defineProperty (obj, field_key, {
 			get: () => obj.__data[field_key],
@@ -18,6 +18,5 @@ export default function field(cls: any, field_key: string) {
 				obj.__data[field_key] = new_value
 			}
 		})
-	}
-	store.registerModelComputedField(cls, field_key, field)
+	})
 }

@@ -22,5 +22,4 @@ export default function one(cls: any, field_key: string) {
 			}
 		})
 	}
-	store.registerModelComputedField(cls, field_key, one)
 }

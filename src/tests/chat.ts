@@ -2,10 +2,8 @@ import store 	from '../store'
 import Model  from '../model'
 import pk 						from '../fields/pk'
 import field 					from '../fields/field'
-import foreignKey 		from '../fields/foreign-key'
-import foreignObject 	from '../fields/foreign-object'
+import foreign			 	from '../fields/foreign'
 import many 					from '../fields/many'
-import computed				from '../fields/computed'
 
 /*
 	Test Plan:
@@ -18,10 +16,10 @@ import computed				from '../fields/computed'
 @store.model
 export class User extends Model {
 	@pk       id         	: number
-	@field    firstName		: string
-	@field    secondName	: string
+	@field    first_name	: string
+	@field    last_name		: string
 
-	@computed get fullName() : string { return `${this.firstName} ${this.secondName}` }
+	get full_name() : string { return `${this.first_name} ${this.last_name}` }
 }
 
 @store.model
@@ -32,51 +30,45 @@ export class Channel extends Model {
 
 @store.model
 export class ChannelMessage extends Model {
-	@pk 												id 				: number
-	@foreignKey(Channel) 				channelId : number
-	@foreignKey(User)						userId    : number
-	@field 											created   : string
-	@field 											text      : string
-	@foreignObject('channelId') channel		: Channel
-	@foreignObject('userId')    user	 		: User
+	@pk 				id 				 : number
+	@field 			channel_id : number
+	@field			user_id    : number
+	@field 			created    : string
+	@field 			text       : string
+	@foreign()	channel		 : Channel
+	@foreign()  user	 		 : User
 }
 
 // 	0. create users (userA, userB)
 let userA = new User()
-userA.firstName  = 'A'
-userA.secondName = 'user'
-userA.save()
+userA.first_name  = 'A'
+userA.last_name = 'user'
 
 let userB = new User()
-userA.firstName  = 'B'
-userA.secondName = 'user'
-userA.save()
+userA.first_name  = 'B'
+userA.last_name = 'user'
 
 // 	1. create 2 channels (channelA, channelB)
 let channelA = new Channel()
-channelA.save()
-
 let channelB = new Channel()
-channelA.save()
 
 // 	2. send some message to channelA
 let message
 for (let i = 0; i < 50; i++) {
 	message = new ChannelMessage()
-	message.channelId = channelA
-	message.userId = userA.id
+	message.channel = channelA
+	message.user = userA
 	message.text = "channel A - message " + i
-	message.save()
 }
 
 // 	3. send some message to channelB
 for (let i = 0; i < 50; i++) {
 	message = new ChannelMessage()
-	message.channelId = channelB
-	message.userId = userB.id
+	message.channel = channelB
+	message.user = userB
 	message.text = "channel B - message " + i
-	message.save()
 }
 
 // check result
+declare let console
 console.log("TEST: chat", store)
