@@ -7,15 +7,27 @@ import store from '../store'
 */
 
 export default function field(cls: any, field_key: string) {
-	store.registerModelField(cls, field_key, (obj) => {
+	// It can be wrong name "Function" because we wrapped class in decorator before.
+	let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
+	store.registerModelField(model_name, field_key, (obj) => {
 		obj.__data[field_key] = obj[field_key]
 		Object.defineProperty (obj, field_key, {
 			get: () => obj.__data[field_key],
 			set: (new_value) => {
-				// let old_values = {}; old_values[field_key] = obj.__data[field_key];
-				// let new_values = {}; new_values[field_key] = new_value;
-				// history(model_name, obj.__data.id, old_values, new_values );
+				let old_value = obj.__data[field_key]
+
+				//  TODO: init it when object created
+				if (!obj._subscriptions.before_property[field_key]) obj._subscriptions.before_property[field_key] = []
+				for (let callback of obj._subscriptions.before_property[field_key]) 			 { if (callback) callback(obj, field_key, new_value)	}
+				for (let callback of obj._subscriptions.before_update)              			 { if (callback) callback(obj, field_key, new_value)	}
+				for (let callback of store.models[model_name].subscriptions.before_update) { if (callback) callback(obj, field_key, new_value)	}
+
 				obj.__data[field_key] = new_value
+
+				if (!obj._subscriptions.after_property[field_key]) obj._subscriptions.after_property[field_key] = []
+				for (let callback of obj._subscriptions.after_property[field_key])  			{ if (callback) callback(obj, field_key, old_value)	}
+				for (let callback of obj._subscriptions.after_update)               			{ if (callback) callback(obj, field_key, old_value)	}
+				for (let callback of store.models[model_name].subscriptions.after_update) { if (callback) callback(obj, field_key, old_value)	}
 			}
 		})
 	})

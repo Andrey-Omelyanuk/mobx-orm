@@ -69,6 +69,8 @@ for (let i = 0; i < 50; i++) {
 	message.text = "channel B - message " + i
 }
 
+userA.delete()
+
 // check result
 declare let console
 console.log("TEST: chat", store)

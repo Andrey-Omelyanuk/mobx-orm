@@ -11,6 +11,13 @@ store
 			relations - на кого мы завязаны, регистрируеться в foreign
 			related		- кто на нас завязан, регистрируеться в many и one
 			getNewId()- используеться для генерации локальных id
+			subscriptions - подписки на изменения
+				before_create
+				before_update
+				before_delete
+				after_create
+				after_update
+				after_delete
 
 Функции хранилища:
 	Note: all functions return nothing, you can catch errors in exception
@@ -36,55 +43,57 @@ class Store {
 		// the new constructor behaviour
 		let f : any = function (...args) {
 			let c : any = function () { return cls.apply(this, args) }
+			c.prototype = cls.__proto__
 			c.prototype = cls.prototype
+
 			let obj = new c()
+			let model_desc = _store.models[cls.name]
+			let id = '#'+model_desc.getNewId()
 
 			obj.__data = {}
-
-			for (let key in _store.models[cls.name].fields) {
-				_store.models[cls.name].fields[key](obj)
-			}
-			if (!_store.models[cls.name].objects){
-				_store.models[cls.name].objects = {}
-			}
-			let id = _store.models[cls.name].getNewId()
-			obj.__data[_store.models[cls.name].pk] = id
-			_store.models[cls.name].objects[id] = obj
+			for (let key in model_desc.fields) { model_desc.fields[key](obj) }
+			obj.__data[model_desc.pk] = id
+			model_desc.objects[id] = obj
 			return obj
 		}
 
+		f.__proto__ = cls.__proto__
 		f.prototype = cls.prototype   // copy prototype so intanceof operator still works
 		return f                      // return new constructor (will override original)
 	}
 
-	registerModel(cls) {
-		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
+	registerModel(model_name) {
 		if (!this.models[model_name]) {
 			let _count = 0
 			this.models[model_name] = {
+				objects		: {},
+				pk				: null,
+				fields		: {},
+				relations	: {},
+				related		: {},
 				getNewId: () => {
 					_count = _count + 1
 					return _count
+				},
+				subscriptions: {
+					before_create: [],
+					before_update: [],
+					before_delete: [],
+					after_create: [],
+					after_update: [],
+					after_delete: []
 				}
 			}
 		}
 	}
 
-	registerModelPk(cls, fieldKey) {
-		this.registerModel(cls)
-		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
+	registerModelPk(model_name, fieldKey) {
+		this.registerModel(model_name)
 		this.models[model_name].pk = fieldKey
 	}
 
-	registerModelField(cls, fieldKey, fieldWrapper) {
-		this.registerModel(cls)
-		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
-		if(!this.models[model_name].fields){
-			this.models[model_name].fields = {}
-		}
+	registerModelField(model_name, fieldKey, fieldWrapper) {
+		this.registerModel(model_name)
 		if (!this.models[model_name].fields[fieldKey]) {
 			this.models[model_name].fields[fieldKey] = fieldWrapper
 		}
@@ -93,21 +102,13 @@ class Store {
 		}
 	}
 
-	registerModelRelation(modelA, fieldA, modelB, fieldB='id') {
-		this.registerModel(modelA)
-		this.registerModel(modelB)
-		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let modelA_name = modelA.constructor.name == "Function" ? modelA.prototype.constructor.name : modelA.constructor.name
-		if (!this.models[modelA_name].keys) {
-			this.models[modelA_name].keys = {}
-		}
-		if (!this.models[modelA_name].keys[fieldA]) {
-			// It can be wrong name "Function" because we wrapped class in decorator before.
-			let modelB_name =  modelB.constructor.name == "Function" ? modelB.prototype.constructor.name : modelB.constructor.name
-			this.models[modelA_name].keys[fieldA] = {model: modelB_name, fieldKey: fieldB}
+	registerModelRelation(modelA_name, fieldA, modelB_name) {
+		this.registerModel(modelA_name)
+		if (!this.models[modelA_name].relations[fieldA]) {
+			this.models[modelA_name].relations[fieldA] = modelB_name
 		}
 		else {
-			throw 'Key already registered.'
+			throw 'Relation already registered.'
 		}
 	}
 
@@ -128,8 +129,42 @@ class Store {
 			throw 'Key already registered.'
 		}
 	}
+	/*
+		before - it is means action not started yet and you can interrupt it
+		after  - action was done and you can only react on it
+
+		Примеры использования подписки на события
+		store.subscribe.create.after  (cls, callback)
+		store.subscribe.create.before (cls, callback)
+		store.subscribe.delete.after  (cls, callback)
+		store.subscribe.delete.before (cls, callback)
+		store.subscribe.update.after	(cls, callback)
+		store.subscribe.update.before (cls, callback)
+	 */
+	subscribe = {
+		create: {
+			before: (model_name, callback)=> { return this._subscribeTo(model_name, 'before_create', callback) },
+			after : (model_name, callback)=> { return this._subscribeTo(model_name, 'after_create' , callback) },
+		},
+		update: {
+			before: (model_name, callback)=> { return this._subscribeTo(model_name, 'before_update', callback) },
+			after : (model_name, callback)=> { return this._subscribeTo(model_name, 'after_update' , callback) },
+		},
+		delete: {
+			before: (model_name, callback)=> { return this._subscribeTo(model_name, 'before_delete', callback) },
+			after : (model_name, callback)=> { return this._subscribeTo(model_name, 'after_delete' , callback) }
+		}
+	}
+
+	private _subscribeTo(model_name, to, callback) {
+		let subscriptions = this.models[model_name].subscriptions[to]
+		subscriptions.push(callback)
+		let index = subscriptions.length - 1
+		return () => {
+			delete subscriptions[index]
+		}
+	}
 }
 
 let store = new Store()
 export default store
-

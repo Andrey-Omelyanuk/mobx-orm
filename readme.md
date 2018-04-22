@@ -77,3 +77,25 @@ users.loadAll()
 users.loadPage(N)
 
 все в одном!
+
+subscribe
+---
+
+before - it is means action not started yet and you can interrupt it
+after  - action was done and you can only react on it
+
+Примеры использования подписки на события
+User.subscribe.create.after  (callback)
+User.subscribe.create.before (callback)
+User.subscribe.delete.after  (callback)
+User.subscribe.delete.before (callback)
+User.subscribe.update.after	 (callback)
+User.subscribe.update.before (callback)
+
+user.subscribe.delete.before (callback)
+user.subscribe.delete.after  (callback)
+user.subscribe.update.before (callback)
+user.subscribe.update.after  (callback)
+
+user.subscribe.property.before('property name', callback)
+user.subscribe.property.after ('property name', callback)
