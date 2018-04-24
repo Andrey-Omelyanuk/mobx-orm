@@ -9,7 +9,9 @@ store
 			pk				- id поле, он же primary key
 			fields		- <field name>: function(obj)  функция которая оборачивает в getter и setter БАЗОВЫЕ поля такие как: pk, key, field
 			relations - на кого мы завязаны, регистрируеться в foreign
+				<local field>: <model_name>
 			related		- кто на нас завязан, регистрируеться в many и one
+				<local field>: { model_name: <model_name>, field: <field> }
 			getNewId()- используеться для генерации локальных id
 			subscriptions - подписки на изменения
 				before_create
@@ -22,11 +24,12 @@ store
 Функции хранилища:
 	Note: all functions return nothing, you can catch errors in exception
 
-	model 										 (cls) - декоратор для класса, который мы хотим зарегистрировать как модель
-	registerModel 						 (cls) - register model in store if not registered yet
-	registerModelPk						 (cls, fieldKey)	-
-	registerModelField 				 (cls, fieldKey, fieldWrapper) -
-
+	model 								(cls) - декоратор для класса, который мы хотим зарегистрировать как модель
+	registerModel 				(model_name) - register model in store if not registered yet
+	registerModelPk				(model_name, fieldKey)	-
+	registerModelField 		(model_name, fieldKey, fieldWrapper) 				-
+	registerModelRelation	(modelA_name, fieldA, modelB_name)					-
+	registerModelRelated	(modelA_name, fieldA, modelB_name, fieldB) 	-
 */
 
 class Store {
@@ -104,30 +107,21 @@ class Store {
 
 	registerModelRelation(modelA_name, fieldA, modelB_name) {
 		this.registerModel(modelA_name)
-		if (!this.models[modelA_name].relations[fieldA]) {
+
+		if (!this.models[modelA_name].relations[fieldA])
 			this.models[modelA_name].relations[fieldA] = modelB_name
-		}
-		else {
+		else
 			throw 'Relation already registered.'
-		}
 	}
 
-	registerModelRelated(modelA, fieldA, modelB, fieldB='id') {
-		this.registerModel(modelA)
-		this.registerModel(modelB)
-		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let modelA_name = modelA.constructor.name == "Function" ? modelA.prototype.constructor.name : modelA.constructor.name
-		if (!this.models[modelA_name].keys) {
-			this.models[modelA_name].keys = {}
-		}
-		if (!this.models[modelA_name].keys[fieldA]) {
-			// It can be wrong name "Function" because we wrapped class in decorator before.
-			let modelB_name =  modelB.constructor.name == "Function" ? modelB.prototype.constructor.name : modelB.constructor.name
-			this.models[modelA_name].keys[fieldA] = {model: modelB_name, fieldKey: fieldB}
-		}
-		else {
-			throw 'Key already registered.'
-		}
+	registerModelRelated(modelA_name, fieldA, modelB_name, fieldB) {
+		this.registerModel(modelA_name)
+		this.registerModel(modelB_name)
+
+		if (!this.models[modelA_name].related[fieldA])
+			this.models[modelA_name].related[fieldA] = {model_name: modelB_name, field: fieldB}
+		else
+			throw 'Related already registered.'
 	}
 	/*
 		before - it is means action not started yet and you can interrupt it

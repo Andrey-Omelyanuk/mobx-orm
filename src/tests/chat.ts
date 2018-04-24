@@ -24,8 +24,8 @@ export class User extends Model {
 
 @store.model
 export class Channel extends Model {
-	@pk 	id 				: number
-	@many messages	: ChannelMessage[]
+	@pk 	  id 				: number
+	@many() messages	: ChannelMessage[]
 }
 
 @store.model
@@ -37,6 +37,8 @@ export class ChannelMessage extends Model {
 	@field 			text       : string
 	@foreign()	channel		 : Channel
 	@foreign()  user	 		 : User
+
+	first_message_of_user_group : boolean
 }
 
 // 	0. create users (userA, userB)
