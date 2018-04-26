@@ -1,4 +1,5 @@
 import store from './store'
+import { Filter, createFilter } from './filter'
 declare let console
 
 
@@ -19,6 +20,7 @@ export default class Model {
 		user.subscribe.property.before('property name', callback)
 		user.subscribe.property.after ('property name', callback)
 	*/
+
 	_unsubscriptions = [] // need unsubscribe when we delete object
 	_subscriptions = {
 		before_update: [],

@@ -1,62 +1,85 @@
- /*
-	Array который автоматически заполняеться на основании источника и фильтра
-	Эти фильтры организуються в дерево
-	и вставлять в Filter можно только корневой.
+
+
+/*
+
+
+добавили в список, позиция куда вставили и сам объект
+удалили из списка, с какой позиции и сам объект
+??? если список сдвинулся, что тогда? для каждого объекта вызвать add/remove ?
+это очень плохо! нам нужно знать лишь что последовательность изменилась
+и этого достаточно!!! кому важна последовательность будут это событие слушать!!!
+=> передавать позицию при добавлении или удалении не имеет смысла!?!
+пусть будет на всякий случай! а add.after индекса вставки быть не может???
+может!!! мы можем посчитать!
+*/
+
+
+
+/*
+	Filter - особый Array который сам заполняеться данными
+	=> заполнять его напрямую нельзя, отсутствие описания pop, push etc в интерфейсе
+	поможет нам запретить прямые манипуляции со списком, хотя это полноценныый Array.
+	Мы не можем седалть extend Array, т.к. некоторый функционал мы переопределяем
+	например filter, нам в любом случае нельзя фильтровать! так как он сам контролирует свое содержимое!
+*/
+export interface Filter<T> {
+
+	subscribe: {
+		// добавили елемент в список
+		add: {
+			before(callback)
+			after (callback)
+		}
+		// удалили елемент из списка
+		remove: {
+			before(callback),
+			after (callback)
+		},
+		// замена одного элемента другим
+		update: {
+			before (callback),
+			after  (callback)
+		},
+		// события от элементов, если они могут их создавать
+		changes: {
+			before (callback),
+			after  (callback)
+		}
+	}
+
+	/*
+	ВСЕ!!!! начальные условия формирования списка
+  не должны меняться после создания списка
+  => мы может только читать эти условия.
+  => события изменения последовательности избыточны
+  т.к. их можно отловить при помощи add/remove.
  */
-import Model from './model'
+	readonly filter: any
+	readonly order : any
 
+	// Объявление интерфейся Array, который нам нужен
+	readonly length: number
+	[n: number]: T
+}
 
-export default class Filter<T> extends Array<T> {
-
-	private _source : Filter<T> | Model
-	private _where
-	private _orderBy: string[]
-	private _limit	: number
-	private _offset : number
-
-	constructor(source : Filter<T> | Model = null, where = null, orderBy : string[] = null, limit : number = null, offset : number = null) {
-		super()
-		this._source 	= source
-		this._where  	= where
-		this._orderBy = orderBy
-		this._limit   = limit
-		this._offset  = offset
-		// https://github.com/Microsoft/TypeScript/wiki/FAQ#why-doesnt-extending-built-ins-like-error-array-and-map-work
-		Object.setPrototypeOf(this, Filter.prototype)
+let filterHandler = {
+	get: function(target, property) {
+		console.log('getting ' + property + ' for ' + target)
+		// property is index in this case
+		return target[property]
+	},
+	set: function(target, property, value, receiver) {
+		console.log('setting ' + property + ' for ' + target + ' with value ' + value)
+		target[property] = value
+		// you have to return true to accept the changes
+		return true
 	}
-	push(item: T) : number {
-		console.log('push', item)
-		return super.push(item)
-	}
-	newFilter(where, orderBy, limit, offset) {
-		return new Filter<T>(this._source, where, orderBy, limit, offset)
-	}
+}
 
-	//
+export function createFilter(model_name, where, orderBy?) : Filter<any>{
+	let list = <any>[]
 
-	async loadAll() {
+	let proxy = new Proxy(list, filterHandler )
 
-	}
-
-	async loadPage(N) {
-
-	}
-
-	async loadNextPage() {
-
-	}
-
-	async loadPrevPage() {
-
-	}
-
-	_getModel() {
-		// Only root Filter store Model,
-		// not root Filter store parent Filter in this._source
-		return (this._source instanceof Model) ? this._source : (<Filter<T>>this._source)._getModel()
-	}
-
-	_getFullFilter() {
-		// TODO: ???
-	}
+	return <Filter<any>>proxy
 }
