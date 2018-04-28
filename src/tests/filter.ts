@@ -18,20 +18,20 @@ let userA = new User()
 userA.first_name = 'A'
 
 let userB = new User()
-userA.first_name = 'B'
+userB.first_name = 'B'
 
 let userC = new User()
-userA.first_name = 'C'
+userC.first_name = 'C'
 
 let userD = new User()
-userA.first_name = 'D'
+userD.first_name = 'D'
 
 let users = <Filter<User>>createFilter('User', {last_name: {'==': 'test'}}, [['first_name', 'DESC']])
 
 function showUsers(users) {
 	console.log('-----------')
 	for(let user of users) {
-		console.log(user)
+		console.log(`${user.id}: ${user.first_name} ${user.last_name} `)
 	}
 }
 
@@ -44,7 +44,7 @@ userA.last_name = 'test'
 showUsers(users)
 userD.last_name = 'ddd'
 showUsers(users)
-
+console.log('-----------')
 // let channel_messages = <Filter<any>>(<any>[])
 //
 // console.log(channel_messages)
