@@ -54,10 +54,6 @@ unsubscribe()
 userB.delete()
 
 
-userA.subscribe.property.after('first_name', (user, property_name, old_value) => {
-	console.log('After Property', property_name, user)
-})
-
 userA.last_name = '1'
 userA.first_name = '2'
 

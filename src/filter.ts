@@ -1,43 +1,5 @@
 import store from './store'
-
-/*
-добавили в список, позиция куда вставили и сам объект
-удалили из списка, с какой позиции и сам объект
-??? если список сдвинулся, что тогда? для каждого объекта вызвать add/remove ?
-это очень плохо! нам нужно знать лишь что последовательность изменилась
-и этого достаточно!!! кому важна последовательность будут это событие слушать!!!
-=> передавать позицию при добавлении или удалении не имеет смысла!?!
-пусть будет на всякий случай! а add.after индекса вставки быть не может???
-может!!! мы можем посчитать!
-*/
-
-
-
-class Event {
-	private _before: any[] = []
-	private _after : any[] = []
-
-	before(callback) { return this._subscribeTo('_before', callback) }
-	after (callback) { return this._subscribeTo('_after' , callback) }
-
-	private _subscribeTo(to, callback) {
-		this[to].push(callback)
-		let index = this[to].length - 1
-		return () => {
-			delete this[to][index]
-		}
-	}
-}
-
-class FilterEvents {
-	add		 : Event = new Event() // добавили елемент в список
-	remove : Event = new Event() // удалили елемент из списка
-	// не имеет смысла! т.к. объекты либо вставляются или удаляются в списке
-	//update : Event = new Event() // замена одного элемента другим
-	changes: Event = new Event() // события от элементов, если они могут их создавать
-}
-
-
+import EventsOfList from './event-list'
 
 /*
 	Filter - особый Array который сам заполняеться данными
@@ -48,14 +10,8 @@ class FilterEvents {
 */
 export interface Filter<T> {
 
-	subscribe: FilterEvents
-	/*
-	ВСЕ!!!! начальные условия формирования списка
-  не должны меняться после создания списка
-  => мы может только читать эти условия.
-  => события изменения последовательности избыточны
-  т.к. их можно отловить при помощи add/remove.
- */
+	subscribe: EventsOfList
+
 	readonly filter   : any
 	readonly order_by : any
 
@@ -64,6 +20,7 @@ export interface Filter<T> {
 	[n: number]: T
 }
 
+// Proxy for list
 let filter_handler = {
 	get: function(target, property) {
 		//console.log('getting ' + property + ' for ' + target)
@@ -100,22 +57,6 @@ function checkFilter(model_name, filter, order_by) {
 	}
 }
 
-// проверяем относиться ли этот объект к нашему фильтру
-function checkObject(obj, filter) {
-	for (let field in filter) {
-		for(let operator in filter[field]) {
-			switch(operator) {
-				case '==':
-					if (obj[field] != filter[field][operator]) return false
-					break
-				default:
-					throw 'Unknown operator in filter'
-			}
-		}
-	}
-	return true
-}
-
 function findPlace(list, order_by, obj) {
 	return list.length
 }
@@ -127,49 +68,78 @@ export function createFilter(model_name, filter, order_by?) : Filter<any>{
 
 	checkFilter(model_name, filter, order_by)
 
-	list.model_name = model_name
-	list.subscribe 	= new FilterEvents()
-	list.filter 		= filter
-	list.order_by   = order_by
+	list.model_name  = model_name
+	list.subscribe 	 = new EventsOfList()
+	list.unsubscribe = []
+	list.filter 		 = filter
+	list.order_by    = order_by
 
+	// isMy  - object is my after changes
+	// wasMy - before changes the object was my
+	//
+	// created/added
+	// isMy - add to list
+	//
+	// updated
+	// isMy  wasMy action
+	// 0     0     ignore
+	// 1     0     add to list and sort
+	// 0     1     remove from list
+	// 1     1     nothing do, but sort  order, it can be changed
+	//
+	// deleted/removed
+	// wasMy - remove from list
+
+
+	let isMy = (obj, filter) => {
+		for (let field in filter) {
+			for(let operator in filter[field]) {
+				switch(operator) {
+					case '==':
+						if (obj[field] != filter[field][operator]) return false
+						break
+					default:
+						throw 'Unknown operator in filter'
+				}
+			}
+		}
+		return true
+	}
+
+	let wasMy = (list, obj) => {
+		return list.indexOf(obj) != -1
+	}
 
 	function add(list, obj, order_by) {
 		let place_to_paste = findPlace(list, order_by, obj)
 		list.splice(place_to_paste, 0, obj)
-
-		let unsubscribe_delete = obj.subscribe.delete.after((obj) => {
-			proxy.splice(list.indexOf(obj), 1)
-			unsubscribe_delete()
-		})
 	}
 
-	store.subscribe.create.after(model_name, (obj) => {
-		if (checkObject(obj, filter)) {
-			add(proxy, obj, order_by)
-		}
-	})
+	function remove(list, obj) {
+		list.splice(list.indexOf(obj), 1)
+		list.subscribe._emit_remove(obj)
+	}
 
-	store.subscribe.update.after(model_name, (obj, field_key, old_value) => {
-		// 1. наш объект
-		if (list.indexOf(obj) != -1) {
-			// но уже не должен быть нашим
-			if(!checkObject(obj, filter)){
-				proxy.splice(list.indexOf(obj), 1)
-				// TODO: проблемы с отпиской, мы не можем до нее дотянуться!
-			}
-			// TODO: после изменений может остаться нашим, но должен поменять позицию
-		}
-		// не наш, но должен к нам попасть
-		else if(checkObject(obj, filter)) {
-			add(proxy, obj, order_by)
-		}
+	function sort(list, obj) {
+		// TODO: sort list
+	}
 
-		// событие
-		// 3. вставляем/удаляем
-		// событие
-	})
+	list.unsubscribe.push(store.subscribe.create.after(model_name, (obj) => {
+		if (isMy(obj, filter)) add(proxy, obj, order_by)
+	}))
 
+	list.unsubscribe.push(store.subscribe.update.after(model_name, (obj, field_key, old_value) => {
+		let is_my  = isMy(obj, filter)
+		let was_my = wasMy(list, obj)
 
+		     if ( is_my && !was_my) add   (list, obj, order_by)
+		else if (!is_my &&  was_my) remove(list, obj)
+		else if (!is_my && !was_my) sort  (list, obj)
+	}))
+
+	list.unsubscribe.push(store.subscribe.delete.after(model_name, (obj) => {
+		if (wasMy(list, obj)) remove(list, obj)
+	}))
 
 	return <Filter<any>>proxy
 }

@@ -17,16 +17,12 @@ export default function field(cls: any, field_key: string) {
 				let old_value = obj.__data[field_key]
 
 				//  TODO: init it when object created
-				if (!obj._subscriptions.before_property[field_key]) obj._subscriptions.before_property[field_key] = []
-				for (let callback of obj._subscriptions.before_property[field_key]) 			 { if (callback) callback(obj, field_key, new_value)	}
-				for (let callback of obj._subscriptions.before_update)              			 { if (callback) callback(obj, field_key, new_value)	}
+				obj.subscribe.update._emit_before(obj, field_key, new_value)
 				for (let callback of store.models[model_name].subscriptions.before_update) { if (callback) callback(obj, field_key, new_value)	}
 
 				obj.__data[field_key] = new_value
 
-				if (!obj._subscriptions.after_property[field_key]) obj._subscriptions.after_property[field_key] = []
-				for (let callback of obj._subscriptions.after_property[field_key])  			{ if (callback) callback(obj, field_key, old_value)	}
-				for (let callback of obj._subscriptions.after_update)               			{ if (callback) callback(obj, field_key, old_value)	}
+				obj.subscribe.update._emit_after(obj, field_key, old_value)
 				for (let callback of store.models[model_name].subscriptions.after_update) { if (callback) callback(obj, field_key, old_value)	}
 			}
 		})
