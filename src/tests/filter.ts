@@ -2,7 +2,7 @@ import pk 		from '../fields/pk'
 import Model 	from '../model'
 import store 	from '../store'
 import field 	from '../fields/field'
-import {createFilter, Filter} from '../filter'
+import Filter from '../filter'
 
 
 @store.model
@@ -26,7 +26,7 @@ userC.first_name = 'C'
 let userD = new User()
 userD.first_name = 'D'
 
-let users = <Filter<User>>createFilter('User', {last_name: {'==': 'test'}}, [['first_name', 'DESC']])
+let users = new Filter<User>('User', {last_name: {'==': 'test'}}, [['first_name', 'DESC']])
 
 function showUsers(users) {
 	console.log('-----------')

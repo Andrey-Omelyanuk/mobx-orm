@@ -1,5 +1,5 @@
 import store from './store'
-import { Filter, createFilter } from './filter'
+import Filter from './filter'
 import EventsOfObject from './event-object'
 declare let console
 
