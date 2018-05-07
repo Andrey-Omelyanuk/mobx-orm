@@ -44,6 +44,11 @@ userA.last_name = 'test'
 showUsers(users)
 userD.last_name = 'ddd'
 showUsers(users)
+let userX = new User()
+userX.first_name = 'X'
+userX.last_name  = 'test'
+showUsers(users)
+userX.last_name = 'empty'
 console.log('-----------')
 // let channel_messages = <Filter<any>>(<any>[])
 //

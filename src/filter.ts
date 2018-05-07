@@ -39,21 +39,6 @@ class EventsOfFilter {
 */
 
 
-	// isMy  - object is my after changes
-	// wasMy - before changes the object was my
-	//
-	// created/added
-	// isMy - add to list
-	//
-	// updated
-	// isMy  wasMy action
-	// 0     0     ignore
-	// 1     0     add to list and sort
-	// 0     1     remove from list
-	// 1     1     nothing do, but sort  order, it can be changed
-	//
-	// deleted/removed
-	// wasMy - remove from list
 
 export default class Filter<T> {
 
@@ -83,12 +68,28 @@ export default class Filter<T> {
 		}))
 
 		this._unsubscribe.push(store.subscribe.update.after(model_name, (obj, field_key, old_value) => {
+			// isMy  - object is my after changes
+			// wasMy - before changes the object was my
+			//
+			// created/added
+			// isMy - add to list
+			//
+			// updated
+			// isMy  wasMy action
+			// 0     0     ignore
+			// 1     0     add to list and sort
+			// 0     1     remove from list
+			// 1     1     nothing do, but sort  order, it can be changed
+			//
+			// deleted/removed
+			// wasMy - remove from list
 			let is_my  = this._isMy(obj)
 			let was_my = this._wasMy(obj)
 
 					 if ( is_my && !was_my) this._add    (obj)
 			else if (!is_my &&  was_my) this._remove (obj)
-			else if (!is_my && !was_my) this._replace(obj)
+			// TODO: оптимизация, replace только если поменялось поле которое есть в order_by
+			else if ( is_my &&  was_my) this._replace(obj)
 		}))
 
 		this._unsubscribe.push(store.subscribe.delete.after(model_name, (obj) => {
@@ -127,15 +128,23 @@ export default class Filter<T> {
 		this.subscribe._emit_remove(obj)
 	}
 
-	private _replace = (obj) => {
-		// TODO: sort list
+	private _replace = (obj: T) => {
+		let current_index = (<any>this).indexOf(obj)
+		let place_to_paste = this._findPlace(obj)
+
+		if (place_to_paste != current_index) {
+			if (place_to_paste > current_index) place_to_paste = place_to_paste - 1;
+			(<any>this).splice(current_index, 1);
+			(<any>this).splice(place_to_paste, 0, obj)
+		}
 	}
 
-	private _findPlace = (obj) => {
+	private _findPlace = (obj: T) => {
 		return (<any>this).length
 	}
 
-	// бросаем error в консоль если проблемы с фильтрами
+	// проверяем поля фильтра с зарегистрированными полями модели
+	// если нет таких полей, то бросаем error только в консоль
 	private _checkFilter = () => {
 		for (let filter_field in this._filter) {
 			let isOk = false
