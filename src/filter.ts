@@ -140,7 +140,37 @@ export default class Filter<T> {
 	}
 
 	private _findPlace = (obj: T) => {
-		return (<any>this).length
+		if (!this._order_by.length) return (<any>this).length
+		let index = 0
+		let order_index = 0
+		let order_field = this._order_by[order_index][0]
+		let order_type  = this._order_by[order_index][1]
+
+		while (index < (<any>this).length) {
+			let item = this[index]
+			if (order_type == 'ASC' && obj[order_field] < item[order_field]) {
+				return index
+			}
+			else if (order_type == 'DESC' && obj[order_field] > item[order_field]) {
+				return index
+			}
+			// поле совпало, проверяем другие поля сортировки
+			else if (obj[order_field] == item[order_field]) {
+				if (order_index < this._order_by.length - 1) {
+					order_index = order_index + 1
+					order_field = this._order_by[order_index][0]
+					order_type  = this._order_by[order_index][1]
+				}
+				// все поля проверили и они одинаковы, наша задача вставить такой элемент в конец
+				else {
+					index = index + 1
+				}
+			}
+			else {
+				index = index + 1
+			}
+		}
+		return index
 	}
 
 	// проверяем поля фильтра с зарегистрированными полями модели
