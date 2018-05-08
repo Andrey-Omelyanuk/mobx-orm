@@ -1,6 +1,6 @@
 // Karma configuration
 // Generated on Mon May 07 2018 20:16:11 GMT+0300 (+03)
-let webpackConfig = require('./webpack.config.js')
+let webpackConfig = require('./webpack.config.js')()
 process.env.CHROME_BIN = require('puppeteer').executablePath()
 
 
@@ -18,7 +18,8 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-			'src/**/*.spec.ts'
+			//{ pattern: 'src/*.spec.ts', watched: false },
+			{ pattern: 'src/**/*.spec.ts', watched: false }
     ],
 
 
@@ -33,8 +34,10 @@ module.exports = function(config) {
 			'src/**/*.spec.ts': ['webpack']
     },
 
+		mime: {
+			'text/x-typescript': ['ts', 'tsx']
+		},
 
-    // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
     reporters: ['progress'],
@@ -72,9 +75,13 @@ module.exports = function(config) {
 
 		webpack: {
 			target: 'web',
-			mode: 'development',
-			module: webpackConfig.module,
+			mode  : 'development',
+			module : webpackConfig.module,
 			resolve: webpackConfig.resolve
+		},
+		webpackMiddleware: {
+			//stats: 'errors-only'
 		}
   })
 }
+

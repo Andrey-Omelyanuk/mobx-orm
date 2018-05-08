@@ -4,7 +4,6 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 
 module.exports = function (env) {
-
   return {
     target: 'web',
 		mode: 'development',
