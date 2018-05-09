@@ -96,6 +96,11 @@ export default class Filter<T> {
 			if (this._wasMy(obj)) this._remove(obj)
 		}))
 
+		// Наполнить фильтр из уже существующийх данных.
+		for (let [key, item] of Object.entries(store.models[model_name].objects)) {
+			if (this._isMy(<T>item)) this._add(<T>item)
+		}
+
 		return  new Proxy(this, filter_handler)
 	}
 

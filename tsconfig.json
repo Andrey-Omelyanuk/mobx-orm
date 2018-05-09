@@ -10,11 +10,7 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "skipLibCheck": true,
-    "lib": [
-      "es5",
-      "es6",
-      "es2015.promise"
-    ],
+    "lib": ["es2017" ],
     "baseUrl": "src"
   },
   "include": [
