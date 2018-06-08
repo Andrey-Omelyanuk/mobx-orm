@@ -1,44 +1,30 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const path = require('path')
 
 
 module.exports = function (env) {
   return {
-    target: 'web',
-		mode: 'development',
+		mode: 'production',
+		devtool: "source-map",
 
-    entry: './src/index.ts',
+		entry: './src/index.ts',
     output: {
-			path: path.resolve(__dirname, './dist'),
-    	filename: 'z-data.js'
+    	filename			: 'z-data.js',
+			path					: path.resolve(__dirname, './dist'),
+			library				: 'zData',
+			libraryTarget	: 'umd',
 		},
 
     module: {
       rules: [
-				{ test: /\.ts$/   , loader: 'ts-loader', exclude: /node_modules/, },
-				{ test: /\.html$/ , loader: 'html-loader' }
+				{ test: /\.ts$/, loader: 'ts-loader'    , exclude: /node_modules/, },
+				{ test: /\.ts$/, loader: 'tslint-loader', exclude: /node_modules/, }
       ]
     },
 
-    plugins: [
-      // inject dependencies to html
-      new HtmlWebpackPlugin({ template: './src/index.html' }),
-			// clean old files
-      new CleanWebpackPlugin(['dist'])
-    ],
     resolve: {
       modules: ['node_modules'],
       extensions: ['.js', '.ts']
-    },
-    devServer: {
-      contentBase: path.join(__dirname, "dist"),
-      //compress: true,
-      port: 3000,
-      // hot: true,
-      historyApiFallback: {
-        disableDotRule: true
-      }
     }
-  };
-};
+  }
+}
+

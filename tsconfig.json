@@ -1,19 +1,21 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-    "module": "es2015",
+		"baseUrl": "./",
+		"module": "es2015",
     "target": "es5",
-    "experimentalDecorators": true,
     "sourceMap": true,
+		"moduleResolution": "node",
     "stripInternal": true,
     "emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
     "skipLibCheck": true,
-    "lib": ["es2017" ],
-    "baseUrl": "src"
+		"lib": [
+			"es2017"
+		]
   },
-  "include": [
-    "./src/**/*.ts"
-  ]
+	"exclude": [
+		"node_modules"
+	]
 }

@@ -1,3 +1,8 @@
+import store  from './store'
+import Filter from './filter'
 
-import './tests/filter'
+export {
+	store,
+	Filter
+}
 

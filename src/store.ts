@@ -123,6 +123,12 @@ class Store {
 		else
 			throw 'Related already registered.'
 	}
+	// remove all registered things on the store
+	clear() {
+		// TODO: we have to unsubscribe ??!!!
+		// not best but quick solution
+		this.models = {}
+	}
 	/*
 		before - it is means action not started yet and you can interrupt it
 		after  - action was done and you can only react on it

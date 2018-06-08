@@ -12,8 +12,11 @@ export default class Model {
 
 	readonly subscribe = new EventsOfObject()
 
+	async save() {
 
-	delete() {
+	}
+
+	async delete() {
 		this.subscribe.delete._emit_before(this)
 		// call cls.before_delete
 		for (let callback of store.models[this.constructor.name].subscriptions.before_delete) {	if (callback) callback(this) }
