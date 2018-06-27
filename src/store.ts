@@ -1,26 +1,6 @@
 /*
 Note: ни каких составных ключей! в жопу их, они все только усложняют и это плохая практика!
 
-Структура данных хранилища:
-store
-	models
-		<model_name>
-			objects		- <id>: {<object>} - ВСЕ объекты модели
-			pk				- id поле, он же primary key
-			fields		- <field name>: function(obj)  функция которая оборачивает в getter и setter БАЗОВЫЕ поля такие как: pk, key, field
-			relations - на кого мы завязаны, регистрируеться в foreign
-				<local field>: <model_name>
-			related		- кто на нас завязан, регистрируеться в many и one
-				<local field>: { model_name: <model_name>, field: <field> }
-			getNewId()- используеться для генерации локальных id
-			subscriptions - подписки на изменения
-				before_create
-				before_update
-				before_delete
-				after_create
-				after_update
-				after_delete
-
 Функции хранилища:
 	Note: all functions return nothing, you can catch errors in exception
 
@@ -28,12 +8,39 @@ store
 	registerModel 				(model_name) - register model in store if not registered yet
 	registerModelPk				(model_name, fieldKey)	-
 	registerModelField 		(model_name, fieldKey, fieldWrapper) 				-
-	registerModelRelation	(modelA_name, fieldA, modelB_name)					-
-	registerModelRelated	(modelA_name, fieldA, modelB_name, fieldB) 	-
 */
 
+interface FieldTypeDecorator {
+	(model_name: string, field_name: string, obj: Object): void
+}
+
+
 class Store {
-	models : any = {}
+
+	field_types: { [type_name: string]: FieldTypeDecorator } = {}
+
+	models : {
+		[model_name: string]: {
+			id_field_name: string,
+			fields: {
+				[field_type: string]: {
+					[field_name: string]: any
+				}
+			},
+			objects: {
+				[id: number]: object
+			},
+			subscriptions: {
+				before_create: any[],
+				before_update: any[],
+				before_delete: any[],
+				after_create : any[],
+				after_update : any[],
+				after_delete : any[]
+			},
+			getNewId():number
+		}
+	} = {}
 
 	model = (cls) => {
 		// Decorate class for:
@@ -50,13 +57,16 @@ class Store {
 			c.prototype = cls.prototype
 
 			let obj = new c()
-			let model_desc = _store.models[cls.name]
-			let id = '#'+model_desc.getNewId()
-
+			let model_name = cls.name
+			let model_description = _store.models[model_name]
 			obj.__data = {}
-			for (let key in model_desc.fields) { model_desc.fields[key](obj) }
-			obj.__data[model_desc.pk] = id
-			model_desc.objects[id] = obj
+
+			for (let type in model_description.fields) {
+				for (let field_name in model_description.fields[type]) {
+					_store.field_types[type](model_name, field_name, obj)
+				}
+			}
+			model_description.objects[obj.id] = obj
 			return obj
 		}
 
@@ -69,59 +79,45 @@ class Store {
 		if (!this.models[model_name]) {
 			let _count = 0
 			this.models[model_name] = {
-				objects		: {},
-				pk				: null,
-				fields		: {},
-				relations	: {},
-				related		: {},
-				getNewId: () => {
-					_count = _count + 1
-					return _count
-				},
+				id_field_name: null,
+				objects: {},
+				fields : {},
 				subscriptions: {
 					before_create: [],
 					before_update: [],
 					before_delete: [],
-					after_create: [],
-					after_update: [],
-					after_delete: []
+					after_create : [],
+					after_update : [],
+					after_delete : []
+				},
+				getNewId: () => {
+					_count = _count + 1
+					return _count
 				}
 			}
 		}
 	}
 
-	registerModelPk(model_name, fieldKey) {
-		this.registerModel(model_name)
-		this.models[model_name].pk = fieldKey
+	registerFieldType(type, decorator) {
+		if (!this.field_types[type]) this.field_types[type] = decorator
 	}
 
-	registerModelField(model_name, fieldKey, fieldWrapper) {
+	registerModelId(model_name, id_field_name) {
 		this.registerModel(model_name)
-		if (!this.models[model_name].fields[fieldKey]) {
-			this.models[model_name].fields[fieldKey] = fieldWrapper
+		if (this.models[model_name].id_field_name) throw "You trying to change id field!"
+		this.models[model_name].id_field_name = id_field_name
+	}
+
+	registerModelField(model_name, type, field_name, settings) {
+		this.registerModel(model_name)
+		let model_description = this.models[model_name]
+		if (!model_description.fields[type]) model_description.fields[type] = {}
+		if (!model_description.fields[type][field_name]) {
+			model_description.fields[type][field_name] = settings
 		}
 		else {
-			throw 'Field already registered.'
+			throw `Field ${field_name} on ${model_name} already registered.`
 		}
-	}
-
-	registerModelRelation(modelA_name, fieldA, modelB_name) {
-		this.registerModel(modelA_name)
-
-		if (!this.models[modelA_name].relations[fieldA])
-			this.models[modelA_name].relations[fieldA] = modelB_name
-		else
-			throw 'Relation already registered.'
-	}
-
-	registerModelRelated(modelA_name, fieldA, modelB_name, fieldB) {
-		this.registerModel(modelA_name)
-		this.registerModel(modelB_name)
-
-		if (!this.models[modelA_name].related[fieldA])
-			this.models[modelA_name].related[fieldA] = {model_name: modelB_name, field: fieldB}
-		else
-			throw 'Related already registered.'
 	}
 	// remove all registered things on the store
 	clear() {

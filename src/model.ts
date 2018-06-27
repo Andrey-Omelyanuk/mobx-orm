@@ -1,8 +1,5 @@
 import store from './store'
-import Filter from './filter'
 import EventsOfObject from './event-object'
-declare let console
-
 
 
 export default class Model {
