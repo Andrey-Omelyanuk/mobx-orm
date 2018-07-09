@@ -66,7 +66,10 @@ class Store {
 					_store.field_types[type](model_name, field_name, obj)
 				}
 			}
-			model_description.objects[obj.id] = obj
+			// get new id for new object
+			obj.__data[model_description.id_field_name] = model_description.getNewId()
+			// add new object to 'all objects' list
+			model_description.objects[obj[model_description.id_field_name]] = obj
 			return obj
 		}
 

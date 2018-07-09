@@ -7,16 +7,16 @@ describe("Z-Data: Model.", () => {
 
 	@store.model
 	class A extends Model {
-		@id    id : number
+		@id id : number
 	}
 
 	afterAll(function() {
 		store.clear()
 	})
 
-	it("Save object and set id.", async ()=> {
-		let a = new A(); a.save()
-		expect(a.id).not.toBeNull()
+
+	it("Delete object.", async ()=> {
+
 	})
 
 })

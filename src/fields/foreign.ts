@@ -16,7 +16,7 @@ let type = 'foreign'
 store.registerFieldType(type, (model_name, field_name, obj) => {
 	let foreign_model_name    = store.models[model_name].fields[type][field_name].foreign_model_name
 	let foreign_id_field_name = store.models[model_name].fields[type][field_name].foreign_id_field_name
-	obj.__data[field_name] = obj[field_name]
+	obj.__data[field_name] = null
 	Object.defineProperty (obj, field_name, {
 		get: () => obj.__data[field_name],
 		set: (new_value) => {

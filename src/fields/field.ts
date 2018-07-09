@@ -4,7 +4,7 @@ let type = 'field'
 
 
 store.registerFieldType(type, (model_name, field_name, obj) => {
-	obj.__data[field_name] = obj[field_name] ? obj[field_name] : null
+	obj.__data[field_name] = null
 	Object.defineProperty (obj, field_name, {
 		get: () => obj.__data[field_name],
 		set: (new_value) => {

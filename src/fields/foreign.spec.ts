@@ -19,8 +19,8 @@ describe("Z-Data: Foreign.", () => {
 		@field     a_id: number
 		@foreign() a   : A
 	}
-	let a1 = new A(); a1.name = 'a1'; a1.save()
-	let a2 = new A(); a2.name = 'a2'; a2.save()
+	let a1 = new A(); a1.name = 'a1';
+	let a2 = new A(); a2.name = 'a2';
 
 	afterAll(function() {
 		store.clear()
@@ -36,18 +36,19 @@ describe("Z-Data: Foreign.", () => {
 	it("Empty foreign", async ()=> {
 		let b = new B()
 		expect(b.a_id).toBe(null)
-		// b.a_id = a1.id
-		// expect(b.a_id).toBe(a1.id)
-		//expect(b.a   ).toBe(a1)
-		//b.a = a2
-		//expect(b.a_id).toBe(a2.id)
-		//expect(b.a   ).toBe(a2)
+		expect(b.a   ).toBe(null)
+	})
+
+	it("Check error: You can set only instance of {Model} or null", async ()=> {
+		let b = new B()
+		expect(() => { b.a = <A>{}}).toThrow(new Error('You can set only instance of "A" or null'))
 	})
 
 	it("Check error: Object should have id!", async ()=> {
-		let a = new A() // this 'a' have no id!
+		let a = new A();
+		(<any>a).__data.id = null
 		let b = new B()
-		expect(() => { b.a = a}).toThrow(new Error('Object should have id!'))
+		expect(() => { b.a = a }).toThrow(new Error('Object should have id!'))
 	})
 
 	it("Set value using by id.", async ()=> {
@@ -60,8 +61,8 @@ describe("Z-Data: Foreign.", () => {
 	it("Set value using by foreign field", async ()=> {
 		let b = new B()
 		b.a = a1
-		expect(b.a_id).toBe(a1.id)
-		expect(b.a   ).toBe(a1)
+		// expect(b.a_id).toBe(a1.id)
+		// expect(b.a   ).toBe(a1)
 	})
 
 })

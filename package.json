@@ -12,7 +12,7 @@
   "scripts": {
     "serve": "./node_modules/.bin/webpack-dev-server --progress --inline",
     "build": "./node_modules/.bin/webpack",
-		"test" : "./node_modules/.bin/karma start karma.config.js"
+		"test" : "./node_modules/.bin/jest"
   },
   "devDependencies": {
     "typescript"	: "2.8.3",
@@ -24,13 +24,7 @@
     "ts-loader"			: "4.2.0",
     "tslint-loader"	: "3.6.0",
 
-		"jasmine"       : "3.1.0",
-		"karma"					: "2.0.2",
-		"karma-jasmine"	: "1.1.1",
-		"karma-webpack"	: "3.0.0",
-
-		"@types/node"   : "9.6.6",
-		"@types/jasmine": "2.8.7"
+		"@types/node"   : "9.6.6"
   },
   "engines": {
     "node": ">= 8.0.0",
