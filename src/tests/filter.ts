@@ -66,3 +66,12 @@
 // // channel_messages.filter
 // // channel_messages.order
 //
+
+
+describe("Other tests: Filters.", () => {
+
+	it("...", async ()=> {
+
+	})
+
+})

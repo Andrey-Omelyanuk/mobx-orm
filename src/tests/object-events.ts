@@ -61,3 +61,14 @@
 //
 //
 // console.log("TEST: chat", store)
+
+
+
+describe("Other tests: Object-events.", () => {
+
+	it("...", async ()=> {
+
+	})
+
+})
+
