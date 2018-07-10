@@ -10,21 +10,30 @@ describe("Z-Data: Id.", () => {
 		@id    id : number
 	}
 
-	@store.model
-	class B extends Model {
-		@id    key : number
-	}
-
 	afterAll(function() {
 		store.clear()
 	})
 
 	it("Ids init correctly.", async ()=> {
 		expect(store.models['A'].fields['id']['id' ]).toEqual({})
-		expect(store.models['B'].fields['id']['key']).toEqual({})
 	})
 
-	it("Check values on the ids", async ()=> {
+	it("Empty Id by default", async ()=> {
+		let a = new A()
+		expect(a.id).toBeNull()
+	})
+
+	it("Set Id using by save()", async ()=> {
+		let a = new A()
+		await a.save()
+		expect(a.id).not.toBeNull()
+	})
+
+	it("Remove Id using by delete()", async ()=> {
+		let a = new A()
+		await a.save()
+		await a.delete()
+		expect(a.id).toBeNull()
 	})
 
 })

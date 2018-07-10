@@ -1,24 +1,22 @@
 import store 	from './store'
-import Model  from './model'
-import id 		from './fields/id'
 
 
-describe("Model", () => {
-
-	@store.model
-	class A extends Model {
-		@id id : number
-	}
+describe("Store", () => {
 
 	afterAll(function() {
 		store.clear()
 	})
 
 	// register model
-	// after save() object should be in store
-	// after double save() should be nothing changed
-	// after delete() object should be removed from store
-	// after double delete() should be error
+	// double register model
+	// register field type
+	// double register type
+	// register model id
+	// double register model id
+	// register model field
+	// double register model field
+	// clear
+
 
 	it("...", async ()=> {
 		// await channelA.sendMessage(userA, 'First  message from userA');

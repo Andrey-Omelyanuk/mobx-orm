@@ -6,7 +6,7 @@ import foreign	from '../fields/foreign'
 import many 		from '../fields/many'
 
 
-describe("Other tests: Chat.", () => {
+describe("Other tests: Chat.", async () => {
 
 	@store.model
 	class User extends Model {
@@ -43,13 +43,19 @@ describe("Other tests: Chat.", () => {
 		@foreign()  user	 		 : User
 	}
 
+	let userA = new User(); userA.first_name = 'A'; userA.last_name  = 'X'
+	let userB = new User(); userB.first_name = 'B'; userB.last_name  = 'X'
+	let channelA = new Channel()
+
+	beforeAll(async () => {
+		await userA.save()
+		await userB.save()
+		await channelA.save()
+	})
+
 	afterAll(function() {
 		store.clear()
 	})
-
-	let userA = new User(); userA.first_name = 'A'; userA.last_name  = 'X';
-	let userB = new User(); userB.first_name = 'B'; userB.last_name  = 'X';
-	let channelA = new Channel();
 
 	it("Send messages to channelA", async ()=> {
 		// await channelA.sendMessage(userA, 'First  message from userA');

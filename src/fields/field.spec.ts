@@ -4,7 +4,7 @@ import id 		from '../fields/id'
 import field 	from '../fields/field'
 
 
-describe("Z-Data: Field.", () => {
+describe("Field", () => {
 
 	@store.model
 	class A extends Model {
@@ -31,9 +31,9 @@ describe("Z-Data: Field.", () => {
 		expect(store.models['B'].fields['field']['b2']).toEqual({})
 	})
 
-	it("Check values on the fields", async ()=> {
-		let a = new A(); a.a1 = 'A'; a.a2 = 'X';
-		let b = new B(); b.b1 = 'B'; b.b2 = 'X';
+	it("Set value on the field", async ()=> {
+		let a = new A(); a.a1 = 'A'; a.a2 = 'X'
+		let b = new B(); b.b1 = 'B'; b.b2 = 'X'
 		expect(a.a1).toBe('A')
 		expect(a.a2).toBe('X')
 		expect(b.b1).toBe('B')
@@ -41,7 +41,7 @@ describe("Z-Data: Field.", () => {
 	})
 
 	it("Update value on the field", async ()=> {
-		let a = new A();
+		let a = new A()
 		a.a1 = 'A'
 		expect(a.a1).toBe('A')
 		a.a1 = 'AA'
