@@ -20,7 +20,6 @@ export default class Model {
 
 		// delete object on the list of objects
 		// TODO: don't use this.constructor.name, add model_name instead
-		delete store.models[this.constructor.name].objects[(<any>this).id]
 
 		this.subscribe.delete._emit_after(this)
 		// call cls.after_delete

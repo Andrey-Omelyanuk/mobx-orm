@@ -31,12 +31,8 @@ class Store {
 				[id: number]: object
 			},
 			subscriptions: {
-				before_create: any[],
-				before_update: any[],
-				before_delete: any[],
-				after_create : any[],
-				after_update : any[],
-				after_delete : any[]
+				inject: any[],
+				eject : any[]
 			},
 			getNewId():number
 		}
@@ -67,9 +63,7 @@ class Store {
 				}
 			}
 			// get new id for new object
-			obj.__data[model_description.id_field_name] = model_description.getNewId()
-			// add new object to 'all objects' list
-			model_description.objects[obj[model_description.id_field_name]] = obj
+			// obj.__data[model_description.id_field_name] = model_description.getNewId()
 			return obj
 		}
 
@@ -86,12 +80,8 @@ class Store {
 				objects: {},
 				fields : {},
 				subscriptions: {
-					before_create: [],
-					before_update: [],
-					before_delete: [],
-					after_create : [],
-					after_update : [],
-					after_delete : []
+					inject: [],
+					eject : []
 				},
 				getNewId: () => {
 					_count = _count + 1
@@ -122,47 +112,55 @@ class Store {
 			throw `Field ${field_name} on ${model_name} already registered.`
 		}
 	}
+
+	inject(model_name, object) {
+		let model_description = this.models[model_name]
+		if (!(model_name in this.models))          throw new Error(`Model name "${model_name} is not registered in the store`)
+		if (!object || !object.constructor)        throw new Error('object should be a object with constructor')
+		if (!object.id)                            throw new Error(`Object should have id!`)
+		if (object.constructor.name != model_name) throw new Error(`You can inject only instance of "${model_name}"`)
+
+		this.models[model_name].objects[object[model_description.id_field_name]] = object
+
+		// TODO: check unique
+
+		for (let callback of model_description.subscriptions.inject) { if (callback) callback(object)	}
+	}
+
+	eject(model_name, object) {
+		let model_description = this.models[model_name]
+		if (!(model_name in this.models))   throw new Error(`Model name "${model_name} is not registered in the store`)
+		if (!object || !object.constructor)        throw new Error('object should be a object with constructor')
+		if (!object.id)                            throw new Error(`Object should have id!`)
+		if (object.constructor.name != model_name) throw new Error(`You can eject only instance of "${model_name}"`)
+		if (!model_description.objects[object.id]) throw new Error(`Object with id ${object.id} not exist in model "${model_name}"`)
+
+		delete model_description.objects[object.id]
+
+		for (let callback of model_description.subscriptions.eject) { if (callback) callback(object) }
+	}
+
 	// remove all registered things on the store
 	clear() {
 		// TODO: we have to unsubscribe ??!!!
 		// not best but quick solution
 		this.models = {}
 	}
-	/*
-		before - it is means action not started yet and you can interrupt it
-		after  - action was done and you can only react on it
 
-		Примеры использования подписки на события
-		store.subscribe.create.after  (cls, callback)
-		store.subscribe.create.before (cls, callback)
-		store.subscribe.delete.after  (cls, callback)
-		store.subscribe.delete.before (cls, callback)
-		store.subscribe.update.after	(cls, callback)
-		store.subscribe.update.before (cls, callback)
-	 */
-	subscribe = {
-		create: {
-			before: (model_name, callback)=> { return this._subscribeTo(model_name, 'before_create', callback) },
-			after : (model_name, callback)=> { return this._subscribeTo(model_name, 'after_create' , callback) },
-		},
-		update: {
-			before: (model_name, callback)=> { return this._subscribeTo(model_name, 'before_update', callback) },
-			after : (model_name, callback)=> { return this._subscribeTo(model_name, 'after_update' , callback) },
-		},
-		delete: {
-			before: (model_name, callback)=> { return this._subscribeTo(model_name, 'before_delete', callback) },
-			after : (model_name, callback)=> { return this._subscribeTo(model_name, 'after_delete' , callback) }
-		}
-	}
+  subscribe = {
+      inject:  (model_name, callback)=> { return this._subscribeTo(model_name, 'inject', callback) },
+      eject :  (model_name, callback)=> { return this._subscribeTo(model_name, 'eject' , callback) },
+  }
 
-	private _subscribeTo(model_name, to, callback) {
-		let subscriptions = this.models[model_name].subscriptions[to]
-		subscriptions.push(callback)
-		let index = subscriptions.length - 1
-		return () => {
-			delete subscriptions[index]
-		}
-	}
+  private _subscribeTo(model_name, to, callback) {
+      let subscriptions = this.models[model_name].subscriptions[to]
+      subscriptions.push(callback)
+      let index = subscriptions.length - 1
+      return () => {
+          delete subscriptions[index]
+      }
+  }
+
 }
 
 let store = new Store()
