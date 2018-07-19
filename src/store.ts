@@ -10,6 +10,8 @@ Note: ни каких составных ключей! в жопу их, они 
 	registerModelField 		(model_name, fieldKey, fieldWrapper) 				-
 */
 
+import ObjectEvent from './events/object'
+
 interface FieldTypeDecorator {
 	(model_name: string, field_name: string, obj: Object): void
 }
@@ -30,21 +32,15 @@ class Store {
 			objects: {
 				[id: number]: object
 			},
-			subscriptions: {
-				inject: any[],
-				eject : any[]
+			subscribe: {
+				inject: ObjectEvent,
+				eject : ObjectEvent
 			},
 			getNewId():number
 		}
 	} = {}
 
 	model = (cls) => {
-		// Decorate class for:
-		// 1. add __data for store original values
-		// 2. Wrap fields of object
-		// 3. generate 'local' id for object
-		// 4. add new object to objects of model
-
 		let _store = this
 		// the new constructor behaviour
 		let f : any = function (...args) {
@@ -53,17 +49,17 @@ class Store {
 			c.prototype = cls.prototype
 
 			let obj = new c()
+			    obj.__data = {}	// __data for store original values
+
 			let model_name = cls.name
 			let model_description = _store.models[model_name]
-			obj.__data = {}
 
+			// wrap fields on the obj
 			for (let type in model_description.fields) {
 				for (let field_name in model_description.fields[type]) {
 					_store.field_types[type](model_name, field_name, obj)
 				}
 			}
-			// get new id for new object
-			// obj.__data[model_description.id_field_name] = model_description.getNewId()
 			return obj
 		}
 
@@ -74,20 +70,26 @@ class Store {
 
 	registerModel(model_name) {
 		if (!this.models[model_name]) {
-			let _count = 0
+			let _count_id = 0
 			this.models[model_name] = {
 				id_field_name: null,
 				objects: {},
 				fields : {},
-				subscriptions: {
-					inject: [],
-					eject : []
+				subscribe: {
+					inject: new ObjectEvent(),
+					eject : new ObjectEvent()
 				},
 				getNewId: () => {
-					_count = _count + 1
-					return _count
+					_count_id = _count_id + 1
+					return _count_id
 				}
 			}
+			// gather model inject/eject events to store events
+			// TODO: unsubscribe ??? when we try to clean/reset store
+			this.models[model_name].subscribe.inject.before((obj)=> {this.subscribe.inject._emit_before(obj)})
+			this.models[model_name].subscribe.inject.after ((obj)=> {this.subscribe.inject._emit_after (obj)})
+			this.models[model_name].subscribe.eject .before((obj)=> {this.subscribe.eject ._emit_before(obj)})
+			this.models[model_name].subscribe.eject .after ((obj)=> {this.subscribe.eject ._emit_after (obj)})
 		}
 	}
 
@@ -121,10 +123,9 @@ class Store {
 		if (object.constructor.name != model_name) throw new Error(`You can inject only instance of "${model_name}"`)
 
 		this.models[model_name].objects[object[model_description.id_field_name]] = object
-
 		// TODO: check unique
 
-		for (let callback of model_description.subscriptions.inject) { if (callback) callback(object)	}
+		model_description.subscribe.inject._emit_after(object)
 	}
 
 	eject(model_name, object) {
@@ -137,7 +138,7 @@ class Store {
 
 		delete model_description.objects[object.id]
 
-		for (let callback of model_description.subscriptions.eject) { if (callback) callback(object) }
+		model_description.subscribe.eject._emit_after(object)
 	}
 
 	// remove all registered things on the store
@@ -148,17 +149,8 @@ class Store {
 	}
 
   subscribe = {
-      inject:  (model_name, callback)=> { return this._subscribeTo(model_name, 'inject', callback) },
-      eject :  (model_name, callback)=> { return this._subscribeTo(model_name, 'eject' , callback) },
-  }
-
-  private _subscribeTo(model_name, to, callback) {
-      let subscriptions = this.models[model_name].subscriptions[to]
-      subscriptions.push(callback)
-      let index = subscriptions.length - 1
-      return () => {
-          delete subscriptions[index]
-      }
+		inject: new ObjectEvent(),
+		eject : new ObjectEvent()
   }
 
 }
