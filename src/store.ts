@@ -1,6 +1,24 @@
-/*
-Note: ни каких составных ключей! в жопу их, они все только усложняют и это плохая практика!
+import Event from './event'
 
+interface FieldTypeDecorator {
+	(model_name: string, field_name: string, obj: Object): void
+}
+
+interface ModelDescription {
+	fields: {
+		[field_type: string]: {
+			[field_name: string]: any
+		}
+	}
+	objects: {
+		[id: number]: object
+	}
+	onInject: any
+	onEject : any
+	getNewId: ()=>number
+}
+
+/*
 Функции хранилища:
 	Note: all functions return nothing, you can catch errors in exception
 
@@ -10,35 +28,13 @@ Note: ни каких составных ключей! в жопу их, они 
 	registerModelField 		(model_name, fieldKey, fieldWrapper) 				-
 */
 
-import ObjectEvent from './events/object'
+export class Store {
 
-interface FieldTypeDecorator {
-	(model_name: string, field_name: string, obj: Object): void
-}
+	onInject = new Event()
+	onEject  = new Event()
 
-
-class Store {
-
-	field_types: { [type_name: string]: FieldTypeDecorator } = {}
-
-	models : {
-		[model_name: string]: {
-			id_field_name: string,
-			fields: {
-				[field_type: string]: {
-					[field_name: string]: any
-				}
-			},
-			objects: {
-				[id: number]: object
-			},
-			subscribe: {
-				inject: ObjectEvent,
-				eject : ObjectEvent
-			},
-			getNewId():number
-		}
-	} = {}
+	field_types: { [type_name : string]: FieldTypeDecorator } = {}
+	models     : { [model_name: string]: ModelDescription   } = {}
 
 	model = (cls) => {
 		let _store = this
@@ -72,46 +68,33 @@ class Store {
 		if (!this.models[model_name]) {
 			let _count_id = 0
 			this.models[model_name] = {
-				id_field_name: null,
 				objects: {},
 				fields : {},
-				subscribe: {
-					inject: new ObjectEvent(),
-					eject : new ObjectEvent()
-				},
+				onInject: new Event(),
+				onEject : new Event(),
 				getNewId: () => {
 					_count_id = _count_id + 1
 					return _count_id
 				}
 			}
-			// gather model inject/eject events to store events
-			// TODO: unsubscribe ??? when we try to clean/reset store
-			this.models[model_name].subscribe.inject.before((obj)=> {this.subscribe.inject._emit_before(obj)})
-			this.models[model_name].subscribe.inject.after ((obj)=> {this.subscribe.inject._emit_after (obj)})
-			this.models[model_name].subscribe.eject .before((obj)=> {this.subscribe.eject ._emit_before(obj)})
-			this.models[model_name].subscribe.eject .after ((obj)=> {this.subscribe.eject ._emit_after (obj)})
 		}
+		else throw new Error(`Model "${model_name}" already registered.`)
 	}
 
 	registerFieldType(type, decorator) {
 		if (!this.field_types[type]) this.field_types[type] = decorator
-	}
-
-	registerModelId(model_name, id_field_name) {
-		this.registerModel(model_name)
-		if (this.models[model_name].id_field_name) throw "You trying to change id field!"
-		this.models[model_name].id_field_name = id_field_name
+		else throw new Error(`Field type "${type}" already registered.`)
 	}
 
 	registerModelField(model_name, type, field_name, settings) {
-		this.registerModel(model_name)
+		if (!this.models[model_name]) this.registerModel(model_name)
 		let model_description = this.models[model_name]
 		if (!model_description.fields[type]) model_description.fields[type] = {}
 		if (!model_description.fields[type][field_name]) {
 			model_description.fields[type][field_name] = settings
 		}
 		else {
-			throw `Field ${field_name} on ${model_name} already registered.`
+			throw `Field "${field_name}" on "${model_name}" already registered.`
 		}
 	}
 
@@ -121,11 +104,12 @@ class Store {
 		if (!object || !object.constructor)        throw new Error('object should be a object with constructor')
 		if (!object.id)                            throw new Error(`Object should have id!`)
 		if (object.constructor.name != model_name) throw new Error(`You can inject only instance of "${model_name}"`)
+		if (model_description.objects[object.id])  throw new Error(`Object with id="${object.id}" already exist in model "${model_name}".`)
 
-		this.models[model_name].objects[object[model_description.id_field_name]] = object
-		// TODO: check unique
+		model_description.objects[object.id] = object
 
-		model_description.subscribe.inject._emit_after(object)
+		model_description.onInject.emit(object)
+		this             .onInject.emit({model_name: model_name, object: object})
 	}
 
 	eject(model_name, object) {
@@ -138,7 +122,8 @@ class Store {
 
 		delete model_description.objects[object.id]
 
-		model_description.subscribe.eject._emit_after(object)
+		model_description.onEject.emit(object)
+		this             .onEject.emit({model_name: model_name, object: object})
 	}
 
 	// remove all registered things on the store
@@ -146,12 +131,8 @@ class Store {
 		// TODO: we have to unsubscribe ??!!!
 		// not best but quick solution
 		this.models = {}
+		this.field_types = {}
 	}
-
-  subscribe = {
-		inject: new ObjectEvent(),
-		eject : new ObjectEvent()
-  }
 
 }
 

@@ -1,31 +1,39 @@
-
-Все возможные события
-
-
-store 	- inject
-				- eject
-				
-Note: Store have events "inject/eject" for each model.
-Note: Model have no events! "Create" event is not make sense.
-
-object 	- update
-
-field 	- update
-
-filter  - add
-				- remove
-				- reorder
-				- update
-				
 Event   - это много раз повторяющиеся события, например inject в store
-Promise - это ТОЛЬКО РАЗ выполненное/завершенное действие, оно ни как ни может повториться, например create или delete!
+Promise - это ТОЛЬКО РАЗ выполненное/завершенное действие, оно ни как не может повториться, например create или delete!
 Ты ведь не думаешь что один и тот же объект можно создать/удалить дважды?
 
-Особый режим загрузки/выгрузки для store.
-Для фронтенда любой inject/eject (не в состоянии режима загрузки!)
-это равносильно create/delete! 
+-----------------------
+Все возможные события
 
-Если хочеться подписаться на удаление объекта, то подписывайся на eject в моделе! И там уже жди свой объект.
-Не надо усложнять дополнительным subscribe.delete на объекте.
+1. store
+	- inject
+	- eject
 
+store.onEject(function(obj) {...})
 
+2. model
+  - inject
+  - eject 
+  
+User.onEject(function(user) {...})
+store.onEject('<model_name>', function(obj) {...})
+
+  
+3. object
+  - update
+  - delete
+user.onUpdate(function(user) {...})
+user.onDelete(function(user) {...})
+  
+Note: внутри delete мы используем Promise! т.к. это событие все равно произойдет только один раз!
+Note: нет смысла в create событии, т.к. ни как нельзя подписаться на объект который еще не существует!
+но можно следить за store.inject
+  
+4. field
+  - update
+user.onUpdate(<field_name>, function(user, field) {...})
+  
+5. filter
+  - add
+  - remove 
+  - update  

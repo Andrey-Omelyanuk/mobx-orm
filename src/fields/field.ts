@@ -11,15 +11,10 @@ store.registerFieldType(type, (model_name, field_name, obj) => {
 			// nothing do if nothing changed
 			if (new_value == obj.__data[field_name]) return
 
-			let old_value = obj.__data[field_name]
-
-			obj.subscribe.update._emit_before(obj, field_name, new_value)
-			for (let callback of store.models[model_name].subscriptions.before_update) { if (callback) callback(obj, field_name, new_value)	}
-
 			obj.__data[field_name] = new_value
 
-			obj.subscribe.update._emit_after(obj, field_name, old_value)
-			for (let callback of store.models[model_name].subscriptions.after_update) { if (callback) callback(obj, field_name, old_value)	}
+			obj._field_events[field_name].emit(new_value);
+			obj.onUpdate.emit(obj);
 		}
 	})
 })

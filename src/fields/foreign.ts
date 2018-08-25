@@ -2,11 +2,7 @@ import 'reflect-metadata'
 import store from '../store'
 
 /*
-	Field - декоратор оборачивает свойство в getter и setter, и в __data храним значение.
 
-	foreign
-		not exist on source
-		can be setup using according key field
 */
 
 
@@ -14,9 +10,12 @@ let type = 'foreign'
 
 
 store.registerFieldType(type, (model_name, field_name, obj) => {
+	let block_update = false
 	let foreign_model_name    = store.models[model_name].fields[type][field_name].foreign_model_name
 	let foreign_id_field_name = store.models[model_name].fields[type][field_name].foreign_id_field_name
+	// value by default
 	obj.__data[field_name] = null
+  // define getter/setter
 	Object.defineProperty (obj, field_name, {
 		get: () => obj.__data[field_name],
 		set: (new_value) => {
@@ -26,25 +25,32 @@ store.registerFieldType(type, (model_name, field_name, obj) => {
 			if (new_value !== null && new_value.id === null)
 				throw new Error(`Object should have id!`)
 
-			// set only id! foreign object will be set by trigger (see subscription below)
+			block_update = true
+			obj[field_name]            = new_value
+			// and update foreign id
 			obj[foreign_id_field_name] = new_value === null ? null : new_value.id
+			block_update = false
 		}
 	})
 
-	// if foreign_id was changed then update foreign_object on instance
-	obj._unsubscriptions.push(store.subscribe.create.after(model_name, (_object, _field_name) => {
-		if (_field_name == foreign_id_field_name) {
-			obj.__data[field_name] = store.models[foreign_model_name].objects[_object[foreign_id_field_name]]
+	// update foreign obj when foreign id was changed
+	obj.onUpdateField(foreign_id_field_name, (new_id) => {
+	  if (!block_update) {
+	  	let foreign_obj = store.models[foreign_model_name].objects[new_id]
+			obj[field_name] = foreign_obj ? foreign_obj : null
 		}
-	}))
+	})
 
-	// if foreign object was create/delete then update foreign_object on instance
-	obj._unsubscriptions.push(store.subscribe.create.after(foreign_model_name, (foreign_object) => {
-		if (foreign_object.id == obj[foreign_id_field_name]) obj[field_name] = foreign_object
-	}))
-	obj._unsubscriptions.push(store.subscribe.delete.after(foreign_model_name, (foreign_object) => {
-		if (foreign_object.id == obj[foreign_id_field_name]) obj[field_name] = null
-	}))
+	store.onInject(model_name, (foreign_obj) => {
+	  if (!obj[field_name] && foreign_obj.id == obj[foreign_id_field_name])
+	  	obj[field_name] = foreign_obj
+	})
+
+	store.onEject(model_name, (foreign_obj) => {
+		if (obj[field_name] === foreign_obj)
+			obj[field_name] = null
+	})
+
 })
 
 
