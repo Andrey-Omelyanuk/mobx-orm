@@ -45,7 +45,6 @@ export class Store {
 			c.prototype = cls.prototype
 
 			let obj = new c()
-			    obj.__data = {}	// __data for store original values
 
 			let model_name = cls.name
 			let model_description = _store.models[model_name]
@@ -56,6 +55,8 @@ export class Store {
 					_store.field_types[type](model_name, field_name, obj)
 				}
 			}
+			obj._init()
+			obj._getNewId = model_description.getNewId
 			return obj
 		}
 

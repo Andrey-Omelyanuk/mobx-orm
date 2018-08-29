@@ -31,7 +31,7 @@ Note: нет смысла в create событии, т.к. ни как нель�
   
 4. field
   - update
-user.onUpdate(<field_name>, function(user, field) {...})
+user.onUpdateField(<field_name>, function(user, field) {...})
   
 5. filter
   - add

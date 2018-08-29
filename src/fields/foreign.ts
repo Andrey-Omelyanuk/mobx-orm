@@ -5,53 +5,55 @@ import store from '../store'
 
 */
 
-
 let type = 'foreign'
 
+function registerForeign() {
+	store.registerFieldType(type, (model_name, field_name, obj) => {
+		let block_update = false
+		let foreign_model_name    = store.models[model_name].fields[type][field_name].foreign_model_name
+		let foreign_id_field_name = store.models[model_name].fields[type][field_name].foreign_id_field_name
+		// value by default
+		obj.__data[field_name] = null
+		// define getter/setter
+		Object.defineProperty (obj, field_name, {
+			get: () => obj.__data[field_name],
+			set: (new_value) => {
 
-store.registerFieldType(type, (model_name, field_name, obj) => {
-	let block_update = false
-	let foreign_model_name    = store.models[model_name].fields[type][field_name].foreign_model_name
-	let foreign_id_field_name = store.models[model_name].fields[type][field_name].foreign_id_field_name
-	// value by default
-	obj.__data[field_name] = null
-  // define getter/setter
-	Object.defineProperty (obj, field_name, {
-		get: () => obj.__data[field_name],
-		set: (new_value) => {
+				if (new_value === null || (new_value.constructor && new_value.constructor.name != foreign_model_name))
+					throw new Error(`You can set only instance of "${foreign_model_name}" or null`)
+				if (new_value !== null && new_value.id === null)
+					throw new Error(`Object should have id!`)
 
-			if (new_value === null || (new_value.constructor && new_value.constructor.name != foreign_model_name))
-				throw new Error(`You can set only instance of "${foreign_model_name}" or null`)
-			if (new_value !== null && new_value.id === null)
-				throw new Error(`Object should have id!`)
+				block_update = true
+				obj[field_name]            = new_value
+				// and update foreign id
+				obj[foreign_id_field_name] = new_value === null ? null : new_value.id
+				block_update = false
+			}
+		})
 
-			block_update = true
-			obj[field_name]            = new_value
-			// and update foreign id
-			obj[foreign_id_field_name] = new_value === null ? null : new_value.id
-			block_update = false
-		}
+		// update foreign obj when foreign id was changed
+		obj.onUpdateField(foreign_id_field_name, (new_id) => {
+			if (!block_update) {
+				let foreign_obj = store.models[foreign_model_name].objects[new_id]
+				obj[field_name] = foreign_obj ? foreign_obj : null
+			}
+		})
+
+		store.onInject(model_name, (foreign_obj) => {
+			if (!obj[field_name] && foreign_obj.id == obj[foreign_id_field_name])
+				obj[field_name] = foreign_obj
+		})
+
+		store.onEject(model_name, (foreign_obj) => {
+			if (obj[field_name] === foreign_obj)
+				obj[field_name] = null
+		})
+
 	})
 
-	// update foreign obj when foreign id was changed
-	obj.onUpdateField(foreign_id_field_name, (new_id) => {
-	  if (!block_update) {
-	  	let foreign_obj = store.models[foreign_model_name].objects[new_id]
-			obj[field_name] = foreign_obj ? foreign_obj : null
-		}
-	})
-
-	store.onInject(model_name, (foreign_obj) => {
-	  if (!obj[field_name] && foreign_obj.id == obj[foreign_id_field_name])
-	  	obj[field_name] = foreign_obj
-	})
-
-	store.onEject(model_name, (foreign_obj) => {
-		if (obj[field_name] === foreign_obj)
-			obj[field_name] = null
-	})
-
-})
+}
+registerForeign()
 
 
 function getType(target, key) {
@@ -73,6 +75,5 @@ export default function foreign(id_field?: string) {
 			foreign_model_name   : foreign_model_name,
 			foreign_id_field_name: foreign_id_field_name
 		})
-
 	}
 }
