@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 import store from '../store'
+import Event from "../event"
 
 /*
 
@@ -13,7 +14,8 @@ function registerForeign() {
 		let foreign_model_name    = store.models[model_name].fields[type][field_name].foreign_model_name
 		let foreign_id_field_name = store.models[model_name].fields[type][field_name].foreign_id_field_name
 		// value by default
-		obj.__data[field_name] = null
+		if (obj.__data[field_name] === undefined) obj.__data[field_name] = null
+		obj._field_events[field_name] = new Event()
 		// define getter/setter
 		Object.defineProperty (obj, field_name, {
 			get: () => obj.__data[field_name],
