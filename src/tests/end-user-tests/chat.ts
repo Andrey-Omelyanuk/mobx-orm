@@ -6,7 +6,7 @@ import foreign	from '../../fields/foreign'
 import many 		from '../../fields/many'
 
 
-describe("Other tests: Chat.", async () => {
+describe('Other tests: Chat.', async () => {
 
 	@store.model
 	class User extends Model {

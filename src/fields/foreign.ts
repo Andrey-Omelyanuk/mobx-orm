@@ -1,14 +1,11 @@
 import 'reflect-metadata'
 import store from '../store'
-import Event from "../event"
+import Event from '../event'
 
-/*
-
-*/
 
 let type = 'foreign'
 
-function registerForeign() {
+export function registerForeign() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
 		let block_update = false
 		let foreign_model_name    = store.models[model_name].fields[type][field_name].foreign_model_name

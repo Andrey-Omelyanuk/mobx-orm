@@ -1,5 +1,16 @@
 {
+	"defaultSeverity": "warning",
+	"linterOptions": {
+		"exclude": [
+			"node_modules/**"
+		]
+	},
   "rules": {
-		"semicolon": [false]
+		"quotemark" : [true, "single"],
+		"one-line"  : [true, "check-open-brace", "check-whitespace"],
+		"semicolon" : [true, "never"],
+
+		"linebreak-style"     : [true, "LF"],
+		"max-file-line-count" : [true, 400]
   }
 }
