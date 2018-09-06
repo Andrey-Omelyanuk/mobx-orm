@@ -18,13 +18,13 @@ export function registerForeign() {
 			get: () => obj.__data[field_name],
 			set: (new_value) => {
 
-				if (new_value === null || (new_value.constructor && new_value.constructor.name != foreign_model_name))
+				if (new_value !== null && !(new_value.constructor && new_value.constructor.name == foreign_model_name))
 					throw new Error(`You can set only instance of "${foreign_model_name}" or null`)
 				if (new_value !== null && new_value.id === null)
 					throw new Error(`Object should have id!`)
 
 				block_update = true
-				obj[field_name]            = new_value
+				obj.__data[field_name] = new_value
 				// and update foreign id
 				obj[foreign_id_field_name] = new_value === null ? null : new_value.id
 				block_update = false
@@ -56,7 +56,7 @@ registerForeign()
 
 
 function getType(target, key) {
-	let type = Reflect.getMetadata("design:type", target, key);
+	let type = Reflect.getMetadata('design:type', target, key)
 	return type ? type.prototype.constructor.name : undefined
 }
 
@@ -65,7 +65,7 @@ export default function foreign(id_field?: string) {
 	return function (cls: any, field_name: string) {
 
 		// It can be wrong name "Function" because we wrapped class in decorator before.
-		let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
+		let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
 
 		let foreign_model_name    = getType(cls, field_name)
 		let foreign_id_field_name = id_field ? id_field : `${field_name}_id`

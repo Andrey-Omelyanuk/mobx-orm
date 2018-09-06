@@ -1,18 +1,18 @@
-import store 	from '../store'
-import Model  from '../model'
-import id   , { registerFieldId } from '../fields/id'
-import field, { registerField   } from '../fields/field'
+import store 	from './store'
+import Model  from './model'
+import id   , { registerFieldId } from './fields/id'
+import field, { registerField   } from './fields/field'
 
 
-describe("Model", () => {
-
+describe('Model', () => {
 
 	beforeEach(function() {
 		store.clear()
+		registerFieldId()
+		registerField()
 	})
 
-	it("Constructor", async () => {
-		registerField()
+	it('Constructor', async () => {
 		@store.model
 		class A extends Model {
 			@field test: number
@@ -22,8 +22,7 @@ describe("Model", () => {
 		expect(a.test).toBe(1)
 	})
 
-	it("Save/Delete", async () => {
-		registerFieldId()
+	it('Save/Delete', async () => {
 		@store.model
 		class A extends Model {
 			@id id : number
@@ -42,8 +41,7 @@ describe("Model", () => {
 		expect(a.id).toBeNull()
 	})
 
-	it("onUpdate", async () => {
-		registerField()
+	it('onUpdate', async () => {
 		@store.model
 		class A extends Model {
 			@field  x: number
@@ -62,8 +60,7 @@ describe("Model", () => {
 		expect(count).toBe(1)
 	})
 
-	it("onUpdateField", async () => {
-		registerField()
+	it('onUpdateField', async () => {
 		@store.model
 		class A extends Model {
 			@field  x: number
@@ -88,8 +85,7 @@ describe("Model", () => {
 		expect(count).toBe(1)
 	})
 
-	it("onDelete", async () => {
-		registerFieldId()
+	it('onDelete', async () => {
 		@store.model
 		class A extends Model {
 			@id id : number
