@@ -4,16 +4,16 @@ import id			, { registerFieldId } 		from '../fields/id'
 import field	, { registerField   } 		from '../fields/field'
 
 
-describe("Fields", () => {
+describe('Fields', () => {
 
 	beforeEach(function() {
 		store.clear()
 	})
 
 
-	it("Field", async ()=> {
+	it('Field', async ()=> {
 		registerField()
-		@store.model
+
 		class A extends Model {
 			@field x : number
 		}
@@ -26,9 +26,9 @@ describe("Fields", () => {
 		expect(a.x).toBe(1)
 	})
 
-	it("Id", async ()=> {
+	it('Id', async ()=> {
 		registerFieldId()
-		@store.model
+
 		class A extends Model {
 			@id id : number
 		}
@@ -48,9 +48,9 @@ describe("Fields", () => {
 			.toThrow(new Error('You cannot change id.'))
 	})
 
-	it("Foreign", async ()=> {
+	it('Foreign', async ()=> {
 		registerFieldId()
-		@store.model
+
 		class A extends Model {
 			@id id : number
 		}
@@ -68,14 +68,6 @@ describe("Fields", () => {
 
 		expect(() => { a.id = 2 })
 			.toThrow(new Error('You cannot change id.'))
-
-	})
-
-	it("One", async ()=> {
-
-	})
-
-	it("Many", async ()=> {
 
 	})
 

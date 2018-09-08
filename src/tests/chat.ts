@@ -8,7 +8,6 @@ import many 		from '../fields/many'
 
 describe('Other tests: Chat.', async () => {
 
-	@store.model
 	class User extends Model {
 		@id       id         	: number
 		@field    first_name	: string
@@ -17,7 +16,6 @@ describe('Other tests: Chat.', async () => {
 		get full_name() : string { return `${this.first_name} ${this.last_name}` }
 	}
 
-	@store.model
 	class Channel extends Model {
 		@id 	  id			 : number
 		@many('ChannelMessage') messages : ChannelMessage[]
@@ -32,7 +30,6 @@ describe('Other tests: Chat.', async () => {
 		}
 	}
 
-	@store.model
 	class ChannelMessage extends Model {
 		@id 				id 				 : number
 		@field 			created    : string
@@ -52,7 +49,7 @@ describe('Other tests: Chat.', async () => {
 		store.clear()
 	})
 
-	it("Check metadata in the store", async ()=> {
+	it('Check metadata in the store', async ()=> {
 		// fields
 		// expect(store.field_types['id'])     .not.toBeUndefined()
 		// expect(store.field_types['field'])  .not.toBeUndefined()
@@ -64,7 +61,7 @@ describe('Other tests: Chat.', async () => {
 		// expect(store.models['ChannelMessage']).not.toBeUndefined()
 	})
 
-	it("Send messages to channelA", async ()=> {
+	it('Send messages to channelA', async ()=> {
 		// await channelA.sendMessage(userA, 'First  message from userA');
 		// await channelA.sendMessage(userA, 'Second message from userA');
 		// await channelA.sendMessage(userB, 'First  message from userB');

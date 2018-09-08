@@ -1,13 +1,13 @@
 import store 	from './store'
 
 
-describe("Store", () => {
+describe('Store', () => {
 
 	afterEach(function() {
 		store.clear()
 	})
 
-	it("Register model", async ()=> {
+	it('Register model', async ()=> {
 		expect(store.models['A']).toBeUndefined()
 		store.registerModel('A')
 		expect(store.models['A']).not.toBeUndefined()
@@ -21,7 +21,7 @@ describe("Store", () => {
 			.toThrow(new Error('Model "A" already registered.'))
 	})
 
-	it("Register field type", async ()=> {
+	it('Register field type', async ()=> {
 		expect(store.field_types['test-field-1']).toBeUndefined()
 		expect(store.field_types['test-field-2']).toBeUndefined()
 
@@ -35,7 +35,7 @@ describe("Store", () => {
 	})
 
 
-	it("Register field model", async ()=> {
+	it('Register field model', async ()=> {
 		store.registerModel('A')
 		store.registerFieldType('common-field', () => {})
 		expect(store.models['A'].fields ).toEqual({})
@@ -48,7 +48,7 @@ describe("Store", () => {
 			.toThrow(new Error('Field "xxx" on "A" already registered.'))
 	})
 
-	it("Inject/Eject", async ()=> {
+	it('Inject/Eject', async ()=> {
 		class A {
 			id: number
 			constructor(id) {
@@ -67,7 +67,7 @@ describe("Store", () => {
 		expect(store.models['A'].objects[2]).toBe(A2)
 	})
 
-	it("Pub/Sub for Inject/Eject", async ()=> {
+	it('Pub/Sub for Inject/Eject', async ()=> {
 		class A {
 			id: number
 			constructor(id) { this.id = id }
@@ -103,7 +103,7 @@ describe("Store", () => {
 		expect(count_eject_model) .toBe(1)
 	})
 
-	it("Clear", async ()=> {
+	it('Clear', async ()=> {
 		expect(store.models).toEqual({})
 		store.registerModel('A')
 		expect(store.models).not.toEqual({})

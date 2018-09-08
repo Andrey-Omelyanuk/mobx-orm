@@ -1,5 +1,5 @@
 import store from '../store'
-import Event from "../event"
+
 
 let type = 'id'
 
@@ -17,11 +17,8 @@ let type = 'id'
 
 export function registerFieldId() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
-		// value by default
-		if (obj.__data.id === undefined) obj.__data.id = null
-		obj._field_events[field_name] = new Event()
-		// define getter/setter
-		Object.defineProperty (obj, 'id', {
+
+		Object.defineProperty (obj, field_name, {
 			get: (         ) => obj.__data.id,
 			set: (new_value) => {
 
@@ -48,9 +45,8 @@ export function registerFieldId() {
 registerFieldId()
 
 
-
 export default function id(cls: any, field_name: string) {
 	// It can be wrong name "Function" because we wrapped class in decorator before.
-	let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
-	store.registerModelField(model_name, type, 'id', {})
+	let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
+	store.registerModelField(model_name, type, field_name, {})
 }

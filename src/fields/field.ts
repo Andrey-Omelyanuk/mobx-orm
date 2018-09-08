@@ -1,12 +1,11 @@
 import store from '../store'
-import Event from '../event'
+
 
 let type = 'field'
 
 export function registerField() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
-		if (obj.__data[field_name] === undefined) obj.__data[field_name] = null
-		obj._field_events[field_name] = new Event()
+
 		Object.defineProperty (obj, field_name, {
 			get: () => obj.__data[field_name],
 			set: (new_value) => {
@@ -15,8 +14,8 @@ export function registerField() {
 
 				obj.__data[field_name] = new_value
 
-				obj._field_events[field_name].emit(new_value);
-				obj.onUpdate.emit(obj);
+				obj._field_events[field_name].emit(new_value)
+				obj.onUpdate.emit(obj)
 			}
 		})
 	})
@@ -26,6 +25,6 @@ registerField()
 
 export default function field(cls: any, field_name: string) {
 	// It can be wrong name "Function" because we wrapped class in decorator before.
-	let model_name = cls.constructor.name == "Function" ? cls.prototype.constructor.name : cls.constructor.name
+	let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
 	store.registerModelField(model_name, type, field_name, {})
 }

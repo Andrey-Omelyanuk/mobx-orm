@@ -1,82 +1,47 @@
 import store 	from '../store'
 import Model  from '../model'
-import id			, { registerFieldId } 		from '../fields/id'
-import field	, { registerField   } 		from '../fields/field'
+import id			, { registerFieldId } from '../fields/id'
+import field	, { registerField   } from '../fields/field'
+import one    , { registerOne     } from '../fields/one'
 
-
-describe("Fields", () => {
+describe('One', () => {
 
 	beforeEach(function() {
 		store.clear()
-	})
-
-
-	it("Field", async ()=> {
+		registerFieldId()
 		registerField()
-		@store.model
+		registerOne()
+	})
+
+	it('...', async ()=> {
+
 		class A extends Model {
-			@field x : number
+			@id    id   : number
+			@one() b    : B
 		}
-		// default
-		let a = new A()
-		expect(a.x).toBeNull()
 
-		// set new value
-		a.x = 1
-		expect(a.x).toBe(1)
-	})
-
-	it("Id", async ()=> {
-		registerFieldId()
-		@store.model
-		class A extends Model {
-			@id id : number
+		class B extends Model {
+			@field a_id : number
 		}
-		// default
-		let a = new A()
-		expect(a.id).toBeNull()
 
-		// set new value
-		expect(() => { (<any>a).id = 'dddd' })
-			.toThrow(new Error('Id can be only integer or null.'))
-
-		a.id = 1
-		expect(a.id).toBe(1)
-		expect(store.models['A'].objects[1]).toBe(a)
-
-		expect(() => { a.id = 2 })
-			.toThrow(new Error('You cannot change id.'))
+		// // default
+		// let a = new A({id: 1})
+		// let b1 = new B()
+		// let b2 = new B()
+		// expect(a.b).toBeNull()
+        //
+		// b1.a_id = 1
+		// expect(a.b).toBe(b1)
+        //
+		// a.b = null
+		// expect(a.b).toBeNull()
+		// expect(b1.a_id).toBeNull()
+        //
+		// a.b = b2
+		// expect(a.b).toBe(b2)
+		// expect(b1.a_id).toBe(a.id)
+        //
+		// expect(() => { b1.a_id = a.id })
+		// 	.toThrow(new Error(',,,'))
 	})
-
-	it("Foreign", async ()=> {
-		registerFieldId()
-		@store.model
-		class A extends Model {
-			@id id : number
-		}
-		// default
-		let a = new A()
-		expect(a.id).toBeNull()
-
-		// set new value
-		expect(() => { (<any>a).id = 'dddd' })
-			.toThrow(new Error('Id can be only integer or null.'))
-
-		a.id = 1
-		expect(a.id).toBe(1)
-		expect(store.models['A'].objects[1]).toBe(a)
-
-		expect(() => { a.id = 2 })
-			.toThrow(new Error('You cannot change id.'))
-
-	})
-
-	it("One", async ()=> {
-
-	})
-
-	it("Many", async ()=> {
-
-	})
-
 })

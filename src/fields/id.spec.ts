@@ -12,7 +12,6 @@ describe('Id', () => {
 
 	it('...', async ()=> {
 
-		@store.model
 		class A extends Model {
 			@id id : number
 		}

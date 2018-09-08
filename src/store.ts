@@ -1,3 +1,4 @@
+import Model from './model'
 import Event from './event'
 
 interface FieldTypeDecorator {
@@ -35,35 +36,6 @@ export class Store {
 
 	field_types: { [type_name : string]: FieldTypeDecorator } = {}
 	models     : { [model_name: string]: ModelDescription   } = {}
-
-	model = (cls) => {
-		let _store = this
-		// the new constructor behaviour
-		let f : any = function (...args) {
-			let c : any = function () { return cls.apply(this, args) }
-			c.prototype = cls.__proto__
-			c.prototype = cls.prototype
-
-			let obj = new c()
-
-			let model_name = cls.name
-			let model_description = _store.models[model_name]
-
-			// wrap fields on the obj
-			for (let type in model_description.fields) {
-				for (let field_name in model_description.fields[type]) {
-					_store.field_types[type](model_name, field_name, obj)
-				}
-			}
-			obj._init()
-			obj._getNewId = model_description.getNewId
-			return obj
-		}
-
-		f.__proto__ = cls.__proto__
-		f.prototype = cls.prototype   // copy prototype so intanceof operator still works
-		return f                      // return new constructor (will override original)
-	}
 
 	registerModel(model_name) {
 		if (!this.models[model_name]) {

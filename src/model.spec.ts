@@ -13,7 +13,7 @@ describe('Model', () => {
 	})
 
 	it('Constructor', async () => {
-		@store.model
+
 		class A extends Model {
 			@field test: number
 		}
@@ -23,7 +23,7 @@ describe('Model', () => {
 	})
 
 	it('Save/Delete', async () => {
-		@store.model
+
 		class A extends Model {
 			@id id : number
 		}
@@ -42,7 +42,7 @@ describe('Model', () => {
 	})
 
 	it('onUpdate', async () => {
-		@store.model
+
 		class A extends Model {
 			@field  x: number
 		}
@@ -61,7 +61,7 @@ describe('Model', () => {
 	})
 
 	it('onUpdateField', async () => {
-		@store.model
+
 		class A extends Model {
 			@field  x: number
 			@field  y: number
@@ -86,7 +86,7 @@ describe('Model', () => {
 	})
 
 	it('onDelete', async () => {
-		@store.model
+
 		class A extends Model {
 			@id id : number
 		}

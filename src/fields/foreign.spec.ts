@@ -1,4 +1,3 @@
-import readline from 'readline-sync'
 import store 	from '../store'
 import Model  from '../model'
 import id			, { registerFieldId } 		from '../fields/id'
@@ -17,13 +16,11 @@ describe('Foreign', () => {
 
 	it('...', async ()=> {
 
-		@store.model
 		class A extends Model {
 			@id    id   : number
 			@field test : number
 		}
 
-		@store.model
 		class B extends Model {
 		  @field     a1_id : number
 			@field     a2_id : number

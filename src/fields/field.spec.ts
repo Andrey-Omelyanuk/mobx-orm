@@ -11,7 +11,7 @@ describe('Field', () => {
 	})
 
 	it('...', async ()=> {
-		@store.model
+
 		class A extends Model {
 			@field x : number
 		}
