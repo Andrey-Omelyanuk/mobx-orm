@@ -20,17 +20,17 @@ export default class Model {
 		let model_description = store.models[model_name]
 
 		// init fields
-		for (let type in model_description.fields) {
-			for (let field_name in model_description.fields[type]) {
-				// value by default
-				if (this[field_name] === undefined) this.__data[field_name] = this[field_name] = null
-				else                                this.__data[field_name] = this[field_name]
 
-				this._field_events[field_name] = new Event()
+		for (let field_name in model_description.fields) {
+			// value by default
+			if (this[field_name] === undefined) this.__data[field_name] = this[field_name] = null
+			else                                this.__data[field_name] = this[field_name]
 
-				store.field_types[type](model_name, field_name, this)
-			}
+			this._field_events[field_name] = new Event()
+
+			store.field_types[model_description.fields[field_name].type](model_name, field_name, this)
 		}
+
 
 		// set fields from init data
 		if (init_data)
@@ -49,7 +49,7 @@ export default class Model {
 		this._delete_resolve = resolve
 	})
 	onDelete(callback: (data:any)=>void) {
-		this._delete_promise = this._delete_promise.then((obj) => { callback(obj); return obj; })
+		this._delete_promise = this._delete_promise.then((obj) => { callback(obj); return obj })
 	}
 
 	// если нет id, то создать его

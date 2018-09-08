@@ -7,8 +7,8 @@ let type = 'foreign'
 export function registerForeign() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
 		let block_update = false
-		let foreign_model_name    = store.models[model_name].fields[type][field_name].foreign_model_name
-		let foreign_id_field_name = store.models[model_name].fields[type][field_name].foreign_id_field_name
+		let foreign_model_name    = store.models[model_name].fields[field_name].settings.foreign_model_name
+		let foreign_id_field_name = store.models[model_name].fields[field_name].settings.foreign_id_field_name
 
 		Object.defineProperty (obj, field_name, {
 			get: () => obj.__data[field_name],

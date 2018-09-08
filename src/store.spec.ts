@@ -41,8 +41,9 @@ describe('Store', () => {
 		expect(store.models['A'].fields ).toEqual({})
 
 		store.registerModelField('A', 'common-field', 'xxx', {test: 1})
-		expect(store.models['A'].fields['common-field']).not.toBeUndefined()
-		expect(store.models['A'].fields['common-field']['xxx']).toEqual({test: 1})
+		expect(store.models['A'].fields['xxx']).not.toBeUndefined()
+		expect(store.models['A'].fields['xxx'].type).toBe('common-field')
+		expect(store.models['A'].fields['xxx'].settings).toEqual({test: 1})
 
 		expect(() => { store.registerModelField('A', 'common-field', 'xxx', {})})
 			.toThrow(new Error('Field "xxx" on "A" already registered.'))

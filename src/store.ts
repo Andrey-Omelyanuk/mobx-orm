@@ -7,8 +7,9 @@ interface FieldTypeDecorator {
 
 interface ModelDescription {
 	fields: {
-		[field_type: string]: {
-			[field_name: string]: any
+		[field_name: string]: {
+			type    : string,
+			settings: any
 		}
 	}
 	objects: {
@@ -62,9 +63,11 @@ export class Store {
 	registerModelField(model_name, type, field_name, settings) {
 		if (!this.models[model_name]) this.registerModel(model_name)
 		let model_description = this.models[model_name]
-		if (!model_description.fields[type]) model_description.fields[type] = {}
-		if (!model_description.fields[type][field_name]) {
-			model_description.fields[type][field_name] = settings
+		if (!model_description.fields[field_name]) {
+			model_description.fields[field_name] = {
+				type    : type,
+				settings: settings
+			}
 		}
 		else {
 			throw `Field "${field_name}" on "${model_name}" already registered.`
