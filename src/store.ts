@@ -12,6 +12,9 @@ interface ModelDescription {
 			settings: any
 		}
 	}
+	unique: {
+		[field_name: string]: any
+	}
 	objects: {
 		[id: number]: object
 	}
@@ -44,6 +47,7 @@ export class Store {
 			this.models[model_name] = {
 				objects: {},
 				fields : {},
+				unique : {},
 				onInject: new Event(),
 				onEject : new Event(),
 				getNewId: () => {
@@ -71,6 +75,18 @@ export class Store {
 		}
 		else {
 			throw `Field "${field_name}" on "${model_name}" already registered.`
+		}
+	}
+
+	registerUniqueField(model_name, field_name) {
+		if (!this.models[model_name]) this.registerModel(model_name)
+		let model_description = this.models[model_name]
+		if (!model_description.unique[field_name]) {
+			model_description.unique[field_name] = new Set()
+			// todo: subscribe on inject/eject and update field for all objects
+		}
+		else {
+			throw `Unique on field "${field_name}" on "${model_name}" already registered.`
 		}
 	}
 
