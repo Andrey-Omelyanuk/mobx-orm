@@ -63,6 +63,7 @@ describe('Foreign', () => {
 		expect(b.a1_id).toBe(a1.id)
 		expect(b.a1   ).toBe(a1)
 	})
+
 	it('cross link', async () => {
 		class A extends Model {
 			@id           id   : number
