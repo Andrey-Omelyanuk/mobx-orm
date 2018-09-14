@@ -9,6 +9,7 @@ interface ModelDescription {
 	fields: {
 		[field_name: string]: {
 			type    : string,
+			onUpdate: any,
 			settings: any
 		}
 	}
@@ -70,6 +71,7 @@ export class Store {
 		if (!model_description.fields[field_name]) {
 			model_description.fields[field_name] = {
 				type    : type,
+				onUpdate: new Event(),
 				settings: settings
 			}
 		}
@@ -82,8 +84,26 @@ export class Store {
 		if (!this.models[model_name]) this.registerModel(model_name)
 		let model_description = this.models[model_name]
 		if (!model_description.unique[field_name]) {
-			model_description.unique[field_name] = new Set()
-			// todo: subscribe on inject/eject and update field for all objects
+
+			let unique_set = new Set()
+			//
+			model_description.unique[field_name] = unique_set
+			// inject/eject/update
+			model_description.fields[field_name].onUpdate((obj) => {
+				// null can be many! just ignore it
+				if (obj[field_name] === null) return
+				if (unique_set.has(obj[field_name])) throw new Error(`Not unique value.`) // for updating ${model_name}.${field_name} to ${obj[field_name]}`)
+				else unique_set.add(obj[field_name])
+			})
+			store.models[model_name].onInject((obj) => {
+				// null can be many! just ignore it
+				if (obj[field_name] === null) return
+				if (unique_set.has(obj[field_name])) throw new Error(`Not unique value.`) // for inject ${model_name}.${field_name} to ${obj[field_name]}`)
+				else unique_set.add(obj[field_name])
+			})
+			store.models[model_name].onEject((obj) => {
+				unique_set.delete(obj[field_name])
+			})
 		}
 		else {
 			throw `Unique on field "${field_name}" on "${model_name}" already registered.`

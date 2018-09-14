@@ -41,24 +41,24 @@ describe('Model', () => {
 		expect(a.id).toBeNull()
 	})
 
-	it('onUpdate', async () => {
-
-		class A extends Model {
-			@field  x: number
-		}
-		let a = new A({x: 0})
-		let test  = {}
-		let count = 0
-		let unsubscribeOnUpdate = a.onUpdate((obj) => { test = obj; count = count + 1; })
-
-		a.x = 1
-		expect(test).toBe(a)
-		expect(count).toBe(1)
-
-		unsubscribeOnUpdate()
-		a.x = 2
-		expect(count).toBe(1)
-	})
+	// it('onUpdate', async () => {
+    //
+	// 	class A extends Model {
+	// 		@field  x: number
+	// 	}
+	// 	let a = new A({x: 0})
+	// 	let test  = {}
+	// 	let count = 0
+	// 	let unsubscribeOnUpdate = a.onUpdate((obj) => { test = obj; count = count + 1; })
+    //
+	// 	a.x = 1
+	// 	expect(test).toBe(a)
+	// 	expect(count).toBe(1)
+    //
+	// 	unsubscribeOnUpdate()
+	// 	a.x = 2
+	// 	expect(count).toBe(1)
+	// })
 
 	it('onUpdateField', async () => {
 

@@ -16,7 +16,7 @@ describe('Unique', () => {
 	it('...', async ()=> {
 
 		class A extends Model {
-			@id    id   : number
+			@id id : number
 			@unique @field test : number
 		}
 

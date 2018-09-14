@@ -21,10 +21,26 @@ export function registerOne() {
 					throw new Error(`Object should have id!`)
 
 				block_update = true
+				let old_value = obj.__data[field_name]
 				obj[field_name]            = new_value
 				// and update foreign id
 				obj[foreign_id_field_name] = new_value === null ? null : new_value.id
 				block_update = false
+
+				try {
+					obj._field_events[field_name].emit(new_value)
+					// мы передаем объект полностью, т.к. мы и так знаем какое поле поменялось!
+					// но не знаем на каком объекте!
+					store.models[model_name].fields[field_name].onUpdate.emit(obj)
+				}
+				catch(e) {
+					// if any callback throw exception then rollback changes!
+					block_update = true
+					obj.__data[field_name] = old_value
+					obj[foreign_id_field_name] = old_value.id
+					block_update = false
+					throw e
+				}
 			}
 		})
 
@@ -36,12 +52,12 @@ export function registerOne() {
 			}
 		})
 
-		store.onInject(model_name, (foreign_obj) => {
+		store.models[model_name].onInject(model_name, (foreign_obj) => {
 			if (!obj[field_name] && foreign_obj.id == obj[foreign_id_field_name])
 				obj[field_name] = foreign_obj
 		})
 
-		store.onEject(model_name, (foreign_obj) => {
+		store.models[model_name].onEject(model_name, (foreign_obj) => {
 			if (obj[field_name] === foreign_obj)
 				obj[field_name] = null
 		})

@@ -12,10 +12,20 @@ export function registerField() {
 				// nothing do if nothing changed
 				if (new_value == obj.__data[field_name]) return
 
+				let old_value = obj.__data[field_name]
 				obj.__data[field_name] = new_value
 
-				obj._field_events[field_name].emit(new_value)
-				obj.onUpdate.emit(obj)
+				try {
+					obj._field_events[field_name].emit(new_value)
+					// мы передаем объект полностью, т.к. мы и так знаем какое поле поменялось!
+					// но не знаем на каком объекте!
+					store.models[model_name].fields[field_name].onUpdate.emit(obj)
+				}
+				catch(e) {
+					// if any callback throw exception then rollback changes!
+					obj.__data[field_name] = old_value
+					throw e
+				}
 			}
 		})
 	})

@@ -7,7 +7,7 @@
  */
 
 export default function Event(revert: Boolean = false) : void {
-	let _subscriptions = [];
+	let _subscriptions = []
 
 	let event = function (callback) {
 		_subscriptions.push(callback)
