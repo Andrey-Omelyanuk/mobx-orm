@@ -26,10 +26,10 @@ describe('User Profile.', async () => {
 		}
 
 		class UserProfile extends Model {
-			@id 	  		id			: number
-			@field  		user_id	: number
-			@foreign() 	user 		: User
-			@field			test		: string
+			@id 	  					id			: number
+			@field  					user_id	: number
+			@foreign('User') 	user 		: User
+			@field						test		: string
 		}
 
 		user_a = new User({id: 1, name: 'A'})

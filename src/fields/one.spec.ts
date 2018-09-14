@@ -17,7 +17,7 @@ describe('One', () => {
 	it('...', async ()=> {
 
 		class A extends Model {
-			@id id   : number
+			@id id : number
 			@one('B','a_id') b : B
 		}
 

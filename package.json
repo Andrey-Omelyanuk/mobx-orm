@@ -6,8 +6,7 @@
 	"main"      : "dist/z-data.js",
 	"module"    : "src/index.ts",
   "dependencies": {
-    "core-js"						: "2.5.3",
-    "reflect-metadata"	: "0.1.10"
+    "core-js"						: "2.5.3"
   },
   "scripts": {
     "serve": "./node_modules/.bin/webpack-dev-server --progress --inline",

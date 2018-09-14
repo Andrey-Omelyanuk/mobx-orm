@@ -25,8 +25,8 @@ describe('Foreign', () => {
 		  @field     a1_id : number
 			@field     a2_id : number
 
-		  @foreign()        a1 : A
-		  @foreign('a2_id') a2 : A
+		  @foreign('A')          a1 : A
+		  @foreign('A', 'a2_id') a2 : A
 		}
 
 		let a1 = new A({id: 1, test: 1})
@@ -62,5 +62,29 @@ describe('Foreign', () => {
 	  // проверяем что на а1 не изменилась
 		expect(b.a1_id).toBe(a1.id)
 		expect(b.a1   ).toBe(a1)
+	})
+	it('cross link', async () => {
+		class A extends Model {
+			@id           id   : number
+			@field        b_id : number
+			@foreign('B') b    : B
+		}
+
+		class B extends Model {
+			@id           id   : number
+			@field        a_id : number
+			@foreign('A') a    : A
+		}
+
+		let a = new A({id: 1})
+		let b = new B({id: 1})
+
+		a.b = b
+		b.a = a
+		expect(a.b_id).toBe(b.id)
+		expect(b.a_id).toBe(a.id)
+		expect(a.b).toBe(b)
+		expect(b.a).toBe(a)
+
 	})
 })

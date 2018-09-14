@@ -1,4 +1,4 @@
-import 'reflect-metadata'
+// import 'reflect-metadata'
 import store from '../store'
 import Event from '../event'
 
@@ -92,7 +92,9 @@ export default function one(foreign_model_name: string, foreign_id_field_name: s
 		// It can be wrong name "Function" because we wrapped class in decorator before.
 		let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
 
-		// console.log(Reflect.getMetadata('design:type', cls, field_name))
+		// не выполняеться! потому что класс B объявлен после класса А
+		// а он уже нужен в классе А!!!
+		// console.warn(cls, '---', field_name, '---', Reflect.getMetadata('design:type', cls, field_name))
 
 		store.registerModelField(model_name, type, field_name, {
 			foreign_model_name   : foreign_model_name,

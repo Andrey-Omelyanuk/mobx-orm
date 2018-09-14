@@ -1,4 +1,4 @@
-import 'reflect-metadata'
+// import 'reflect-metadata'
 import store from '../store'
 
 
@@ -51,12 +51,12 @@ export function registerForeign() {
 			}
 		})
 
-		store.models[model_name].onInject(model_name, (foreign_obj) => {
+		store.models[model_name].onInject((foreign_obj) => {
 			if (!obj[field_name] && foreign_obj.id == obj[foreign_id_field_name])
 				obj[field_name] = foreign_obj
 		})
 
-		store.models[model_name].onEject(model_name, (foreign_obj) => {
+		store.models[model_name].onEject((foreign_obj) => {
 			if (obj[field_name] === foreign_obj)
 				obj[field_name] = null
 		})
@@ -67,24 +67,19 @@ export function registerForeign() {
 registerForeign()
 
 
-function getType(target, key) {
-	let type = Reflect.getMetadata('design:type', target, key)
-	return type ? type.prototype.constructor.name : undefined
-}
 
-
-export default function foreign(id_field?: string) {
+export default function foreign(foreign_model_name: string, foreign_id_field_name?: string) {
 	return function (cls: any, field_name: string) {
 
 		// It can be wrong name "Function" because we wrapped class in decorator before.
 		let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
 
-		let foreign_model_name    = getType(cls, field_name)
-		let foreign_id_field_name = id_field ? id_field : `${field_name}_id`
+		// тут нет проблемы как у "one" ? да, теже проблемы (((
+		// console.warn(cls, '---', field_name, '---', Reflect.getMetadata('design:type', cls, field_name))
 
 		store.registerModelField(model_name, type, field_name, {
 			foreign_model_name   : foreign_model_name,
-			foreign_id_field_name: foreign_id_field_name
+			foreign_id_field_name: foreign_id_field_name ? foreign_id_field_name : `${field_name}_id`
 		})
 	}
 }
