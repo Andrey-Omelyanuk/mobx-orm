@@ -25,7 +25,8 @@ export default function Event(revert: Boolean = false) : void {
 		}
 		else {
 			for (let callback of _subscriptions) {
-				if (callback) callback(data)
+				if (callback instanceof Function) callback(data)
+				else if (callback) console.warn('It is not a function', callback)
 			}
 		}
 	}
