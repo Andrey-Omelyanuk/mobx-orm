@@ -38,8 +38,6 @@ export default class Model {
 				this[field_name] = init_data[field_name]
 	}
 
-	onUpdate = new Event()
-
 	onUpdateField(field_name: string, callback: (value:any)=>void) {
 		return this._field_events[field_name](callback)
 	}
