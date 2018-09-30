@@ -1,30 +1,24 @@
 import store 	from '../store'
 import Model  from '../model'
-import id			, { registerFieldId } from '../fields/id'
-import field	, { registerField   } from '../fields/field'
-import one    , { registerOne     } from '../fields/one'
+import id			from '../fields/id'
+import field	from '../fields/field'
+import one    from '../fields/one'
 
 
 describe('One', () => {
 
-	beforeEach(function() {
-		store.clear()
-		registerFieldId()
-		registerField()
-		registerOne()
-	})
+	store.clear()
+
+	class A extends Model {
+		@id id : number
+		@one('B','a_id') b : B
+	}
+
+	class B extends Model {
+		@field a_id : number
+	}
 
 	it('...', async ()=> {
-
-		class A extends Model {
-			@id id : number
-			@one('B','a_id') b : B
-		}
-
-		class B extends Model {
-			@field a_id : number
-		}
-
 		// // default
 		let a = new A({id: 1})
 		let b1 = new B()

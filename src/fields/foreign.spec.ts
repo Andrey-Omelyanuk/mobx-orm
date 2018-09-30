@@ -1,36 +1,35 @@
-import store 	from '../store'
-import Model  from '../model'
-import id			, { registerFieldId } 		from '../fields/id'
-import field	, { registerField   } 		from '../fields/field'
-import foreign, { registerForeign }			from '../fields/foreign'
+import store 	 from '../store'
+import Model   from '../model'
+import id			 from './id'
+import field	 from './field'
+import foreign from './foreign'
 
 
 describe('Foreign', () => {
 
-	beforeEach(function() {
-		store.clear()
-		registerFieldId()
-		registerField()
-		registerForeign()
-	})
+	store.clear()
+
+	class A extends Model {
+		@id           id   : number
+		@field        test : number
+		@field        b_id : number
+		@foreign('B') b    : B
+	}
+
+	class B extends Model {
+		@id           id : number
+		@field     a_id  : number
+		@field     a1_id : number
+		@field     a2_id : number
+
+		@foreign('A')          a  : A
+		@foreign('A')          a1 : A
+		@foreign('A', 'a2_id') a2 : A
+	}
 
 	it('...', async ()=> {
-
-		class A extends Model {
-			@id    id   : number
-			@field test : number
-		}
-
-		class B extends Model {
-		  @field     a1_id : number
-			@field     a2_id : number
-
-		  @foreign('A')          a1 : A
-		  @foreign('A', 'a2_id') a2 : A
-		}
-
-		let a1 = new A({id: 1, test: 1})
-		let a2 = new A({id: 2, test: 2})
+		let a1 = new A({test: 1}); await a1.save()
+		let a2 = new A({test: 2}); await a2.save()
 
 		// default
 		let b = new B()
@@ -65,20 +64,9 @@ describe('Foreign', () => {
 	})
 
 	it('cross link', async () => {
-		class A extends Model {
-			@id           id   : number
-			@field        b_id : number
-			@foreign('B') b    : B
-		}
 
-		class B extends Model {
-			@id           id   : number
-			@field        a_id : number
-			@foreign('A') a    : A
-		}
-
-		let a = new A({id: 1})
-		let b = new B({id: 1})
+		let a = new A(); await a.save()
+		let b = new B(); await b.save()
 
 		a.b = b
 		b.a = a

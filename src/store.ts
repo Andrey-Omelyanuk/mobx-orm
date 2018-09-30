@@ -143,7 +143,7 @@ export class Store {
 		// TODO: we have to unsubscribe ??!!!
 		// not best but quick solution
 		this.models = {}
-		this.field_types = {}
+		// this.field_types = {}
 	}
 
 }

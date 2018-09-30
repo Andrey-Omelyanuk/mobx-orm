@@ -1,24 +1,20 @@
 import store 	from '../store'
 import Model  from '../model'
 import unique from '../fields/unique'
-import id			, { registerFieldId } from '../fields/id'
-import field	, { registerField   } from '../fields/field'
+import id			from '../fields/id'
+import field	from '../fields/field'
 
 
 describe('Unique', () => {
 
-	beforeEach(function() {
-		store.clear()
-		registerFieldId()
-		registerField()
-	})
+	store.clear()
+
+	class A extends Model {
+		@id id : number
+		@unique @field test : number
+	}
 
 	it('...', async ()=> {
-
-		class A extends Model {
-			@id id : number
-			@unique @field test : number
-		}
 
 		let a1 = new A({id: 1, test: 1})
 	  let a2 = new A({id: 2})
