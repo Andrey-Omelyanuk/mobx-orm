@@ -1,28 +1,19 @@
 import store 	from '../store'
 import Model  from '../model'
-import field	, { registerField   } 		from '../fields/field'
+import field	from './field'
 
 
 describe('Field', () => {
+	store.clear()
 
-	beforeEach(function() {
-		store.clear()
-		registerField()
-	})
+	class A extends Model {
+		@field x : number
+	}
 
 	it('...', async ()=> {
 
-		class A extends Model {
-			@field x : number
-		}
-
-		// default
-		let a = new A()
-		expect(a.x).toBeNull()
-
-		// set new value
-		a.x = 1
-		expect(a.x).toBe(1)
+		let a = new A(); 	expect(a.x).toBeNull()
+		a.x = 1; 					expect(a.x).toBe(1)
 	})
 
 })

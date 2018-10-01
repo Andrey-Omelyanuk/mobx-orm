@@ -1,36 +1,30 @@
 import store 	from '../store'
 import Model  from '../model'
-import id 		, { registerFieldId }	from '../fields/id'
-import field 	, { registerField   }	from '../fields/field'
-import foreign, { registerForeign }	from '../fields/foreign'
-import one  	, { registerOne     }	from '../fields/one'
+import id 			from '../fields/id'
+import field 		from '../fields/field'
+import foreign	from '../fields/foreign'
+import one  		from '../fields/one'
 
 
 describe('User Profile.', async () => {
 
-	beforeAll(async () => {
-		store.clear()
-		registerFieldId()
-		registerField()
-		registerForeign()
-		registerOne()
-	})
+	store.clear()
+
+	class User extends Model {
+		@id       id      : number
+		@field    name		: string
+		@one('UserProfile', 'user_id') profile : UserProfile
+	}
+
+	class UserProfile extends Model {
+		@id 	  					id			: number
+		@field  					user_id	: number
+		@foreign('User') 	user 		: User
+		@field						test		: string
+	}
 
 	it('...', async ()=> {
 		let user_a, user_b, user_profile_a, user_profile_b
-
-		class User extends Model {
-			@id       id      : number
-			@field    name		: string
-			@one('UserProfile', 'user_id') profile : UserProfile
-		}
-
-		class UserProfile extends Model {
-			@id 	  					id			: number
-			@field  					user_id	: number
-			@foreign('User') 	user 		: User
-			@field						test		: string
-		}
 
 		user_a = new User({id: 1, name: 'A'})
 		user_b = new User({id: 2, name: 'B'})

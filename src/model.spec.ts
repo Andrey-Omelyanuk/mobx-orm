@@ -1,106 +1,64 @@
 import store 	from './store'
 import Model  from './model'
-import id   , { registerFieldId } from './fields/id'
-import field, { registerField   } from './fields/field'
+import id    from './fields/id'
+import field from './fields/field'
 
 
 describe('Model', () => {
+	store.clear()
 
-	beforeEach(function() {
-		store.clear()
-		registerFieldId()
-		registerField()
-	})
+	class User extends Model {
+		@id    id        : number
+		@field first_name: string
+		@field last_name : string
+		@field age       : number
+	}
 
 	it('Constructor', async () => {
-
-		class A extends Model {
-			@field test: number
-		}
-
-		let a = new A({test: 1})
-		expect(a.test).toBe(1)
+		let a = new User({first_name: 'A', last_name: 'B', age: 1})
+		expect(a.id        ).toBeNull()
+		expect(a.first_name).toBe('A')
+		expect(a.last_name ).toBe('B')
+		expect(a.age       ).toBe(1)
 	})
 
 	it('Save/Delete', async () => {
+		let amount_objects = Object.keys(store.models['User'].objects).length
 
-		class A extends Model {
-			@id id : number
-		}
+		let user = new User(); 	expect(user.id).toBeNull()
+														expect(Object.keys(store.models['User'].objects).length).toBe(amount_objects)
 
-		let a = new A()
-		expect(store.models['A'].objects).toEqual({})
-		expect(a.id).toBeNull()
+		await user.save();     	expect(user.id).not.toBeNull()
+														expect(Object.keys(store.models['User'].objects).length).toBe(amount_objects+1)
+														expect(store.models['User'].objects[user.id]).toBe(user)
 
-		await a.save()
-		expect(store.models['A'].objects[1]).toBe(a)
-		expect(a.id).toBe(1)
-
-		await a.delete()
-		expect(store.models['A'].objects).toEqual({})
-		expect(a.id).toBeNull()
+		await user.delete();   	expect(user.id).toBeNull()
+														expect(Object.keys(store.models['User'].objects).length).toBe(amount_objects)
 	})
 
-	// it('onUpdate', async () => {
-    //
-	// 	class A extends Model {
-	// 		@field  x: number
-	// 	}
-	// 	let a = new A({x: 0})
-	// 	let test  = {}
-	// 	let count = 0
-	// 	let unsubscribeOnUpdate = a.onUpdate((obj) => { test = obj; count = count + 1; })
-    //
-	// 	a.x = 1
-	// 	expect(test).toBe(a)
-	// 	expect(count).toBe(1)
-    //
-	// 	unsubscribeOnUpdate()
-	// 	a.x = 2
-	// 	expect(count).toBe(1)
-	// })
-
 	it('onUpdateField', async () => {
-
-		class A extends Model {
-			@field  x: number
-			@field  y: number
-		}
-		let a = new A({x: 0, y: 0})
+		let user = new User()
 		let _value = null
-		let count = 0
-		let unsubscribeOnUpdateField = a.onUpdateField('x', (value) => { _value = value; count = count + 1; })
+		let _count = 0
 
-		a.x = 1
-		expect(_value).toBe(1)
-		expect(count).toBe(1)
+		let unsubscribeOnUpdateField = user.onUpdateField('first_name', (value) => { _value = value; _count = _count + 1 })
 
-		a.y = 1
-		expect(_value).toBe(1)
-		expect(count).toBe(1)
+		user.first_name = 'A1'; expect(_value).toBe('A1'); expect(_count).toBe(1)
+		user.last_name  = 'B1'; expect(_value).toBe('A1'); expect(_count).toBe(1)  // nothing changed, because we are not subscribe on last_name field
 
 		unsubscribeOnUpdateField()
-		a.x = 2
-		expect(_value).toBe(1)
-		expect(count).toBe(1)
+
+		user.first_name = 'A2'; expect(_value).toBe('A1'); expect(_count).toBe(1)  // nothing changed, because we have unsubscribed on first_name
 	})
 
 	it('onDelete', async () => {
-
-		class A extends Model {
-			@id id : number
-		}
-		let a = new A()
-		let test  = {}
+		let user = new User()
+		let test  = null
 		let count = 0
-		a.onDelete((obj) => { test = obj; count = count + 1; })
 
-		await a.save()
-		expect(test).toEqual({})
-		expect(count).toBe(0)
+		user.onDelete((obj) => { test = obj; count = count + 1 })
 
-		await a.delete()
-		expect(test).toBe(a)
-		expect(count).toBe(1)
+		await user.save(); 		expect(test ).toBeNull(); expect(count).toBe(0)
+		await user.delete(); 	expect(test ).toBe(user); expect(count).toBe(1)
 	})
 })

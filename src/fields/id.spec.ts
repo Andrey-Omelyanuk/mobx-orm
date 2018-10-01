@@ -1,37 +1,26 @@
 import store 	from '../store'
 import Model  from '../model'
-import id, { registerFieldId } from '../fields/id'
+import id     from './id'
 
 
 describe('Id', () => {
+	store.clear()
 
-	beforeEach(function() {
-		store.clear()
-		registerFieldId()
-	})
+	class A extends Model {
+		@id id : number
+	}
 
 	it('...', async ()=> {
 
-		class A extends Model {
-			@id id : number
-		}
+		let a = new A(); expect(a.id).toBeNull()
 
-		// default
-		let a = new A()
-		expect(a.id).toBeNull()
-
-		// set new value
-		expect(() => { (<any>a).id = 'dddd' })
-			.toThrow(new Error('Id can be only integer or null.'))
+		expect(() => { a.id = <any>'test' }).toThrow(new Error('Id can be only integer or null.'))
 
 		// if id was set then obj should be injected to store
-		a.id = 1
-		expect(a.id).toBe(1)
-		expect(store.models['A'].objects[1]).toBe(a)
+		a.id = 1; expect(a.id).not.toBeNull(); expect(store.models['A'].objects[a.id]).toBe(a)
 
 		// id cannot be changed
-		expect(() => { a.id = 2 })
-			.toThrow(new Error('You cannot change id.'))
+		expect(() => { a.id = 2 }).toThrow(new Error('You cannot change id.'))
 	})
 
 })
