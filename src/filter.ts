@@ -1,34 +1,5 @@
 import store from './store'
-
-/*
- * Events on a filter.
- *
- * add    - element was added to a list
- * remove - element was removed from a list
- * update - if element was changed, but it stay in list, we pass object.update.after event
- */
-
-class EventsOfFilter {
-	private _add    : any[] = []
-	private _remove : any[] = []
-	private _update : any[] = []
-
-	add    (callback) { return this._subscribeTo('_add'    , callback) }
-	remove (callback) { return this._subscribeTo('_remove' , callback) }
-	update (callback) { return this._subscribeTo('_update' , callback) }
-
-	_emit_add   (obj) { for (let callback of this._add   ) { if (callback) callback(obj) } }
-	_emit_remove(obj) { for (let callback of this._remove) { if (callback) callback(obj) } }
-	_emit_update(obj, field_name, old_value) { for(let callback of this._update) { if (callback) callback(obj, field_name, old_value) }}
-
-	private _subscribeTo(to, callback) {
-		this[to].push(callback)
-		let index = this[to].length - 1
-		return () => {
-			delete this[to][index]
-		}
-	}
-}
+import Event from './event'
 
 /*
 	Filter - особый Array который сам заполняеться данными
@@ -42,11 +13,11 @@ class EventsOfFilter {
 
 export default class Filter<T> {
 
-	subscribe: EventsOfFilter
-	private _unsubscribe = []
+	public onAdd    = new Event()
+	public onRemove = new Event()
+	public onUpdate = new Event()
 
-	//[n: number]: T
-	//readonly length
+	private _unsubscribe = []
 
 	private _model_name
 	private _filter
@@ -56,15 +27,19 @@ export default class Filter<T> {
 	//get order_by() : any    { return this._order_by }
 
 	constructor(model_name, filter, order_by?) {
-		this.subscribe   = new EventsOfFilter()
+
 		this._model_name = model_name
 		this._filter     = filter
 		this._order_by   = order_by
 		this._checkFilter()
 		Array.apply(this)
 
-		this._unsubscribe.push(store.subscribe.create.after(model_name, (obj) => {
+		this._unsubscribe.push(store.models[model_name].onInject((obj) => {
 			if (this._isMy(obj)) this._add(obj)
+		}))
+
+		this._unsubscribe.push(store.models[model_name].onEject((obj) => {
+			if (this._wasMy(obj)) this._remove(obj)
 		}))
 
 		this._unsubscribe.push(store.subscribe.update.after(model_name, (obj, field_key, old_value) => {
@@ -92,16 +67,13 @@ export default class Filter<T> {
 			else if ( is_my &&  was_my) this._replace(obj)
 		}))
 
-		this._unsubscribe.push(store.subscribe.delete.after(model_name, (obj) => {
-			if (this._wasMy(obj)) this._remove(obj)
-		}))
 
 		// Наполнить фильтр из уже существующийх данных.
 		for (let [key, item] of Object.entries(store.models[model_name].objects)) {
 			if (this._isMy(<T>item)) this._add(<T>item)
 		}
 
-		return  new Proxy(this, filter_handler)
+		return new Proxy(this, filter_handler)
 	}
 
 	private _isMy = (obj: T) : boolean => {
@@ -126,11 +98,12 @@ export default class Filter<T> {
 	private _add = (obj: T) => {
 		let place_to_paste = this._findPlace(obj);
 		(<any>this).splice(place_to_paste, 0, obj)
+		this.onAdd.emit(obj)
 	}
 
 	private _remove = (obj: T) => {
 		(<any>this).splice((<any>this).indexOf(obj), 1)
-		this.subscribe._emit_remove(obj)
+		this.onRemove.emit(obj)
 	}
 
 	private _replace = (obj: T) => {
