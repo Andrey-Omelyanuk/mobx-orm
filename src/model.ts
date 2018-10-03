@@ -20,7 +20,6 @@ export default class Model {
 		let model_description = store.models[model_name]
 
 		// init fields
-
 		for (let field_name in model_description.fields) {
 			// value by default
 			if (this[field_name] === undefined) this.__data[field_name] = this[field_name] = null

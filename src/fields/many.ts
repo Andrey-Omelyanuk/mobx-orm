@@ -25,7 +25,7 @@ export function registerMany() {
 			field_description.settings.subscription_to_foreign = foreign_field_description.onUpdate(({obj, new_value, old_value}) => {
 
 				if (obj.id == null) return  // ignore object if you not in the store yet
-
+				//console.log('onUpdate', obj.id, new_value, old_value)
 				let old_obj:any = model_description.objects[old_value]
 				let new_obj:any = model_description.objects[new_value]
 
@@ -36,7 +36,7 @@ export function registerMany() {
 				if (new_obj) {
 					let index = new_obj[field_name].indexOf(obj)
 					if (index == -1) {
-						console.log('push2', obj)
+						//console.log('push2', obj)
 						new_obj[field_name].push(obj)
 					}
 				}
@@ -45,14 +45,14 @@ export function registerMany() {
 
 		if (!field_description.settings.subscription_on_inject) {
 			field_description.settings.subscription_on_inject = foreign_model_description.onInject((foreign) => {
-				console.log('onInject', foreign.id, foreign[foreign_id_field_name])
+				//console.log('onInject', foreign.id, foreign[foreign_id_field_name])
 				if (foreign[foreign_id_field_name] != null) {
 					let obj:any = model_description.objects[foreign[foreign_id_field_name]]
-					let index = obj[field_name].indexOf(obj)
-					console.log('...', index, obj)
+					let index = obj[field_name].indexOf(foreign)
+					console.log('...', index, foreign)
 					if (index == -1) {
-						console.log('push', obj.id)
-						obj[field_name].push(obj)
+						//console.log('push', foreign.id)
+						obj[field_name].push(foreign)
 					}
 				}
 			})
@@ -60,7 +60,7 @@ export function registerMany() {
 
 		if (!field_description.settings.subscription_on_eject) {
 			field_description.settings.subscription_on_eject = foreign_model_description.onEject((foreign) => {
-
+				//console.log('onEject', foreign.id, foreign[foreign_id_field_name])
 				if (foreign[foreign_id_field_name] != null) {
 					let obj:any = model_description.objects[foreign[foreign_id_field_name]]
 					let index = obj[field_name].indexOf(foreign)

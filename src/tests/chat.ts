@@ -8,6 +8,8 @@ import many 		from '../fields/many'
 
 describe('Other tests: Chat.', async () => {
 
+	store.clear()
+
 	class User extends Model {
 		@id       id         	: number
 		@field    first_name	: string
@@ -18,7 +20,7 @@ describe('Other tests: Chat.', async () => {
 
 	class Channel extends Model {
 		@id 	  id			 : number
-		@many('ChannelMessage') messages : ChannelMessage[]
+		@many('ChannelMessage', 'channel_id') messages : ChannelMessage[]
 
 		async sendMessage(user: User, text: string) {
 			let message = new ChannelMessage()
@@ -35,19 +37,15 @@ describe('Other tests: Chat.', async () => {
 		@field 			created    : string
 		@field 			text       : string
 		@field 			channel_id : number
-		@foreign()	channel		 : Channel
 		@field			user_id    : number
-		@foreign()  user	 		 : User
+		@foreign('Channel')	channel		 : Channel
+		@foreign('User')  	user	 		 : User
 	}
 
-	let channelA = new Channel()
-	let channelB = new Channel()
-	let userA = new User({first_name: 'A', last_name: 'X'})
-	let userB = new User(); userB.first_name = 'B'; userB.last_name  = 'X'
-
-	beforeAll(async () => {
-		store.clear()
-	})
+	let channelA = new Channel(); channelA.save()
+	let channelB = new Channel(); channelB.save()
+	let userA = new User({first_name: 'A', last_name: 'X'}); userA.save()
+	let userB = new User(); userB.first_name = 'B'; userB.last_name  = 'X'; userB.save()
 
 	it('Check metadata in the store', async ()=> {
 		// fields
@@ -62,15 +60,15 @@ describe('Other tests: Chat.', async () => {
 	})
 
 	it('Send messages to channelA', async ()=> {
-		// await channelA.sendMessage(userA, 'First  message from userA');
-		// await channelA.sendMessage(userA, 'Second message from userA');
-		// await channelA.sendMessage(userB, 'First  message from userB');
-		// await channelA.sendMessage(userA, 'Third  message from userA');
-        //
-		// expect(channelA.messages[0].text).toBe('First  message from userA')
-		// expect(channelA.messages[1].text).toBe('Second message from userA')
-		// expect(channelA.messages[2].text).toBe('First  message from userB')
-		// expect(channelA.messages[3].text).toBe('Third  message from userA')
+		await channelA.sendMessage(userA, 'First  message from userA');
+		await channelA.sendMessage(userA, 'Second message from userA');
+		await channelA.sendMessage(userB, 'First  message from userB');
+		await channelA.sendMessage(userA, 'Third  message from userA');
+
+		expect(channelA.messages[0].text).toBe('First  message from userA')
+		expect(channelA.messages[1].text).toBe('Second message from userA')
+		expect(channelA.messages[2].text).toBe('First  message from userB')
+		expect(channelA.messages[3].text).toBe('Third  message from userA')
 	})
 
 })

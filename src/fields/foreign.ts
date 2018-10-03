@@ -16,10 +16,16 @@ export function registerForeign() {
 				let old_value = obj.__data[field_name]
 				if (old_value === new_value) return  // it will help stop endless loop A.b -> A.b_id -> A.b -> A.b_id ...
 
-				if (new_value !== null && !(new_value.constructor && new_value.constructor.name == foreign_model_name))
+				if (new_value !== null && !(new_value.constructor && new_value.constructor.name == foreign_model_name)) {
+					// console.log(new_value)
 					throw new Error(`You can set only instance of "${foreign_model_name}" or null`)
-				if (new_value !== null && new_value.id === null)
+				}
+
+				if (new_value !== null && new_value.id === null) {
+					// console.log(new_value)
 					throw new Error(`Object should have id!`)
+				}
+
 
 				function invoke(new_value, old_value) {
 					obj.__data[field_name]     = new_value
