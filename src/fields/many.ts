@@ -24,6 +24,8 @@ export function registerMany() {
 		if (!field_description.settings.subscription_to_foreign) {
 			field_description.settings.subscription_to_foreign = foreign_field_description.onUpdate(({obj, new_value, old_value}) => {
 
+				if (obj.id == null) return  // ignore object if you not in the store yet
+
 				let old_obj:any = model_description.objects[old_value]
 				let new_obj:any = model_description.objects[new_value]
 
@@ -33,23 +35,32 @@ export function registerMany() {
 				}
 				if (new_obj) {
 					let index = new_obj[field_name].indexOf(obj)
-					if (index == -1) new_obj[field_name].push(obj)
+					if (index == -1) {
+						console.log('push2', obj)
+						new_obj[field_name].push(obj)
+					}
 				}
 			})
 		}
 
 		if (!field_description.settings.subscription_on_inject) {
 			field_description.settings.subscription_on_inject = foreign_model_description.onInject((foreign) => {
+				console.log('onInject', foreign.id, foreign[foreign_id_field_name])
 				if (foreign[foreign_id_field_name] != null) {
 					let obj:any = model_description.objects[foreign[foreign_id_field_name]]
 					let index = obj[field_name].indexOf(obj)
-					if (index == -1) obj[field_name].push(obj)
+					console.log('...', index, obj)
+					if (index == -1) {
+						console.log('push', obj.id)
+						obj[field_name].push(obj)
+					}
 				}
 			})
 		}
 
 		if (!field_description.settings.subscription_on_eject) {
 			field_description.settings.subscription_on_eject = foreign_model_description.onEject((foreign) => {
+
 				if (foreign[foreign_id_field_name] != null) {
 					let obj:any = model_description.objects[foreign[foreign_id_field_name]]
 					let index = obj[field_name].indexOf(foreign)

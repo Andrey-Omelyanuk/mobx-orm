@@ -1,6 +1,6 @@
 {
   "name"      : "z-data",
-  "version"   : "0.0.2",
+  "version"   : "0.0.3",
   "license"   : "MIT",
   "repository": "https://bitbucket.org/__Andrey/z-data",
 	"main"      : "dist/z-data.js",
