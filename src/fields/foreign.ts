@@ -6,49 +6,43 @@ let type = 'foreign'
 
 export function registerForeign() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
-		let block_update = false
+
 		let foreign_model_name    = store.models[model_name].fields[field_name].settings.foreign_model_name
 		let foreign_id_field_name = store.models[model_name].fields[field_name].settings.foreign_id_field_name
 
 		Object.defineProperty (obj, field_name, {
 			get: () => obj.__data[field_name],
 			set: (new_value) => {
+				let old_value = obj.__data[field_name]
+				if (old_value === new_value) return  // it will help stop endless loop A.b -> A.b_id -> A.b -> A.b_id ...
 
 				if (new_value !== null && !(new_value.constructor && new_value.constructor.name == foreign_model_name))
 					throw new Error(`You can set only instance of "${foreign_model_name}" or null`)
 				if (new_value !== null && new_value.id === null)
 					throw new Error(`Object should have id!`)
 
-				block_update = true
-				let old_value = obj.__data[field_name]
-				obj.__data[field_name] = new_value
-				// and update foreign id
-				obj[foreign_id_field_name] = new_value === null ? null : new_value.id
-				block_update = false
+				function invoke(new_value, old_value) {
+					obj.__data[field_name]     = new_value
+					obj[foreign_id_field_name] = new_value === null ? null : new_value.id
+					obj._field_events[field_name].emit({new_value: new_value, old_value: old_value})
+					store.models[model_name].fields[field_name].onUpdate.emit({obj:obj, new_value: new_value, old_value: old_value})
+				}
 
 				try {
-					obj._field_events[field_name].emit(new_value)
-					// мы передаем объект полностью, т.к. мы и так знаем какое поле поменялось!
-					// но не знаем на каком объекте!
-					store.models[model_name].fields[field_name].onUpdate.emit(obj)
+					invoke(new_value, old_value)
 				}
 				catch(e) {
-					// if any callback throw exception then rollback changes!
-					block_update = true
-					obj.__data[field_name] = old_value
-					obj[foreign_id_field_name] = old_value.id
-					block_update = false
+					// rollback changes!
+					invoke(old_value, new_value)
 					throw e
 				}
 			}
 		})
 
 		// update foreign obj when foreign id was changed
-		obj.onUpdateField(foreign_id_field_name, (new_id) => {
-			if (!block_update) {
-				let foreign_obj = store.models[foreign_model_name].objects[new_id]
-				obj[field_name] = foreign_obj ? foreign_obj : null
-			}
+		obj.onUpdateField(foreign_id_field_name, ({new_value}) => {
+			let foreign_obj = store.models[foreign_model_name].objects[new_value]
+			obj[field_name] = foreign_obj ? foreign_obj : null
 		})
 
 		store.models[model_name].onInject((foreign_obj) => {

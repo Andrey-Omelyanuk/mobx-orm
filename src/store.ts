@@ -89,7 +89,7 @@ export class Store {
 			//
 			model_description.unique[field_name] = unique_set
 			// inject/eject/update
-			model_description.fields[field_name].onUpdate((obj) => {
+			model_description.fields[field_name].onUpdate(({obj}) => {
 				// null can be many! just ignore it
 				if (obj[field_name] === null) return
 				if (unique_set.has(obj[field_name])) throw new Error(`Not unique value.`) // for updating ${model_name}.${field_name} to ${obj[field_name]}`)

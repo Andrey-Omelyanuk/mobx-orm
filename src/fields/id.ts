@@ -23,13 +23,13 @@ export function registerFieldId() {
 			set: (new_value) => {
 
 				if (new_value != null)
-					if (obj.__data.id)
+					if(obj.__data.id)
 						throw new Error(`You cannot change id.`)
-				else if (!Number.isInteger(new_value))
-					throw new Error(`Id can be only integer or null.`)
+					else if (!Number.isInteger(new_value))
+						throw new Error(`Id can be only integer or null.`)
 
 				// if null then remove from store
-				if (new_value == null){
+				if (new_value == null) {
 					store.eject(model_name, obj)
 					obj.__data.id = new_value
 				}

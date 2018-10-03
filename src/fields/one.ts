@@ -1,85 +1,93 @@
-// import 'reflect-metadata'
 import store from '../store'
-import Event from '../event'
 
 
 let type = 'one'
 
 export function registerOne() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
-		let block_update = false
-		let foreign_model_name    = store.models[model_name].fields[field_name].settings.foreign_model_name
-		let foreign_id_field_name = store.models[model_name].fields[field_name].settings.foreign_id_field_name
+		let model_description 				= store.models[model_name]
+		let field_description 				= model_description.fields[field_name]
+		let foreign_model_name    		= field_description.settings.foreign_model_name
+		let foreign_id_field_name 		= field_description.settings.foreign_id_field_name
+		let foreign_model_description = store.models[foreign_model_name]
+		let foreign_field_description = foreign_model_description.fields[foreign_id_field_name]
 
 		Object.defineProperty (obj, field_name, {
 			get: () => obj.__data[field_name],
 			set: (new_value) => {
+				let old_value = obj.__data[field_name]
+				if (old_value === new_value) return  // it will help stop endless loop A.b -> B.a_id -> A.b -> B.a_id ...
 
 				if (new_value !== null && !(new_value.constructor && new_value.constructor.name == foreign_model_name))
 					throw new Error(`You can set only instance of "${foreign_model_name}" or null`)
 				if (new_value !== null && new_value.id === null)
 					throw new Error(`Object should have id!`)
 
-				block_update = true
-				let old_value    = obj.__data[field_name]
-				let old_value_id = new_value != null ? new_value[foreign_id_field_name] : null
-				// 1.
-				if (old_value !== null) old_value[foreign_id_field_name] = null
-				// 2.
-				if (new_value !== null) new_value[foreign_id_field_name] = obj.id
-				// 3.
-				obj.__data[field_name] = new_value
-				block_update = false
+
+				function invoke(new_value, old_value) {
+					obj.__data[field_name]     = new_value
+					obj[foreign_id_field_name] = new_value === null ? null : new_value.id
+					obj._field_events[field_name].emit({new_value: new_value, old_value: old_value})
+					store.models[model_name].fields[field_name].onUpdate.emit({obj:obj, new_value: new_value, old_value: old_value})
+				}
+
+				let prev_id_on_new_value = new_value != null ? new_value[foreign_id_field_name] : null
 
 				try {
-					obj._field_events[field_name].emit(new_value)
-					// мы передаем объект полностью, т.к. мы и так знаем какое поле поменялось!
-					// но не знаем на каком объекте!
-					store.models[model_name].fields[field_name].onUpdate.emit(obj)
+					if (old_value !== null) old_value[foreign_id_field_name] = null
+					if (new_value !== null) new_value[foreign_id_field_name] = obj.id
+					obj.__data[field_name] = new_value
+
+					obj._field_events[field_name].emit({new_value: new_value, old_value: old_value})
+					field_description.onUpdate.emit(obj)
 				}
 				catch(e) {
 					// if any callback throw exception then rollback changes!
-					block_update = true
-					// 3.
 					obj.__data[field_name] = old_value
-					// 2.
-					if (new_value !== null) new_value[foreign_id_field_name] = old_value_id
-					// 1.
+					if (new_value !== null) new_value[foreign_id_field_name] = prev_id_on_new_value
 					if (old_value !== null) old_value[foreign_id_field_name] = obj.id
-					block_update = false
+
+					obj._field_events[field_name].emit({new_value: old_value, old_value: new_value})
+					field_description.onUpdate.emit(obj)
 					throw e
 				}
 			}
 		})
 
-		store.models[foreign_model_name].fields[foreign_id_field_name].onUpdate((foreign) => {
-			if (!block_update) {
-				//
-				if (obj.id == foreign[foreign_id_field_name]) {
-					if (obj[field_name] === null) obj[field_name] = foreign
-					else throw new Error('Not unique value. (One)')
-				}
-				//
-				else if (obj[field_name] === foreign)
-					obj[field_name] = null
-			}
-		})
+		if (!field_description.settings.subscription_to_foreign) {
+			field_description.settings.subscription_to_foreign = foreign_field_description.onUpdate(({obj, new_value, old_value}) => {
 
-		store.models[model_name].onInject((foreign) => {
-			if (!block_update) {
-				if (obj.id == foreign[foreign_id_field_name]) {
-					if (obj[field_name] === null) obj[field_name] = foreign
-					else throw new Error('Not unique value. (One)')
-				}
-			}
-		})
+				let old_obj:any = model_description.objects[old_value]
+				let new_obj:any = model_description.objects[new_value]
 
-		store.models[model_name].onEject((foreign) => {
-			if (!block_update) {
-				if (obj.id == foreign[foreign_id_field_name])
+				if (new_obj && new_obj[field_name] != null)
+					throw new Error('Not unique value. (One)')
+
+				if (old_obj) old_obj[field_name] = null
+				if (new_obj) new_obj[field_name] = obj
+			})
+		}
+
+		if (!field_description.settings.subscription_on_inject) {
+			field_description.settings.subscription_on_inject = foreign_model_description.onInject((foreign) => {
+				if (foreign[foreign_id_field_name] != null) {
+					let obj:any = model_description.objects[foreign[foreign_id_field_name]]
+					if (obj[field_name] == null)
+						obj[field_name] = foreign
+					else
+						throw new Error('Not unique value. (One)')
+				}
+			})
+		}
+
+		if (!field_description.settings.subscription_on_eject) {
+			field_description.settings.subscription_on_eject = foreign_model_description.onEject((foreign) => {
+				if (foreign[foreign_id_field_name] != null) {
+					let obj:any = model_description.objects[foreign[foreign_id_field_name]]
 					obj[field_name] = null
-			}
-		})
+				}
+			})
+		}
 
 	})
 }

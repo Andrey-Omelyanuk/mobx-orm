@@ -41,7 +41,7 @@ describe('Model', () => {
 		let _value = null
 		let _count = 0
 
-		let unsubscribeOnUpdateField = user.onUpdateField('first_name', (value) => { _value = value; _count = _count + 1 })
+		let unsubscribeOnUpdateField = user.onUpdateField('first_name', ({new_value}) => { _value = new_value; _count = _count + 1 })
 
 		user.first_name = 'A1'; expect(_value).toBe('A1'); expect(_count).toBe(1)
 		user.last_name  = 'B1'; expect(_value).toBe('A1'); expect(_count).toBe(1)  // nothing changed, because we are not subscribe on last_name field
