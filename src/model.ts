@@ -15,7 +15,6 @@ export default class Model {
 	private __data = {}
 
 	constructor(init_data?) {
-
 		let model_name = this.constructor.name
 		let model_description = store.models[model_name]
 
@@ -26,10 +25,8 @@ export default class Model {
 			else                                this.__data[field_name] = this[field_name]
 
 			this._field_events[field_name] = new Event()
-
 			store.field_types[model_description.fields[field_name].type](model_name, field_name, this)
 		}
-
 
 		// set fields from init data
 		if (init_data)
