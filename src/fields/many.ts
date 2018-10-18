@@ -49,7 +49,7 @@ export function registerMany() {
 				if (foreign[foreign_id_field_name] != null) {
 					let obj:any = model_description.objects[foreign[foreign_id_field_name]]
 					let index = obj[field_name].indexOf(foreign)
-					console.log('...', index, foreign)
+					// console.log('...', index, foreign)
 					if (index == -1) {
 						//console.log('push', foreign.id)
 						obj[field_name].push(foreign)
