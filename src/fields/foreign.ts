@@ -68,7 +68,7 @@ registerForeign()
 
 
 
-export default function foreign(foreign_model_name: string, foreign_id_field_name?: string) {
+export default function foreign(foreign_cls: any, foreign_id_field_name?: string) {
 	return function (cls: any, field_name: string) {
 
 		// It can be wrong name "Function" because we wrapped class in decorator before.

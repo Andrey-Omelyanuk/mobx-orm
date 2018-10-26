@@ -1,5 +1,6 @@
+import { observable } from 'mobx'
 import Model from './model'
-import Event from './event'
+
 
 interface FieldTypeDecorator {
 	(model_name: string, field_name: string, obj: Object): void
@@ -9,18 +10,15 @@ interface ModelDescription {
 	fields: {
 		[field_name: string]: {
 			type    : string,
-			onUpdate: any,
 			settings: any
 		}
-	}
-	unique: {
-		[field_name: string]: any
 	}
 	objects: {
 		[id: number]: object
 	}
-	onInject: any
-	onEject : any
+	unique: {
+		[field_name: string]: any
+	}
 	getNewId: ()=>number
 }
 
@@ -36,11 +34,9 @@ interface ModelDescription {
 
 export class Store {
 
-	onInject = new Event()
-	onEject  = new Event()
-
-	field_types: { [type_name : string]: FieldTypeDecorator } = {}
 	models     : { [model_name: string]: ModelDescription   } = {}
+	field_types: { [type_name : string]: FieldTypeDecorator } = {}
+
 
 	registerModel(model_name) {
 		if (!this.models[model_name]) {
@@ -49,66 +45,62 @@ export class Store {
 				objects: {},
 				fields : {},
 				unique : {},
-				onInject: new Event(),
-				onEject : new Event(),
 				getNewId: () => {
 					_count_id = _count_id + 1
 					return _count_id
 				}
 			}
+			observable(this.models[model_name].objects)
 		}
 		else throw new Error(`Model "${model_name}" already registered.`)
 	}
 
 	registerFieldType(type, decorator) {
-		if (!this.field_types[type]) this.field_types[type] = decorator
-		else throw new Error(`Field type "${type}" already registered.`)
+		if (!this.field_types[type])
+			this.field_types[type] = decorator
+		else
+			throw new Error(`Field type "${type}" already registered.`)
 	}
 
 	registerModelField(model_name, type, field_name, settings) {
 		if (!this.models[model_name]) this.registerModel(model_name)
 		let model_description = this.models[model_name]
-		if (!model_description.fields[field_name]) {
-			model_description.fields[field_name] = {
-				type    : type,
-				onUpdate: new Event(),
-				settings: settings
-			}
-		}
-		else {
+
+		if (!model_description.fields[field_name])
+			model_description.fields[field_name] = { type: type, settings: settings }
+		else
 			throw `Field "${field_name}" on "${model_name}" already registered.`
-		}
 	}
 
-	registerUniqueField(model_name, field_name) {
-		if (!this.models[model_name]) this.registerModel(model_name)
-		let model_description = this.models[model_name]
-		if (!model_description.unique[field_name]) {
-
-			let unique_set = new Set()
-			//
-			model_description.unique[field_name] = unique_set
-			// inject/eject/update
-			model_description.fields[field_name].onUpdate(({obj}) => {
-				// null can be many! just ignore it
-				if (obj[field_name] === null) return
-				if (unique_set.has(obj[field_name])) throw new Error(`Not unique value.`) // for updating ${model_name}.${field_name} to ${obj[field_name]}`)
-				else unique_set.add(obj[field_name])
-			})
-			store.models[model_name].onInject((obj) => {
-				// null can be many! just ignore it
-				if (obj[field_name] === null) return
-				if (unique_set.has(obj[field_name])) throw new Error(`Not unique value.`) // for inject ${model_name}.${field_name} to ${obj[field_name]}`)
-				else unique_set.add(obj[field_name])
-			})
-			store.models[model_name].onEject((obj) => {
-				unique_set.delete(obj[field_name])
-			})
-		}
-		else {
-			throw `Unique on field "${field_name}" on "${model_name}" already registered.`
-		}
-	}
+	// registerUniqueField(model_name, field_name) {
+	// 	if (!this.models[model_name]) this.registerModel(model_name)
+	// 	let model_description = this.models[model_name]
+	// 	if (!model_description.unique[field_name]) {
+    //
+	// 		let unique_set = new Set()
+	// 		//
+	// 		model_description.unique[field_name] = unique_set
+	// 		// inject/eject/update
+	// 		model_description.fields[field_name].onUpdate(({obj}) => {
+	// 			// null can be many! just ignore it
+	// 			if (obj[field_name] === null) return
+	// 			if (unique_set.has(obj[field_name])) throw new Error(`Not unique value.`) // for updating ${model_name}.${field_name} to ${obj[field_name]}`)
+	// 			else unique_set.add(obj[field_name])
+	// 		})
+	// 		store.models[model_name].onInject((obj) => {
+	// 			// null can be many! just ignore it
+	// 			if (obj[field_name] === null) return
+	// 			if (unique_set.has(obj[field_name])) throw new Error(`Not unique value.`) // for inject ${model_name}.${field_name} to ${obj[field_name]}`)
+	// 			else unique_set.add(obj[field_name])
+	// 		})
+	// 		store.models[model_name].onEject((obj) => {
+	// 			unique_set.delete(obj[field_name])
+	// 		})
+	// 	}
+	// 	else {
+	// 		throw `Unique on field "${field_name}" on "${model_name}" already registered.`
+	// 	}
+	// }
 
 	inject(model_name, object) {
 		let model_description = this.models[model_name]
@@ -119,31 +111,26 @@ export class Store {
 		if (model_description.objects[object.id])  throw new Error(`Object with id="${object.id}" already exist in model "${model_name}".`)
 
 		model_description.objects[object.id] = object
-
-		model_description.onInject.emit(object)
-		this             .onInject.emit({model_name: model_name, object: object})
 	}
 
 	eject(model_name, object) {
 		let model_description = this.models[model_name]
-		if (!(model_name in this.models))   throw new Error(`Model name "${model_name} is not registered in the store`)
+		if (!(model_name in this.models))          throw new Error(`Model name "${model_name} is not registered in the store`)
 		if (!object || !object.constructor)        throw new Error('object should be a object with constructor')
 		if (!object.id)                            throw new Error(`Object should have id!`)
 		if (object.constructor.name != model_name) throw new Error(`You can eject only instance of "${model_name}"`)
 		if (!model_description.objects[object.id]) throw new Error(`Object with id ${object.id} not exist in model "${model_name}"`)
 
 		delete model_description.objects[object.id]
-
-		model_description.onEject.emit(object)
-		this             .onEject.emit({model_name: model_name, object: object})
 	}
 
-	// remove all registered things on the store
 	clear() {
-		// TODO: we have to unsubscribe ??!!!
-		// not best but quick solution
+		for (let model_name of Object.keys(this.models))
+			for (let obj of <any>Object.values(this.models[model_name].objects))
+				if(obj.delete)
+					obj.delete()
+
 		this.models = {}
-		// this.field_types = {}
 	}
 
 }

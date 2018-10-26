@@ -1,3 +1,4 @@
+import { observe, intercept } from 'mobx'
 import store from '../store'
 
 
@@ -18,27 +19,22 @@ let type = 'id'
 export function registerFieldId() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
 
-		Object.defineProperty (obj, field_name, {
-			get: (         ) => obj.__data.id,
-			set: (new_value) => {
+		intercept(this, field_name, (change) => {
+			if (change.newValue != null)
+				if(this.id != null)
+					throw new Error(`You cannot change id.`)
+				else if (!Number.isInteger(change.newValue))
+					throw new Error(`Id can be only integer or null.`)
 
-				if (new_value != null)
-					if(obj.__data.id)
-						throw new Error(`You cannot change id.`)
-					else if (!Number.isInteger(new_value))
-						throw new Error(`Id can be only integer or null.`)
+			if (obj.id && change.newValue == null)
+				store.eject (model_name, obj)
 
-				// if null then remove from store
-				if (new_value == null) {
-					store.eject(model_name, obj)
-					obj.__data.id = new_value
-				}
-				// otherwise add to store
-				else {
-					obj.__data.id = new_value
-					store.inject(model_name, obj)
-				}
-			}
+			return change
+		})
+
+		observe(this, field_name, (change) => {
+			if (change.newValue)
+				store.inject(model_name,obj)
 		})
 	})
 }
