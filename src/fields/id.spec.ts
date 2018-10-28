@@ -1,13 +1,13 @@
 import store 	from '../store'
 import Model  from '../model'
-import id     from './id'
+import id from './id'
 
 
 describe('Id', () => {
 	store.clear()
 
 	class A extends Model {
-		@id id : number
+		@id id: number
 	}
 
 	it('...', async ()=> {

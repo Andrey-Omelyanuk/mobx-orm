@@ -1,4 +1,4 @@
-import { observe, intercept } from 'mobx'
+import { extendObservable, observe, intercept } from 'mobx'
 import store from '../store'
 
 
@@ -19,9 +19,12 @@ let type = 'id'
 export function registerFieldId() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
 
-		intercept(this, field_name, (change) => {
+		let extendedObj = {}; extendedObj['id'] = obj['id']; extendObservable(obj, extendedObj)
+		if (obj.id === undefined) obj.id = null
+
+		intercept(obj, 'id', (change) => {
 			if (change.newValue != null)
-				if(this.id != null)
+				if(obj.id != null)
 					throw new Error(`You cannot change id.`)
 				else if (!Number.isInteger(change.newValue))
 					throw new Error(`Id can be only integer or null.`)
@@ -32,7 +35,7 @@ export function registerFieldId() {
 			return change
 		})
 
-		observe(this, field_name, (change) => {
+		observe(obj, field_name, (change) => {
 			if (change.newValue)
 				store.inject(model_name,obj)
 		})
@@ -44,5 +47,7 @@ registerFieldId()
 export default function id(cls: any, field_name: string) {
 	// It can be wrong name "Function" because we wrapped class in decorator before.
 	let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
+	if (field_name != 'id')
+		throw new Error(`id field should named by 'id'`)
 	store.registerModelField(model_name, type, field_name, {})
 }

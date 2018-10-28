@@ -50,7 +50,7 @@ export class Store {
 					return _count_id
 				}
 			}
-			observable(this.models[model_name].objects)
+			this.models[model_name].objects = observable(this.models[model_name].objects)
 		}
 		else throw new Error(`Model "${model_name}" already registered.`)
 	}

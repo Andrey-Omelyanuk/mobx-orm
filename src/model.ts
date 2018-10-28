@@ -1,22 +1,24 @@
+import { observable }     from 'mobx'
 import store from './store'
-import id from './fields/id'
 
 
 export default class Model {
-	@id id: number = null
 
 	constructor(init_data?) {
 		let model_name = this.constructor.name
 		let model_description = store.models[model_name]
 
+		console.log(this['id'])
 		// init fields
 		for (let field_name in model_description.fields)
 			store.field_types[model_description.fields[field_name].type](model_name, field_name, this)
 
+		console.log(this['id'])
 		// set fields from init data
 		if (init_data)
 			for (let field_name in init_data)
 				this[field_name] = init_data[field_name]
+		console.log(this['id'])
 	}
 
 	// если нет id, то создать его
@@ -26,7 +28,7 @@ export default class Model {
 	async save() {
 		let obj = <any>this
 		if (!obj.id) {
-			obj.id = Object.keys(store[this.constructor.name]).length + 1
+			obj.id = store.models[this.constructor.name].getNewId()
 		}
 	}
 

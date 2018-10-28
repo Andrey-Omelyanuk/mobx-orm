@@ -1,5 +1,6 @@
 import store from './store'
 import Model from './model'
+import id    from './fields/id'
 
 
 describe('Model', () => {
@@ -7,6 +8,7 @@ describe('Model', () => {
 	store.clear()
 
 	class User extends Model {
+		@id id    : number
 		first_name: string
 		last_name : string
 	}
@@ -18,11 +20,11 @@ describe('Model', () => {
 		expect(user.last_name ).toBe('B')
 
 		await user.save();    expect(user.id).not.toBeNull()
-													expect(store['User'][user.id]).toBe(user)
+													expect(store.models['User'].objects[user.id]).toBe(user)
 
 		let old_id = user.id
 		await user.delete();  expect(user.id).toBeNull()
-													expect(store['User'][old_id]).toBeUndefined()
+													expect(store.models['User'].objects[old_id]).toBeUndefined()
 	})
 
 })
