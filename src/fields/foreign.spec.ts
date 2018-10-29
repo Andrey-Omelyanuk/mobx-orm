@@ -1,18 +1,22 @@
-import store, { resetStore } from '../store'
+import store from '../store'
 import Model   from '../model'
+import id from './id'
 import foreign from './foreign'
 import { observable } from 'mobx'
 
 
 describe('Foreign', () => {
 
+	store.clear()
 	class A extends Model {
+		@id id : number
 		@observable test : number
 		@observable b_id : number
 		@foreign('B') b    : B
 	}
 
 	class B extends Model {
+		@id id : number
 		@observable a_id  : number
 		@observable a1_id : number
 		@observable a2_id : number
@@ -54,8 +58,8 @@ describe('Foreign', () => {
 		let a = new A(); await a.save()
 		let b = new B(); await b.save()
 
-		a.b = b
-		b.a = a
+		a.b_id = b.id
+		b.a_id = a.id
 
 		expect(a.b_id).toBe(b.id)
 		expect(b.a_id).toBe(a.id)
