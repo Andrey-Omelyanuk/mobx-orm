@@ -1,25 +1,28 @@
 import store from '../store'
-import Model   from '../model'
+import { Model, model } from '../model'
 import id from './id'
+import field from './field'
 import foreign from './foreign'
-import { observable } from 'mobx'
 
 
 describe('Foreign', () => {
 
 	store.clear()
+
+	@model
 	class A extends Model {
 		@id id : number
-		@observable test : number
-		@observable b_id : number
+		@field test : number
+		@field b_id : number
 		@foreign('B') b    : B
 	}
 
+	@model
 	class B extends Model {
 		@id id : number
-		@observable a_id  : number
-		@observable a1_id : number
-		@observable a2_id : number
+		@field a_id  : number
+		@field a1_id : number
+		@field a2_id : number
 
 		@foreign(A)          a  : A
 		@foreign(A)          a1 : A

@@ -44,17 +44,11 @@ export function model(cls) {
 
 		for (let field_name in model_description.fields) {
 			let type = model_description.fields[field_name].type
-			if (type !== 'computed') {
-			  let extendedObj = {}; extendedObj[field_name] = obj[field_name]; extendObservable(obj, extendedObj)
-			  if (obj[field_name] === undefined) obj[field_name] = null
-			}
-			else {
-				let extendedObj = {}; extendedObj[field_name] = obj[field_name]; extendObservable(obj, extendedObj)
-			}
 			store.field_types[type](model_name, field_name, obj)
 		}
 
 		if (init_data)
+			for (let field_name in init_data)
 			for (let field_name in init_data)
 				obj[field_name] = init_data[field_name]
 

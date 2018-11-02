@@ -1,5 +1,5 @@
 import store 	from '../store'
-import Model  from '../model'
+import { Model, model } from '../model'
 import id 			from '../fields/id'
 import field 		from '../fields/field'
 import foreign	from '../fields/foreign'
@@ -10,6 +10,7 @@ describe('Other tests: Chat.', async () => {
 
 	store.clear()
 
+	@model
 	class User extends Model {
 		@id    id         : number
 		@field first_name	: string
@@ -19,6 +20,7 @@ describe('Other tests: Chat.', async () => {
 		get full_name() : string { return `${this.first_name} ${this.last_name}` }
 	}
 
+	@model
 	class Channel extends Model {
 		@id id : number
 		@many('ChannelMessage', 'channel_id') messages : ChannelMessage[]
@@ -33,6 +35,7 @@ describe('Other tests: Chat.', async () => {
 		}
 	}
 
+	@model
 	class ChannelMessage extends Model {
 		@id 		id 				 : number
 		@field 	created    : string

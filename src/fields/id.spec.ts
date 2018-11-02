@@ -1,11 +1,12 @@
 import store 	from '../store'
-import Model  from '../model'
+import { Model, model } from '../model'
 import id from './id'
 
 
 describe('Id', () => {
 	store.clear()
 
+	@model
 	class A extends Model {
 		@id id: number
 	}

@@ -19,6 +19,8 @@ let type = 'id'
 export function registerFieldId() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
 
+		let extendedObj = {}; extendedObj[field_name] = obj[field_name]; extendObservable(obj, extendedObj)
+		if (obj[field_name] === undefined) obj[field_name] = null
 
 		intercept(obj, 'id', (change) => {
 			if (change.newValue != null)

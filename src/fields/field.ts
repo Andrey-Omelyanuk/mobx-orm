@@ -6,7 +6,8 @@ let type = 'field'
 
 export function registerField() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
-		// nothing do
+		let extendedObj = {}; extendedObj[field_name] = obj[field_name]; extendObservable(obj, extendedObj)
+		if (obj[field_name] === undefined) obj[field_name] = null
 	})
 }
 registerField()

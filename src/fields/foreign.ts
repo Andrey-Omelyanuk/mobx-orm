@@ -1,6 +1,6 @@
 // import 'reflect-metadata'
 import store from '../store'
-import {extendObservable} from "mobx"
+import {extendObservable, computed} from 'mobx'
 
 
 let type = 'foreign'
@@ -12,15 +12,24 @@ export function registerForeign() {
 		let foreign_id_field_name = store.models[model_name].fields[field_name].settings.foreign_id_field_name
 
 		let extendedObj = {}
-		Object.assign(extendedObj, field_name, {
-			get: function() {
-				console.log(field_name)
-				return store.models[foreign_model_name].objects[foreign_id_field_name]
-			}
+
+		obj[field_name] = computed(() => {
+			console.log(field_name)
+			return store.models[foreign_model_name].objects[foreign_id_field_name]
 		})
-		console.log(extendedObj, field_name)
-		extendObservable(obj, extendedObj)
-		console.log(obj)
+
+		// Object.defineProperty(extendedObj, field_name, {
+		// 	get: function() {
+		// 		console.log(field_name)
+		// 		return store.models[foreign_model_name].objects[foreign_id_field_name]
+		// 	}
+		// })
+		// //delete extendedObj['0']
+		// console.log(field_name)
+		// console.log('obj', obj)
+		// console.log('obj ext', extendedObj)
+		// extendObservable(obj, extendedObj)
+		// console.log('obj get2', obj[field_name])
 	})
 }
 registerForeign()

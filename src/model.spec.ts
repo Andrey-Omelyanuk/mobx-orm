@@ -1,4 +1,4 @@
-import { computed } from 'mobx'
+import { computed, observable } from 'mobx'
 import store from './store'
 import { Model, model } from './model'
 import id    from './fields/id'
