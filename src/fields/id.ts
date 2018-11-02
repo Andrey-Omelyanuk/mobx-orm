@@ -19,8 +19,6 @@ let type = 'id'
 export function registerFieldId() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
 
-		let extendedObj = {}; extendedObj['id'] = obj['id']; extendObservable(obj, extendedObj)
-		if (obj.id === undefined) obj.id = null
 
 		intercept(obj, 'id', (change) => {
 			if (change.newValue != null)
@@ -35,7 +33,7 @@ export function registerFieldId() {
 			return change
 		})
 
-		observe(obj, field_name, (change) => {
+		observe(obj, 'id', (change) => {
 			if (change.newValue)
 				store.inject(model_name,obj)
 		})
