@@ -12,7 +12,6 @@ describe('Field', () => {
 	}
 
 	it('...', async ()=> {
-
 		let a = new A(); 	expect(a.x).toBeNull()
 		a.x = 1; 					expect(a.x).toBe(1)
 	})

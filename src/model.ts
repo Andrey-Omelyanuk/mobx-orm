@@ -49,7 +49,6 @@ export function model(cls) {
 
 		if (init_data)
 			for (let field_name in init_data)
-			for (let field_name in init_data)
 				obj[field_name] = init_data[field_name]
 
 		return obj

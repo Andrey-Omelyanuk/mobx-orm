@@ -1,5 +1,5 @@
 import store from './store'
-import Model from './model'
+import { Model } from './model'
 
 
 describe('Store', () => {

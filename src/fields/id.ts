@@ -1,4 +1,4 @@
-import { extendObservable, observe, intercept } from 'mobx'
+import { observable, observe, intercept } from 'mobx'
 import store from '../store'
 
 
@@ -19,9 +19,7 @@ let type = 'id'
 export function registerFieldId() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
 
-		let extendedObj = {}; extendedObj[field_name] = obj[field_name]; extendObservable(obj, extendedObj)
-		if (obj[field_name] === undefined) obj[field_name] = null
-
+		// before changes
 		intercept(obj, 'id', (change) => {
 			if (change.newValue != null)
 				if(obj.id != null)
@@ -35,10 +33,14 @@ export function registerFieldId() {
 			return change
 		})
 
+		// after changes
 		observe(obj, 'id', (change) => {
 			if (change.newValue)
 				store.inject(model_name,obj)
 		})
+
+		// default value
+		if (obj[field_name] === undefined) obj[field_name] = null
 	})
 }
 registerFieldId()
@@ -50,4 +52,7 @@ export default function id(cls: any, field_name: string) {
 	if (field_name != 'id')
 		throw new Error(`id field should named by 'id'`)
 	store.registerModelField(model_name, type, field_name, {})
+
+	// register observable into mobx
+	observable(cls, field_name)
 }

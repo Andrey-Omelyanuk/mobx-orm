@@ -1,5 +1,5 @@
 import { observable } from 'mobx'
-import Model from './model'
+import { Model } from './model'
 
 
 interface FieldTypeDecorator {
