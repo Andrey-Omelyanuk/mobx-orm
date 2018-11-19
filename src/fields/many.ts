@@ -1,92 +1,82 @@
 import store from '../store'
+import {observable, observe, intercept} from 'mobx'
 
-
-let type = 'many'
 
 export function registerMany() {
-	store.registerFieldType(type, (model_name, field_name, obj) => {
-		let model_description 				= store.models[model_name]
-		let field_description 				= model_description.fields[field_name]
-		let foreign_model_name    		= field_description.settings.foreign_model_name
-		let foreign_id_field_name 		= field_description.settings.foreign_id_field_name
-		let foreign_model_description = store.models[foreign_model_name]
-		let foreign_field_description = foreign_model_description.fields[foreign_id_field_name]
-
-		if (!obj.__data[field_name]) obj.__data[field_name] = []
-
-		Object.defineProperty (obj, field_name, {
-			get: () => obj.__data[field_name],
-			set: (new_value) => {
-				throw new Error(`Don't change this field!`)
-			}
-		})
-
-		if (!field_description.settings.subscription_to_foreign) {
-			field_description.settings.subscription_to_foreign = foreign_field_description.onUpdate(({obj, new_value, old_value}) => {
-
-				if (obj.id == null) return  // ignore object if you not in the store yet
-				//console.log('onUpdate', obj.id, new_value, old_value)
-				let old_obj:any = model_description.objects[old_value]
-				let new_obj:any = model_description.objects[new_value]
-
-				if (old_obj) {
-					let index = old_obj[field_name].indexOf(obj)
-					if (index > -1) old_obj[field_name].splice(index, 1)
-				}
-				if (new_obj) {
-					let index = new_obj[field_name].indexOf(obj)
-					if (index == -1) {
-						//console.log('push2', obj)
-						new_obj[field_name].push(obj)
-					}
-				}
-			})
-		}
-
-		if (!field_description.settings.subscription_on_inject) {
-			field_description.settings.subscription_on_inject = foreign_model_description.onInject((foreign) => {
-				//console.log('onInject', foreign.id, foreign[foreign_id_field_name])
-				if (foreign[foreign_id_field_name] != null) {
-					let obj:any = model_description.objects[foreign[foreign_id_field_name]]
-					let index = obj[field_name].indexOf(foreign)
-					// console.log('...', index, foreign)
-					if (index == -1) {
-						//console.log('push', foreign.id)
-						obj[field_name].push(foreign)
-					}
-				}
-			})
-		}
-
-		if (!field_description.settings.subscription_on_eject) {
-			field_description.settings.subscription_on_eject = foreign_model_description.onEject((foreign) => {
-				//console.log('onEject', foreign.id, foreign[foreign_id_field_name])
-				if (foreign[foreign_id_field_name] != null) {
-					let obj:any = model_description.objects[foreign[foreign_id_field_name]]
-					let index = obj[field_name].indexOf(foreign)
-					if (index > -1) obj[field_name].splice(index, 1)
-				}
-			})
-		}
-
+	store.registerFieldType('many', (model_name, field_name, obj) => {
+		// default value
+		obj[field_name] = []
 	})
 }
 registerMany()
 
 
-export default function many(foreign_model_name: string, foreign_id_field_name: string) {
+export default function many(foreign_model_name: any, foreign_id_field_name: string) {
 	return function (cls: any, field_name: string) {
 
 		// It can be wrong name "Function" because we wrapped class in decorator before.
 		let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
+		// detect class name
+		if (typeof foreign_model_name === 'function')
+			foreign_model_name
+				= foreign_model_name.constructor.name == 'Function'
+				? foreign_model_name.prototype.constructor.name
+				: foreign_model_name.constructor.name
 
-		// не выполняеться! потому что класс B объявлен после класса А
-		// а он уже нужен в классе А!!!
-		// console.warn(cls, '---', field_name, '---', Reflect.getMetadata('design:type', cls, field_name))
-
-		store.registerModelField(model_name, type, field_name, {
+		if (!store.models[model_name])         store.registerModel(model_name)
+		if (!store.models[foreign_model_name]) store.registerModel(foreign_model_name)
+		store.registerModelField(model_name, 'many', field_name, {
 			foreign_model_name   : foreign_model_name,
 			foreign_id_field_name: foreign_id_field_name
+		})
+
+		// register into mobx
+		observable(cls, field_name)
+
+		// сдедим за созданием объектов, для первого подсчета many
+		observe(store.models[model_name].objects, (change) => {
+			if (change.type == 'add')
+				for (let obj of Object.values(store.models[foreign_model_name].objects))
+					if (obj[foreign_id_field_name] == change.newValue.id)
+						change.newValue[field_name].push(obj)
+		})
+
+		// следим за всеми foreign объектами
+		observe(store.models[foreign_model_name].objects, (change) => {
+			switch (change.type) {
+				// появился новый объект
+				case 'add':
+					let new_object = store.models[model_name].objects[(<any>change).newValue[foreign_id_field_name]]
+					if (new_object)
+						new_object[field_name].push(change.newValue)
+
+					// подписываемся на каждый объект
+					observe(change.newValue, foreign_id_field_name, (field_change) => {
+						//
+						if (field_change.newValue) {
+							let obj = store.models[model_name].objects[field_change.newValue]
+							if (obj)
+								obj[field_name].push(change.newValue)
+						}
+						//
+						if (field_change.oldValue) {
+							let object = store.models[model_name].objects[field_change.oldValue]
+							let index = object[field_name].indexOf(change.newValue)
+							if (index > -1)
+								object[field_name].splice(index, 1)
+						}
+					})
+					break
+				// удалили объект
+				case 'remove':
+					let old_object = store.models[model_name].objects[(<any>change).oldValue[foreign_id_field_name]]
+					if (old_object) {
+						let index = old_object[field_name].indexOf(change.oldValue)
+						if (index > -1)
+						  old_object[field_name].splice(index, 1)
+					}
+					break
+			}
 		})
 	}
 }

@@ -1,19 +1,21 @@
 import store 	from '../store'
-import Model  from '../model'
-import id			from '../fields/id'
-import field	from '../fields/field'
-import one    from '../fields/one'
+import { Model, model } from '../model'
+import id			from './id'
+import field	from './field'
+import one    from './one'
 
 
 describe('One', () => {
 
 	store.clear()
 
+	@model
 	class A extends Model {
 		@id id : number
 		@one('B','a_id') b : B
 	}
 
+	@model
 	class B extends Model {
 		@field a_id : number
 	}
