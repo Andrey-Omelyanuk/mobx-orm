@@ -17,26 +17,35 @@ describe('One', () => {
 
 	@model
 	class B extends Model {
+		@id id : number
 		@field a_id : number
 	}
 
 	it('...', async ()=> {
 
-		let a = new A({id: 1})
-		let b1 = new B()
-		let b2 = new B()
+		let a1 = new A(); await a1.save()
+		let b1 = new B(); await b1.save()
+		let b2 = new B(); await b2.save()
 
-		expect(a.b).toBeNull()
+		expect(a1.b   ).toBeNull()
+		expect(b1.a_id).toBeNull()
+		expect(b2.a_id).toBeNull()
 
-		b1.a_id = 1;  expect(a.b).toBe(b1)
+		b1.a_id = a1.id
 
-		a.b = null; 	expect(a.b    ).toBeNull()
-									expect(b1.a_id).toBeNull()
+		expect(a1.b   ).toBe(b1)
+		expect(b1.a_id).toBe(a1.id)
+		expect(b2.a_id).toBeNull()
 
-		a.b = b2; 		expect(a.b    ).toBe(b2)
-									expect(b1.a_id).toBeNull()
-									expect(b2.a_id).toBe(a.id)
+		a1.b = b2
 
-		expect(() => { b1.a_id = a.id }).toThrow(new Error('Not unique value. (One)'))
+		expect(a1.b   ).toBe(b2)
+		expect(b1.a_id).toBeNull()
+		expect(b2.a_id).toBe(a1.id)
+
+		await b2.delete()
+
+		expect(a1.b   ).toBeNull()
+		expect(b1.a_id).toBeNull()
 	})
 })

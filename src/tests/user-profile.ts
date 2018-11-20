@@ -1,5 +1,5 @@
 import store 	from '../store'
-import Model  from '../model'
+import { model, Model } from '../model'
 import id 			from '../fields/id'
 import field 		from '../fields/field'
 import foreign	from '../fields/foreign'
@@ -10,12 +10,14 @@ describe('User Profile.', async () => {
 
 	store.clear()
 
+	@model
 	class User extends Model {
 		@id       id      : number
 		@field    name		: string
 		@one('UserProfile', 'user_id') profile : UserProfile
 	}
 
+	@model
 	class UserProfile extends Model {
 		@id 	  					id			: number
 		@field  					user_id	: number

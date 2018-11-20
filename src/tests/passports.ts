@@ -1,5 +1,5 @@
 import store 	from '../store'
-import Model  from '../model'
+import { model, Model } from '../model'
 import id 			from '../fields/id'
 import field 		from '../fields/field'
 import foreign	from '../fields/foreign'
@@ -10,6 +10,7 @@ describe('Other tests: Passports.', async () => {
 
 	store.clear()
 
+	@model
 	class User extends Model {
 		@id id : number
 		@field user_name : string
@@ -22,6 +23,7 @@ describe('Other tests: Passports.', async () => {
 		}
 	}
 
+	@model
 	class Passport extends Model {
 		@id    id         : number
 		@field timestamp  : Date
@@ -34,6 +36,7 @@ describe('Other tests: Passports.', async () => {
 		}
 	}
 
+	@model
 	class Key extends Model {
 		@id id : number
 		@field private : string
@@ -65,6 +68,7 @@ describe('Other tests: Passports.', async () => {
 	  REJECT = 2
 	}
 
+	@model
 	class Action extends Model {
 		@id id: number
 		@field timestamp  : Date
@@ -84,14 +88,14 @@ describe('Other tests: Passports.', async () => {
 		}
 	}
 
-	let userA = new User({user_name: 'A'}); userA.save()
-	let userB = new User({user_name: 'B'}); userB.save()
-	let userC = new User({user_name: 'C'}); userC.save()
-
 	it('...', async ()=> {
-		let passportA = new Passport({first_name: 'A', last_name: 'A'}); passportA.save()
-		let passportB = new Passport({first_name: 'B', last_name: 'B'}); passportB.save()
-		let passportC = new Passport({first_name: 'C', last_name: 'C'}); passportC.save()
+		let userA = new User({user_name: 'A'}); await userA.save()
+		let userB = new User({user_name: 'B'}); await userB.save()
+		let userC = new User({user_name: 'C'}); await userC.save()
+
+		let passportA = new Passport({first_name: 'A', last_name: 'A'}); await passportA.save()
+		let passportB = new Passport({first_name: 'B', last_name: 'B'}); await passportB.save()
+		let passportC = new Passport({first_name: 'C', last_name: 'C'}); await passportC.save()
 
 		let keyA1 = userA.generateNewKey()
 		let keyB1 = userB.generateNewKey()
@@ -105,5 +109,4 @@ describe('Other tests: Passports.', async () => {
 		let action5 = keyB1.sign(passportA, keyA1, ActionType.ACCEPT)
 
 	})
-
 })
