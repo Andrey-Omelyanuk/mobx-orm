@@ -134,6 +134,8 @@ export class Store {
 	}
 
 }
-
 let store = new Store()
 export default store
+
+declare let windows
+windows.mobx_orm_store = store
