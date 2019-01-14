@@ -6,7 +6,7 @@
 	"main"      : "dist/z-data.js",
 	"module"    : "src/index.ts",
   "dependencies": {
-		"mobx"   :"5.5.1",
+		"mobx"   : "5.8.0",
     "core-js": "2.5.3"
   },
   "scripts": {
