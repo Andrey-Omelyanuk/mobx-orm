@@ -1,6 +1,6 @@
 // import 'reflect-metadata'
 import store from '../store'
-import {intercept, observe, observable} from 'mobx'
+import {intercept, observe, observable, autorun} from 'mobx'
 
 
 let type = 'foreign'
@@ -14,10 +14,10 @@ export function registerForeign() {
 		// Computed
 		// watch "foreign_id" field
 		// e.i. update foreign obj when foreign id was changed
-		observe(obj, foreign_id_field_name, (change => {
-			let foreign_obj = store.models[foreign_model_name].objects[change.newValue]
+		autorun(() => {
+			let foreign_obj = store.models[foreign_model_name].objects[obj[foreign_id_field_name]]
 			obj[field_name] = foreign_obj ? foreign_obj : null
-		}))
+		})
 
 		// Setter
 		// 1. checks before set new changes
