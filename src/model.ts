@@ -4,11 +4,23 @@ import store from './store'
 
 export class Model {
 
+	static get(id: number) {
+		let model_name = this.prototype.constructor.name
+		return store.models[model_name].objects[id]
+	}
+
+	static all() {
+		let model_name = this.prototype.constructor.name
+		return store.models[model_name].objects
+	}
+
 	private readonly _init_data
 
 	constructor(init_data?) {
 		this._init_data = init_data
 	}
+
+
 
 	// если нет id, то создать его
 	// если нужна синхронизация с удаленным хранилищем, то:

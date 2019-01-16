@@ -15,7 +15,6 @@ describe('Model', () => {
 		@field first_name: string
 		@field last_name : string
 		@computed get full_name() {
-			console.log('full name', this)
 			return `${this.first_name} ${this.last_name}`
 		}
 	}
@@ -37,4 +36,24 @@ describe('Model', () => {
 													expect(store.models['User'].objects[old_id]).toBeUndefined()
 	})
 
+	it('Model.get(id)', async () => {
+		let user_a = new User({first_name: 'a', last_name: 'a'}); user_a.save()
+		let user_b = new User({first_name: 'b', last_name: 'b'}); user_b.save()
+		let user_c = new User({first_name: 'c', last_name: 'c'}); user_c.save()
+
+		expect(User.get(user_a.id)).toBe(user_a)
+		expect(User.get(user_b.id)).toBe(user_b)
+		expect(User.get(user_c.id)).toBe(user_c)
+	})
+
+	it('Model.all()', async () => {
+		let user_a = new User({first_name: 'a', last_name: 'a'}); user_a.save()
+		let user_b = new User({first_name: 'b', last_name: 'b'}); user_b.save()
+		let user_c = new User({first_name: 'c', last_name: 'c'}); user_c.save()
+		let all_users = User.all()
+
+		expect(all_users[user_a.id]).toBe(user_a)
+		expect(all_users[user_b.id]).toBe(user_b)
+		expect(all_users[user_c.id]).toBe(user_c)
+	})
 })
