@@ -20,8 +20,8 @@ interface ModelDescription {
 		[field_name: string]: any
 	}
 	getNewId: ()=>number
-	save  : (model_name, obj)=> any 
-	delete: (model_name, obj)=> any
+	save  : undefined | ((model_name, obj)=> any) 
+	delete: undefined | ((model_name, obj)=> any)
 }
 
 /*
@@ -50,7 +50,9 @@ export class Store {
 				getNewId: () => {
 					_count_id = _count_id + 1
 					return _count_id
-				}
+				},
+				save  : undefined,
+				delete: undefined
 			}
 			this.models[model_name].objects = observable(this.models[model_name].objects)
 		}
