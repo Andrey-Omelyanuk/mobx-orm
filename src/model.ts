@@ -4,12 +4,12 @@ import store from './store'
 
 export class Model {
 
-	static get(id: number) {
+	static get(id: number): any {
 		let model_name = this.prototype.constructor.name
 		return store.models[model_name].objects[id]
 	}
 
-	static all() {
+	static all(): any {
 		let model_name = this.prototype.constructor.name
 		return store.models[model_name].objects
 	}
