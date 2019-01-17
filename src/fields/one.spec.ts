@@ -28,14 +28,14 @@ describe('One', () => {
 		let b2 = new B(); await b2.save()
 
 		expect(a1.b   ).toBeNull()
-		expect(b1.a_id).toBeNull()
-		expect(b2.a_id).toBeNull()
+		expect(b1.a_id).toBeUndefined()
+		expect(b2.a_id).toBeUndefined()
 
 		b1.a_id = a1.id
 
 		expect(a1.b   ).toBe(b1)
 		expect(b1.a_id).toBe(a1.id)
-		expect(b2.a_id).toBeNull()
+		expect(b2.a_id).toBeUndefined()
 
 		a1.b = b2
 

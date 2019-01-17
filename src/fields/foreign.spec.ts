@@ -33,15 +33,15 @@ describe('Foreign', () => {
 		let a1 = new A({test: 1}); await a1.save()
 		let a2 = new A({test: 2}); await a2.save()
 
-		let b = new B(); 	expect(b.a1_id).toBeNull()
-											expect(b.a2_id).toBeNull()
+		let b = new B(); 	expect(b.a1_id).toBeUndefined()
+											expect(b.a2_id).toBeUndefined()
 											expect(b.a1   ).toBeNull()
 											expect(b.a2   ).toBeNull()
 		// set id
 		b.a1_id = a2.id;  expect(b.a1_id).toBe(a2.id)
 											expect(b.a1   ).toBe(a2)
 		// set foreign
-	  b.a1 = a1;			  expect(b.a1_id).toBe(a1.id)
+		b.a1 = a1;			  expect(b.a1_id).toBe(a1.id)
 											expect(b.a1   ).toBe(a1)
 		// set foreign
 		b.a2 = a2;			  expect(b.a2_id).toBe(a2.id)

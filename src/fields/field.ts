@@ -7,7 +7,7 @@ let type = 'field'
 export function registerField() {
 	store.registerFieldType(type, (model_name, field_name, obj) => {
 		// default value
-		if (obj[field_name] === undefined) obj[field_name] = null
+		// if (obj[field_name] === undefined) obj[field_name] = null
 	})
 }
 registerField()
