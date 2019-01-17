@@ -20,6 +20,8 @@ interface ModelDescription {
 		[field_name: string]: any
 	}
 	getNewId: ()=>number
+	save  : (model_name, obj)=> any 
+	delete: (model_name, obj)=> any
 }
 
 /*

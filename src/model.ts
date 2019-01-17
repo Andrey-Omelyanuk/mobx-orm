@@ -20,20 +20,33 @@ export class Model {
 		this._init_data = init_data
 	}
 
-
-
 	// если нет id, то создать его
 	// если нужна синхронизация с удаленным хранилищем, то:
 	//      если нет id - то создаем объект удаленно, оттуда и приходит обект с готовым id
 	//			если есть   - то обновляем удаленно
 	async save() {
-		let obj = <any>this
-		if (!obj.id)
-			obj.id = obj._getNewId()
+		let model_name = this.constructor.name
+		let model_description = store.models[model_name]
+		if (model_description.save) 
+			return model_description.save(model_name, this)
+		else {
+			let obj = <any>this
+			if (!obj.id)
+				obj.id = model_description.getNewId()
+
+			return Promise.resolve(obj)
+		}
 	}
 
 	async delete() {
-		(<any>this).id = null
+		let model_name = this.constructor.name
+		let model_description = store.models[model_name]
+		if (model_description.delete) 
+			return model_description.delete(model_name, this)
+		else {
+			(<any>this).id = null
+			return Promise.resolve(this)
+		}
 	}
 }
 
@@ -52,7 +65,6 @@ export function model(cls) {
 		let obj  = new c()
 		let init_data = obj._init_data
 		delete obj._init_data
-		obj._getNewId = model_description.getNewId
 
 		for (let field_name in model_description.fields) {
 			let type = model_description.fields[field_name].type
