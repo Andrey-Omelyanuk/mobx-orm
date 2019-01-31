@@ -60,10 +60,12 @@ export default function many(foreign_model_name: any, foreign_id_field_name: str
 						}
 						//
 						if (field_change.oldValue) {
-							let object = store.models[model_name].objects[field_change.oldValue]
-							let index = object[field_name].indexOf(change.newValue)
-							if (index > -1)
-								object[field_name].splice(index, 1)
+							let obj = store.models[model_name].objects[field_change.oldValue]
+							if (obj) {
+								let index = obj[field_name].indexOf(change.newValue)
+								if (index > -1)
+									obj[field_name].splice(index, 1)
+							}
 						}
 					})
 					break
