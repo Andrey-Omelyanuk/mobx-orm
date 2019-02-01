@@ -51,8 +51,9 @@ export default function many(foreign_model_name: any, foreign_id_field_name: str
 					foreign_object = change.newValue
 					object_with_many = store.models[model_name].objects[foreign_object[foreign_id_field_name]]
 					if (object_with_many) {
+						if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} add ${foreign_object.id} start`)
 						object_with_many[many_field_name].push(foreign_object)
-						if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} add ${foreign_object.id}`)
+						if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} add ${foreign_object.id} finish`)
 					}
 
 					observe(foreign_object, foreign_id_field_name, (field_change) => {
@@ -60,8 +61,9 @@ export default function many(foreign_model_name: any, foreign_id_field_name: str
 							let object_with_many_id = field_change.newValue
 							let object_with_many = store.models[model_name].objects[object_with_many_id]
 							if (object_with_many) {
+								if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} add ${foreign_object.id} start`)
 								object_with_many[many_field_name].push(foreign_object)
-								if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} add ${foreign_object.id}`)
+								if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} add ${foreign_object.id} finish`)
 							}
 						}
 						if (field_change.oldValue) {
@@ -70,8 +72,9 @@ export default function many(foreign_model_name: any, foreign_id_field_name: str
 							if (object_with_many) {
 								let index = object_with_many[many_field_name].indexOf(foreign_object)
 								if (index > -1) {
+									if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} remove ${foreign_object.id} start`)
 									object_with_many[many_field_name].splice(index, 1)
-									if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} remove ${foreign_object.id}`)
+									if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} remove ${foreign_object.id} finish`)
 								}
 							}
 						}
@@ -84,8 +87,9 @@ export default function many(foreign_model_name: any, foreign_id_field_name: str
 					if (object_with_many) {
 						let index = object_with_many[many_field_name].indexOf(foreign_object)
 						if (index > -1) {
+							if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} remove ${foreign_object.id} start`)
 							object_with_many[many_field_name].splice(index, 1)
-							if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} remove ${foreign_object.id}`)
+							if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} remove ${foreign_object.id} finish`)
 						}
 					}
 					break
