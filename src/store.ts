@@ -1,5 +1,4 @@
 import { observable } from 'mobx'
-import { Model } from './model'
 
 
 interface FieldTypeDecorator {
@@ -36,6 +35,7 @@ interface ModelDescription {
 
 export class Store {
 
+	debug      : boolean = false 
 	models     : { [model_name: string]: ModelDescription   } = {}
 	field_types: { [type_name : string]: FieldTypeDecorator } = {}
 
@@ -135,6 +135,12 @@ export class Store {
 					obj.delete()
 
 		this.models = {}
+	}
+
+	clearModel(model_name) {
+		for (let obj of <any>Object.values(this.models[model_name].objects))
+			if(obj.delete)
+				obj.delete()
 	}
 
 }

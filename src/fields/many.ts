@@ -1,5 +1,5 @@
-import store from '../store'
 import {observable, observe, intercept} from 'mobx'
+import store from '../store'
 
 
 export function registerMany() {
@@ -12,7 +12,7 @@ registerMany()
 
 
 export default function many(foreign_model_name: any, foreign_id_field_name: string) {
-	return function (cls: any, field_name: string) {
+	return function (cls: any, many_field_name: string) {
 
 		// It can be wrong name "Function" because we wrapped class in decorator before.
 		let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
@@ -25,57 +25,68 @@ export default function many(foreign_model_name: any, foreign_id_field_name: str
 
 		if (!store.models[model_name])         store.registerModel(model_name)
 		if (!store.models[foreign_model_name]) store.registerModel(foreign_model_name)
-		store.registerModelField(model_name, 'many', field_name, {
+		store.registerModelField(model_name, 'many', many_field_name, {
 			foreign_model_name   : foreign_model_name,
 			foreign_id_field_name: foreign_id_field_name
 		})
 
 		// register into mobx
-		observable(cls, field_name)
+		observable(cls, many_field_name)
 
 		// сдедим за созданием объектов, для первого подсчета many
 		observe(store.models[model_name].objects, (change) => {
 			if (change.type == 'add')
 				for (let obj of Object.values(store.models[foreign_model_name].objects))
 					if (obj[foreign_id_field_name] == change.newValue.id)
-						change.newValue[field_name].push(obj)
+						change.newValue[many_field_name].push(obj)
 		})
 
 		// следим за всеми foreign объектами
-		observe(store.models[foreign_model_name].objects, (change) => {
+		observe(store.models[foreign_model_name].objects, (change: any) => {
+			let foreign_object   : any
+			let object_with_many : any
 			switch (change.type) {
 				// появился новый объект
 				case 'add':
-					let new_object = store.models[model_name].objects[(<any>change).newValue[foreign_id_field_name]]
-					if (new_object)
-						new_object[field_name].push(change.newValue)
+					foreign_object = change.newValue
+					object_with_many = store.models[model_name].objects[foreign_object[foreign_id_field_name]]
+					if (object_with_many) {
+						object_with_many[many_field_name].push(foreign_object)
+						if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} add ${foreign_object.id}`)
+					}
 
-					// подписываемся на каждый объект
-					observe(change.newValue, foreign_id_field_name, (field_change) => {
-						//
+					observe(foreign_object, foreign_id_field_name, (field_change) => {
 						if (field_change.newValue) {
-							let obj = store.models[model_name].objects[field_change.newValue]
-							if (obj)
-								obj[field_name].push(change.newValue)
+							let object_with_many_id = field_change.newValue
+							let object_with_many = store.models[model_name].objects[object_with_many_id]
+							if (object_with_many) {
+								object_with_many[many_field_name].push(foreign_object)
+								if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} add ${foreign_object.id}`)
+							}
 						}
-						//
 						if (field_change.oldValue) {
-							let obj = store.models[model_name].objects[field_change.oldValue]
-							if (obj) {
-								let index = obj[field_name].indexOf(change.newValue)
-								if (index > -1)
-									obj[field_name].splice(index, 1)
+							let object_with_many_id = field_change.oldValue
+							let object_with_many = store.models[model_name].objects[object_with_many_id]
+							if (object_with_many) {
+								let index = object_with_many[many_field_name].indexOf(foreign_object)
+								if (index > -1) {
+									object_with_many[many_field_name].splice(index, 1)
+									if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} remove ${foreign_object.id}`)
+								}
 							}
 						}
 					})
 					break
 				// удалили объект
 				case 'remove':
-					let old_object = store.models[model_name].objects[(<any>change).oldValue[foreign_id_field_name]]
-					if (old_object) {
-						let index = old_object[field_name].indexOf(change.oldValue)
-						if (index > -1)
-						  old_object[field_name].splice(index, 1)
+					foreign_object = change.oldValue
+					object_with_many = store.models[model_name].objects[foreign_object[foreign_id_field_name]]
+					if (object_with_many) {
+						let index = object_with_many[many_field_name].indexOf(foreign_object)
+						if (index > -1) {
+							object_with_many[many_field_name].splice(index, 1)
+							if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} remove ${foreign_object.id}`)
+						}
 					}
 					break
 			}
