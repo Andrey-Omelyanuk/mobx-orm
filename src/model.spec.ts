@@ -9,13 +9,17 @@ describe('Model', () => {
 
 	store.clear()
 
-  @model
+	@model
 	class User extends Model {
-		@id id    : number
-		@field first_name: string
-		@field last_name : string
+		@id id				: number
+		@field first_name	: string
+		@field last_name 	: string
 		@computed get full_name() {
 			return `${this.first_name} ${this.last_name}`
+		}
+
+		static staticMethod () {
+			return true
 		}
 	}
 
@@ -28,12 +32,12 @@ describe('Model', () => {
 		let full_name = user.full_name
 		expect(user.full_name).toBe('A B')
 
-		await user.save();    expect(user.id).not.toBeNull()
-													expect(store.models['User'].objects[user.id]).toBe(user)
+		await user.save();	expect(user.id).not.toBeNull()
+							expect(store.models['User'].objects[user.id]).toBe(user)
 
 		let old_id = user.id
-		await user.delete();  expect(user.id).toBeNull()
-													expect(store.models['User'].objects[old_id]).toBeUndefined()
+		await user.delete();	expect(user.id).toBeNull()
+								expect(store.models['User'].objects[old_id]).toBeUndefined()
 	})
 
 	it('Model.get(id)', async () => {
@@ -52,8 +56,13 @@ describe('Model', () => {
 		let user_c = new User({first_name: 'c', last_name: 'c'}); user_c.save()
 		let all_users = User.all()
 
-		expect(all_users[user_a.id]).toBe(user_a)
-		expect(all_users[user_b.id]).toBe(user_b)
-		expect(all_users[user_c.id]).toBe(user_c)
+		expect(all_users.includes(user_a)).toBeTruthy()
+		expect(all_users.includes(user_b)).toBeTruthy()
+		expect(all_users.includes(user_c)).toBeTruthy()
+	})
+
+	it('Static method should stay on class', async () => {
+		expect(typeof User.staticMethod).toBe('function')
+		expect(User.staticMethod()).toBeTruthy()
 	})
 })

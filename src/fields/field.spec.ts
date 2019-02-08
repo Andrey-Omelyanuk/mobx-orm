@@ -12,8 +12,8 @@ describe('Field', () => {
 	}
 
 	it('...', async ()=> {
-		let a = new A(); 	expect(a.x).toBeUndefined()
-		a.x = 1; 					expect(a.x).toBe(1)
+		let a = new A();	expect(a.x).toBeUndefined()
+		a.x = 1;			expect(a.x).toBe(1)
 	})
 
 })

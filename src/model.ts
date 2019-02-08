@@ -77,6 +77,10 @@ export function model(cls) {
 
 		return obj
 	}
+	// copy static properties/methods
+	for (let prop_name in cls)
+		if(f[prop_name] == undefined)
+			f[prop_name] = cls[prop_name]
 
 	f.__proto__ = cls.__proto__
 	f.prototype = cls.prototype   // copy prototype so intanceof operator still works
