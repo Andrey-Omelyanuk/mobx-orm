@@ -78,7 +78,7 @@ export function model(cls) {
 		return obj
 	}
 	// copy static properties/methods
-	for (let prop_name in cls)
+	for (let prop_name of Object.getOwnPropertyNames(cls))
 		if(f[prop_name] == undefined)
 			f[prop_name] = cls[prop_name]
 
