@@ -53,7 +53,8 @@ export class Store {
 					return _count_id
 				},
 				save  : undefined,
-				delete: undefined
+				delete: undefined,
+				load  : undefined
 			}
 			this.models[model_name].objects = observable(this.models[model_name].objects)
 		}
