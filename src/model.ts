@@ -13,6 +13,15 @@ export class Model {
 		return <Model[]>Object.values(store.models[model_name].objects)
 	}
 
+	static async load(where = {}, order_by = {}, limit = 0, offset = 0) {
+		let model_name = this.constructor.name
+		let model_description = store.models[model_name]
+		if (model_description.load) 
+			return model_description.load(where, order_by, limit, offset)
+		else
+			throw Error(`load function is not defined for ${model_name}`) 
+	}
+
 	private readonly _init_data
 
 	constructor(init_data?) {
@@ -46,15 +55,6 @@ export class Model {
 			(<any>this).id = null
 			return Promise.resolve(this)
 		}
-	}
-
-	async load(where = {}, order_by = {}, limit = 0, offset = 0) {
-		let model_name = this.constructor.name
-		let model_description = store.models[model_name]
-		if (model_description.load) 
-			return model_description.load(where, order_by, limit, offset)
-		else
-			throw Error(`load function is not defined for ${model_name}`) 
 	}
 }
 
