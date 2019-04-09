@@ -48,7 +48,7 @@ export class Model {
 		}
 	}
 
-	async load(where, order_by, limit, offset) {
+	async load(where = {}, order_by = {}, limit = 0, offset = 0) {
 		let model_name = this.constructor.name
 		let model_description = store.models[model_name]
 		if (model_description.load) 
