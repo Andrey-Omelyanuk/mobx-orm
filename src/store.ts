@@ -19,8 +19,8 @@ interface ModelDescription {
 		[field_name: string]: any
 	}
 	getNewId: ()=>number
-	save  : undefined | ((model_name, obj)=> any) 
-	delete: undefined | ((model_name, obj)=> any)
+	save  : undefined | ((obj)=> any) 
+	delete: undefined | ((obj)=> any)
 	load  : undefined | ((model_name, where, order_by, limit, offset) => any)
 }
 

@@ -17,7 +17,7 @@ export class Model {
 		let model_name = this.prototype.constructor.name
 		let model_description = store.models[model_name]
 		if (model_description.load) 
-			return model_description.load(model_name, where, order_by, limit, offset)
+			return model_description.load(this, where, order_by, limit, offset)
 		else
 			throw Error(`load function is not defined for ${model_name}`) 
 	}
@@ -36,7 +36,7 @@ export class Model {
 		let model_name = this.constructor.name
 		let model_description = store.models[model_name]
 		if (model_description.save) 
-			return model_description.save(model_name, this)
+			return model_description.save(this)
 		else {
 			let obj = <any>this
 			if (!obj.id)
@@ -50,7 +50,7 @@ export class Model {
 		let model_name = this.constructor.name
 		let model_description = store.models[model_name]
 		if (model_description.delete) 
-			return model_description.delete(model_name, this)
+			return model_description.delete(this)
 		else {
 			(<any>this).id = null
 			return Promise.resolve(this)
