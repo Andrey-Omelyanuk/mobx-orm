@@ -1,4 +1,3 @@
-import { observable, extendObservable } from 'mobx'
 import store from './store'
 
 
@@ -47,6 +46,15 @@ export class Model {
 			(<any>this).id = null
 			return Promise.resolve(this)
 		}
+	}
+
+	async load(where, order_by, limit, offset) {
+		let model_name = this.constructor.name
+		let model_description = store.models[model_name]
+		if (model_description.load) 
+			return model_description.load(where, order_by, limit, offset)
+		else
+			throw Error(`load function is not defined for ${model_name}`) 
 	}
 }
 
