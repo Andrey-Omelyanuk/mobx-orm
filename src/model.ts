@@ -17,7 +17,7 @@ export class Model {
 		let model_name = this.prototype.constructor.name
 		let model_description = store.models[model_name]
 		if (model_description.load) 
-			return model_description.load(where, order_by, limit, offset)
+			return model_description.load(model_name, where, order_by, limit, offset)
 		else
 			throw Error(`load function is not defined for ${model_name}`) 
 	}
