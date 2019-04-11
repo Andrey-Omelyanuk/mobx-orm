@@ -6,7 +6,7 @@ import foreign	from '../fields/foreign'
 import many 		from '../fields/many'
 
 
-describe('Other tests: Passports.', async () => {
+describe('Other tests: Passports.', () => {
 
 	store.clear()
 

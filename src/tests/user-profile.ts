@@ -6,7 +6,7 @@ import foreign	from '../fields/foreign'
 import one  		from '../fields/one'
 
 
-describe('User Profile.', async () => {
+describe('User Profile.', () => {
 
 	store.clear()
 

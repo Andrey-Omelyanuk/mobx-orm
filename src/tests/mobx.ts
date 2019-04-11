@@ -1,7 +1,7 @@
 import { observable, computed, reaction } from 'mobx'
 
 
-describe('Mobx Experiments.', async () => {
+describe('Mobx Experiments.', () => {
 
 	it('...', async ()=> {
 

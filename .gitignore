@@ -1,14 +1,5 @@
-.idea/
-.tmp/
-.DS_Store
-
-node_modules/
-dist/
+/.idea
+/node_modules
 
 npm-debug.log
 debug.log
-package-lock.json
-yarn.lock
-
-
-

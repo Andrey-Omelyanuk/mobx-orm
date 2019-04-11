@@ -45,7 +45,7 @@ export function adapter() {
     }
 }
 
-describe('Other tests: Adapter.', async () => {
+describe('Other tests: Adapter.', () => {
 
 	store.clear()
 
