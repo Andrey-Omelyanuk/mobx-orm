@@ -10,7 +10,8 @@
     "emitDecoratorMetadata"				: true,
 		"experimentalDecorators"			: true,
     "allowSyntheticDefaultImports": true,
-    "skipLibCheck"								: true,
+		"skipLibCheck"								: true,
+		"declaration"									: true,
 		"lib": [      
 			"dom",
 			"es2017"

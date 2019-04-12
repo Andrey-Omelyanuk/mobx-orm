@@ -1,5 +1,7 @@
 /.idea
 /node_modules
 
+/src/**/*.d.ts
+
 npm-debug.log
 debug.log

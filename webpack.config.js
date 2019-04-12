@@ -1,4 +1,5 @@
 const path = require('path')
+const TypescriptDeclarationPlugin = require('typescript-declaration-webpack-plugin');
 
 
 module.exports = function (env) {
@@ -20,6 +21,12 @@ module.exports = function (env) {
 				{ test: /\.ts$/, loader: 'tslint-loader', exclude: /node_modules/, }
       ]
     },
+
+    plugins: [
+      new TypescriptDeclarationPlugin({
+        out: 'z-data.d.ts'
+      })
+    ],
 
     resolve: {
       modules: ['node_modules'],
