@@ -1,5 +1,4 @@
 const path = require('path')
-const TypescriptDeclarationPlugin = require('typescript-declaration-webpack-plugin');
 
 
 module.exports = function (env) {
@@ -23,9 +22,7 @@ module.exports = function (env) {
     },
 
     plugins: [
-      new TypescriptDeclarationPlugin({
-        out: 'z-data.d.ts'
-      })
+      new DtsBundlePlugin()
     ],
 
     resolve: {
@@ -34,4 +31,19 @@ module.exports = function (env) {
     }
   }
 }
+
+
+function DtsBundlePlugin(){}
+DtsBundlePlugin.prototype.apply = function (compiler) {
+  compiler.plugin('done', function(){
+    var dts = require('dts-bundle');
+    dts.bundle({
+      name: 'z-data',
+      main: 'src/index.d.ts',
+      out : '../dist/z-data.d.ts',
+      removeSource: true,
+      outputAsModuleFolder: true // to use npm in-package typings
+    });
+  });
+};
 
