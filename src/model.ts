@@ -78,7 +78,7 @@ export function model(cls) {
 			let type = model_description.fields[field_name].type
 			store.field_types[type](model_name, field_name, obj)
 		}
-
+		
 		if (init_data)
 			for (let field_name in init_data)
 				obj[field_name] = init_data[field_name]

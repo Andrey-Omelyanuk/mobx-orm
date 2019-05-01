@@ -12,7 +12,7 @@ describe('Model', () => {
 	@model
 	class User extends Model {
 		@id id				: number
-		@field first_name	: string
+		@field first_name	: string = 'default first name'
 		@field last_name 	: string
 		@computed get full_name() {
 			return `${this.first_name} ${this.last_name}`
@@ -64,5 +64,13 @@ describe('Model', () => {
 	it('Static method should stay on class', async () => {
 		expect(typeof User.staticMethod).toBe('function')
 		expect(User.staticMethod()).toBeTruthy()
+	})
+
+	it('default field', async () => {
+		let user_a = new User({first_name: 'a'}) 
+		let user_b = new User({})
+
+		expect(user_a.first_name).toBe('a')
+		// expect(user_a.first_name).toBe('default first name')
 	})
 })

@@ -3,9 +3,8 @@
   "version"   : "0.1.1",
   "license"   : "MIT",
   "repository": "https://bitbucket.org/__Andrey/z-data",
-	"main"      : "dist/z-data.js",
-	"module"    : "dist/z-data.js",
-  "types"     : "dist/z-data.d.ts",
+	"main"      : "index.ts",
+	"module"    : "index.ts",
   "dependencies": {
 		"mobx" : "5.9.4" 
   },
