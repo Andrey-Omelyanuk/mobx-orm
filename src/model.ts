@@ -22,6 +22,12 @@ export class Model {
 			throw Error(`load function is not defined for ${model_name}`) 
 	}
 
+	static getFieldsNames() {
+		let model_name = this.prototype.constructor.name
+		let model_description = store.models[model_name]
+		return model_description.fields
+	}
+
 	private readonly _init_data
 
 	constructor(init_data?) {
@@ -64,7 +70,7 @@ export function model(cls) {
 	// the new constructor behaviour
 	let f : any = function (...args) {
 		let c : any = function () { return cls.apply(this, args) }
-		c.prototype = cls.__proto__
+		c.__proto__ = cls.__proto__
 		c.prototype = cls.prototype
 
 		let model_name = cls.name
@@ -74,6 +80,14 @@ export function model(cls) {
 		let init_data = obj._init_data
 		delete obj._init_data
 
+		// save defaults from class declaration
+		for (let field_name in model_description.fields) {
+			if (obj[field_name] !== undefined && init_data[field_name] === undefined) {
+				init_data[field_name] = obj[field_name]
+			}
+		}
+
+		// apply decorators
 		for (let field_name in model_description.fields) {
 			let type = model_description.fields[field_name].type
 			store.field_types[type](model_name, field_name, obj)

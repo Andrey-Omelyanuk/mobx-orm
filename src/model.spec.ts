@@ -66,11 +66,11 @@ describe('Model', () => {
 		expect(User.staticMethod()).toBeTruthy()
 	})
 
-	it('default field', async () => {
+	it('defaults from class declaration', async () => {
 		let user_a = new User({first_name: 'a'}) 
 		let user_b = new User({})
 
 		expect(user_a.first_name).toBe('a')
-		// expect(user_a.first_name).toBe('default first name')
+		expect(user_b.first_name).toBe('default first name')
 	})
 })
