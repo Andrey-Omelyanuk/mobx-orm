@@ -1,8 +1,8 @@
 
-import store 	from '../store'
+import store            from '../store'
 import { Model, model } from '../model'
-import id 			from '../fields/id'
-import field 		from '../fields/field'
+import id               from '../fields/id'
+import field            from '../fields/field'
 
 
 export function adapter() {
@@ -47,50 +47,43 @@ export function adapter() {
 
 describe('Other tests: Adapter.', () => {
 
-	store.clear()
+    store.clear()
 
     @model
     @adapter()
-	class A extends Model {
-		@id    id   : number
-		@field a	: number
+    class A extends Model {
+        @id    id   : number
+        @field a	: number
     }
-    
+
     beforeEach(() => {
         store.clearModel('A')
     })
 
-	it('create', async ()=> {
-        expect(A.all().length).toBe(0)
-        let a = new A()
-        expect(A.all().length).toBe(0)
-        await a.save()
-        expect(A.all().length).toBe(1)
-        expect(A.all()[0]    ).toBe(a)
+    it('create', async ()=> {
+                            expect(A.all().length).toBe(0)
+        let a = new A();    expect(A.all().length).toBe(0)
+        await a.save();     expect(A.all().length).toBe(1)
+                            expect(A.all()[0]    ).toBe(a)
     })
 
-	it('edit', async ()=> {
-        expect(A.all().length).toBe(0)
+    it('edit', async ()=> {
+                                expect(A.all().length).toBe(0)
         let a = new A({a: 1})
-        await a.save()
-        expect(a.a).toBe(1)
+        await a.save();         expect(a.a).toBe(1)
         a.a = 2
-        await a.save()
-        expect(a.a).toBe(2)
+        await a.save();         expect(a.a).toBe(2)
     })
 
-	it('delete', async ()=> {
+    it('delete', async ()=> {
         let a = new A({a: 1})
-        await a.save()
-        expect(A.all().length).toBe(1)
-        await a.delete()
-        expect(A.all().length).toBe(0)
-        expect(a.id).toBeNull()
+        await a.save();     expect(A.all().length).toBe(1)
+        await a.delete();   expect(A.all().length).toBe(0)
+                            expect(a.id).toBeNull()
     })
 
-	it('load', async ()=> {
-        expect(A.all().length).toBe(0)
-        await A.load()
-        expect(A.all().length).toBe(4)
-	})
+    it('load', async ()=> {
+                            expect(A.all().length).toBe(0)
+        await A.load();     expect(A.all().length).toBe(4)
+    })
 })

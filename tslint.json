@@ -1,16 +1,17 @@
 {
-	"defaultSeverity": "warning",
-	"linterOptions": {
-		"exclude": [
-			"node_modules/**"
-		]
-	},
-  "rules": {
-		"quotemark" : [true, "single"],
-		"one-line"  : [true, "check-open-brace", "check-whitespace"],
-		"semicolon" : [true, "never"],
+    "defaultSeverity": "warning",
+    "linterOptions": {
+        "exclude": [
+            "node_modules/**"
+        ]
+    },
+    "rules": {
+        "indent"    : [true, "spaces", 4],
+        "quotemark" : [true, "single"],
+        "one-line"  : [true, "check-open-brace", "check-whitespace"],
+        "semicolon" : [true, "never"],
 
-		"linebreak-style"     : [true, "LF"],
-		"max-file-line-count" : [true, 400]
-  }
+        "linebreak-style"     : [true, "LF"],
+        "max-file-line-count" : [true, 400]
+    }
 }
