@@ -1,8 +1,8 @@
 {
-  "name"      : "z-data",
+  "name"      : "mobx-orm",
   "version"   : "0.1.1",
   "license"   : "MIT",
-  "repository": "https://bitbucket.org/__Andrey/z-data",
+  "repository": "https://github.com/Andrey-Omelyanuk/mobx-orm",
 	"main"      : "index.ts",
 	"module"    : "index.ts",
   "dependencies": {
