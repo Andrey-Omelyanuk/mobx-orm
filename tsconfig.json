@@ -1,17 +1,18 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
+		"outDir"											: "lib",
 		"baseUrl"											: "./",
 		"module"											: "es2015",
     "target"											: "es5",
-    "sourceMap"										: true,
 		"moduleResolution"						: "node",
     "stripInternal"								: true,
     "emitDecoratorMetadata"				: true,
 		"experimentalDecorators"			: true,
     "allowSyntheticDefaultImports": true,
 		"skipLibCheck"								: true,
-		"declaration"									: true,
+    "sourceMap"										: true,
+		"declaration"									: false,
 		"lib": [      
 			"dom",
 			"es2017"

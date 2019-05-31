@@ -4,16 +4,15 @@ import field	from './field'
 
 
 describe('Field', () => {
-	store.clear()
+    store.clear()
 
-	@model
-	class A extends Model {
-		@field x : number
-	}
+    @model
+    class A extends Model {
+        @field x : number
+    }
 
-	it('...', async ()=> {
-		let a = new A();	expect(a.x).toBeUndefined()
-		a.x = 1;			expect(a.x).toBe(1)
-	})
-
+    it('...', async ()=> {
+        let a = new A();	expect(a.x).toBeUndefined()
+        a.x = 1;			expect(a.x).toBe(1)
+    })
 })

@@ -1,8 +1,4 @@
-
-import store            from '../store'
-import { Model, model } from '../model'
-import id               from '../fields/id'
-import field            from '../fields/field'
+import { store , Model, model, id, field } from 'dist/mobx-orm'
 
 
 export function adapter() {

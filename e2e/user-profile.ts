@@ -1,9 +1,4 @@
-import store            from '../store'
-import { model, Model } from '../model'
-import id               from '../fields/id'
-import field            from '../fields/field'
-import foreign          from '../fields/foreign'
-import one              from '../fields/one'
+import { store , Model, model, id, field, foreign, one } from 'dist/mobx-orm'
 
 
 describe('User Profile.', () => {

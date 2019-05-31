@@ -1,31 +1,35 @@
 {
-  "name"      : "mobx-orm",
-  "version"   : "0.1.1",
-  "license"   : "MIT",
-  "repository": "https://github.com/Andrey-Omelyanuk/mobx-orm",
-	"main"      : "index.ts",
-	"module"    : "index.ts",
+  "name"        : "mobx-orm",
+  "description" : "Reactive ORM based on MobX",
+  "version"     : "0.1.1",
+  "license"     : "MIT",
+  "author"      : "Andrey Omelyanuk",
+  "repository"  : {
+    "type": "git",
+    "url" : "https://github.com/Andrey-Omelyanuk/mobx-orm"
+  },
+	"main"        : "dist/mobx-orm.js",
+  "jsnext:main" : "dist/mobx-orm.es2015.js",
+  "typings"     : "dist/mobx-orm.d.ts",
   "dependencies": {
-		"mobx" : "5.9.4" 
+		"mobx" : "^5.9.4" 
   },
   "scripts": {
-    "serve": "./node_modules/.bin/webpack-dev-server --progress --inline",
-    "build": "./node_modules/.bin/webpack",
-		"test" : "./node_modules/.bin/jest"
+    "build" : "rollup -c",
+		"test"  : "jest"
   },
   "devDependencies": {
     "typescript"	: "3.4.3",
     "tslint"			: "5.15.0",
 		"jest"				: "24.7.1",
-		"ts-jest"			: "24.0.2",
+    "ts-jest"			: "24.0.2",
+		"@types/jest" : "24.0.11",
 
-    "webpack"				: "4.29.6",
-		"webpack-cli"		: "3.3.0",
-    "ts-loader"			: "5.3.3",
-    "tslint-loader"	: "3.5.4",
-    "dts-bundle"    : "0.7.3",
+    "rollup"                    : "1.12.3",
+    "rollup-plugin-typescript2" : "0.21.1", 
+    "rollup-plugin-terser"      : "5.0.0",
+    "rollup-plugin-dts"         : "0.15.1"
 
-		"@types/jest"		: "24.0.11" 
   },
   "engines": {
     "node": ">= 8.0.0",
@@ -34,10 +38,10 @@
 	"jest": {
 		"moduleFileExtensions"	: ["ts", "js", "json"],
 		"moduleDirectories"			: ["node_modules"],
-		"modulePaths"						: ["/src"],
+		"modulePaths"						: ["."],
 		"transform": {
 			"^.+\\.tsx?$": "ts-jest"
 		},
-		"testRegex": "(/tests/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$"
+		"testRegex": "(/src|e2e/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$"
 	}
 }

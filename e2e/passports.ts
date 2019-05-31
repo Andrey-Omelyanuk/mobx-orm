@@ -1,9 +1,4 @@
-import store            from '../store'
-import { model, Model } from '../model'
-import id               from '../fields/id'
-import field            from '../fields/field'
-import foreign          from '../fields/foreign'
-import many             from '../fields/many'
+import { store , Model, model, id, field, foreign, many } from 'dist/mobx-orm'
 
 
 describe('Other tests: Passports.', () => {

@@ -5,54 +5,54 @@ import store from '../store'
 let type = 'id'
 
 /*
-1. id установить можно только один раз!
-через obj.id = x, new Obj({id: x}) или obj.save()
+1. you can setup id only once!
+using obj.id = x, new Obj({id: x}) or obj.save()
 
-2. вызов save() по разному ведет в зависимости есть или нет id
- - нет id - создаем объект
- - есть id - сохраняем в оригинальном хранилище
+2. save() has two behavior depend on id 
+ - id === undefined or null -> create object on remote storage and get it
+ - id === some number       -> save object in remote storage 
 
-3. если хочешь загрузить данные в локальное хранилище(store),
-то используй new Obj({id: x, ...})
+3. if you want just load data to store then you can use this 
+new Obj({id: x, ...})
 */
 
 export function registerFieldId() {
-	store.registerFieldType(type, (model_name, field_name, obj) => {
+    store.registerFieldType(type, (model_name, field_name, obj) => {
 
-		// before changes
-		intercept(obj, 'id', (change) => {
-			if (change.newValue != null)
-				if(obj.id != null)
-					throw new Error(`You cannot change id.`)
-				else if (!Number.isInteger(change.newValue))
-					throw new Error(`Id can be only integer or null.`)
+        // before changes
+        intercept(obj, 'id', (change) => {
+            if (change.newValue != null)
+                if(obj.id != null)
+                    throw new Error(`You cannot change id.`)
+                else if (!Number.isInteger(change.newValue))
+                    throw new Error(`Id can be only integer or null.`)
 
-			if (obj.id && change.newValue == null)
-				store.eject (model_name, obj)
+            if (obj.id && change.newValue == null)
+                store.eject (model_name, obj)
 
-			return change
-		})
+            return change
+        })
 
-		// after changes
-		observe(obj, 'id', (change) => {
-			if (change.newValue)
-				store.inject(model_name,obj)
-		})
+        // after changes
+        observe(obj, 'id', (change) => {
+            if (change.newValue)
+                store.inject(model_name,obj)
+        })
 
-		// default value
-		if (obj[field_name] === undefined) obj[field_name] = null
-	})
+        // default value
+        if (obj[field_name] === undefined) obj[field_name] = null
+    })
 }
 registerFieldId()
 
 
 export default function id(cls: any, field_name: string) {
-	// It can be wrong name "Function" because we wrapped class in decorator before.
-	let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
-	if (field_name != 'id')
-		throw new Error(`id field should named by 'id'`)
-	store.registerModelField(model_name, type, field_name, {})
+    // It can be wrong name "Function" because we wrapped class in decorator before.
+    let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
+    if (field_name != 'id')
+        throw new Error(`id field should named by 'id'`)
+    store.registerModelField(model_name, type, field_name, {})
 
-	// register observable into mobx
-	observable(cls, field_name)
+    // register observable into mobx
+    observable(cls, field_name)
 }
