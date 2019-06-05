@@ -22,7 +22,7 @@ export class Model {
             throw Error(`load function is not defined for ${model_name}`) 
     }
 
-    static getFieldsNames() {
+    static getFieldsMeta() {
         let model_name = this.prototype.constructor.name
         let model_description = store.models[model_name]
         return model_description.fields

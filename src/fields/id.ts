@@ -1,5 +1,6 @@
 import { observable, observe, intercept } from 'mobx'
 import store from '../store'
+import field from './field';
 
 
 let type = 'id'
@@ -20,7 +21,7 @@ export function registerFieldId() {
     store.registerFieldType(type, (model_name, field_name, obj) => {
 
         // before changes
-        intercept(obj, 'id', (change) => {
+        intercept(obj, field_name, (change) => {
             if (change.newValue != null)
                 if(obj.id != null)
                     throw new Error(`You cannot change id.`)
@@ -34,7 +35,7 @@ export function registerFieldId() {
         })
 
         // after changes
-        observe(obj, 'id', (change) => {
+        observe(obj, field_name, (change) => {
             if (change.newValue)
                 store.inject(model_name,obj)
         })
@@ -48,10 +49,10 @@ registerFieldId()
 
 export default function id(cls: any, field_name: string) {
     // It can be wrong name "Function" because we wrapped class in decorator before.
-    let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
+    let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
     if (field_name != 'id')
         throw new Error(`id field should named by 'id'`)
-    store.registerModelField(model_name, type, field_name, {})
+    store.registerModelField(model_name, type, field_name)
 
     // register observable into mobx
     observable(cls, field_name)

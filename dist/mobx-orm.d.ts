@@ -8,8 +8,10 @@ interface FieldTypeDecorator {
 interface ModelDescription {
     fields: {
         [field_name: string]: {
-            type: string;
-            settings: any;
+            type: undefined | string;
+            settings: undefined | any;
+            serialize: undefined | any;
+            deserialize: undefined | any;
         };
     };
     objects: {
@@ -33,7 +35,7 @@ declare class Store {
     };
     registerModel(model_name: any): void;
     registerFieldType(type: any, decorator: any): void;
-    registerModelField(model_name: any, type: any, field_name: any, settings: any): void;
+    registerModelField(model_name: any, type: any, field_name: any, settings?: {}, serialize?: any, deserialize?: any): void;
     inject(model_name: any, object: any): void;
     eject(model_name: any, object: any): void;
     clear(): void;
@@ -45,10 +47,12 @@ declare class Model {
     static get(id: number): Model;
     static all(): Model[];
     static load(where?: {}, order_by?: {}, limit?: number, offset?: number): Promise<any>;
-    static getFieldsNames(): {
+    static getFieldsMeta(): {
         [field_name: string]: {
             type: string;
             settings: any;
+            serialize: any;
+            deserialize: any;
         };
     };
     private readonly _init_data;

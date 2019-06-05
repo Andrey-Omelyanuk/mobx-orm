@@ -54,7 +54,7 @@ export default function foreign(foreign_model_name: any, foreign_id_field_name?:
     return function (cls: any, field_name: string) {
 
         // It can be wrong name "Function" because we wrapped class in decorator before.
-        let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
+        let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
 
         //
         if (typeof foreign_model_name === 'function')

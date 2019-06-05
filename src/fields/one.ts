@@ -11,7 +11,7 @@ export function registerOne() {
         // 1. checks before set new changes
         intercept(obj, field_name, (change) => {
             if (change.newValue !== null) {
-                if (!(change.newValue.constructor && change.newValue.constructor.name == foreign_model_name))
+                if (!(change.newValue.constructor && change.newValue.constructor.name === foreign_model_name))
                     throw new Error(`You can set only instance of "${foreign_model_name}" or null`)
                 if (change.newValue.id === null)
                     throw new Error(`Object should have id!`)

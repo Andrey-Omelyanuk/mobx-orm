@@ -1,4 +1,5 @@
-import { store , Model, model, id, field, foreign, many } from 'dist/mobx-orm'
+///<reference path="../dist/mobx-orm.d.ts" />
+import { store , Model, model, id, field, foreign, many } from '../dist/mobx-orm'
 
 
 describe('Other tests: Passports.', () => {

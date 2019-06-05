@@ -6,7 +6,7 @@ import field			from './field'
 import many				from './many'
 
 
-describe('Many', () => {
+describe('Field: many', () => {
     store.clear()
 
     @model

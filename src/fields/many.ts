@@ -15,7 +15,7 @@ export default function many(foreign_model_name: any, foreign_id_field_name: str
     return function (cls: any, many_field_name: string) {
 
         // It can be wrong name "Function" because we wrapped class in decorator before.
-        let model_name = cls.constructor.name == 'Function' ? cls.prototype.constructor.name : cls.constructor.name
+        let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
         // detect class name
         if (typeof foreign_model_name === 'function')
             foreign_model_name
@@ -35,7 +35,7 @@ export default function many(foreign_model_name: any, foreign_id_field_name: str
 
         // watch for creation of new objects for first calculation of "many"
         observe(store.models[model_name].objects, (change) => {
-            if (change.type == 'add')
+            if (change.type === 'add')
                 for (let obj of Object.values(store.models[foreign_model_name].objects))
                     if (obj[foreign_id_field_name] == change.newValue.id)
                         change.newValue[many_field_name].push(obj)

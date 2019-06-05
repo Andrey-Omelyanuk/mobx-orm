@@ -8,8 +8,10 @@ interface FieldTypeDecorator {
 interface ModelDescription {
     fields: {
         [field_name: string]: {
-            type    : string,
-            settings: any
+            type        : undefined | string,
+            settings    : undefined | any,
+            serialize   : undefined | any,
+            deserialize : undefined | any
         }
     }
     objects: {
@@ -68,12 +70,12 @@ export class Store {
             throw new Error(`Field type "${type}" already registered.`)
     }
 
-    registerModelField(model_name, type, field_name, settings) {
+    registerModelField(model_name, type, field_name, settings = {}, serialize = null, deserialize = null) {
         if (!this.models[model_name]) this.registerModel(model_name)
         let model_description = this.models[model_name]
 
         if (!model_description.fields[field_name])
-            model_description.fields[field_name] = { type: type, settings: settings }
+            model_description.fields[field_name] = { type: type, settings: settings, serialize: serialize, deserialize: deserialize }
         else
             throw `Field "${field_name}" on "${model_name}" already registered.`
     }

@@ -5,7 +5,7 @@ import field            from './field'
 import foreign          from './foreign'
 
 
-describe('Foreign', () => {
+describe('Field: foreign', () => {
 
     store.clear()
 
