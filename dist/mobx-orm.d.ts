@@ -72,4 +72,10 @@ declare function one(foreign_model_name: any, foreign_id_field_name: string): (c
 
 declare function many(foreign_model_name: any, foreign_id_field_name: string): (cls: any, many_field_name: string) => void;
 
-export { Model, field, foreign, id, many, model, one, store };
+declare function number(cls: any, field_name: string): void;
+
+declare function number$1(cls: any, field_name: string): void;
+
+declare function datetime(cls: any, field_name: string): void;
+
+export { Model, datetime, field, number$1 as float, foreign, id, many, model, number, one, store };

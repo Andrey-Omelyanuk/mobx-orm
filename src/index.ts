@@ -5,6 +5,9 @@ import field            from './fields/field'
 import foreign          from './fields/foreign'
 import one              from './fields/one'
 import many             from './fields/many'
+import number           from './fields/number'
+import float            from './fields/float'
+import datetime         from './fields/datetime'
 
 export {
     store,
@@ -14,5 +17,8 @@ export {
     field,
     foreign,
     one,
-    many
+    many,
+    number,
+    float,
+    datetime
 }

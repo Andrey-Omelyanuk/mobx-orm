@@ -1,9 +1,9 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { store , Model, model, id, field, foreign, many } from '../dist/mobx-orm'
+import { store , Model, model, id, field, foreign, many, datetime, number } from '../dist/mobx-orm'
+import { initializeInstance } from 'mobx/lib/internal';
 
 
-describe('Other tests: Chat.', () => {
-
+describe('e2e: Chat.', () => {
     store.clear()
 
     @model
@@ -11,7 +11,7 @@ describe('Other tests: Chat.', () => {
         @id    id           : number
         @field first_name   : string
         @field last_name    : string
-        @many('ChannelMessage', 'user_id') messages: ChannelMessage[]
+        @many('Message', 'user_id') messages: Message[]
 
         get full_name() : string { return `${this.first_name} ${this.last_name}` }
     }
@@ -19,35 +19,53 @@ describe('Other tests: Chat.', () => {
     @model
     class Channel extends Model {
         @id id : number
-        @many('ChannelMessage', 'channel_id') messages : ChannelMessage[]
+        @many('Message', 'channel_id') messages : Message[]
 
         async sendMessage(user: User, text: string) {
-            let message = new ChannelMessage()
+            let message = new Message()
             message.channel = this
             message.user    = user
             message.text    = text
-            message.created = new Date().toLocaleString()
+            message.created = new Date()
             return message.save()
         }
     }
 
     @model
-    class ChannelMessage extends Model {
-        @id     id          : number
-        @field  created     : string
-        @field  text        : string
-        @field  channel_id  : number
-        @field  user_id     : number
+    class Message extends Model {
+        @id         id          : number
+        @datetime   created     : Date
+        @field      text        : string
+        @number     channel_id  : number
+        @number     user_id     : number
+
         @foreign('Channel') channel : Channel
         @foreign('User')    user    : User
     }
 
-    let channelA = new Channel(); channelA.save()
-    let channelB = new Channel(); channelB.save()
-    let userA = new User({first_name: 'A', last_name: 'X'}); userA.save()
-    let userB = new User({first_name: 'B', last_name: 'X'}); userB.save()
+    beforeEach(async ()=> {
+        store.clearModel('User')
+        store.clearModel('Channel')
+        store.clearModel('Message')
+    })
 
-    it('Send messages to channelA', async ()=> {
+    it('init', async ()=> {
+        let channelA = new Channel(); channelA.save()
+        let channelB = new Channel(); channelB.save()
+        let userA = new User({first_name: 'A', last_name: 'X'}); userA.save()
+        let userB = new User({first_name: 'B', last_name: 'X'}); userB.save()
+
+        expect(User   .all().length).toBe(2)
+        expect(Channel.all().length).toBe(2)
+        expect(Message.all().length).toBe(0)
+    })
+
+    it('Send messages', async ()=> {
+        let channelA = new Channel(); channelA.save()
+        let channelB = new Channel(); channelB.save()
+        let userA = new User({first_name: 'A', last_name: 'X'}); userA.save()
+        let userB = new User({first_name: 'B', last_name: 'X'}); userB.save()
+
         await channelA.sendMessage(userA, 'First  message from userA')
         await channelA.sendMessage(userA, 'Second message from userA')
         await channelA.sendMessage(userB, 'First  message from userB')
