@@ -78,4 +78,6 @@ declare function number$1(cls: any, field_name: string): void;
 
 declare function datetime(cls: any, field_name: string): void;
 
-export { Model, datetime, field, number$1 as float, foreign, id, many, model, number, one, store };
+declare function number$2(cls: any, field_name: string): void;
+
+export { Model, number$2 as boolean, datetime, field, number$1 as float, foreign, id, many, model, number, one, store };

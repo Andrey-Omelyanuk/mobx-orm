@@ -21,5 +21,6 @@ export {
     many,
     number,
     float,
-    datetime
+    datetime,
+    boolean
 }
