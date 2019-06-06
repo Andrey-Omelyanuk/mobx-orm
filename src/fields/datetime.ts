@@ -1,5 +1,6 @@
 import { observable, intercept } from 'mobx'
 import store from '../store'
+import { isNoop } from '@babel/types';
 
 
 let type = 'datetime'
@@ -9,13 +10,17 @@ export function registerField() {
 
         // before changes
         intercept(obj, field_name, (change) => {
-            if (change.newValue !== null)
-                if (Object.prototype.toString.call(change.newValue) !== '[object Date]')
+            if (change.newValue !== null) {
+                if(typeof change.newValue === 'string' || change.newValue instanceof String) {
+                    change.newValue = Date.parse(<any>change.newValue)
+                    if (!isNaN(change.newValue))
+                        change.newValue = new Date(change.newValue)
+                }
+                if (!(change.newValue instanceof Date)) 
                     throw new Error(`Field can be only Date or null.`)
+            }
             return change
         })
-        // default value
-        // if (obj[field_name] === undefined) obj[field_name] = null
     })
 }
 registerField()

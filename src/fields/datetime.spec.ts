@@ -12,15 +12,16 @@ describe('Field: moment', () => {
     }
 
     it('...', async ()=> {
-        let a = new A();	expect(a.x).toBeUndefined()
+        let timestamp_string    = '2019-02-25T11:27:32.682907-06:00'
+        let timestamp           = new Date(timestamp_string)
+
+        let a = new A();                expect(a.x).toBeUndefined()
+        a.x = <any>timestamp_string;    expect(a.x).toEqual(timestamp)
+        a.x = null;                     expect(a.x).toBeNull()
+        a.x = timestamp;                expect(a.x.getDate()).toBe(25)
+
         expect(() => { a.x = <any>1      }).toThrow(new Error('Field can be only Date or null.'))
         expect(() => { a.x = <any>'test' }).toThrow(new Error('Field can be only Date or null.'))
-        let now      = new Date()
-        a.x = now;          expect(a.x).toBe(now)
-        a.x = null;         expect(a.x).toBeNull()
-
-        let sometime = new Date('2019-02-25T11:27:32.682907-06:00')
-        a.x = sometime;     expect(a.x.getDate()).toBe(25)
     }),
 
     it('serialize/deserialize', async ()=> {

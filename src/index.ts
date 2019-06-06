@@ -8,6 +8,7 @@ import many             from './fields/many'
 import number           from './fields/number'
 import float            from './fields/float'
 import datetime         from './fields/datetime'
+import boolean          from './fields/boolean'
 
 export {
     store,
