@@ -5,17 +5,23 @@ export class Model {
 
     static get(id: number): Model {
         let model_name = this.prototype.constructor.name
+        if (store.models[model_name] === undefined) 
+            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
         return <Model>store.models[model_name].objects[id]
     }
 
     static all(): Model[] {
         let model_name = this.prototype.constructor.name
+        if (store.models[model_name] === undefined) 
+            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
         return <Model[]>Object.values(store.models[model_name].objects)
     }
 
     static async load(where = {}, order_by = {}, limit = 0, offset = 0) {
         let model_name = this.prototype.constructor.name
         let model_description = store.models[model_name]
+        if (model_description === undefined) 
+            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
         if (model_description.load) 
             return model_description.load(this, where, order_by, limit, offset)
         else
@@ -25,6 +31,8 @@ export class Model {
     static getFieldsMeta() {
         let model_name = this.prototype.constructor.name
         let model_description = store.models[model_name]
+        if (model_description === undefined) 
+            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
         return model_description.fields
     }
 
@@ -75,6 +83,8 @@ export function model(cls) {
 
         let model_name = cls.name
         let model_description = store.models[model_name]
+        if (model_description === undefined) 
+            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
 
         let obj  = new c()
         let init_data = obj._init_data
