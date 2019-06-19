@@ -75,12 +75,11 @@ describe('Model', () => {
     })
 
     it('Using models after clear', async () => {
-        @model
-        class X extends Model { @id id : number }
+        @model class X extends Model { @id id : number }
         store.clear()
-        expect(() => { new X()  }).toThrow(new Error(`Description for 'X' is not exist. Maybe, you called store.clear after model declaration.`))
-        expect(() => { X.get(0) }).toThrow(new Error(`Description for 'X' is not exist. Maybe, you called store.clear after model declaration.`))
-        expect(() => { X.all()  }).toThrow(new Error(`Description for 'X' is not exist. Maybe, you called store.clear after model declaration.`))
-        expect(() => { X.getFieldsMeta()  }).toThrow(new Error(`Description for 'X' is not exist. Maybe, you called store.clear after model declaration.`))
+        expect(() => { new X()                  }).toThrow(new Error(`Description for 'X' is not exist. Maybe, you called store.clear after model declaration.`))
+        expect(() => { X.get(0)                 }).toThrow(new Error(`Description for 'X' is not exist. Maybe, you called store.clear after model declaration.`))
+        expect(() => { X.all()                  }).toThrow(new Error(`Description for 'X' is not exist. Maybe, you called store.clear after model declaration.`))
+        expect(() => { X.getModelDescription()  }).toThrow(new Error(`Description for 'X' is not exist. Maybe, you called store.clear after model declaration.`))
     })
 })

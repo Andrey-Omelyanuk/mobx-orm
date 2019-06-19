@@ -1,39 +1,42 @@
-import store from './store'
+import store, { ModelDescription } from './store'
 
 
 export class Model {
 
-    static get(id: number): Model {
+    static get(...args: any[]): Model {
         let model_name = this.prototype.constructor.name
         if (store.models[model_name] === undefined) 
             throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
-        return <Model>store.models[model_name].objects[id]
+
+        let obj = undefined
+        let tmp: any = store.models[model_name].objects
+        for(let id of args) {
+            tmp = tmp[id]
+            obj = tmp
+        }
+        return <Model>obj
     }
 
     static all(): Model[] {
-        let model_name = this.prototype.constructor.name
-        if (store.models[model_name] === undefined) 
-            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
-        return <Model[]>Object.values(store.models[model_name].objects)
+        let model_description = this.getModelDescription()
+        return <Model[]>Object.values(model_description.objects)
     }
 
     static async load(where = {}, order_by = {}, limit = 0, offset = 0) {
-        let model_name = this.prototype.constructor.name
-        let model_description = store.models[model_name]
-        if (model_description === undefined) 
-            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
-        if (model_description.load) 
-            return model_description.load(this, where, order_by, limit, offset)
-        else
-            throw Error(`load function is not defined for ${model_name}`) 
+        let model_description = this.getModelDescription()
+        return model_description.adapter.load(this, where, order_by, limit, offset)
     }
 
-    static getFieldsMeta() {
-        let model_name = this.prototype.constructor.name
+    static getModelName() : string {
+        return this.prototype.constructor.name
+    }
+
+    static getModelDescription() : ModelDescription {
+        let model_name = this.getModelName()
         let model_description = store.models[model_name]
         if (model_description === undefined) 
             throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
-        return model_description.fields
+        return model_description
     }
 
     private readonly _init_data
@@ -42,33 +45,24 @@ export class Model {
         this._init_data = init_data
     }
 
-    // если нет id, то создать его
-    // если нужна синхронизация с удаленным хранилищем, то:
-    //      если нет id - то создаем объект удаленно, оттуда и приходит обект с готовым id
-    //			если есть   - то обновляем удаленно
-    async save() {
-        let model_name = this.constructor.name
-        let model_description = store.models[model_name]
-        if (model_description.save) 
-            return model_description.save(this)
-        else {
-            let obj = <any>this
-            if (!obj.id)
-                obj.id = model_description.getNewId()
+    getModelName() : string {
+        return this.constructor.name
+    }
 
-            return Promise.resolve(obj)
-        }
+    getModelDescription() : ModelDescription {
+        let model_name = this.getModelName() 
+        let model_description = store.models[model_name]
+        if (model_description === undefined) 
+            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
+        return model_description
+    }
+    
+    async save() {
+        return this.getModelDescription().adapter.save(this)
     }
 
     async delete() {
-        let model_name = this.constructor.name
-        let model_description = store.models[model_name]
-        if (model_description.delete) 
-            return model_description.delete(this)
-        else {
-            (<any>this).id = null
-            return Promise.resolve(this)
-        }
+        return this.getModelDescription().adapter.delete(this)
     }
 }
 
@@ -81,10 +75,8 @@ export function model(cls) {
         c.__proto__ = cls.__proto__
         c.prototype = cls.prototype
 
-        let model_name = cls.name
-        let model_description = store.models[model_name]
-        if (model_description === undefined) 
-            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
+        let model_name        = cls.getModelName()
+        let model_description = cls.getModelDescription()
 
         let obj  = new c()
         let init_data = obj._init_data

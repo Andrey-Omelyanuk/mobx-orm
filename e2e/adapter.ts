@@ -1,44 +1,48 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { store , Model, model, id, field } from '../dist/mobx-orm'
+import { store , Model, model, id, field, Adapter } from '../dist/mobx-orm'
 
 
-export function adapter() {
-    return (cls) => {
-        let model_name = cls.prototype.constructor.name
-
-        store.models[model_name].save = (obj) => {
-            // edit
-            if (obj.id) {
-                return new Promise((resolve, reject) => {
-                    resolve(obj)
-                })
-            }
-            // create
-            else {
-                return new Promise((resolve, reject) => {
-                    obj.id = store.models[model_name].getNewId()
-                    resolve(obj)
-                })
-            }
+class TestAdapter implements Adapter {
+    async save(obj: Model) {
+        // edit
+        if (obj.id) {
+            return new Promise((resolve, reject) => {
+                resolve(obj)
+            })
         }
+        // create
+        else {
+            return new Promise((resolve, reject) => {
+                obj.id = store.models[model_name].getNewId()
+                resolve(obj)
+            })
+        }
+    }
 
-        store.models[model_name].delete = (obj) => {
+    async delete(obj: Model) {
             return new Promise((resolve, reject) => {
                 obj.id = null
                 resolve(obj)
             })
         }
 
-        store.models[model_name].load = (cls, where, order_by, limit, offset) => {
-            return new Promise((resolve, reject) => {
-                let objs = []
-                objs.push(new cls({id: store.models[model_name].getNewId(), a: 1}))
-                objs.push(new cls({id: store.models[model_name].getNewId(), a: 1}))
-                objs.push(new cls({id: store.models[model_name].getNewId(), a: 1}))
-                objs.push(new cls({id: store.models[model_name].getNewId(), a: 1}))
-                resolve(objs)
-            })
-        }
+    async load(cls, where, order_by, limit, offset) {
+        return new Promise((resolve, reject) => {
+            let objs = []
+            objs.push(new cls({id: store.models[model_name].getNewId(), a: 1}))
+            objs.push(new cls({id: store.models[model_name].getNewId(), a: 1}))
+            objs.push(new cls({id: store.models[model_name].getNewId(), a: 1}))
+            objs.push(new cls({id: store.models[model_name].getNewId(), a: 1}))
+            resolve(objs)
+        })
+    }
+
+}
+
+export function adapter() {
+    return (cls) => {
+        let model_name = cls.prototype.constructor.name
+        store.models[model_name].adapter = new TestAdapter() 
     }
 }
 

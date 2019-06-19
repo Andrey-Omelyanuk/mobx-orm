@@ -8,3 +8,7 @@ Inspired by [ember-data](https://github.com/emberjs/data) and [js-data](https://
 Warning: it is not mobx-orm from npm package
 
 Check ./e2e tests for understanding how to use the lib.
+
+
+Unique is not make sense.
+Transaction is not make sense.

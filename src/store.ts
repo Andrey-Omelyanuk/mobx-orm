@@ -1,29 +1,23 @@
 import { observable } from 'mobx'
+import { Adapter, defaultAdapter } from './adatper'
 
 
-interface FieldTypeDecorator {
+export interface FieldTypeDecorator {
     (model_name: string, field_name: string, obj: Object): void
 }
 
-interface ModelDescription {
-    fields: {
+export interface ModelDescription {
+    ids     : any[]
+    fields  : {
         [field_name: string]: {
             type        : undefined | string,
             settings    : undefined | any,
             serialize   : undefined | any,
             deserialize : undefined | any
         }
-    }
-    objects: {
-        [id: number]: object
-    }
-    unique: {
-        [field_name: string]: any
-    }
-    getNewId: ()=>number
-    save  : undefined | ((obj)=> any) 
-    delete: undefined | ((obj)=> any)
-    load  : undefined | ((model_name, where, order_by, limit, offset) => any)
+    },
+    objects : any
+    adapter : Adapter
 }
 
 /*
@@ -47,16 +41,10 @@ export class Store {
         if (!this.models[model_name]) {
             let _count_id = 0
             this.models[model_name] = {
-                objects: {},
-                fields : {},
-                unique : {},
-                getNewId: () => {
-                    _count_id = _count_id + 1
-                    return _count_id
-                },
-                save  : undefined,
-                delete: undefined,
-                load  : undefined
+                ids     : [],
+                fields  : {},
+                objects : {},
+                adapter : undefined
             }
             this.models[model_name].objects = observable(this.models[model_name].objects)
         }
@@ -79,36 +67,6 @@ export class Store {
         else
             throw `Field "${field_name}" on "${model_name}" already registered.`
     }
-
-    // registerUniqueField(model_name, field_name) {
-    // 	if (!this.models[model_name]) this.registerModel(model_name)
-    // 	let model_description = this.models[model_name]
-    // 	if (!model_description.unique[field_name]) {
-    //
-    // 		let unique_set = new Set()
-    // 		//
-    // 		model_description.unique[field_name] = unique_set
-    // 		// inject/eject/update
-    // 		model_description.fields[field_name].onUpdate(({obj}) => {
-    // 			// null can be many! just ignore it
-    // 			if (obj[field_name] === null) return
-    // 			if (unique_set.has(obj[field_name])) throw new Error(`Not unique value.`) // for updating ${model_name}.${field_name} to ${obj[field_name]}`)
-    // 			else unique_set.add(obj[field_name])
-    // 		})
-    // 		store.models[model_name].onInject((obj) => {
-    // 			// null can be many! just ignore it
-    // 			if (obj[field_name] === null) return
-    // 			if (unique_set.has(obj[field_name])) throw new Error(`Not unique value.`) // for inject ${model_name}.${field_name} to ${obj[field_name]}`)
-    // 			else unique_set.add(obj[field_name])
-    // 		})
-    // 		store.models[model_name].onEject((obj) => {
-    // 			unique_set.delete(obj[field_name])
-    // 		})
-    // 	}
-    // 	else {
-    // 		throw `Unique on field "${field_name}" on "${model_name}" already registered.`
-    // 	}
-    // }
 
     inject(model_name, object) {
         let model_description = this.models[model_name]
@@ -142,9 +100,12 @@ export class Store {
     }
 
     clearModel(model_name) {
-        for (let obj of <any>Object.values(this.models[model_name].objects))
-            if(obj.delete)
-                obj.delete()
+        let model_desc = this.models[model_name]
+        if (model_desc) {
+            for (let obj of <any>Object.values(model_desc.objects))
+                if(obj.delete)
+                    obj.delete()
+        }
     }
 
 }
