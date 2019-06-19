@@ -3,23 +3,14 @@ import store, { ModelDescription } from './store'
 
 export class Model {
 
-    static get(...args: any[]): Model {
-        let model_name = this.prototype.constructor.name
-        if (store.models[model_name] === undefined) 
-            throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
-
-        let obj = undefined
-        let tmp: any = store.models[model_name].objects
-        for(let id of args) {
-            tmp = tmp[id]
-            obj = tmp
-        }
-        return <Model>obj
+    static get(id: string): Model {
+        let model_description = this.getModelDescription()
+        return model_description.objects[id]
     }
 
     static all(): Model[] {
         let model_description = this.getModelDescription()
-        return <Model[]>Object.values(model_description.objects)
+        return Object.values(model_description.objects)
     }
 
     static async load(where = {}, order_by = {}, limit = 0, offset = 0) {
@@ -45,6 +36,19 @@ export class Model {
         this._init_data = init_data
     }
 
+    getId() : string | null {
+        let id = '' 
+        for (let id_name_field of this.getModelDescription().ids) {
+            // if any id field is null then we should return null
+            // because id is not complite
+            if (this[id_name_field] === null) 
+                return null
+
+            id += `${this[id_name_field]} :`
+        }
+        return id
+    }
+
     getModelName() : string {
         return this.constructor.name
     }
@@ -54,6 +58,7 @@ export class Model {
         let model_description = store.models[model_name]
         if (model_description === undefined) 
             throw Error(`Description for '${model_name}' is not exist. Maybe, you called store.clear after model declaration.`)
+            // throw new Error(`Model name "${model_name} is not registered in the store`)
         return model_description
     }
     
@@ -79,7 +84,7 @@ export function model(cls) {
         let model_description = cls.getModelDescription()
 
         let obj  = new c()
-        let init_data = obj._init_data
+        let init_data = obj._init_data ? obj._init_data : {}
         delete obj._init_data
 
         // save defaults from class declaration

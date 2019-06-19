@@ -10,18 +10,22 @@ export interface Adapter {
 export class DefaultAdapter implements Adapter {
     newId = 0
     async save(obj) {
-        // ids cannot be set partially => we can check just first id
-        if (obj[obj.getModelDescription().ids[0]] === null) {
-            // TODO: set new id
+        let model_description = obj.getModelDescription()
+        // if first id is null then we set all ids to new value
+        if (obj[model_description.ids[0]] === null) {
+            for (let id_field_name of model_description.ids) {
+                obj[id_field_name] = this.newId
+            }
+            this.newId++
         }
         return Promise.resolve(obj)
     }
     async delete(obj: Model) {
         let model_description = obj.getModelDescription()
-        // enough set only one id to null for reset all ids
-        obj[model_description.ids[0]] = null
+        for (let id_field_name of model_description.ids) {
+            obj[id_field_name] = null
+        }
         return Promise.resolve(obj)
-
     }
     async load() {
         throw new Error('Not Implemented for DefaultAdapter')

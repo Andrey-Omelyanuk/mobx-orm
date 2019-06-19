@@ -1,6 +1,6 @@
 import { observable, observe, intercept } from 'mobx'
+import { Model } from '../model'
 import store from '../store'
-import field from './field';
 
 
 let type = 'id'
@@ -22,22 +22,27 @@ export function registerFieldId() {
 
         // before changes
         intercept(obj, field_name, (change) => {
-            if (change.newValue != null)
-                if(obj.id != null)
-                    throw new Error(`You cannot change id.`)
-                else if (!Number.isInteger(change.newValue))
-                    throw new Error(`Id can be only integer or null.`)
+            if (change.newValue !== null && obj[field_name] !== null)
+                throw new Error(`You cannot change id field: ${field_name}`)
 
-            if (obj.id && change.newValue == null)
-                store.eject (model_name, obj)
+            if (obj[field_name] && change.newValue === null) {
+                try {
+                    store.eject(obj)
+                }
+                catch (err) {
+                    if (err.name !== `Object with id "${obj.getId()}" not exist in the store (model: ${obj.getModelName()}")`)
+                        throw err
+                }
+            }
 
             return change
         })
 
         // after changes
         observe(obj, field_name, (change) => {
-            if (change.newValue)
-                store.inject(model_name,obj)
+            // if id is complete
+            if (obj.getId() !== null) 
+                store.inject(obj)
         })
 
         // default value
@@ -47,13 +52,11 @@ export function registerFieldId() {
 registerFieldId()
 
 
-export default function id(cls: any, field_name: string) {
+export default function id(cls: Model, field_name: string) {
     // It can be wrong name "Function" because we wrapped class in decorator before.
-    let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
-    if (field_name != 'id')
-        throw new Error(`id field should named by 'id'`)
-    store.registerModelField(model_name, type, field_name)
-
+    // let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
+    store.registerModelField(cls.getModelName(), type, field_name)
+    store.registerId(cls.getModelName(), field_name)
     // register observable into mobx
     observable(cls, field_name)
 }

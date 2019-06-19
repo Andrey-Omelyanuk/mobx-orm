@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build" : "rollup -c",
-		"test"  : "jest"
+    "test"  : "jest"
   },
   "devDependencies": {
     "typescript"	: "3.4.3",

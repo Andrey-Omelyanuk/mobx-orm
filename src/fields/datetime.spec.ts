@@ -26,7 +26,7 @@ describe('Field: moment', () => {
 
     it('serialize/deserialize', async ()=> {
         let sometime = new Date('2019-02-25T11:27:32.682907-06:00')
-        let raw  = A.getFieldsMeta().x.deserialize(sometime);    expect(raw).toBe('2019-02-25T17:27:32.682Z')
-        let copy = A.getFieldsMeta().x.serialize(raw);           expect(copy).toEqual(sometime)
+        let raw  = A.getModelDescription().fields.x.deserialize(sometime);    expect(raw).toBe('2019-02-25T17:27:32.682Z')
+        let copy = A.getModelDescription().fields.x.serialize(raw);           expect(copy).toEqual(sometime)
     })
 })

@@ -1,6 +1,6 @@
 import store            from './store'
 import {Model, model}   from './model'
-import {Adapter, DefaultAdapter} from './adatper'
+import {Adapter, DefaultAdapter} from './adapter'
 import id               from './fields/id'
 import field            from './fields/field'
 import foreign          from './fields/foreign'

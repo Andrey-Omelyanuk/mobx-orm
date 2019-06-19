@@ -1,5 +1,6 @@
 import { observable } from 'mobx'
-import { Adapter, defaultAdapter } from './adatper'
+import { Model } from './model'
+import { Adapter, DefaultAdapter } from './adapter'
 
 
 export interface FieldTypeDecorator {
@@ -16,7 +17,9 @@ export interface ModelDescription {
             deserialize : undefined | any
         }
     },
-    objects : any
+    objects : {
+        [string_id: string]: Model 
+    } 
     adapter : Adapter
 }
 
@@ -44,7 +47,7 @@ export class Store {
                 ids     : [],
                 fields  : {},
                 objects : {},
-                adapter : undefined
+                adapter : new DefaultAdapter()
             }
             this.models[model_name].objects = observable(this.models[model_name].objects)
         }
@@ -68,26 +71,30 @@ export class Store {
             throw `Field "${field_name}" on "${model_name}" already registered.`
     }
 
-    inject(model_name, object) {
+    registerId(model_name, field_name) {
+        if (!this.models[model_name]) this.registerModel(model_name)
         let model_description = this.models[model_name]
-        if (!(model_name in this.models))          throw new Error(`Model name "${model_name} is not registered in the store`)
-        if (!object || !object.constructor)        throw new Error('object should be a object with constructor')
-        if (!object.id)                            throw new Error(`Object should have id!`)
-        if (object.constructor.name != model_name) throw new Error(`You can inject only instance of "${model_name}"`)
-        if (model_description.objects[object.id])  throw new Error(`Object with id="${object.id}" already exist in model "${model_name}".`)
 
-        model_description.objects[object.id] = object
+        if (model_description.ids.indexOf(field_name) != -1)
+            throw `Id "${field_name}" in model "${model_name}" already registered.`
+        else
+            model_description.ids.push(field_name)
     }
 
-    eject(model_name, object) {
-        let model_description = this.models[model_name]
-        if (!(model_name in this.models))          throw new Error(`Model name "${model_name} is not registered in the store`)
-        if (!object || !object.constructor)        throw new Error('object should be a object with constructor')
-        if (!object.id)                            throw new Error(`Object should have id!`)
-        if (object.constructor.name != model_name) throw new Error(`You can eject only instance of "${model_name}"`)
-        if (!model_description.objects[object.id]) throw new Error(`Object with id ${object.id} not exist in model "${model_name}"`)
+    inject(obj: Model) {
+        let id                = obj.getId()
+        let model_description = obj.getModelDescription()
+        if (id === null)                    throw new Error(`Object should have id!`)
+        if (model_description.objects[id])  throw new Error(`Object with id "${id}" already exist in the store (model: "${obj.getModelName()}")`)
+        model_description.objects[id] = obj
+    }
 
-        delete model_description.objects[object.id]
+    eject(obj: Model) {
+        let id                = obj.getId()
+        let model_description = obj.getModelDescription()
+        if (id === null)                    throw new Error(`Object should have id!`)
+        if (!model_description.objects[id]) throw new Error(`Object with id "${id}" not exist in the store (model: ${obj.getModelName()}")`)
+        delete model_description.objects[id]
     }
 
     clear() {
@@ -102,9 +109,9 @@ export class Store {
     clearModel(model_name) {
         let model_desc = this.models[model_name]
         if (model_desc) {
-            for (let obj of <any>Object.values(model_desc.objects))
-                if(obj.delete)
-                    obj.delete()
+            for (let obj of Object.values(model_desc.objects)) {
+                obj[model_desc.ids[0]] = null
+            }
         }
     }
 
