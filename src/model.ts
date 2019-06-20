@@ -37,16 +37,7 @@ export class Model {
     }
 
     getId() : string | null {
-        let id = '' 
-        for (let id_name_field of this.getModelDescription().ids) {
-            // if any id field is null then we should return null
-            // because id is not complite
-            if (this[id_name_field] === null) 
-                return null
-
-            id += `${this[id_name_field]} :`
-        }
-        return id
+        return store.getId(this, this.getModelDescription().ids)
     }
 
     getModelName() : string {

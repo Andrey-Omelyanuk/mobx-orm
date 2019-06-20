@@ -98,11 +98,9 @@ export class Store {
     }
 
     clear() {
-        for (let model_name of Object.keys(this.models))
-            for (let obj of <any>Object.values(this.models[model_name].objects))
-                if(obj.delete)
-                    obj.delete()
-
+        for (let model_name of Object.keys(this.models)) {
+            this.clearModel(model_name)
+        }
         this.models = {}
     }
 
@@ -115,9 +113,23 @@ export class Store {
         }
     }
 
+    getId(obj: Model, id_name_fields: string[]) : string | null {
+        let id = '' 
+        for (let id_name_field of id_name_fields) {
+            // if any id field is null then we should return null
+            // because id is not complite
+            if (obj[id_name_field] === null || obj[id_name_field] === undefined) 
+                return null
+
+            id += `${obj[id_name_field]} :`
+        }
+        return id
+    }
+
 }
 let store = new Store()
 export default store
 
-declare let window
-window.mobx_orm_store = store
+// declare let window
+// if (window) 
+//     window.mobx_orm_store = store

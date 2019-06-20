@@ -36,6 +36,7 @@
     "npm" : ">= 5.0.0"
   },
 	"jest": {
+    "testEnvironment": "node",
 		"moduleFileExtensions"	: ["ts", "js", "json"],
 		"moduleDirectories"			: ["node_modules"],
 		"modulePaths"						: ["."],
