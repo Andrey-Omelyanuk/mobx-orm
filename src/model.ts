@@ -1,3 +1,4 @@
+import { computed } from 'mobx'
 import store, { ModelDescription } from './store'
 
 
@@ -36,7 +37,7 @@ export class Model {
         this._init_data = init_data
     }
 
-    getId() : string | null {
+    @computed({keepAlive: true}) get __id() : string | null {
         return store.getId(this, this.getModelDescription().ids)
     }
 

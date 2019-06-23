@@ -41,7 +41,7 @@ export function registerFieldId() {
         // after changes
         observe(obj, field_name, (change) => {
             // if id is complete
-            if (obj.getId() !== null) 
+            if (obj.__id !== null) 
                 store.inject(obj)
         })
 

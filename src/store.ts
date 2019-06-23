@@ -82,19 +82,17 @@ export class Store {
     }
 
     inject(obj: Model) {
-        let id                = obj.getId()
         let model_description = obj.getModelDescription()
-        if (id === null)                    throw new Error(`Object should have id!`)
-        if (model_description.objects[id])  throw new Error(`Object with id "${id}" already exist in the store (model: "${obj.getModelName()}")`)
-        model_description.objects[id] = obj
+        if (obj.__id === null)                    throw new Error(`Object should have id!`)
+        if (model_description.objects[obj.__id])  throw new Error(`Object with id "${obj.__id}" already exist in the store (model: "${obj.getModelName()}")`)
+        model_description.objects[obj.__id] = obj
     }
 
     eject(obj: Model) {
-        let id                = obj.getId()
         let model_description = obj.getModelDescription()
-        if (id === null)                    throw new Error(`Object should have id!`)
-        if (!model_description.objects[id]) throw new Error(`Object with id "${id}" not exist in the store (model: ${obj.getModelName()}")`)
-        delete model_description.objects[id]
+        if (obj.__id === null)                    throw new Error(`Object should have id!`)
+        if (!model_description.objects[obj.__id]) throw new Error(`Object with id "${obj.__id}" not exist in the store (model: ${obj.getModelName()}")`)
+        delete model_description.objects[obj.__id]
     }
 
     clear() {

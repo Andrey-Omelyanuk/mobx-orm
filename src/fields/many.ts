@@ -11,85 +11,55 @@ export function registerMany() {
 registerMany()
 
 
-export default function many(foreign_model_name: any, foreign_id_field_name: string) {
-    return function (cls: any, many_field_name: string) {
-
+export default function many(remote_model_name: any, foreign_field_on_remote_model: string) {
+    return function (cls: any, field_name: string) {
         // It can be wrong name "Function" because we wrapped class in decorator before.
-        let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
-        // detect class name
-        if (typeof foreign_model_name === 'function')
-            foreign_model_name
-                = foreign_model_name.constructor.name == 'Function'
-                ? foreign_model_name.prototype.constructor.name
-                : foreign_model_name.constructor.name
+        // let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
+        let model_name = cls.getModelName()
 
-        if (!store.models[model_name])         store.registerModel(model_name)
-        if (!store.models[foreign_model_name]) store.registerModel(foreign_model_name)
-        store.registerModelField(model_name, 'many', many_field_name, {
-            foreign_model_name   : foreign_model_name,
-            foreign_id_field_name: foreign_id_field_name
+        // detect class name
+        if (typeof remote_model_name === 'function')
+            remote_model_name = remote_model_name.constructor.name == 'Function'
+                ? remote_model_name.prototype.constructor.name
+                : remote_model_name.constructor.name
+        //
+        if (!store.models[model_name])          store.registerModel(model_name)
+        if (!store.models[remote_model_name])   store.registerModel(remote_model_name)
+        store.registerModelField(model_name, 'many', field_name, {
+            remote_model_name               : remote_model_name,
+            foreign_field_on_remote_model   : foreign_field_on_remote_model
         })
 
         // register into mobx
-        observable(cls, many_field_name)
-
-        // watch for creation of new objects for first calculation of "many"
-        observe(store.models[model_name].objects, (change) => {
-            if (change.type === 'add')
-                for (let obj of Object.values(store.models[foreign_model_name].objects))
-                    if (obj[foreign_id_field_name] == change.newValue.id)
-                        change.newValue[many_field_name].push(obj)
-        })
+        observable(cls, field_name)
 
         // watch for all foreign objects
-        observe(store.models[foreign_model_name].objects, (change: any) => {
-            let foreign_object   : any
-            let object_with_many : any
-            switch (change.type) {
-                // new object was added 
+        observe(store.models[remote_model_name].objects, (remote_change: any) => {
+            switch (remote_change.type) {
+                // remote object was injected
                 case 'add':
-                    foreign_object = change.newValue
-                    object_with_many = store.models[model_name].objects[foreign_object[foreign_id_field_name]]
-                    if (object_with_many) {
-                        if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} add ${foreign_object.id} start`)
-                        object_with_many[many_field_name].push(foreign_object)
-                        if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} add ${foreign_object.id} finish`)
-                    }
-
-                    observe(foreign_object, foreign_id_field_name, (field_change) => {
-                        if (field_change.newValue) {
-                            let object_with_many_id = field_change.newValue
-                            let object_with_many = store.models[model_name].objects[object_with_many_id]
-                            if (object_with_many) {
-                                if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} add ${foreign_object.id} start`)
-                                object_with_many[many_field_name].push(foreign_object)
-                                if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} add ${foreign_object.id} finish`)
+                    // watch foreign field on remote object 
+                    observe(remote_change.newValue, foreign_field_on_remote_model, (remote_foreign_field_change) => {
+                        // remote old
+                        if (remote_foreign_field_change.oldValue) {
+                            let object_with_many = remote_foreign_field_change.oldValue
+                            let index = object_with_many[field_name].indexOf(remote_change.newValue)
+                            if (index > -1) {
+                                object_with_many[field_name].splice(index, 1)
                             }
                         }
-                        if (field_change.oldValue) {
-                            let object_with_many_id = field_change.oldValue
-                            let object_with_many = store.models[model_name].objects[object_with_many_id]
-                            if (object_with_many) {
-                                let index = object_with_many[many_field_name].indexOf(foreign_object)
-                                if (index > -1) {
-                                    if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} remove ${foreign_object.id} start`)
-                                    object_with_many[many_field_name].splice(index, 1)
-                                    if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many_id} remove ${foreign_object.id} finish`)
-                                }
-                            }
-                        }
+                        // add new
+                        if (remote_foreign_field_change.newValue)
+                            remote_foreign_field_change.newValue[field_name].push(remote_change.newValue)
                     })
                     break
                 // object was removed 
                 case 'remove':
-                    foreign_object = change.oldValue
-                    object_with_many = store.models[model_name].objects[foreign_object[foreign_id_field_name]]
+                    let object_with_many = remote_change.oldValue[foreign_field_on_remote_model]
                     if (object_with_many) {
-                        let index = object_with_many[many_field_name].indexOf(foreign_object)
+                        let index = object_with_many[field_name].indexOf(remote_change.oldValue)
                         if (index > -1) {
-                            if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} remove ${foreign_object.id} start`)
-                            object_with_many[many_field_name].splice(index, 1)
-                            if(store.debug) console.log(`many ${model_name}.${many_field_name} of ${object_with_many.id} remove ${foreign_object.id} finish`)
+                            object_with_many[field_name].splice(index, 1)
                         }
                     }
                     break
