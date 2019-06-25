@@ -11,8 +11,7 @@ export class DefaultAdapter implements Adapter {
     newId = 0
     async save(obj) {
         let model_description = obj.getModelDescription()
-        // if first id is null then we set all ids to new value
-        if (obj[model_description.ids[0]] === null) {
+        if (obj.__id === null) {
             for (let id_field_name of model_description.ids) {
                 obj[id_field_name] = this.newId
             }

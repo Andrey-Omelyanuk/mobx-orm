@@ -179,4 +179,27 @@ describe('Field: foreign', () => {
             expect(x.y_id3).toBeNull()
         })
     })
+
+    it('remote model created before', async ()=> {
+
+        @model
+        class B1 extends Model {
+            @id     id   : number
+            @field  a_id : number
+            @foreign('A1', 'a_id') a
+        }
+
+        let b = new B1({id: 1, a_id: 1})
+
+        function declare() {
+            @model
+            class A1 extends Model {
+                @id     id   : number
+            }
+            let a = new A1({id: 1})
+
+            expect(b.a).toBe(a)
+        }
+        declare()
+    })
 })

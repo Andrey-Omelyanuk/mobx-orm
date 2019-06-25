@@ -43,6 +43,18 @@ export default function one(remote_model_name: any, foreign_field_on_remote_mode
         // register into mobx
         observable(cls, field_name)
 
+        // watch foreign fields on exists remote object 
+        for (let remote_object of Object.values(store.models[remote_model_name].objects)) {
+            observe(remote_object, <any>foreign_field_on_remote_model, (remote_foreign_field_change) => {
+                // remove old
+                if (remote_foreign_field_change.oldValue) 
+                    remote_foreign_field_change.oldValue[field_name] = null
+                // add new
+                if (remote_foreign_field_change.newValue)
+                    remote_foreign_field_change.newValue[field_name] = remote_object
+            })
+        }
+
         // watch for remote object that related to one-field
         observe(store.models[remote_model_name].objects, (remote_change) => {
             switch (remote_change.type) {

@@ -69,4 +69,46 @@ describe('One', () => {
         await a.delete()
         expect(b.a_one).toBeNull()
     })
+
+    it('remote model created before', async ()=> {
+        @model
+        class B1 extends Model {
+            @id                    id   : number
+            @field                 a_id : number
+            @foreign('A1', 'a_id') a
+        }
+        let b = new B1({id: 1, a_id: 1})
+
+        function declare() {
+            @model
+            class A1 extends Model {
+                @id             id   : number
+                @one('B1', 'a') b_one  
+            }
+            let a = new A1({id: 1})
+            expect(a.b_one).toBe(b)
+        }
+        declare()
+    })
+
+    it('remote model created after', async ()=> {
+        @model
+        class A2 extends Model {
+            @id             id   : number
+            @one('B2', 'a') b_one  
+        }
+        let a = new A2({id: 1})
+
+        function declare() {
+            @model
+            class B2 extends Model {
+                @id                    id   : number
+                @field                 a_id : number
+                @foreign('A2', 'a_id') a
+            }
+            let b = new B2({id: 1, a_id: 1})
+            expect(a.b_one).toBe(b)
+        }
+        declare()
+    })
 })

@@ -35,10 +35,9 @@ export interface ModelDescription {
 
 export class Store {
 
-    debug      : boolean = false 
-    models     : { [model_name: string]: ModelDescription   } = {}
-    field_types: { [type_name : string]: FieldTypeDecorator } = {}
-
+                debug      : boolean = false 
+    @observable models     : { [model_name: string]: ModelDescription   } = {}
+                field_types: { [type_name : string]: FieldTypeDecorator } = {}
 
     registerModel(model_name) {
         if (!this.models[model_name]) {

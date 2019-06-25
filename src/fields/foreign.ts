@@ -16,9 +16,10 @@ export function registerForeign() {
         // e.i. update foreign obj when foreign ids was changed
         autorun(() => {
             let id = store.getId(obj, foreign_id_field_names)
-            let foreign_obj = store.models[foreign_model_name].objects[id]
-            if (!edit_mode)
+            if (store.models[foreign_model_name]) {
+                let foreign_obj = store.models[foreign_model_name].objects[id]
                 obj[field_name] = foreign_obj ? foreign_obj : null 
+            }
         })
 
         // Setter
@@ -30,7 +31,7 @@ export function registerForeign() {
         })
         // 2. after changes run trigger for "change foreign_id"
         observe(obj, field_name, (change) => {
-            if (change.newValue === change.oldValue)
+            if (change.newValue === change.oldValue || edit_mode)
                 return  // it will help stop endless loop A.b -> A.b_id -> A.b -> A.b_id ...
 
             edit_mode = true
