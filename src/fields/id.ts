@@ -25,12 +25,12 @@ export function registerFieldId() {
             if (change.newValue !== null && obj[field_name] !== null)
                 throw new Error(`You cannot change id field: ${field_name}`)
 
-            if (obj[field_name] && change.newValue === null) {
+            if (obj[field_name] !== null && change.newValue === null) {
                 try {
                     store.eject(obj)
                 }
                 catch (err) {
-                    if (err.name !== `Object with id "${obj.getId()}" not exist in the store (model: ${obj.getModelName()}")`)
+                    if (err.name !== `Object with id "${obj.__id}" not exist in the store (model: ${obj.getModelName()}")`)
                         throw err
                 }
             }

@@ -33,7 +33,7 @@ describe('Model', () => {
         expect(user.full_name).toBe('A B')
 
         await user.save();	expect(user.id).not.toBeNull()
-                            expect(User.get(user.getId())).toBe(user)
+                            expect(User.get(user.__id)).toBe(user)
 
         let old_id = user.id
         await user.delete();	expect(user.id).toBeNull()
@@ -45,9 +45,9 @@ describe('Model', () => {
         let user_b = new User({first_name: 'b', last_name: 'b'}); await user_b.save()
         let user_c = new User({first_name: 'c', last_name: 'c'}); await user_c.save()
 
-        expect(User.get(user_a.getId())).toBe(user_a)
-        expect(User.get(user_b.getId())).toBe(user_b)
-        expect(User.get(user_c.getId())).toBe(user_c)
+        expect(User.get(user_a.__id)).toBe(user_a)
+        expect(User.get(user_b.__id)).toBe(user_b)
+        expect(User.get(user_c.__id)).toBe(user_c)
     })
 
     it('Model.all()', async () => {

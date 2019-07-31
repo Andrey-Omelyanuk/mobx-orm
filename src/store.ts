@@ -88,8 +88,8 @@ export class Store {
     }
 
     eject(obj: Model) {
+        if (obj.__id === null) return                   
         let model_description = obj.getModelDescription()
-        if (obj.__id === null)                    throw new Error(`Object should have id!`)
         if (!model_description.objects[obj.__id]) throw new Error(`Object with id "${obj.__id}" not exist in the store (model: ${obj.getModelName()}")`)
         delete model_description.objects[obj.__id]
     }
@@ -104,8 +104,11 @@ export class Store {
     clearModel(model_name) {
         let model_desc = this.models[model_name]
         if (model_desc) {
+            // we need it for run triggers on id fields 
             for (let obj of Object.values(model_desc.objects)) {
-                obj[model_desc.ids[0]] = null
+                for (let id_field_name of model_desc.ids) {
+                    obj[id_field_name] = null
+                }
             }
         }
     }
@@ -127,6 +130,6 @@ export class Store {
 let store = new Store()
 export default store
 
-// declare let window
+// declare let window: any
 // if (window) 
 //     window.mobx_orm_store = store

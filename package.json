@@ -16,7 +16,8 @@
   },
   "scripts": {
     "build" : "rollup -c",
-    "test"  : "jest"
+    "test"  : "jest --testMatch='**/src/**/*.spec.ts'",
+    "e2e"   : "jest --testMatch='**/e2e/**/*.ts'"
   },
   "devDependencies": {
     "typescript"	: "3.4.3",
@@ -42,7 +43,6 @@
 		"modulePaths"						: ["."],
 		"transform": {
 			"^.+\\.tsx?$": "ts-jest"
-		},
-		"testRegex": "(/src|e2e/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$"
+    }
 	}
 }

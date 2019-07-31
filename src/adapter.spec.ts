@@ -3,56 +3,74 @@ import { store, model, Model, id, DefaultAdapter } from './index'
 
 describe('DefaultAdapter', () => {
 
-    @model 
-    class A extends Model {
-        @id id : number
-    }
-
-    @model 
-    class B extends Model {
-        @id a_id : number
-        @id b_id : number
-    }
+    store.clear()
+    @model class SN  extends Model { @id id : number }                      // Single Number
+    @model class SS  extends Model { @id id : string }                      // Single String
+    @model class CNN extends Model { @id id1: number; @id id2: number }     // Composite Numbers
+    @model class CSS extends Model { @id id1: string; @id id2: string }     // Composite Strings
+    @model class CNS extends Model { @id id1: number; @id id2: string }     // Composite Number+String
 
     beforeEach(() => {
-        store.clearModel('A')
-        store.clearModel('B')
+        store.clearModel('SN')
+        store.clearModel('SS')
+        store.clearModel('CNN')
+        store.clearModel('CSS')
+        store.clearModel('CNS')
     })
 
     it('save', async () => {
-        let adapterA = new DefaultAdapter()
-        let a1 = new A();           expect(a1.id).toBeNull()
-        let a2 = new A();           expect(a2.id).toBeNull()
-        await adapterA.save(a1);    expect(a1.id).toBe(0)
-        await adapterA.save(a2);    expect(a2.id).toBe(1)
+        let adapter_sn = new DefaultAdapter()
+        let sn1 = new SN();           expect(sn1.id).toBeNull()
+        let sn2 = new SN();           expect(sn2.id).toBeNull()
+        await adapter_sn.save(sn1);   expect(sn1.id).toBe(0)
+        await adapter_sn.save(sn2);   expect(sn2.id).toBe(1)
+                                      expect(SN.all().length).toBe(2)
+        // second save is update => nothing change in current case
+        await adapter_sn.save(sn1);   expect(sn1.id).toBe(0)
+        await adapter_sn.save(sn2);   expect(sn2.id).toBe(1)
+                                      expect(SN.all().length).toBe(2)
 
-        let adapterB = new DefaultAdapter()
-        let b1 = new B();           expect(b1.a_id).toBeNull(); expect(b1.b_id).toBeNull()
-        let b2 = new B();           expect(b2.a_id).toBeNull(); expect(b2.b_id).toBeNull()
-        await adapterB.save(b1);    expect(b1.a_id).toBe(0);    expect(b1.b_id).toBe(0)
-        await adapterB.save(b2);    expect(b2.a_id).toBe(1);    expect(b2.b_id).toBe(1)
+        let adapter_cnn = new DefaultAdapter()
+        let cnn1 = new CNN();         expect(cnn1.id1).toBeNull(); expect(cnn1.id2).toBeNull()
+        let cnn2 = new CNN();         expect(cnn2.id1).toBeNull(); expect(cnn2.id2).toBeNull()
+        await adapter_cnn.save(cnn1); expect(cnn1.id1).toBe(0);    expect(cnn1.id2).toBe(0)
+        await adapter_cnn.save(cnn2); expect(cnn2.id1).toBe(1);    expect(cnn2.id2).toBe(1)
+                                      expect(CNN.all().length).toBe(2)
+        // second save is update => nothing change in current case
+        await adapter_cnn.save(cnn1); expect(cnn1.id1).toBe(0);    expect(cnn1.id2).toBe(0)
+        await adapter_cnn.save(cnn2); expect(cnn2.id1).toBe(1);    expect(cnn2.id2).toBe(1)
+                                      expect(CNN.all().length).toBe(2)
     })
 
     it('delete', async () => {
-        let adapterA = new DefaultAdapter()
-        let a1 = new A()
-        let a2 = new A()
-        await adapterA.save(a1);    expect(a1.id).toBe(0)
-        await adapterA.save(a2);    expect(a2.id).toBe(1)
-        await adapterA.delete(a1);  expect(a1.id).toBeNull()
-        await adapterA.delete(a2);  expect(a2.id).toBeNull()
+        let adapter_sn = new DefaultAdapter()
+        let sn1 = new SN()
+        let sn2 = new SN()
+        await adapter_sn.save(sn1);    expect(sn1.id).toBe(0)
+        await adapter_sn.save(sn2);    expect(sn2.id).toBe(1)
+                                       expect(SN.all().length).toBe(2)
+        await adapter_sn.delete(sn1);  expect(sn1.id).toBeNull()
+        await adapter_sn.delete(sn2);  expect(sn2.id).toBeNull()
+                                       expect(SN.all().length).toBe(0)
 
-        let adapterB = new DefaultAdapter()
-        let b1 = new B()
-        let b2 = new B()
-        await adapterB.save(b1);    expect(b1.a_id).toBe(0);    expect(b1.b_id).toBe(0)
-        await adapterB.save(b2);    expect(b2.a_id).toBe(1);    expect(b2.b_id).toBe(1)
-        await adapterB.delete(b1);  expect(b1.a_id).toBeNull(); expect(b1.b_id).toBeNull()
-        await adapterB.delete(b2);  expect(b2.a_id).toBeNull(); expect(b2.b_id).toBeNull()
+        let adapter_cnn = new DefaultAdapter()
+        let cnn1 = new CNN()
+        let cnn2 = new CNN()
+        await adapter_cnn.save(cnn1);    expect(cnn1.id1).toBe(0);    expect(cnn1.id2).toBe(0)
+        await adapter_cnn.save(cnn2);    expect(cnn2.id1).toBe(1);    expect(cnn2.id2).toBe(1)
+                                         expect(CNN.all().length).toBe(2)
+        await adapter_cnn.delete(cnn1);  expect(cnn1.id1).toBeNull(); expect(cnn1.id2).toBeNull()
+        await adapter_cnn.delete(cnn2);  expect(cnn2.id1).toBeNull(); expect(cnn2.id2).toBeNull()
+                                         expect(CNN.all().length).toBe(0)
     })
 
     it('load', async () => {
         let adapter = new DefaultAdapter()
-        // expect(async () => { await adapter.load() }).toThrow(new Error('Not Implemented for DefaultAdapter'))
+        try {
+            await adapter.load()
+        }
+        catch (e) {
+            expect(e).toEqual(new Error('Not Implemented for DefaultAdapter'))
+        }
     })
 })

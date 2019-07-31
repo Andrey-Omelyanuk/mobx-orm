@@ -1,186 +1,141 @@
 import { store, Model, model, id } from '../index'
 
+// init: 
+//  - create object without init fields
+//  - init fields into constructor
+//  - init fields after creation without init fields
+// update:
+//  - id cannot be changed
+// delete:
+//  - id can be reset to null and after that entry should be deleted from the store
+
+// nothing happend when id setted to null for new object
 
 describe('Field: id', () => {
     store.clear()
+    @model class SN  extends Model { @id id : number }                      // Single Number
+    @model class SS  extends Model { @id id : string }                      // Single String
+    @model class CNN extends Model { @id id1: number; @id id2: number }     // Composite Numbers
+    @model class CSS extends Model { @id id1: string; @id id2: string }     // Composite Strings
+    @model class CNS extends Model { @id id1: number; @id id2: string }     // Composite Number+String
 
-    describe('single number', () => {
-        beforeEach(() => store.clearModel('SN'))
-
-        @model
-        class SN extends Model {
-            @id id: number
-        }
-
-        it('create object without id', async ()=> {
-            let a = new SN()
-            expect(a.id).toBeNull()
-            expect(a.__id).toBeNull()
-            expect(SN.all().length).toBe(0)
-        })
-
-        it('set id in constructor', async ()=> {
-            let a = new SN({id: 1});    
-            expect(a.id).not.toBeNull()
-            expect(SN.all().length).toBe(1)
-            expect(SN.get(a.__id)).toBe(a)
-        })
-
-        it('set id after creation without id', async ()=> {
-            let a = new SN()    
-            a.id = 1
-            expect(a.id).toBe(1)
-            expect(SN.all().length).toBe(1)
-            expect(SN.get(a.__id)).toBe(a)
-
-            // let b = new B();    expect(b.a_id).toBeNull()
-            //                     expect(b.b_id).toBeNull()
-            //                     expect(B.all().length).toBe(0)
-            // b.a_id = 1;         expect(b.a_id).not.toBeNull()
-            //                     expect(b.__id).toBeNull()
-            //                     // inject to store only when all ids was setted
-            //                     expect(B.all().length).toBe(0)
-            // b.b_id = 1;         expect(b.b_id).not.toBeNull()
-            //                     expect(b.__id).not.toBeNull()
-            //                     expect(B.all().length).toBe(1)
-            //                     expect(B.get(b.__id)).toBe(b)
-        })
-
-        it('nothing happend when id setted to null for new object', async ()=> {
-            let a = new SN()
-            a.id  = null
-            expect(a.id).toBeNull() 
-            expect(SN.all().length).toBe(0)
-
-            // let b = new B()
-            // b.a_id = null;      expect(b.a_id).toBeNull()
-            // b.b_id = null;      expect(b.b_id).toBeNull()
-            //                     expect(B.all().length).toBe(0)
-
-            // let c = new C()
-            // c.id  = null;       expect(c.id).toBeNull()
-            //                     expect(C.all().length).toBe(0)
-        })
-
-        it('id cannot be changed', async ()=> {
-            let a = new SN({id: 1})    
-            expect(() => { 
-                a.id = 2 
-            })
-            .toThrow(new Error('You cannot change id field: id'))
-
-            // let b = new B({a_id: 1, b_id: 1})    
-            // expect(() => { b.a_id = 2 }).toThrow(new Error('You cannot change id field: a_id'))
-            // expect(() => { b.b_id = 2 }).toThrow(new Error('You cannot change id field: b_id'))
-
-            // let c = new C({id: 'test'})    
-            // expect(() => { c.id = 'new test' }).toThrow(new Error('You cannot change id field: id'))
-        })
-
-        it('id can be reset to null and after that entry should be deleted from store', async ()=> {
-            let a = new SN({id: 99}) 
-            let a_id = a.__id 
-            a.id = null        
-            expect(a.id).toBeNull()
-            expect(SN.all().length).toBe(0)
-            expect(SN.get(a_id)).toBeUndefined()
-
-            // let b = new B({a_id: 99, b_id: 99})    
-            // let b_id = b.__id
-            //                     expect(B.get(b.__id)).toBe(b)
-            //                     expect(B.all().length).toBe(1)
-            // b.a_id = null;      expect(b.a_id).toBeNull()
-            //                     expect(B.all().length).toBe(0)
-            //                     expect(B.get(b_id)).toBeUndefined()
-
-            // let c = new C({id: 'test99'})    
-            // let c_id = c.__id
-            //                     expect(C.get(c_id)).toBe(c)
-            //                     expect(C.all().length).toBe(1)
-            // c.id = null;        expect(c.id).toBeNull()
-            //                     expect(C.all().length).toBe(0)
-            //                     expect(C.get(c_id)).toBeUndefined()
-        })
-
+    beforeEach(() => {
+        store.clearModel('SN')
+        store.clearModel('SS')
+        store.clearModel('CNN')
+        store.clearModel('CSS')
+        store.clearModel('CNS')
     })
 
-    describe('single string', () => {
-        beforeEach(() => store.clearModel('SS'))
+    it('init: create object without id', async ()=> {
+        let sn  = new SN();     expect(sn.id).toBeNull()
+                                expect(sn.__id).toBeNull()
+                                expect(SN.all().length).toBe(0)
 
-        @model
-        class SS extends Model {
-            @id id: string
-        }
+        let ss  = new SS();     expect(ss.id).toBeNull()
+                                expect(ss.__id).toBeNull()
+                                expect(SS.all().length).toBe(0)
 
-        it('create object without id', async ()=> {
-            let a = new SS()
-            expect(a.id).toBeNull()
-            expect(a.__id).toBeNull()
-            expect(SS.all().length).toBe(0)
-        })
+        let cns = new CNS();    expect(cns.id1).toBeNull()
+                                expect(cns.id2).toBeNull()
+                                expect(cns.__id).toBeNull()
+                                expect(CNS.all().length).toBe(0)
+
+        let cnn = new CNN();    expect(cnn.id1).toBeNull()
+                                expect(cnn.id2).toBeNull()
+                                expect(cnn.__id).toBeNull()
+                                expect(CNN.all().length).toBe(0)
+
+        let css = new CSS();    expect(css.id1).toBeNull()
+                                expect(css.id2).toBeNull()
+                                expect(css.__id).toBeNull()
+                                expect(CSS.all().length).toBe(0)
     })
 
-    describe('composite numbers', () => {
-        beforeEach(() => store.clearModel('CNs'))
+    it('init: set id in constructor', async ()=> {
+        let sn  = new SN({id: 1});  expect(sn.id).toBe(1)
+                                    expect(SN.all().length).toBe(1)
+                                    expect(SN.get(sn.__id)).toBe(sn)
 
-        @model
-        class CNs extends Model {
-            @id id1: number
-            @id id2: number
-        }
+        let ss  = new SS({id: '1'});    expect(ss.id).toBe('1')
+                                        expect(SS.all().length).toBe(1)
+                                        expect(SS.get(ss.__id)).toBe(ss)
 
-        it('create object without id', async ()=> {
-            let a = new CNs()
-            expect(a.id1).toBeNull()
-            expect(a.id2).toBeNull()
-            expect(a.__id).toBeNull()
-            expect(CNs.all().length).toBe(0)
-        })
+        let cns = new CNS({id1: 1, id2: '1'});  expect(cns.id1).toBe(1)
+                                                expect(cns.id2).toBe('1')
+                                                expect(CNS.all().length).toBe(1)
+                                                expect(CNS.get(cns.__id)).toBe(cns)
 
-        it('set id in constructor', async ()=> {
-            let a = new CNs({id1: 1, id2: 1})
-            expect(a.id1).toBe(1)
-            expect(a.id2).toBe(1)
-            expect(CNs.all().length).toBe(1)
-            expect(CNs.get(a.__id)).toBe(a)
-        })
+        let cnn = new CNN({id1: 1, id2: 1});    expect(cnn.id1).toBe(1)
+                                                expect(cnn.id2).toBe(1)
+                                                expect(CNN.all().length).toBe(1)
+                                                expect(CNN.get(cnn.__id)).toBe(cnn)
+
+        let css = new CSS({id1: '1', id2: '1'});expect(css.id1).toBe('1')
+                                                expect(css.id2).toBe('1')
+                                                expect(CSS.all().length).toBe(1)
+                                                expect(CSS.get(css.__id)).toBe(css)
     })
 
-    describe('composite strings', () => {
-        beforeEach(() => store.clearModel('CSs'))
+    it('init: set id after creation without id', async ()=> {
+        let sn = new SN(); sn.id = 1;   expect(sn.id).toBe(1)
+                                        expect(SN.all().length).toBe(1)
+                                        expect(SN.get(sn.__id)).toBe(sn)
 
-        @model
-        class CSs extends Model {
-            @id id1: string
-            @id id2: string
-        }
-
-        it('create object without id', async ()=> {
-            let a = new CSs()
-            expect(a.id1).toBeNull()
-            expect(a.id2).toBeNull()
-            expect(a.__id).toBeNull()
-            expect(CSs.all().length).toBe(0)
-        })
+        let ss = new SS(); ss.id = '1'; expect(ss.id).toBe('1')
+                                        expect(SS.all().length).toBe(1)
+                                        expect(SS.get(ss.__id)).toBe(ss)
+        let cns = new CNS()
+        cns.id1 = 1;                    expect(cns.id1).toBe(1)
+                                        expect(CNS.all().length).toBe(0)    // inject to store only when all ids was setted
+        cns.id2 = '1';                  expect(cns.id2).toBe('1')
+                                        expect(CNS.all().length).toBe(1)
+                                        expect(CNS.get(cns.__id)).toBe(cns)
+        let cnn = new CNN()
+        cnn.id1 = 1;                    expect(cnn.id1).toBe(1)
+                                        expect(CNN.all().length).toBe(0)    // inject to store only when all ids was setted
+        cnn.id2 = 1;                    expect(cnn.id2).toBe(1)
+                                        expect(CNN.all().length).toBe(1)
+                                        expect(CNN.get(cnn.__id)).toBe(cnn)
+        let css = new CSS()
+        css.id1 = '1';                  expect(css.id1).toBe('1')
+                                        expect(CSS.all().length).toBe(0)    // inject to store only when all ids was setted
+        css.id2 = '1';                  expect(css.id2).toBe('1')
+                                        expect(CSS.all().length).toBe(1)
+                                        expect(CSS.get(css.__id)).toBe(css)
     })
 
-    describe('composite number+string', () => {
-        beforeEach(() => store.clearModel('CNS'))
+    it('update: id cannot be changed', async ()=> {
+        let sn = new SN({id: 1})    
+        expect(() => { sn.id = 2 })         .toThrow(new Error('You cannot change id field: id'))
 
-        @model
-        class CNS extends Model {
-            @id id1: number
-            @id id2: string
-        }
+        let ss = new SS({id: '1'})    
+        expect(() => { ss.id = '2' })       .toThrow(new Error('You cannot change id field: id'))
 
-        it('create object without id', async ()=> {
-            let a = new CNS()
-            expect(a.id1).toBeNull()
-            expect(a.id2).toBeNull()
-            expect(a.__id).toBeNull()
-            expect(CNS.all().length).toBe(0)
-        })
+        let cns = new CNS({id1: 1, id2: '1'})
+        expect(() => { cns.id1 =  2  })     .toThrow(new Error('You cannot change id field: id1'))
+        expect(() => { cns.id2 = '2' })     .toThrow(new Error('You cannot change id field: id2'))
+
+        let cnn = new CNN({id1: 1 , id2: 1})
+        expect(() => { cnn.id1 =  2  })     .toThrow(new Error('You cannot change id field: id1'))
+        expect(() => { cnn.id2 =  2  })     .toThrow(new Error('You cannot change id field: id2'))
+
+        let css = new CSS({id1: '1', id2: '1'})
+        expect(() => { css.id1 = '2' })     .toThrow(new Error('You cannot change id field: id1'))
+        expect(() => { css.id2 = '2' })     .toThrow(new Error('You cannot change id field: id2'))
     })
 
+    it('delete: id can be reset to null and after that entry should be deleted from the store', async ()=> {
+        let sn    = new SN({id: 1});        expect(SN.get(sn.__id)).toBe(sn)
+        let sn_id = sn.__id;                expect(SN.all().length).toBe(1)
+            sn.id = null;                   expect(sn.id).toBeNull()
+                                            expect(SN.all().length).toBe(0)
+                                            expect(SN.get(sn_id)).toBeUndefined()
 
+        let ss    = new SS({id: '1'});      expect(SS.get(ss.__id)).toBe(ss)
+        let ss_id = ss.__id;                expect(SS.all().length).toBe(1) 
+            ss.id = null;                   expect(ss.id).toBeNull()
+                                            expect(SS.all().length).toBe(0)
+                                            expect(SS.get(ss_id)).toBeUndefined()
+    })
 })

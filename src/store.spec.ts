@@ -41,6 +41,10 @@ describe('Store', () => {
     it('Inject/Eject', async ()=> {
         // TODO: is id.spec.ts cover this case?
     })
+    
+    it('Eject: ignore object without __id', async ()=> {
+        store.eject(<any>{__id: null})
+    })
 
     it('Clear', async ()=> {
         store.clear()               // should not be an exception
