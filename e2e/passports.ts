@@ -10,8 +10,8 @@ describe('Other tests: Passports.', () => {
         @id     id           : number
         @field  user_name    : string
 
-        @one ('Passport', 'user_id') passport: Passport
-        @many('Key'     , 'user_id') keys    : Key[]
+        @one ('Passport', 'user') passport: Passport
+        @many('Key'     , 'user') keys    : Key[]
 
         async generateNewKey() {
             let new_key = new Key({user_id: this.id})
@@ -38,6 +38,8 @@ describe('Other tests: Passports.', () => {
         @number   user_id       : number
         @field    first_name    : string
         @field    last_name     : string
+
+        @foreign('User') user : User
 
         constructor(init_data?) {
             super(init_data)

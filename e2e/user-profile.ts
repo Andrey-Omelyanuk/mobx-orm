@@ -10,7 +10,7 @@ describe('User Profile.', () => {
     class User extends Model {
         @id       id    : number
         @field    name  : string
-        @one('UserProfile', 'user_id') profile : UserProfile
+        @one('UserProfile', 'user') profile : UserProfile
     }
 
     @model

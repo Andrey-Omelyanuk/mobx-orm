@@ -60,6 +60,9 @@ export default function one(remote_model_name: any, foreign_field_on_remote_mode
             switch (remote_change.type) {
                 // remote object was injected
                 case 'add':
+                    // add to one  
+                    if (remote_change.newValue[foreign_field_on_remote_model])
+                        remote_change.newValue[foreign_field_on_remote_model][field_name] = remote_change.newValue
                     // watch foreign field on remote object 
                     observe(remote_change.newValue, foreign_field_on_remote_model, (remote_foreign_field_change) => {
                         // remove old

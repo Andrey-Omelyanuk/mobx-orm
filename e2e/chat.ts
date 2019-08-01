@@ -1,6 +1,5 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
 import { store , Model, model, id, field, foreign, many, datetime, number } from '../dist/mobx-orm'
-import { initializeInstance } from 'mobx/lib/internal';
 
 
 describe('e2e: Chat.', () => {
@@ -11,7 +10,7 @@ describe('e2e: Chat.', () => {
         @id    id           : number
         @field first_name   : string
         @field last_name    : string
-        @many('Message', 'user_id') messages: Message[]
+        @many('Message', 'user') messages: Message[]
 
         get full_name() : string { return `${this.first_name} ${this.last_name}` }
     }
@@ -19,7 +18,7 @@ describe('e2e: Chat.', () => {
     @model
     class Channel extends Model {
         @id id : number
-        @many('Message', 'channel_id') messages : Message[]
+        @many('Message', 'channel') messages : Message[]
 
         async sendMessage(user: User, text: string) {
             let message = new Message()
