@@ -12,7 +12,7 @@
   "jsnext:main" : "dist/mobx-orm.es2015.js",
   "typings"     : "dist/mobx-orm.d.ts",
   "dependencies": {
-    "mobx"  : "^5.9.4"
+    "mobx"  : "^5.15.7"
   },
   "scripts": {
     "build" : "rollup -c",
@@ -20,16 +20,16 @@
     "e2e"   : "jest --testMatch='**/e2e/**/*.ts'"
   },
   "devDependencies": {
-    "typescript"	: "3.4.3",
-    "tslint"			: "5.15.0",
-		"jest"				: "24.7.1",
-    "ts-jest"			: "24.0.2",
-		"@types/jest" : "24.0.11",
+    "typescript"	      : "^4.1.3",
+    "tslint"            : "^6.1.3",
+		"jest"				      : "^26.6.3",
+    "ts-jest"			      : "^26.4.4",
+		"@types/jest"       : "^26.0.19",
 
-    "rollup"                    : "1.12.3",
-    "rollup-plugin-typescript2" : "0.21.1", 
-    "rollup-plugin-terser"      : "5.0.0",
-    "rollup-plugin-dts"         : "0.15.1"
+    "rollup"                    : "^2.35.1",
+    "rollup-plugin-typescript2" : "^0.29.0", 
+    "rollup-plugin-terser"      : "^7.0.2",
+    "rollup-plugin-dts"         : "^2.0.1"
 
   },
   "engines": {

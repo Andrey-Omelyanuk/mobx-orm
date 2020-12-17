@@ -18,7 +18,7 @@ describe('Field: moment', () => {
         let a = new A();                expect(a.x).toBeUndefined()
         a.x = <any>timestamp_string;    expect(a.x).toEqual(timestamp)
         a.x = null;                     expect(a.x).toBeNull()
-        a.x = timestamp;                expect(a.x.getDate()).toBe(25)
+        a.x = timestamp;                expect(a.x.getDate()).toBe(timestamp.getDate())
 
         expect(() => { a.x = <any>1      }).toThrow(new Error('Field can be only Date or null.'))
         expect(() => { a.x = <any>'test' }).toThrow(new Error('Field can be only Date or null.'))

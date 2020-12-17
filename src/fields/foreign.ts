@@ -30,7 +30,7 @@ export function registerForeign() {
             return change
         })
         // 2. after changes run trigger for "change foreign_id"
-        observe(obj, field_name, (change) => {
+        observe(obj, field_name, (change:any) => {
             if (change.newValue === change.oldValue || edit_mode)
                 return  // it will help stop endless loop A.b -> A.b_id -> A.b -> A.b_id ...
 
