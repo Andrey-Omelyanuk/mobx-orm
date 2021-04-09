@@ -1,4 +1,4 @@
-import { computed } from 'mobx'
+import { computed, makeObservable, runInAction } from 'mobx'
 import store, { ModelDescription } from './store'
 
 
@@ -86,16 +86,18 @@ export function model(cls) {
             }
         }
 
+        makeObservable(obj)
         // apply decorators
         for (let field_name in model_description.fields) {
             let type = model_description.fields[field_name].type
             store.field_types[type](model_name, field_name, obj)
         }
         
-        if (init_data)
-            for (let field_name in init_data)
-                obj[field_name] = init_data[field_name]
-
+        runInAction(() => {
+            if (init_data)
+                for (let field_name in init_data)
+                    obj[field_name] = init_data[field_name]
+        })
         return obj
     }
     // copy static properties/methods

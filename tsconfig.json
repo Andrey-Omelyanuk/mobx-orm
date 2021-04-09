@@ -1,24 +1,25 @@
 {
-  "compileOnSave": true,
-  "compilerOptions": {
-		"outDir"											: "lib",
-		"baseUrl"											: "./",
-		"module"											: "es2015",
-    "target"											: "es5",
-		"moduleResolution"						: "node",
-    "stripInternal"								: true,
-    "emitDecoratorMetadata"				: true,
-		"experimentalDecorators"			: true,
-    "allowSyntheticDefaultImports": true,
-		"skipLibCheck"								: true,
-    "sourceMap"										: true,
-		"declaration"									: false,
-		"lib": [      
-			"dom",
-			"es2017"
-		]
-  },
-	"exclude": [
-		"node_modules"
-	]
+    "compileOnSave": true,
+    "compilerOptions": {
+        "outDir"    : "lib",
+        "baseUrl"   : "./",
+        "module"    : "es2015",
+        "target"    : "es5",
+        "moduleResolution"              : "node",
+        "stripInternal"                 : true,
+        "emitDecoratorMetadata"         : true,
+        "experimentalDecorators"        : true,
+        "useDefineForClassFields"       : true,
+        "allowSyntheticDefaultImports"  : true,
+        "skipLibCheck"                  : true,
+        "sourceMap"                     : true,
+        "declaration"                   : false,
+        "lib": [      
+            "dom",
+            "es2017"
+        ]
+    },
+    "exclude": [
+        "node_modules"
+    ]
 }

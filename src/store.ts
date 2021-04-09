@@ -1,7 +1,10 @@
-import { observable } from 'mobx'
+import { action, configure, observable } from 'mobx'
 import { Model } from './model'
 import { Adapter, DefaultAdapter } from './adapter'
 
+configure({
+    enforceActions: "never",
+})
 
 export interface FieldTypeDecorator {
     (model_name: string, field_name: string, obj: Object): void

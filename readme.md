@@ -12,3 +12,17 @@ Check ./e2e tests for understanding how to use the lib.
 
 Unique is not make sense.
 Transaction is not make sense.
+
+
+
+How to use with docker:
+
+# run docker
+docker-compose up -d
+# connect to docker
+docker-compose exec front sh
+# install packages
+yarn install
+# run tests
+yarn test
+yarn e2e

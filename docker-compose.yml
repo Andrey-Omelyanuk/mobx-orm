@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  front:
+    build: 
+      context: .
+    volumes:
+      - .:/app
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    environment:
+      - CHOKIDAR_USEPOLLING=true

@@ -1,4 +1,4 @@
-import {store, Model, model, id, field, foreign} from '../index'
+import { store, Model, model, id, field, foreign } from '../index'
 
 
 describe('Field: foreign', () => {
