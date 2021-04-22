@@ -3,60 +3,143 @@ import store from './store'
 
 describe('Store', () => {
 
-    afterEach(function() {
-        store.clear()
+    beforeEach(() => {
+        store.reset()
     })
 
     it('Register model', async ()=> {
-                                    expect(store.models['A']).toBeUndefined()
-        store.registerModel('A');   expect(store.models['A']).not.toBeUndefined()
-                                    expect(store.models['A'].objects).toEqual({})
-                                    expect(store.models['A'].fields ).toEqual({})
+        let model_name_a = 'A'
+        let model_name_b = 'B'
 
-        expect(() => { store.registerModel('A')})
-            .toThrow(new Error('Model "A" already registered.'))
+        // register model A
+        expect(store.models[model_name_a]).toBeUndefined()
+        store.registerModel(model_name_a);   
+        expect(store.models[model_name_a].ids.length).toBe(0)
+        expect(store.models[model_name_a].objects).toEqual({})
+        expect(store.models[model_name_a].fields ).toEqual({})
+        expect(store.models[model_name_a].adapter).not.toBeUndefined()
+
+        // register model B 
+        expect(store.models[model_name_b]).toBeUndefined()
+        store.registerModel(model_name_b);   
+        expect(store.models[model_name_b].ids.length).toBe(0)
+        expect(store.models[model_name_b].objects).toEqual({})
+        expect(store.models[model_name_b].fields ).toEqual({})
+        expect(store.models[model_name_b].adapter).not.toBeUndefined()
+
+        // again register model A
+        expect(() => { store.registerModel(model_name_a)})
+            .toThrow(new Error(`Model "${model_name_a}" already registered.`))
     })
 
     it('Register field type', async ()=> {
-                                                            expect(store.field_types['test-field-1']).toBeUndefined()
-                                                            expect(store.field_types['test-field-2']).toBeUndefined()
-        store.registerFieldType('test-field-1', () => {});  expect(typeof store.field_types['test-field-1']).toBe('function')
-        store.registerFieldType('test-field-2', () => {});  expect(typeof store.field_types['test-field-2']).toBe('function')
+        let field_type_a = 'field_type_a'
+        let field_type_b = 'field_type_b'
 
-        expect(() => { store.registerFieldType('test-field-1', () => {})})
-            .toThrow(new Error('Field type "test-field-1" already registered.'))
+        // register type A
+        expect(store.field_types[field_type_a]).toBeUndefined()
+        store.registerFieldType(field_type_a, () => {});  
+        expect(typeof store.field_types[field_type_a]).toBe('function')
+
+        // register type B 
+        expect(store.field_types[field_type_b]).toBeUndefined()
+        store.registerFieldType(field_type_b, () => {});  
+        expect(typeof store.field_types[field_type_b]).toBe('function')
+
+        // again register type A 
+        expect(() => { store.registerFieldType(field_type_a, () => {})})
+            .toThrow(new Error(`Field type "${field_type_a}" already registered.`))
     })
 
-    it('Register field model', async ()=> {
-        store.registerModel('A')
-        store.registerFieldType('common-field', () => {});                  expect(store.models['A'].fields ).toEqual({})
-        store.registerModelField('A', 'common-field', 'xxx', {test: 1});    expect(store.models['A'].fields['xxx']).not.toBeUndefined()
-                                                                            expect(store.models['A'].fields['xxx'].type).toBe('common-field')
-                                                                            expect(store.models['A'].fields['xxx'].settings).toEqual({test: 1})
+    it('Register field in the model', async ()=> {
+        let model_name = 'A'
+        let field_type = 'field'
+        let field_name_a = 'xxx'
+        let field_name_b = 'yyy'
+        store.registerModel(model_name)
+        store.registerFieldType(field_type, () => {})
 
-        expect(() => { store.registerModelField('A', 'common-field', 'xxx', {})})
-            .toThrow(new Error('Field "xxx" on "A" already registered.'))
+        // register field A 
+        expect(store.models[model_name].fields[field_name_a]).toBeUndefined()
+        store.registerModelField(model_name, field_type, field_name_a, {test: 1})
+        expect(store.models[model_name].fields[field_name_a].type).toBe(field_type)
+        expect(store.models[model_name].fields[field_name_a].settings).toEqual({test: 1})
+
+        // register field B
+        expect(store.models[model_name].fields[field_name_b]).toBeUndefined()
+        store.registerModelField(model_name, field_type, field_name_b, {test: 1})
+        expect(store.models[model_name].fields[field_name_b].type).toBe(field_type)
+        expect(store.models[model_name].fields[field_name_b].settings).toEqual({test: 1})
+
+        // again register field A 
+        expect(() => { store.registerModelField(model_name, field_type, field_name_a)})
+            .toThrow(new Error(`Field "${field_name_a}" on "${model_name}" already registered.`))
     })
 
-    it('Inject/Eject', async ()=> {
-        // TODO: is id.spec.ts cover this case?
+    it('Register id field in the model', async ()=> {
+        let model_name = 'A'
+        let field_type = 'field'
+        let field_name_a = 'xxx'
+        let field_name_b = 'yyy'
+        store.registerModel(model_name)
+        store.registerFieldType(field_type, () => {})
+        store.registerModelField(model_name, field_type, field_name_a)
+        store.registerModelField(model_name, field_type, field_name_b)
+
+        // register id A
+        expect(store.models[model_name].ids.length).toBe(0)
+        store.registerId(model_name, field_name_a)
+        expect(store.models[model_name].ids[0]).toBe(field_name_a)
+
+        // register id B
+        expect(store.models[model_name].ids.length).toBe(1)
+        store.registerId(model_name, field_name_b)
+        expect(store.models[model_name].ids[1]).toBe(field_name_b)
+
+        // again register id A
+        expect(() => { store.registerId(model_name, field_name_a)})
+            .toThrow(new Error(`Id "${field_name_a}" in model "${model_name}" already registered.`))
     })
+
+    // TODO
+    // it('Inject obj', async ()=> {
+    // })
+
+    // TODO
+    // it('Eject obj', async ()=> {
+    // })
     
-    it('Eject: ignore object without __id', async ()=> {
-        store.eject(<any>{__id: null})
+    // TODO
+    // it('Eject: ignore object without __id', async ()=> {
+    //     // store.eject(<any>{__id: null})
+    // })
+
+    // TODO
+    // it('Get ID string', async ()=> {
+    // })
+
+    it('Reset', async ()=> {
+        let model_name = 'A'
+        let field_type = 'typeA'
+        store.registerModel(model_name);    
+        store.registerFieldType(field_type, () => {});  
+
+        store.reset(); 
+        expect(store.models).toEqual({})
+        expect(store.field_types).toEqual({})
+
+        store.reset() // should not be an exception
     })
 
-    it('Clear', async ()=> {
-        store.clear()               // should not be an exception
-        store.clear();              expect(store.models).toEqual({})
-        store.registerModel('A');   expect(store.models).not.toEqual({})
-        store.clear();              expect(store.models).toEqual({})
-    })
+    // TODO
+    // it('Reset All Cache', async ()=> {
+    // })
 
-    it('ClearModel', async ()=> {
-        store.clearModel('TestModel')       // should not be an exception
-        store.registerModel('TestModel');   expect(store.models['TestModel'].objects).toEqual({})
-        store.clearModel('TestModel');      expect(store.models['TestModel'].objects).toEqual({})
-        // TODO: add objects to model and clear model
-    })
+    // TODO
+    // it('Remove model', async ()=> {
+    // })
+
+    // TODO
+    // it('Clear cache for the model', async ()=> {
+    // })
 })

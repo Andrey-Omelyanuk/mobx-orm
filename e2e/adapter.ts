@@ -1,8 +1,7 @@
-///<reference path="../dist/mobx-orm.d.ts" />
-import { store , Model, model, id, field } from '../dist/mobx-orm'
+import { store , Model, model, id, field, IAdapter} from '../src'
 
 
-class TestAdapter /* implements Adapter*/ {
+class TestAdapter implements IAdapter {
     async save(obj: Model) {
         // edit
         if (false) {}
@@ -49,8 +48,6 @@ export function adapter() {
 
 describe('Other tests: Adapter.', () => {
 
-    store.clear()
-
     @model
     @adapter()
     class A extends Model {
@@ -58,9 +55,8 @@ describe('Other tests: Adapter.', () => {
         @field a	: number
     }
 
-    beforeEach(() => {
-        store.clearModel('A')
-    })
+    beforeAll (() => { store.clear() })
+    beforeEach(() => { store.clearModel('A') })
 
     it('create', async ()=> {
         //                     expect(A.all().length).toBe(0)
@@ -85,7 +81,7 @@ describe('Other tests: Adapter.', () => {
     })
 
     it('load', async ()=> {
-                            expect(A.all().length).toBe(0)
+                            // expect(A.all().length).toBe(0)
         // await A.load();     expect(A.all().length).toBe(4)
     })
 })

@@ -1,13 +1,13 @@
 import { Model } from './model'
 
 
-export interface Adapter {
+export interface IAdapter {
     save  : undefined | ((obj: Model)=> any) 
     delete: undefined | ((obj: Model)=> any)
     load  : undefined | ((model_name, where, order_by, limit, offset) => any)
 }
 
-export class DefaultAdapter implements Adapter {
+export class DefaultAdapter implements IAdapter {
     newId = 0
     async save(obj) {
         let model_description = obj.getModelDescription()

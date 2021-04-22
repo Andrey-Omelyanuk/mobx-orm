@@ -10,3 +10,4 @@ services:
     tty: true        # docker run -t
     environment:
       - CHOKIDAR_USEPOLLING=true
+    entrypoint: ["sh", "-c", "yarn install && yarn test"]

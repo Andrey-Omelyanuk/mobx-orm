@@ -16,8 +16,8 @@
   },
   "scripts": {
     "build" : "rollup -c",
-    "test"  : "jest --testMatch='**/src/**/*.spec.ts'",
-    "e2e"   : "jest --testMatch='**/e2e/**/*.ts'"
+    "test"  : "jest --testMatch='**/src/**/store.spec.ts'",
+    "e2e"   : "jest --testMatch='**/e2e/**/store.ts'"
   },
   "devDependencies": {
     "typescript"	      : "~4.2.4",

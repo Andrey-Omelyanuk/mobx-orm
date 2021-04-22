@@ -1,6 +1,6 @@
 import store            from './store'
 import {Model, model}   from './model'
-import {Adapter, DefaultAdapter} from './adapter'
+import {IAdapter, DefaultAdapter} from './adapter'
 import id               from './fields/id'
 import field            from './fields/field'
 import foreign          from './fields/foreign'
@@ -12,7 +12,7 @@ import datetime         from './fields/datetime'
 import boolean          from './fields/boolean'
 
 export {
-    Adapter,
+    IAdapter,
     DefaultAdapter,
     store,
     model,
