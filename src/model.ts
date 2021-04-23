@@ -66,15 +66,17 @@ export class Model {
 
 // Decorator
 export function model(cls) {
+    let model_name = cls.getModelName()
+    if (!store.models[model_name]) 
+        store.registerModel(model_name)
+
     // the new constructor behaviour
     let f : any = function (...args) {
         let c : any = function () { return cls.apply(this, args) }
         c.__proto__ = cls.__proto__
         c.prototype = cls.prototype
 
-        let model_name        = cls.getModelName()
         let model_description = cls.getModelDescription()
-
         let obj  = new c()
         let init_data = obj._init_data ? obj._init_data : {}
         delete obj._init_data

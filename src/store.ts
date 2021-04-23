@@ -1,4 +1,4 @@
-import { action, observable } from 'mobx'
+import { action, observable, makeObservable } from 'mobx'
 import { Model } from './model'
 import { IAdapter, DefaultAdapter } from './adapter'
 
@@ -23,6 +23,10 @@ export class ModelDescription {
     @observable objects : {[string_id: string]: Model} = {}
     // 
     adapter : IAdapter = new DefaultAdapter()
+
+    constructor() {
+        makeObservable(this)
+    }
 }
 
 
@@ -32,6 +36,10 @@ export class Store {
     models     : { [model_name: string]: ModelDescription   } = {}
     // field types that were registered in store
     field_types: { [type_name : string]: FieldTypeDecorator } = {} 
+    
+    constructor() {
+        makeObservable(this)
+    }
 
     // register model in the store if not registered yet
     registerModel(model_name) {
@@ -113,7 +121,8 @@ export class Store {
         for (let model_name of Object.keys(this.models)) {
             this.removeModel(model_name)
         }
-        this.field_types = {}
+        // do not reset field types
+        // this.field_types = {}
     }
 
     // clear all cache 
@@ -130,6 +139,7 @@ export class Store {
     }
 
     // clear cache for model
+    @action
     clearCacheForModel(model_name) {
         let model_desc = this.models[model_name]
         if (model_desc) {

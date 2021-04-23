@@ -1,4 +1,4 @@
-import store from './store'
+import store, { ModelDescription } from './store'
 
 
 describe('Store', () => {
@@ -14,18 +14,12 @@ describe('Store', () => {
         // register model A
         expect(store.models[model_name_a]).toBeUndefined()
         store.registerModel(model_name_a);   
-        expect(store.models[model_name_a].ids.length).toBe(0)
-        expect(store.models[model_name_a].objects).toEqual({})
-        expect(store.models[model_name_a].fields ).toEqual({})
-        expect(store.models[model_name_a].adapter).not.toBeUndefined()
+        expect(store.models[model_name_a]).toEqual(new ModelDescription())
 
         // register model B 
         expect(store.models[model_name_b]).toBeUndefined()
         store.registerModel(model_name_b);   
-        expect(store.models[model_name_b].ids.length).toBe(0)
-        expect(store.models[model_name_b].objects).toEqual({})
-        expect(store.models[model_name_b].fields ).toEqual({})
-        expect(store.models[model_name_b].adapter).not.toBeUndefined()
+        expect(store.models[model_name_b]).toEqual(new ModelDescription())
 
         // again register model A
         expect(() => { store.registerModel(model_name_a)})
@@ -62,12 +56,14 @@ describe('Store', () => {
         // register field A 
         expect(store.models[model_name].fields[field_name_a]).toBeUndefined()
         store.registerModelField(model_name, field_type, field_name_a, {test: 1})
+        // TODO: use one to Equal statement
         expect(store.models[model_name].fields[field_name_a].type).toBe(field_type)
         expect(store.models[model_name].fields[field_name_a].settings).toEqual({test: 1})
 
         // register field B
         expect(store.models[model_name].fields[field_name_b]).toBeUndefined()
         store.registerModelField(model_name, field_type, field_name_b, {test: 1})
+        // TODO: use one to Equal statement
         expect(store.models[model_name].fields[field_name_b].type).toBe(field_type)
         expect(store.models[model_name].fields[field_name_b].settings).toEqual({test: 1})
 
@@ -126,7 +122,7 @@ describe('Store', () => {
 
         store.reset(); 
         expect(store.models).toEqual({})
-        expect(store.field_types).toEqual({})
+        expect(store.field_types).not.toEqual({})
 
         store.reset() // should not be an exception
     })

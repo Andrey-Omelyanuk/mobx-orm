@@ -55,8 +55,9 @@ registerFieldId()
 export default function id(cls: Model, field_name: string) {
     // It can be wrong name "Function" because we wrapped class in decorator before.
     // let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
-    store.registerModelField(cls.getModelName(), type, field_name)
-    store.registerId(cls.getModelName(), field_name)
+    let model_name = cls.getModelName()
+    store.registerModelField(model_name, type, field_name)
+    store.registerId(model_name, field_name)
     // register observable into mobx
     observable(cls, field_name)
 }
