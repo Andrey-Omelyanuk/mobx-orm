@@ -4,7 +4,7 @@ import field	from './field'
 
 
 describe('Field', () => {
-    store.clear()
+    store.reset()
 
     @model
     class A extends Model {

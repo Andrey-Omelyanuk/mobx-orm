@@ -49,6 +49,8 @@ export function registerFieldId() {
         if (obj[field_name] === undefined) obj[field_name] = null
     })
 }
+// TODO: multi storage
+// register field should be not once
 registerFieldId()
 
 

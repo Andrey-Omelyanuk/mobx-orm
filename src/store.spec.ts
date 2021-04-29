@@ -5,6 +5,8 @@ describe('Store', () => {
 
     beforeEach(() => {
         store.reset()
+        // reset field types
+        store.field_types = {}
     })
 
     it('Register model', async ()=> {

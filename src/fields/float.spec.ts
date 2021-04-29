@@ -4,7 +4,7 @@ import float   from './float'
 
 
 describe('Field: float', () => {
-    store.clear()
+    store.reset()
 
     @model
     class A extends Model {

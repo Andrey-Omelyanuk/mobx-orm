@@ -3,7 +3,7 @@ import { store, Model, model, id ,field, foreign, many } from '../index'
 
 
 describe('Field: many', () => {
-    store.clear()
+    store.reset()
 
     @model
     class A extends Model {
@@ -23,8 +23,8 @@ describe('Field: many', () => {
     }
     
     beforeEach(() => {
-        store.clearModel('A')
-        store.clearModel('B')
+        store.clearCacheForModel('A')
+        store.clearCacheForModel('B')
     })
 
     it('Init', async ()=> {

@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build" : "rollup -c",
-    "test"  : "jest --testMatch='**/src/**/model.spec.ts'",
+    "test"  : "jest --testMatch='**/src/**/query.spec.ts'",
     "e2e"   : "jest --testMatch='**/e2e/**/store.ts'"
   },
   "devDependencies": {

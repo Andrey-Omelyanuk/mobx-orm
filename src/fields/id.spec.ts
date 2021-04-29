@@ -12,7 +12,7 @@ import { store, Model, model, id } from '../index'
 // nothing happend when id setted to null for new object
 
 describe('Field: id', () => {
-    store.clear()
+    store.reset()
     @model class SN  extends Model { @id id : number }                      // Single Number
     @model class SS  extends Model { @id id : string }                      // Single String
     @model class CNN extends Model { @id id1: number; @id id2: number }     // Composite Numbers
@@ -20,11 +20,11 @@ describe('Field: id', () => {
     @model class CNS extends Model { @id id1: number; @id id2: string }     // Composite Number+String
 
     beforeEach(() => {
-        store.clearModel('SN')
-        store.clearModel('SS')
-        store.clearModel('CNN')
-        store.clearModel('CSS')
-        store.clearModel('CNS')
+        store.clearCacheForModel('SN')
+        store.clearCacheForModel('SS')
+        store.clearCacheForModel('CNN')
+        store.clearCacheForModel('CSS')
+        store.clearCacheForModel('CNS')
     })
 
     it('init: create object without id', async ()=> {

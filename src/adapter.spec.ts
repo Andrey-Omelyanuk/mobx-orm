@@ -3,7 +3,7 @@ import { store, model, Model, id, DefaultAdapter } from './index'
 
 describe('DefaultAdapter', () => {
 
-    store.clear()
+    store.reset()
     @model class SN  extends Model { @id id : number }                      // Single Number
     @model class SS  extends Model { @id id : string }                      // Single String
     @model class CNN extends Model { @id id1: number; @id id2: number }     // Composite Numbers
@@ -11,11 +11,11 @@ describe('DefaultAdapter', () => {
     @model class CNS extends Model { @id id1: number; @id id2: string }     // Composite Number+String
 
     beforeEach(() => {
-        store.clearModel('SN')
-        store.clearModel('SS')
-        store.clearModel('CNN')
-        store.clearModel('CSS')
-        store.clearModel('CNS')
+        store.clearCacheForModel('SN')
+        store.clearCacheForModel('SS')
+        store.clearCacheForModel('CNN')
+        store.clearCacheForModel('CSS')
+        store.clearCacheForModel('CNS')
     })
 
     it('save', async () => {

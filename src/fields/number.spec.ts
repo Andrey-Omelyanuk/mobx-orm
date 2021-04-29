@@ -4,7 +4,7 @@ import number   from './number'
 
 
 describe('Field: number', () => {
-    store.clear()
+    store.reset()
 
     @model
     class A extends Model {

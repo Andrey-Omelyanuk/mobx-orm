@@ -1,7 +1,12 @@
-import { action, observable, makeObservable } from 'mobx'
+import { action, configure, observable, makeObservable } from 'mobx'
 import { Model } from './model'
 import { IAdapter, DefaultAdapter } from './adapter'
 
+
+// TODO: remove enforceAction
+configure({
+    enforceActions: "never",
+})
 
 export interface FieldTypeDecorator {
     (model_name: string, field_name: string, obj: Object): void
@@ -116,7 +121,7 @@ export class Store {
         return id
     }
 
-    // remove all models and field_types and clear all cache 
+    // remove all models and clear all cache 
     reset() {
         for (let model_name of Object.keys(this.models)) {
             this.removeModel(model_name)

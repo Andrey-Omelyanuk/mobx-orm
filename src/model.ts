@@ -64,6 +64,7 @@ export class Model {
 }
 
 
+// TODO: multi storage?
 // Decorator
 export function model(cls) {
     let model_name = cls.getModelName()

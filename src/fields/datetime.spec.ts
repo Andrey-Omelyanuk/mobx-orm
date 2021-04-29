@@ -4,7 +4,7 @@ import datetime   from './datetime'
 
 
 describe('Field: moment', () => {
-    store.clear()
+    store.reset()
 
     @model
     class A extends Model {
