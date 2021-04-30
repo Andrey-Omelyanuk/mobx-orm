@@ -1,12 +1,8 @@
-import { Model } from './model'
+import { Model } from '../model'
 import { action, makeObservable } from 'mobx'
+import IAdapter  from './adapter.interface'
 
 
-export interface IAdapter {
-    save  : undefined | ((obj: Model)=> any) 
-    delete: undefined | ((obj: Model)=> any)
-    load  : undefined | ((model, where, order_by, limit, offset) => any)
-}
 
 export class DefaultAdapter implements IAdapter {
     newId = 0

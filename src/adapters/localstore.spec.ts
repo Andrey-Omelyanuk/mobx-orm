@@ -1,4 +1,4 @@
-import { store, model, Model, id, DefaultAdapter } from './index'
+import { store, model, Model, id, DefaultAdapter } from '../index'
 
 
 describe('DefaultAdapter', () => {
