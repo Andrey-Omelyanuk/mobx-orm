@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build" : "rollup -c",
-    "test"  : "jest --testMatch='**/src/**/query.spec.ts'",
+    "test"  : "jest --testMatch='**/src/**/*.spec.ts'",
     "e2e"   : "jest --testMatch='**/e2e/**/store.ts'"
   },
   "devDependencies": {
@@ -30,11 +30,9 @@
     "rollup-plugin-typescript2" : "~0.30.0", 
     "rollup-plugin-terser"      : "~7.0.2",
     "rollup-plugin-dts"         : "~3.0.1"
-
   },
   "engines": {
-    "node": ">= 8.0.0",
-    "npm" : ">= 5.0.0"
+    "node": ">= 15.0.0"
   },
 	"jest": {
     "testEnvironment": "node",

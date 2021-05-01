@@ -1,22 +1,17 @@
-import { observable } from 'mobx'
-import store from '../store'
+import { extendObservable } from 'mobx'
 
 
-let type = 'field'
 
-export function registerField() {
-    store.registerFieldType(type, (model_name, field_name, obj) => {
-        // default value
-        // if (obj[field_name] === undefined) obj[field_name] = null
+function field_field(obj, field_name) {
+    // make observable and set default value
+    extendObservable(obj, {
+        [field_name]: null 
     })
 }
-registerField()
 
 
-export default function field(cls: any, field_name: string) {
-    // It can be wrong name "Function" because we wrapped class in decorator before.
-    let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
-    store.registerModelField(model_name, type, field_name)
-    // register into mobx
-    observable(cls, field_name)
+export default function field(cls, field_name: string) {
+    let model = cls.constructor
+    model.initModel(model)                                 // init model if was not inited
+    model.fields[field_name] = { decorator: field_field }  // register field 
 }

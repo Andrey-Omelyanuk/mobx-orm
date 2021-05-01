@@ -1,5 +1,4 @@
 import { observable, intercept } from 'mobx'
-import store from '../store'
 
 
 let type = 'float'
