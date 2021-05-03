@@ -1,10 +1,10 @@
 import { Model } from '../model'
 import { action, makeObservable } from 'mobx'
-import IAdapter  from './adapter.interface'
+import Adapter  from './adapter'
 
 
 
-export class DefaultAdapter implements IAdapter {
+export class DefaultAdapter implements Adapter {
     newId = 0
 
     constructor() {

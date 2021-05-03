@@ -2,7 +2,7 @@ import { extendObservable } from 'mobx'
 
 
 
-function field_field(obj, field_name) {
+export function field_field(obj, field_name) {
     // make observable and set default value
     extendObservable(obj, {
         [field_name]: null 

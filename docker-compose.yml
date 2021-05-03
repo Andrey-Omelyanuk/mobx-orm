@@ -14,6 +14,6 @@ services:
       - CHOKIDAR_USEPOLLING=true
     # entrypoint: ["sh", "-c", "yarn install && yarn test"]
     entrypoint: ["sh", "-c", "yarn install && yarn test --testMatch='**/src/**/model.spec.ts'"]
-    # debug
+    # debug 
     # chrome://inspect/#devices
     # entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/model.spec.ts'"]

@@ -14,18 +14,15 @@ export default class Query<M extends Model> {
     @observable is_ready    : boolean = false
     @observable error       : string = '' 
 
-    private model 
     private autoUpdateDisposer
 
     constructor(model, filters?, order_by?, page?, page_size?) {
         makeObservable(this)
-        this.model = model
         this.autoUpdateDisposer = autorun(async () => {
-            let adapter: Adapter = this.model.adapter
+            let adapter: Adapter<M> = model.adapter
             this.is_ready = false
             try {
                 this.items = await adapter.load(
-                    this.model, 
                     this.filters, 
                     this.order_by, 
                     this.page_size, 
