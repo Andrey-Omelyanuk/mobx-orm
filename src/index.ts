@@ -4,10 +4,6 @@ import field            from './fields/field'
 import foreign          from './fields/foreign'
 import one              from './fields/one'
 import many             from './fields/many'
-import number           from './fields/number'
-import float            from './fields/float'
-import datetime         from './fields/datetime'
-import boolean          from './fields/boolean'
 
 export {
     model,
@@ -17,8 +13,4 @@ export {
     foreign,
     one,
     many,
-    number,
-    float,
-    datetime,
-    boolean
 }

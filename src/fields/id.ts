@@ -21,7 +21,7 @@ function field_ID (obj , field_name) {
     // before changes
     intercept(obj, field_name, (change) => {
         if (change.newValue !== null && obj[field_name] !== null)
-            throw new Error(`You cannot change id field: ${field_name}. ${obj[field_name]} ${change.newValue}`)
+            throw new Error(`You cannot change id field: ${field_name}. ${obj[field_name]} to ${change.newValue}`)
         if (obj[field_name] !== null && change.newValue === null) {
             try {
                 obj.eject()
@@ -53,8 +53,6 @@ export default function id(cls, field_name: string) {
     model.fields[field_name] = { decorator: field_ID }  // register field 
     model.ids.push(field_name)                          // register id
 
-    // TODO ??? is it necessary?
-    // observable(model, field_name)
-    // we have to observe cache
+    // TODO we have to observe cache
     // observable(model, 'cache')
 }

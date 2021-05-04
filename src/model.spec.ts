@@ -10,27 +10,6 @@ describe('Model', () => {
         expect((<any>A).cache).toEqual({})
     })
 
-    // TODO move it to ID spec
-    it('init model empty with id', async () => {
-        @model class A extends Model {
-            @id id: number
-
-        }
-        expect((<any>A).ids).toEqual(['id'])
-        expect((<any>A).fields['id'].decorator instanceof Function).toBeTruthy()
-    })
-
-    // TODO move it to ID spec
-    it('init model empty with multi id', async () => {
-        @model class A extends Model {
-            @id id_a: number
-            @id id_b: number
-        }
-        expect((<any>A).ids).toEqual(['id_a', 'id_b'])
-        expect((<any>A).fields['id_a'].decorator instanceof Function).toBeTruthy()
-        expect((<any>A).fields['id_b'].decorator instanceof Function).toBeTruthy()
-    })
-
     it('init model: default property', async () => {
         let a
         @model class A extends Model {

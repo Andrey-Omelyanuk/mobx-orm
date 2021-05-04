@@ -1,144 +1,107 @@
-import { Model, model, id } from '../index'
+import { Model, model } from '../model'
+import id from './id'
 
-// init: 
-//  - create object without init fields
-//  - init fields into constructor
-//  - init fields after creation without init fields
-// update:
-//  - id cannot be changed
-// delete:
-//  - id can be reset to null and after that entry should be deleted from the store
-
-// nothing happend when id setted to null for new object
 
 describe('Field: id', () => {
 
-    it('...', async ()=> {
+    it('declare id', async () => {
+        @model class A extends Model {
+            @id id: number
+        }
+        expect((<any>A).ids).toEqual(['id'])
+        expect((<any>A).fields['id'].decorator instanceof Function).toBeTruthy()
     })
 
-    // @model class SN  extends Model { @id id : number }                      // Single Number
-    // @model class SS  extends Model { @id id : string }                      // Single String
-    // @model class CNN extends Model { @id id1: number; @id id2: number }     // Composite Numbers
-    // @model class CSS extends Model { @id id1: string; @id id2: string }     // Composite Strings
-    // @model class CNS extends Model { @id id1: number; @id id2: string }     // Composite Number+String
+    it('declare multi ids', async () => {
+        @model class A extends Model {
+            @id id_a: number
+            @id id_b: number
+        }
+        expect((<any>A).ids).toEqual(['id_a', 'id_b'])
+        expect((<any>A).fields['id_a'].decorator instanceof Function).toBeTruthy()
+        expect((<any>A).fields['id_b'].decorator instanceof Function).toBeTruthy()
+    })
 
-    // beforeEach(() => {
-    //     store.clearCacheForModel('SN')
-    //     store.clearCacheForModel('SS')
-    //     store.clearCacheForModel('CNN')
-    //     store.clearCacheForModel('CSS')
-    //     store.clearCacheForModel('CNS')
-    // })
+    it('create object', async () => {
+        @model class A extends Model { 
+            @id id: number 
+        }
 
-    // it('init: create object without id', async ()=> {
-    //     let sn  = new SN();     expect(sn.id).toBeNull()
-    //                             expect(sn.__id).toBeNull()
-    //                             expect(SN.all().length).toBe(0)
+        let a = new A()
+        expect(a.id).toBeNull()
+    })
 
-    //     let ss  = new SS();     expect(ss.id).toBeNull()
-    //                             expect(ss.__id).toBeNull()
-    //                             expect(SS.all().length).toBe(0)
+    it('create object with default value in class property', async () => {
+        @model class A extends Model {
+            @id id: number = 1
+        }
 
-    //     let cns = new CNS();    expect(cns.id1).toBeNull()
-    //                             expect(cns.id2).toBeNull()
-    //                             expect(cns.__id).toBeNull()
-    //                             expect(CNS.all().length).toBe(0)
+        let a = new A()
+        expect(a.id).toBe(1)
+    })
 
-    //     let cnn = new CNN();    expect(cnn.id1).toBeNull()
-    //                             expect(cnn.id2).toBeNull()
-    //                             expect(cnn.__id).toBeNull()
-    //                             expect(CNN.all().length).toBe(0)
+    it('create object with value ', async () => {
+        @model class A extends Model { 
+            @id id: number 
+        }
 
-    //     let css = new CSS();    expect(css.id1).toBeNull()
-    //                             expect(css.id2).toBeNull()
-    //                             expect(css.__id).toBeNull()
-    //                             expect(CSS.all().length).toBe(0)
-    // })
+        let a = new A({id: 1})
+        expect(a.id).toBe(1)
+    })
 
-    // it('init: set id in constructor', async ()=> {
-    //     let sn  = new SN({id: 1});  expect(sn.id).toBe(1)
-    //                                 expect(SN.all().length).toBe(1)
-    //                                 expect(SN.get(sn.__id)).toBe(sn)
+    it('create object and set value ', async () => {
+        @model class A extends Model { 
+            @id id: number 
+        }
+        let a = new A()
 
-    //     let ss  = new SS({id: '1'});    expect(ss.id).toBe('1')
-    //                                     expect(SS.all().length).toBe(1)
-    //                                     expect(SS.get(ss.__id)).toBe(ss)
+        expect(a.id).toBeNull()
+        a.id = 1
+        expect(a.id).toBe(1)
+    })
 
-    //     let cns = new CNS({id1: 1, id2: '1'});  expect(cns.id1).toBe(1)
-    //                                             expect(cns.id2).toBe('1')
-    //                                             expect(CNS.all().length).toBe(1)
-    //                                             expect(CNS.get(cns.__id)).toBe(cns)
+    it('update from not null to null', async () => {
+        @model class A extends Model { 
+            @id id: number 
+        }
+        let a = new A({id: 1})
 
-    //     let cnn = new CNN({id1: 1, id2: 1});    expect(cnn.id1).toBe(1)
-    //                                             expect(cnn.id2).toBe(1)
-    //                                             expect(CNN.all().length).toBe(1)
-    //                                             expect(CNN.get(cnn.__id)).toBe(cnn)
+        expect(a.id).toBe(1) 
+        a.id = null
+        expect(a.id).toBeNull()
+    })
 
-    //     let css = new CSS({id1: '1', id2: '1'});expect(css.id1).toBe('1')
-    //                                             expect(css.id2).toBe('1')
-    //                                             expect(CSS.all().length).toBe(1)
-    //                                             expect(CSS.get(css.__id)).toBe(css)
-    // })
+    it('update from not null to not null', async () => {
+        @model class A extends Model { 
+            @id id: number 
+        }
+        let a = new A({id: 1})
 
-    // it('init: set id after creation without id', async ()=> {
-    //     let sn = new SN(); sn.id = 1;   expect(sn.id).toBe(1)
-    //                                     expect(SN.all().length).toBe(1)
-    //                                     expect(SN.get(sn.__id)).toBe(sn)
+        expect(a.id).toBe(1)
+        expect(() => { a.id = 2 })
+            .toThrow(new Error(`You cannot change id field: id. 1 to 2`))
+    })
 
-    //     let ss = new SS(); ss.id = '1'; expect(ss.id).toBe('1')
-    //                                     expect(SS.all().length).toBe(1)
-    //                                     expect(SS.get(ss.__id)).toBe(ss)
-    //     let cns = new CNS()
-    //     cns.id1 = 1;                    expect(cns.id1).toBe(1)
-    //                                     expect(CNS.all().length).toBe(0)    // inject to store only when all ids was setted
-    //     cns.id2 = '1';                  expect(cns.id2).toBe('1')
-    //                                     expect(CNS.all().length).toBe(1)
-    //                                     expect(CNS.get(cns.__id)).toBe(cns)
-    //     let cnn = new CNN()
-    //     cnn.id1 = 1;                    expect(cnn.id1).toBe(1)
-    //                                     expect(CNN.all().length).toBe(0)    // inject to store only when all ids was setted
-    //     cnn.id2 = 1;                    expect(cnn.id2).toBe(1)
-    //                                     expect(CNN.all().length).toBe(1)
-    //                                     expect(CNN.get(cnn.__id)).toBe(cnn)
-    //     let css = new CSS()
-    //     css.id1 = '1';                  expect(css.id1).toBe('1')
-    //                                     expect(CSS.all().length).toBe(0)    // inject to store only when all ids was setted
-    //     css.id2 = '1';                  expect(css.id2).toBe('1')
-    //                                     expect(CSS.all().length).toBe(1)
-    //                                     expect(CSS.get(css.__id)).toBe(css)
-    // })
+    it('side effect: inject to the cache', async () => {
+        @model class A extends Model { 
+            @id id: number 
+        }
+        let a = new A()
 
-    // it('update: id cannot be changed', async ()=> {
-    //     let sn = new SN({id: 1})    
-    //     expect(() => { sn.id = 2 })         .toThrow(new Error('You cannot change id field: id'))
+        expect((<any>A).cache).toEqual({})
+        a.id = 1
+        expect((<any>A).cache[a.__id]).toBe(a)
+    })
 
-    //     let ss = new SS({id: '1'})    
-    //     expect(() => { ss.id = '2' })       .toThrow(new Error('You cannot change id field: id'))
+    it('side effect: eject from the cache', async () => {
+        @model class A extends Model { 
+            @id id: number 
+        }
+        let a = new A({id: 1})
 
-    //     let cns = new CNS({id1: 1, id2: '1'})
-    //     expect(() => { cns.id1 =  2  })     .toThrow(new Error('You cannot change id field: id1'))
-    //     expect(() => { cns.id2 = '2' })     .toThrow(new Error('You cannot change id field: id2'))
+        expect((<any>A).cache[a.__id]).toBe(a)
+        a.id = null
+        expect((<any>A).cache).toEqual({})
+    })
 
-    //     let cnn = new CNN({id1: 1 , id2: 1})
-    //     expect(() => { cnn.id1 =  2  })     .toThrow(new Error('You cannot change id field: id1'))
-    //     expect(() => { cnn.id2 =  2  })     .toThrow(new Error('You cannot change id field: id2'))
-
-    //     let css = new CSS({id1: '1', id2: '1'})
-    //     expect(() => { css.id1 = '2' })     .toThrow(new Error('You cannot change id field: id1'))
-    //     expect(() => { css.id2 = '2' })     .toThrow(new Error('You cannot change id field: id2'))
-    // })
-
-    // it('delete: id can be reset to null and after that entry should be deleted from the store', async ()=> {
-    //     let sn    = new SN({id: 1});        expect(SN.get(sn.__id)).toBe(sn)
-    //     let sn_id = sn.__id;                expect(SN.all().length).toBe(1)
-    //         sn.id = null;                   expect(sn.id).toBeNull()
-    //                                         expect(SN.all().length).toBe(0)
-    //                                         expect(SN.get(sn_id)).toBeUndefined()
-
-    //     let ss    = new SS({id: '1'});      expect(SS.get(ss.__id)).toBe(ss)
-    //     let ss_id = ss.__id;                expect(SS.all().length).toBe(1) 
-    //         ss.id = null;                   expect(ss.id).toBeNull()
-    //                                         expect(SS.all().length).toBe(0)
-    //                                         expect(SS.get(ss_id)).toBeUndefined()
-    // })
 })
