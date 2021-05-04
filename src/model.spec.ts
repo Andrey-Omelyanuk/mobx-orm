@@ -7,30 +7,28 @@ describe('Model', () => {
 
     it('init model empty', async () => {
         @model class A extends Model {}
-        expect((<any>A).ids).toEqual([])
-        expect((<any>A).adapter).toBeUndefined()
         expect((<any>A).cache).toEqual({})
-        expect((<any>A).fields).toEqual({})
+    })
 
-        // TODO move it to ID spec
-        @model class B extends Model {
+    // TODO move it to ID spec
+    it('init model empty with id', async () => {
+        @model class A extends Model {
             @id id: number
-        }
-        expect((<any>B).ids).toEqual(['id'])
-        expect((<any>B).adapter).toBeUndefined()
-        expect((<any>B).cache).toEqual({})
-        expect((<any>B).fields['id'].decorator instanceof Function).toBeTruthy()
 
-        // TODO move it to ID spec
-        @model class C extends Model {
+        }
+        expect((<any>A).ids).toEqual(['id'])
+        expect((<any>A).fields['id'].decorator instanceof Function).toBeTruthy()
+    })
+
+    // TODO move it to ID spec
+    it('init model empty with multi id', async () => {
+        @model class A extends Model {
             @id id_a: number
             @id id_b: number
         }
-        expect((<any>C).ids).toEqual(['id_a', 'id_b'])
-        expect((<any>C).adapter).toBeUndefined()
-        expect((<any>C).cache).toEqual({})
-        expect((<any>C).fields['id_a'].decorator instanceof Function).toBeTruthy()
-        expect((<any>C).fields['id_b'].decorator instanceof Function).toBeTruthy()
+        expect((<any>A).ids).toEqual(['id_a', 'id_b'])
+        expect((<any>A).fields['id_a'].decorator instanceof Function).toBeTruthy()
+        expect((<any>A).fields['id_b'].decorator instanceof Function).toBeTruthy()
     })
 
     it('init model: default property', async () => {

@@ -12,6 +12,7 @@ export function field_field(obj, field_name) {
 
 export default function field(cls, field_name: string) {
     let model = cls.constructor
-    model.initModel(model)                                 // init model if was not inited
+    if (model.fields === undefined) model.fields = {}
+
     model.fields[field_name] = { decorator: field_field }  // register field 
 }

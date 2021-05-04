@@ -47,7 +47,9 @@ function field_ID (obj , field_name) {
 
 export default function id(cls, field_name: string) {
     let model = cls.constructor
-    model.initModel(model)                              // init model if was not inited
+    if (model.fields === undefined) model.fields = {}
+    if (model.ids    === undefined) model.ids = []
+
     model.fields[field_name] = { decorator: field_ID }  // register field 
     model.ids.push(field_name)                          // register id
 

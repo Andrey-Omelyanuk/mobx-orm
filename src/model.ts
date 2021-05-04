@@ -33,15 +33,6 @@ export abstract class Model {
         }
     }
 
-    // TODO it is bad code
-    // I need it for correct init model
-    private static initModel(model) {
-        if (!model.hasOwnProperty("ids"   )) model.ids = [] 
-        if (!model.hasOwnProperty("fields")) model.fields = {}
-        if (!model.hasOwnProperty("cache" )) model.cache = {} 
-        if (!model.hasOwnProperty('adapter')) model.adapter = null 
-    }
-
     private readonly _init_data
 
     constructor(init_data?) {
@@ -68,7 +59,6 @@ export abstract class Model {
 
     // create or update object in the repo 
     async save() {
-        debugger
         return this.model.adapter.save(this)
     }
 
@@ -98,13 +88,16 @@ export abstract class Model {
 
 
 // Decorator
-export function model(cls) {
-    debugger
+export function model(constructor) {
+    var original = constructor
+
+    original.cache = {}
+
     // the new constructor
     let f : any = function (...args) {
-        let c : any = function () { return cls.apply(this, args) }
-        c.__proto__ = cls.__proto__
-        c.prototype = cls.prototype
+        let c : any = function () { return original.apply(this, args) }
+        c.__proto__ = original
+        c.prototype = original.prototype
         let obj = new c()
         makeObservable(obj)
 
@@ -128,14 +121,7 @@ export function model(cls) {
         return obj
     }
 
-    // copy static properties/methods
-    for (let prop_name of Object.getOwnPropertyNames(cls))
-        if(f[prop_name] == undefined)
-            f[prop_name] = cls[prop_name]
-
-    f.__proto__ = cls.__proto__
-    f.prototype = cls.prototype   // copy prototype so intanceof operator still works
-    // TODO it is bad code
-    f.initModel(f)                // init model if not inited
+    f.__proto__ = original
+    f.prototype = original.prototype   // copy prototype so intanceof operator still works
     return f                      // return new constructor (will override original)
 }

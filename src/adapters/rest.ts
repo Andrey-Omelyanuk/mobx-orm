@@ -68,9 +68,8 @@ export class RestAdapter<M extends Model> implements Adapter<M> {
 // model decorator
 export default function rest(http, api: string) {
     return (cls) => {
-        debugger
         let adapter = new RestAdapter(cls, http, api)
-        cls.adapter = adapter 
+        cls.__proto__.adapter = adapter 
         // return cls
     }
 }
