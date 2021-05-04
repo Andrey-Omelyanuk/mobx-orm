@@ -6,7 +6,7 @@ export abstract class Model {
 
     // this private static properties will be copied to real model in the model decorator
     private static ids          : any[]
-    private static adapter      : Adapter
+    private static adapter      : Adapter<Model>
     private static cache        : { [string_id : string]: Model }
     private static fields       : {
         [field_name: string]: {
@@ -33,11 +33,13 @@ export abstract class Model {
         }
     }
 
+    // TODO it is bad code
     // I need it for correct init model
     private static initModel(model) {
         if (!model.hasOwnProperty("ids"   )) model.ids = [] 
         if (!model.hasOwnProperty("fields")) model.fields = {}
         if (!model.hasOwnProperty("cache" )) model.cache = {} 
+        if (!model.hasOwnProperty('adapter')) model.adapter = null 
     }
 
     private readonly _init_data
@@ -66,6 +68,7 @@ export abstract class Model {
 
     // create or update object in the repo 
     async save() {
+        debugger
         return this.model.adapter.save(this)
     }
 
@@ -96,6 +99,7 @@ export abstract class Model {
 
 // Decorator
 export function model(cls) {
+    debugger
     // the new constructor
     let f : any = function (...args) {
         let c : any = function () { return cls.apply(this, args) }
@@ -131,7 +135,7 @@ export function model(cls) {
 
     f.__proto__ = cls.__proto__
     f.prototype = cls.prototype   // copy prototype so intanceof operator still works
+    // TODO it is bad code
     f.initModel(f)                // init model if not inited
-    // return new constructor (will override original)
-    return f 
+    return f                      // return new constructor (will override original)
 }

@@ -13,7 +13,6 @@ new Obj({id: x, ...})
 */
 
 function field_ID (obj , field_name) {
-    debugger
     // make observable and set default value
     extendObservable(obj, {
         [field_name]: null 
