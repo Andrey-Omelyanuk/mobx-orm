@@ -1,12 +1,10 @@
 import { autorun, makeObservable, observable } from "mobx"
-import Adapter from "./adapters/adapter"
 import { Model } from "./model"
 
 
 export default class Query<M extends Model> {
 
-    // TODO: do not allow to change items outside
-    @observable items       : Model[] = []
+    @observable items       : Model[] = []   // TODO: do not allow to change items outside
     @observable filters     : object = {}
     @observable order_by    : string[] = []
     @observable page        : number = 0
@@ -19,10 +17,9 @@ export default class Query<M extends Model> {
     constructor(model, filters?, order_by?, page?, page_size?) {
         makeObservable(this)
         this.autoUpdateDisposer = autorun(async () => {
-            let adapter: Adapter<M> = model.adapter
             this.is_ready = false
             try {
-                this.items = await adapter.load(
+                this.items = await model.adapter.load(
                     this.filters, 
                     this.order_by, 
                     this.page_size, 
@@ -32,7 +29,7 @@ export default class Query<M extends Model> {
             catch (e) {
                 this.error = e
             }
-            this.is_ready = false
+            this.is_ready = true
         }) 
     }
 

@@ -33,6 +33,18 @@ export abstract class Model {
         }
     }
 
+    // TODO add test
+    static __id(obj, ids: []) : string | null {
+        let id = '' 
+        for (let id_name of ids) {
+            // if any id field is null then we should return null because id is not complite
+            if (obj[id_name] === null || obj[id_name] === undefined) 
+                return null
+            id += `${obj[id_name]} :`
+        }
+        return id
+    }
+
     private readonly _init_data
 
     constructor(init_data?) {
@@ -42,14 +54,7 @@ export abstract class Model {
 
     // build id string from ids fields and return it
     @computed get __id() : string | null {
-        let id = '' 
-        for (let id_name_field of this.model.ids) {
-            // if any id field is null then we should return null because id is not complite
-            if (this[id_name_field] === null || this[id_name_field] === undefined) 
-                return null
-            id += `${this[id_name_field]} :`
-        }
-        return id
+        return Model.__id(this, this.model.ids)
     }
 
     // TODO: instead of 'any' I whant to use Model constructor
@@ -113,10 +118,12 @@ export function model(constructor) {
             obj.model.fields[field_name].decorator(obj, field_name)
         }
 
-        // push init_data to object 
-        for (let field_name in obj._init_data) {
-            obj[field_name] = obj._init_data[field_name]
-        }
+        runInAction(() => {
+            // push init_data to object 
+            for (let field_name in obj._init_data) {
+                obj[field_name] = obj._init_data[field_name]
+            }
+        })
 
         return obj
     }

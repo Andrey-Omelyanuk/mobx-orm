@@ -1,24 +1,23 @@
-import { store, Model } from '../index'
-import {intercept, observe, observable} from 'mobx'
+import { intercept, observe, observable, extendObservable } from 'mobx'
+import { Model } from '../model'
 
 
-export function registerOne() {
-    store.registerFieldType('one', (model_name: string, field_name: string, obj: Model) => {
-        let remote_model_name             = store.models[model_name].fields[field_name].settings.remote_model_name
-        let foreign_field_on_remote_model = store.models[model_name].fields[field_name].settings.foreign_field_on_remote_model
+function field_one(obj: Model, field_name: string) {
+    let remote_model = obj.model.fields[field_name].settings.remote_model
 
-        // 1. checks before set new changes
-        intercept(obj, <any>field_name, (change) => {
-            if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor.name === remote_model_name))
-                    throw new Error(`You can set only instance of "${remote_model_name}" or null`)
-            return change
-        })
-
-        // default value
-        obj[field_name] = null
+    // make observable and set default value
+    extendObservable(obj, {
+        [field_name]: null 
     })
+
+    // 1. checks before set new changes
+    intercept(obj, <any>field_name, (change) => {
+        if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor.name === remote_model.__proto__))
+                throw new Error(`You can set only instance of "${remote_model.__proto__.name}" or null`)
+        return change
+    })
+
 }
-registerOne()
 
 
 export default function one(remote_model_name: any, foreign_field_on_remote_model: string) {

@@ -1,6 +1,7 @@
 import { Model, model } from './model'
 import id    from './fields/id'
 import field from './fields/field'
+import { adapter } from 'e2e/adapter'
 
 
 describe('Model', () => {
@@ -86,11 +87,6 @@ describe('Model', () => {
         expect(a1.id_a).toBe(1)
         expect(a1.id_b).toBe(1)
         expect(a1.__id).toBe('1 :1 :')
-
-        let a2 = new A({id_a: 2, id_b: 2})
-        expect(a2.id_a).toBe(2)
-        expect(a2.id_b).toBe(2)
-        expect(a2.__id).toBe('2 :2 :')
     })
 
     it('obj.model', async () => {
@@ -100,29 +96,33 @@ describe('Model', () => {
         expect(a.model).toBe(a.constructor)
     })
 
-    // TODO
-    // it('obj.save()', async () => {
-    //     @model class X extends Model { @id id : number }
-    //     let a = new X() 
+    it('obj.save()', async () => {
+        let adapter = {save: async (obj)=>{}}
+        let save = jest.spyOn(adapter, 'save')
+        @model class A extends Model { 
+            @id id : number 
+        }
+        (<any>A).__proto__.adapter = adapter
+        let a = new A() 
 
-    //     expect(a.id).toBeNull()
-    //     expect(X.get(a.__id)).toBeUndefined()
-    //     await a.save();	
-    //     expect(a.id).not.toBeNull()
-    //     expect(X.get(a.__id)).toBe(a)
-    // })
+        await a.save()	
+        expect(save).toHaveBeenCalledTimes(1)
+        expect(save).toHaveBeenCalledWith(a)
+    })
 
-    // TODO
-    // it('obj.delete()', async () => {
-    //     @model class X extends Model { @id id : number }
-    //     let a = new X() 
-    //     await a.save();	
+    it('obj.delete()', async () => {
+        let adapter = {delete: async (obj)=>{}}
+        let del = jest.spyOn(adapter, 'delete')
+        @model class A extends Model { 
+            @id id : number 
+        }
+        (<any>A).__proto__.adapter = adapter
+        let a = new A() 
 
-    //     let old_id = a.id
-    //     await a.delete();	
-    //     expect(a.id).toBeNull()                                   // obj lost id
-    //     expect(store.models['X'].objects[old_id]).toBeUndefined() // obj removed from cache
-    // })
+        await a.delete()	
+        expect(del).toHaveBeenCalledTimes(1)
+        expect(del).toHaveBeenCalledWith(a)
+    })
 
     it('obj.inject/eject', async () => {
         // TODO need to split the test into small tests

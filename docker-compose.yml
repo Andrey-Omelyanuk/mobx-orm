@@ -12,8 +12,8 @@ services:
     tty: true        # docker run -t
     environment:
       - CHOKIDAR_USEPOLLING=true
-    entrypoint: ["sh", "-c", "yarn install && yarn test"]
+    # entrypoint: ["sh", "-c", "yarn install && yarn test"]
     # entrypoint: ["sh", "-c", "yarn install && node node_modules/.bin/jest --testMatch='**/src/**/model.spec.ts'"]
     # debug 
     # chrome://inspect/#devices
-    # entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/rest.spec.ts'"]
+    entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/foreign.spec.ts'"]

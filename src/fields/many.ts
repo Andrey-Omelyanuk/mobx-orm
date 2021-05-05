@@ -1,14 +1,14 @@
-import { observable, observe } from 'mobx'
-import store from '../store'
+import { observable, observe, extendObservable } from 'mobx'
+import { Model } from '../model'
 
 
-export function registerMany() {
-    store.registerFieldType('many', (model_name, field_name, obj) => {
-        // default value
-        obj[field_name] = []
+function field_many(obj: Model, field_name: string) {
+    // make observable and set default value
+    extendObservable(obj, {
+        [field_name]: []
     })
+
 }
-registerMany()
 
 
 export default function many(remote_model_name: any, foreign_field_on_remote_model: string) {

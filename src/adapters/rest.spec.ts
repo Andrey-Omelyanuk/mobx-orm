@@ -6,8 +6,6 @@ import rest, { RestAdapter } from './rest'
 
 describe('Adapter: Rest', () => {
 
-
-
     it('init', async ()=> {
         let http_mock = {} 
         class A {} 

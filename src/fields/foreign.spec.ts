@@ -1,79 +1,117 @@
-import { Model, model, id, field, foreign } from '../index'
+import { Model, model } from '../model'
+import id from './id'
+import foreign from './foreign'
+import field from './field'
 
 
 describe('Field: foreign', () => {
 
-
-    it('...', async ()=> {
+    it('declare foreign with single id', async () => {
+        @model class A extends Model {
+            @id id: number
+        }
+        @model class B extends Model {
+            @id          id  : number
+            @field       a_id: number
+            @foreign(A)  a   : A 
+        }
+        expect((<any>B).fields['a'].decorator instanceof Function).toBeTruthy()
+        expect((<any>B).fields['a'].settings.foreign_model).toBe(A)
+        expect((<any>B).fields['a'].settings.foreign_ids_names).toEqual(['a_id'])
     })
 
-    // @model
-    // class SN extends Model {
-    //     @id             id    : number
-    //     @field          ss_id : string
-    //     @foreign('SS')  ss    : SS
-    // }
+    it('declare foreign with multi ids', async () => {
+        @model class A extends Model {
+            @id id1: number
+            @id id2: number
+        }
+        @model class B extends Model {
+            @id    id: number
+            @field a_id1: number
+            @field a_id2: number
+            @foreign(A, 'a_id1', 'a_id2') a: A 
+        }
+        expect((<any>B).fields['a'].decorator instanceof Function).toBeTruthy()
+        expect((<any>B).fields['a'].settings.foreign_model).toBe(A)
+        expect((<any>B).fields['a'].settings.foreign_ids_names).toEqual(['a_id1', 'a_id2'])
+    })
 
-    // @model
-    // class SS extends Model {
-    //     @id             id    : string
-    //     @field          sn_id : number
-    //     @foreign('SN')  sn    : SN
-    // }
+    it('declare foreign with auto detect single id', async () => {
+        @model class A extends Model {
+            @id id: number
+        }
+        @model class B extends Model {
+            @id      id: number
+            @field a_id: number
+            @foreign(A) a: A 
+        }
+        expect((<any>B).fields['a'].decorator instanceof Function).toBeTruthy()
+        expect((<any>B).fields['a'].settings.foreign_model).toBe(A)
+        expect((<any>B).fields['a'].settings.foreign_ids_names).toEqual(['a_id'])
+    })
 
-    // @model
-    // class CNN extends Model {
-    //     @id    id1     : number
-    //     @id    id2     : number
-    //     @field cns_id1 : number
-    //     @field cns_id2 : string
-    //     @foreign('CNS', 'cns_id1', 'cns_id2', ) cns : CNS
-    // }
+    it('cross declare', async () => {
+        @model class A extends Model {
+            @id      id: number
+            @field b_id: number
+                   b   : B
+        }
+        @model class B extends Model {
+            @id      id: number
+            @field a_id: number
+            @foreign(A) a: A 
+        }
+        // we have to use this band-aid for use cross foreigns
+        foreign(B)(A.prototype, 'b') 
 
-    // @model
-    // class CNS extends Model {
-    //     @id    id1     : number
-    //     @id    id2     : string
-    //     @field css_id1 : string
-    //     @field css_id2 : string
-    //     @foreign('CSS', 'css_id1', 'css_id2') css : CSS
-    // }
+        expect((<any>A).fields['b'].decorator instanceof Function).toBeTruthy()
+        expect((<any>A).fields['b'].settings.foreign_model).toBe(B)
+        expect((<any>A).fields['b'].settings.foreign_ids_names).toEqual(['b_id'])
+        expect((<any>B).fields['a'].decorator instanceof Function).toBeTruthy()
+        expect((<any>B).fields['a'].settings.foreign_model).toBe(A)
+        expect((<any>B).fields['a'].settings.foreign_ids_names).toEqual(['a_id'])
+    })
 
-    // @model
-    // class CSS extends Model {
-    //     @id    id1     : string
-    //     @id    id2     : string
-    //     @field cnn_id1 : number
-    //     @field cnn_id2 : number
-    //     @foreign(CNN, 'cnn_id1', 'cnn_id2') cnn : CNN
-    // }
+    it('should be null by default', async () => {
+        @model class A extends Model {
+            @id id: number
+        }
+        @model class B extends Model {
+            @id      id: number
+            @field a_id: number
+            @foreign(A) a: A 
+        }
+        let b = new B()
+        expect(b.a).toBeNull()
+    })
 
-    // beforeEach(() => {
-    //     store.clearCacheForModel('SN')
-    //     store.clearCacheForModel('SS')
-    //     store.clearCacheForModel('CNN')
-    //     store.clearCacheForModel('CSS')
-    //     store.clearCacheForModel('CNS')
-    // })
+    it('should contain a foreign object if the object is exist in cache', async () => {
+        @model class A extends Model {
+            @id id: number
+        }
+        @model class B extends Model {
+            @id      id: number
+            @field a_id: number
+            @foreign(A) a: A 
+        }
+        let a = new A({id: 1})
+        let b = new B({id: 2, a_id: 1})
+        expect(b.a).toBe(a)
+    })
 
-    // it('init: value by default', async ()=> {
-    //     let sn  = new SN ();    expect(sn .ss ).toBeNull()
-    //     let ss  = new SS ();    expect(ss .sn ).toBeNull()
-    //     let cnn = new CNN();    expect(cnn.cns).toBeNull()
-    //     let cns = new CNS();    expect(cns.css).toBeNull()
-    //     let css = new CSS();    expect(css.cnn).toBeNull()
-    // })
-
-    // it('init: linked during creation (ids pass to constructor)', async ()=> {
-    //     let sn  = new SN ({id:  1 , ss_id: '1'});                               expect(sn .ss ).toBeNull()
-    //     let ss  = new SS ({id: '1', sn_id:  1 });                               expect(ss .sn ).toBe(sn)
-    //                                                                             expect(sn .ss ).toBe(ss)
-    //     let cnn = new CNN({id1:  1 , id2:  1 , cns_id1:  1 , cns_id2: '1'});    expect(cnn.cns).toBeNull()
-    //     let cns = new CNS({id1:  1 , id2: '1', css_id1: '1', css_id2: '1'});    expect(cns.css).toBeNull()
-    //     let css = new CSS({id1: '1', id2: '1', cnn_id1:  1 , cnn_id2:  1 });    expect(css.cnn).toBe(cnn)
-    //                                                                             expect(cnn.cns).toBe(cns)
-    //                                                                             expect(cns.css).toBe(css)
-    // })
+    it('should contain null if the object is not in the cache', async () => {
+        @model class A extends Model {
+            @id id: number
+        }
+        @model class B extends Model {
+            @id      id: number
+            @field a_id: number
+            @foreign(A) a: A 
+        }
+        let a = new A()
+        let b = new B({id: 2, a_id: 1})
+        expect(b.a).toBeNull()
+    })
 
     // it('init: linked after creation (id)', async ()=> {
     //     let sn  = new SN ({id :  1 })

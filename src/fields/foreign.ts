@@ -1,96 +1,91 @@
 // import 'reflect-metadata'
-import store from '../store'
-import {intercept, observe, observable, autorun} from 'mobx'
+import {intercept, observe, extendObservable, observable, autorun} from 'mobx'
 
 
-let type = 'foreign'
+function field_foreign(obj, field_name) {
+    let edit_mode = false
+    let foreign_model     = obj.model.fields[field_name].settings.foreign_model
+    let foreign_ids_names = obj.model.fields[field_name].settings.foreign_ids_names
 
-export function registerForeign() {
-    store.registerFieldType(type, (model_name, field_name, obj) => {
-        let edit_mode = false
-        let foreign_model_name     = store.models[model_name].fields[field_name].settings.foreign_model_name
-        let foreign_id_field_names = store.models[model_name].fields[field_name].settings.foreign_id_field_names
+    // make observable and set default value
+    extendObservable(obj, {
+        [field_name]: null 
+    })
 
-        // Computed
-        // watch "foreign id" fields
-        // e.i. update foreign obj when foreign ids was changed
-        autorun(() => {
-            let id = store.getId(obj, foreign_id_field_names)
-            if (store.models[foreign_model_name]) {
-                let foreign_obj = store.models[foreign_model_name].objects[id]
-                obj[field_name] = foreign_obj ? foreign_obj : null 
+    // Computed
+    // watch "foreign id" fields
+    // e.i. update foreign obj when foreign ids was changed
+    autorun(() => {
+        let id = foreign_model.__id(obj, foreign_ids_names)
+        if (id) {
+            let foreign_obj = foreign_model.cache[id]
+            obj[field_name] = foreign_obj ? foreign_obj : null 
+        }
+    })
+
+    // Setter
+    // 1. checks before set new changes
+    intercept(obj, field_name, (change) => {
+        if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor == foreign_model.__proto__))
+            throw new Error(`You can set only instance of "${foreign_model.__proto__.name}" or null`)
+        return change
+    })
+    // 2. after changes run trigger for "change foreign_id"
+    observe(obj, field_name, (change:any) => {
+        if (change.newValue === change.oldValue || edit_mode)
+            return  // it will help stop endless loop A.b -> A.b_id -> A.b -> A.b_id ...
+
+        edit_mode = true
+        try {
+            if (change.newValue === null) {
+                // if foreign set to null then reset ids on the obj
+                for (let id_name of foreign_ids_names) {
+                    obj[id_name] = null 
+                }
             }
-        })
-
-        // Setter
-        // 1. checks before set new changes
-        intercept(obj, field_name, (change) => {
-            if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor.name == foreign_model_name))
-                throw new Error(`You can set only instance of "${foreign_model_name}" or null`)
-            return change
-        })
-        // 2. after changes run trigger for "change foreign_id"
-        observe(obj, field_name, (change:any) => {
-            if (change.newValue === change.oldValue || edit_mode)
-                return  // it will help stop endless loop A.b -> A.b_id -> A.b -> A.b_id ...
-
-            edit_mode = true
-            try {
-                if (change.newValue === null) {
-                    for (var i = 0; i < foreign_id_field_names.length; i++) {
-                        obj[foreign_id_field_names[i]] = null 
-                    }
+            else {
+                // if foreign set to obj then update ids from the obj's ids
+                let obj_ids = change.newValue.model.ids
+                for (var i = 0; i < foreign_ids_names.length; i++) {
+                    // do not touch if it the same
+                    if (obj[foreign_ids_names[i]] != change.newValue[obj_ids[i]])
+                        obj[foreign_ids_names[i]]  = change.newValue[obj_ids[i]]
                 }
-                else {
-                    let foreign_model_description = change.newValue.getModelDescription()
-                    for (var i = 0; i < foreign_id_field_names.length; i++) {
-                        obj[foreign_id_field_names[i]] = change.newValue[foreign_model_description.ids[i]]
-                    }
-                }
-                edit_mode = false
             }
-            catch(e) {
-                // rollback changes!
-                if (change.oldValue === null) {
-                    for (var i = 0; i < foreign_id_field_names.length; i++) {
-                        obj[foreign_id_field_names[i]] = null 
-                    }
+            edit_mode = false
+        }
+        catch(e) {
+            // rollback changes!
+            if (change.oldValue === null) {
+                for (var i = 0; i < foreign_ids_names.length; i++) {
+                    obj[foreign_ids_names[i]] = null 
                 }
-                else {
-                    let foreign_model_description = change.newValue.getModelDescription()
-                    for (var i = 0; i < foreign_id_field_names.length; i++) {
-                        obj[foreign_id_field_names[i]] = change.oldValue[foreign_model_description.ids[i]]
-                    }
-                }
-                edit_mode = false
-                throw e
             }
-        })
-
-        // default value
-        if (obj[field_name] === undefined) obj[field_name] = null
+            else {
+                let obj_ids = change.oldValue.model.ids
+                for (var i = 0; i < foreign_ids_names.length; i++) {
+                    obj[foreign_ids_names[i]] = change.oldValue[obj_ids[i]]
+                }
+            }
+            edit_mode = false
+            throw e
+        }
     })
 }
-registerForeign()
 
 
-export default function foreign(foreign_model_name: any, ...foreign_id_field_names: string[]) {
+export default function foreign(foreign_model: any, ...foreign_ids_names: string[]) {
     return function (cls: any, field_name: string) {
-
-        // It can be wrong name "Function" because we wrapped class in decorator before.
-        // let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
-        let model_name = cls.getModelName()
-
-        //
-        if (typeof foreign_model_name === 'function')
-            foreign_model_name = foreign_model_name.constructor.name == 'Function' ? foreign_model_name.prototype.constructor.name : foreign_model_name.constructor.name
-
-        store.registerModelField(model_name, type, field_name, {
-            foreign_model_name    : foreign_model_name,
-            foreign_id_field_names: foreign_id_field_names.length ? foreign_id_field_names : [`${field_name}_id`]
-        })
-
-        // register into mobx
-        observable(cls, field_name)
+        let model = cls.constructor
+        if (model.fields === undefined) model.fields = {}
+        // register field 
+        model.fields[field_name] = { 
+            decorator: field_foreign,
+            settings: {
+                foreign_model: foreign_model,
+                // if it is empty then try auto detect it (it works only with single id) 
+                foreign_ids_names: foreign_ids_names.length ? foreign_ids_names : [`${field_name}_id`]
+            } 
+        } 
     }
 }
