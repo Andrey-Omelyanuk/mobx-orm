@@ -2,6 +2,7 @@ import { Model, model } from '../model'
 import id from './id'
 import foreign from './foreign'
 import field from './field'
+import { runInAction } from 'mobx'
 
 
 describe('Field: foreign', () => {
@@ -112,6 +113,43 @@ describe('Field: foreign', () => {
         let b = new B({id: 2, a_id: 1})
         expect(b.a).toBeNull()
     })
+
+    it('foreing object create later', async () => {
+        @model class A extends Model {
+            @id id: number
+        }
+        @model class B extends Model {
+            @id      id: number
+            @field a_id: number
+            @foreign(A) a: A 
+        }
+        let b = new B({id: 2, a_id: 1})
+        expect(b.a).toBeNull()
+
+        let a = new A({id: 1})
+        expect(b.a).toBe(a)
+    })
+
+    it('foreing object delete later', async () => {
+        @model class A extends Model {
+            @id id: number
+        }
+        @model class B extends Model {
+            @id      id: number
+            @field a_id: number
+            @foreign(A) a: A 
+        }
+        let a = new A({id: 1})
+        let b = new B({id: 2, a_id: 1})
+        expect(b.a).toBe(a)
+
+        runInAction(() => {
+            a.id = null // delete object from cache
+        })
+        expect(b.a).toBeNull()
+    })
+
+    // TODO we need more tests
 
     // it('init: linked after creation (id)', async ()=> {
     //     let sn  = new SN ({id :  1 })

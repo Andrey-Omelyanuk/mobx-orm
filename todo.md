@@ -1,7 +1,2 @@
-TODO: add tests
-TODO: build project
-TODO: improve readme
-TODO: register library on npm
-TODO: more error messages
 
-TODO: multi storages
+TODO add localstorage adapter

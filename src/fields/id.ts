@@ -53,6 +53,4 @@ export default function id(cls, field_name: string) {
     model.fields[field_name] = { decorator: field_ID }  // register field 
     model.ids.push(field_name)                          // register id
 
-    // TODO we have to observe cache
-    // observable(model, 'cache')
 }

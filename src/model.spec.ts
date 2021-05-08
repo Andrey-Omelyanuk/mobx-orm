@@ -1,7 +1,7 @@
 import { Model, model } from './model'
 import id    from './fields/id'
 import field from './fields/field'
-import { adapter } from 'e2e/adapter'
+import query from './query'
 
 
 describe('Model', () => {
@@ -44,20 +44,31 @@ describe('Model', () => {
         expect(A.test_method instanceof Function).toBeTruthy()
     })
 
-    // TODO
-    // it('Model.load()', async () => {
-    // })
+    it('Model.load()', async () => {
+        @model class A extends Model {}
+        let query = A.load()
+
+        expect(query.is_ready).toBe(true)
+    })
 
     it('Model.clearCache()', async () => {
         @model class A extends Model {
             @id id: number
         }
+        // id will add objects to the cache
         let a = new A({id: 1})
         let b = new A({id: 2})
-        // TODO: move it to test of ID field
         expect((<any>A).cache).toEqual({[a.__id]: a, [b.__id]: b})
         A.clearCache()
         expect((<any>A).cache).toEqual({})
+    })
+
+    it('Model.__id()', async () => {
+        @model class A extends Model {
+            @id id: number
+        }
+        let a = new A({id: 1})
+        expect(A.__id(a, a.model.ids)).toBe('1 :')
     })
 
     it('obj._init_data', async () => {

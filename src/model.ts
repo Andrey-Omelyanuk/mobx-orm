@@ -1,5 +1,6 @@
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import Adapter from './adapters/adapter'
+import Query from './query'
 
 
 export abstract class Model {
@@ -18,10 +19,8 @@ export abstract class Model {
     }
 
 
-    static async load(where = {}, order_by = {}, limit = 0, offset = 0) {
-        await this.adapter.load(where, order_by, limit, offset)
-        // TODO: return Query
-        return 
+    static load(filter = {}, order_by = {}, page = 0, page_size = 50) {
+        return new Query(this, filter, order_by, page, page_size)
     }
 
     static clearCache() {
@@ -33,7 +32,6 @@ export abstract class Model {
         }
     }
 
-    // TODO add test
     static __id(obj, ids: []) : string | null {
         let id = '' 
         for (let id_name of ids) {
@@ -57,7 +55,7 @@ export abstract class Model {
         return Model.__id(this, this.model.ids)
     }
 
-    // TODO: instead of 'any' I whant to use Model constructor
+    // TODO: any is band-aid 
     get model() : any {
         return this.constructor
     }
@@ -96,7 +94,8 @@ export abstract class Model {
 export function model(constructor) {
     var original = constructor
 
-    original.cache = {}
+    original.cache = observable({})
+    // makeObservable(original, { cache: observable })
 
     // the new constructor
     let f : any = function (...args) {
