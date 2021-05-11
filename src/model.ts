@@ -8,7 +8,7 @@ export abstract class Model {
     // this private static properties will be copied to real model in the model decorator
     private static ids          : any[]
     private static adapter      : Adapter<Model>
-    private static cache        : { [string_id : string]: Model }
+    private static cache        : Map<string, Model>
     private static fields       : {
         [field_name: string]: {
             decorator   : (obj: Model, field_name: string) => void,
@@ -25,13 +25,14 @@ export abstract class Model {
 
     static clearCache() {
         // we need it for run triggers on id fields 
-        for (let obj of Object.values(this.cache)) {
+        for (let obj of this.cache.values()) {
             for (let id_field_name of this.ids) {
                 obj[id_field_name] = null
             }
         }
     }
 
+    // TODO push it to utils
     static __id(obj, ids: []) : string | null {
         let id = '' 
         for (let id_name of ids) {
@@ -44,6 +45,7 @@ export abstract class Model {
     }
 
     private readonly _init_data
+    private disposers = new Map()
 
     constructor(init_data?) {
         // we have to save init data for detect changes
@@ -74,18 +76,18 @@ export abstract class Model {
     @action inject() {
         if (this.__id === null)                    
             throw new Error(`Object should have id!`)
-        if (this.model.cache[this.__id])  
+        if (this.model.cache.has(this.__id))  
             throw new Error(`Object with id "${this.__id}" already exist in the cache of model: "${this.model.name}")`)
-        this.model.cache[this.__id] = this 
+        this.model.cache.set(this.__id, this)
     }
 
     // remove obj from the cache
     @action eject() {
         if (this.__id === null)
             return                   
-        if (!this.model.cache[this.__id]) 
+        if (!this.model.cache.has(this.__id)) 
             throw new Error(`Object with id "${this.__id}" not exist in the cache of model: ${this.model.name}")`)
-        delete this.model.cache[this.__id]
+        this.model.cache.delete(this.__id)
     }
 }
 
@@ -94,7 +96,7 @@ export abstract class Model {
 export function model(constructor) {
     var original = constructor
 
-    original.cache = observable({})
+    original.cache = observable(new Map())
     // makeObservable(original, { cache: observable })
 
     // the new constructor

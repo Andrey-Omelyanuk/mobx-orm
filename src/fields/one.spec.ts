@@ -2,13 +2,12 @@ import { runInAction } from 'mobx'
 import { Model, model } from '../model'
 import id from './id'
 import field from './field'
-import foreign from './foreign'
 import one from './one'
 
 
 describe('One', () => {
 
-    it('declare the one with single id', async () => {
+    function declare() {
         @model class A extends Model {
             @id     id: number
                      b: B
@@ -16,13 +15,16 @@ describe('One', () => {
         @model class B extends Model {
             @id          id  : number
             @field       a_id: number
-            @foreign(A)  a   : A
         }
+        return {A: A, B: B}
+    }
 
-        one(B, 'a')(A, 'b') 
+    it('declare the one with single id', async () => {
+        const {A, B} = declare()
+        one(B, 'a_id')(A, 'b') 
         expect((<any>A).fields['b'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).fields['b'].settings.remote_model).toBe(B)
-        expect((<any>A).fields['b'].settings.remote_foreign_field).toBe('a')
+        expect((<any>A).fields['b'].settings.remote_foreign_ids_names).toEqual(['a_id'])
     })
 
     it('declare the one with multi ids', async () => {
@@ -35,68 +37,47 @@ describe('One', () => {
             @id            id : number
             @field       a_id1: number
             @field       a_id2: number
-            @foreign(A)  a    : A
         }
 
-        one(B, 'a')(A, 'b') 
+        one(B, 'a_id1', 'a_id2')(A, 'b') 
         expect((<any>A).fields['b'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).fields['b'].settings.remote_model).toBe(B)
-        expect((<any>A).fields['b'].settings.remote_foreign_field).toBe('a')
+        expect((<any>A).fields['b'].settings.remote_foreign_ids_names).toEqual(['a_id1', 'a_id2'])
     })
 
     it('declare the one with auto detect single id', async () => {
-        @model class A extends Model {
-            @id     id: number
-                     b: B
-        }
-        @model class B extends Model {
-            @id          id  : number
-            @field       a_id: number
-            @foreign(A)  a   : A
-        }
-
+        const {A, B} = declare()
         one(B)(A, 'b') 
         expect((<any>A).fields['b'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).fields['b'].settings.remote_model).toBe(B)
-        expect((<any>A).fields['b'].settings.remote_foreign_field).toBe('a')
+        expect((<any>A).fields['b'].settings.remote_foreign_ids_names).toEqual(['a_id'])
     })
 
     it('cross declare', async () => {
         @model class A extends Model {
             @id      id: number
             @field b_id: number
-                      b: B
                       b_one: B
         }
         @model class B extends Model {
             @id           id: number
             @field      a_id: number
-            @foreign(A) a: A
                         a_one: A
         }
-        foreign(B)(A.prototype, 'b') 
         one(B)(A, 'b_one') 
         one(A)(B, 'a_one')
 
         expect((<any>A).fields['b_one'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).fields['b_one'].settings.remote_model).toBe(B)
-        expect((<any>A).fields['b_one'].settings.remote_foreign_field).toEqual('a')
+        expect((<any>A).fields['b_one'].settings.remote_foreign_ids_names).toEqual(['a_id'])
 
         expect((<any>B).fields['a_one'].decorator instanceof Function).toBeTruthy()
         expect((<any>B).fields['a_one'].settings.remote_model).toBe(A)
-        expect((<any>B).fields['a_one'].settings.remote_foreign_field).toEqual('b')
+        expect((<any>B).fields['a_one'].settings.remote_foreign_ids_names).toEqual(['b_id'])
     })
 
     it('should be null by default', async () => {
-        @model class A extends Model {
-            @id      id: number
-                      b: B
-        }
-        @model class B extends Model {
-            @id           id: number
-            @field      a_id: number
-            @foreign(A) a   : A
-        }
+        const {A, B} = declare()
         one(B)(A, 'b') 
 
         let a = new A()
@@ -104,15 +85,7 @@ describe('One', () => {
     })
 
     it('should contain a remote object if the object is exist in cache', async () => {
-        @model class A extends Model {
-            @id      id: number
-                      b: B
-        }
-        @model class B extends Model {
-            @id           id: number
-            @field      a_id: number
-            @foreign(A) a   : A
-        }
+        const {A, B} = declare()
         one(B)(A, 'b') 
 
         let a = new A({id: 1})
@@ -121,52 +94,35 @@ describe('One', () => {
     })
 
     it('should contain null if the object is not in the cache', async () => {
-        @model class A extends Model {
-            @id      id: number
-                      b: B
-        }
-        @model class B extends Model {
-            @id           id: number
-            @field      a_id: number
-            @foreign(A) a   : A
-        }
+        const {A, B} = declare()
         one(B)(A, 'b') 
 
         let a = new A()
         let b = new B({id: 2, a_id: 1})
-        expect(b.a).toBeNull()
+        expect(a.b).toBeNull()
     })
 
-    it('remote object create later', async () => {
-        @model class A extends Model {
-            @id      id: number
-                      b: B
-        }
-        @model class B extends Model {
-            @id           id: number
-            @field      a_id: number
-            @foreign(A) a   : A
-        }
+    it('should contain null if the remote object is not in the cache', async () => {
+        const {A, B} = declare()
         one(B)(A, 'b') 
 
         let a = new A({id: 1})
+        let b = new B({a_id: 1})
         expect(a.b).toBeNull()
+    })
 
+    it('remote object create later', async () => {
+        const {A, B} = declare()
+        one(B)(A, 'b') 
+        let a = new A({id: 1})
+
+        expect(a.b).toBeNull()
         let b = new B({id: 2, a_id: 1})
         expect(a.b).toBe(b)
     })
 
-    // TODO very instresting test, I think I have to refactor the one field
     it('remote object delete later', async () => {
-        @model class A extends Model {
-            @id      id: number
-                      b: B
-        }
-        @model class B extends Model {
-            @id           id: number
-            @field      a_id: number
-            @foreign(A) a   : A
-        }
+        const {A, B} = declare()
         one(B)(A, 'b') 
         let a = new A({id: 1})
         let b = new B({id: 2, a_id: 1})
@@ -178,56 +134,49 @@ describe('One', () => {
         expect(a.b).toBeNull()
     })
 
-    // TODO we need more tests
+    // it('set from null to obj', async () => {
+    //     const {A, B} = declare()
+    //     one(B)(A, 'b') 
 
+    //     let a = new A({id: 1})
+    //     let b = new B({id: 2})
 
-    // @model
-    // class A extends Model {
-    //     @id     id   : number
-    //     @field  b_id : number
-    //     @foreign('B', 'b_id'     ) b_foreign: B
-    //     @one    ('B', 'a_foreign') b_one    : B
-    // }
-
-    // @model
-    // class B extends Model {
-    //     @id     id   : number
-    //     @field  a_id : number
-    //     @foreign('A', 'a_id'     ) a_foreign: A
-    //     @one    ('A', 'b_foreign') a_one    : A
-    // }
-
-    // it('linked after creation (set foreign)', async ()=> {
-    //     let a = new A(); await a.save()
-    //     let b = new B(); await b.save()
-    //     a.b_foreign = b                      
-    //     expect(b.a_one).toBe(a)
+    //     expect(a.b).toBeNull()
+    //     a.b = b
+    //     expect(a.b).toBe(b)
+    //     expect(b.a_id).toBe(a.id)
     // })
 
-    // it('cross link', async () => {
-    //     let a = new A(); await a.save()
-    //     let b = new B(); await b.save()                   
-    //     a.b_foreign = b
-    //     b.a_foreign = a
-    //     expect(a.b_one).toBe(b)
-    //     expect(b.a_one).toBe(a)
+    // it('set from obj_a to obj_b', async () => {
+    //     const {A, B} = declare()
+    //     one(B)(A, 'b') 
+
+    //     let a = new A({id: 1})
+    //     let b = new B({id: 2, a_id: 1})
+    //     let c = new B({id: 3 })
+
+    //     expect(a.b).toBe(b)
+    //     expect(b.a_id).toBe(a.id)
+    //     a.b = c
+    //     expect(a.b).toBe(c)
+    //     expect(b.a_id).toBeNull()
+    //     expect(c.a_id).toBe(a.id)
     // })
 
-    // it('reset link (foreign field on remote set to null)', async ()=> {
-    //     let a = new A(); await a.save()
-    //     let b = new B(); await b.save()
-    //     a.b_foreign = b                      
-    //     a.b_foreign = null
-    //     expect(b.a_one).toBeNull()
+    // it('set from obj to null', async () => {
+    //     const {A, B} = declare()
+    //     one(B)(A, 'b') 
+
+    //     let a = new A({id: 1})
+    //     let b = new B({id: 2, a_id: 1})
+
+    //     expect(a.b).toBe(b)
+    //     expect(b.a_id).toBe(a.id)
+    //     a.b = null
+    //     expect(a.b).toBeNull()
     // })
 
-    // it('reset link (delete remote obj)', async ()=> {
-    //     let a = new A(); await a.save()
-    //     let b = new B(); await b.save()
-    //     a.b_foreign = b    
-    //     await a.delete()
-    //     expect(b.a_one).toBeNull()
-    // })
+
 
     // // TODO
     // // it('remote model created before', async ()=> {

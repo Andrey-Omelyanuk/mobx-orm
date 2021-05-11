@@ -8,7 +8,7 @@ describe('Model', () => {
 
     it('init model empty', async () => {
         @model class A extends Model {}
-        expect((<any>A).cache).toEqual({})
+        expect((<any>A).cache.size).toBe(0)
     })
 
     it('init model: default property', async () => {
@@ -58,9 +58,9 @@ describe('Model', () => {
         // id will add objects to the cache
         let a = new A({id: 1})
         let b = new A({id: 2})
-        expect((<any>A).cache).toEqual({[a.__id]: a, [b.__id]: b})
+        expect((<any>A).cache.size).toBe(2)
         A.clearCache()
-        expect((<any>A).cache).toEqual({})
+        expect((<any>A).cache.size).toBe(0)
     })
 
     it('Model.__id()', async () => {
@@ -146,23 +146,25 @@ describe('Model', () => {
         expect(() => { a.inject() })
             .toThrow(new Error(`Object should have id!`))
         a.eject() // nothing to change
-        expect((<any>A).cache).toEqual({})
+        expect((<any>A).cache.size).toBe(0)
 
         a = new A({id: 1})
         a.eject() // we have to eject before because id field auto inject
         expect(() => { a.eject () })
             .toThrow(new Error(`Object with id "${a.__id}" not exist in the cache of model: ${a.model.name}")`))
         a.inject()
-        expect((<any>A).cache).toEqual({[a.__id]: a})
+        expect((<any>A).cache.get(a.__id)).toBe(a)
         a.eject() 
-        expect((<any>A).cache).toEqual({})
+        expect((<any>A).cache.size).toBe(0)
 
         a.inject()
         expect(() => { new A({id: 1}) })
             .toThrow(new Error(`Object with id "1 :" already exist in the cache of model: "A")`))
 
         let c = new A({id: 2}) // id field make auto inject
-        expect((<any>A).cache).toEqual({[a.__id]: a, [c.__id]: c})
+        expect((<any>A).cache.size).toBe(2)
+        expect((<any>A).cache.get(a.__id)).toBe(a)
+        expect((<any>A).cache.get(c.__id)).toBe(c)
     })
 
 })

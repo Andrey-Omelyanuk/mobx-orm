@@ -88,9 +88,9 @@ describe('Field: id', () => {
         }
         let a = new A()
 
-        expect((<any>A).cache).toEqual({})
+        expect((<any>A).cache.size).toBe(0)
         a.id = 1
-        expect((<any>A).cache[a.__id]).toBe(a)
+        expect((<any>A).cache.get(a.__id)).toBe(a)
     })
 
     it('side effect: eject from the cache', async () => {
@@ -99,9 +99,9 @@ describe('Field: id', () => {
         }
         let a = new A({id: 1})
 
-        expect((<any>A).cache[a.__id]).toBe(a)
+        expect((<any>A).cache.get(a.__id)).toBe(a)
         a.id = null
-        expect((<any>A).cache).toEqual({})
+        expect((<any>A).cache.size).toBe(0)
     })
 
 })

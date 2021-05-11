@@ -16,7 +16,7 @@ function field_foreign(obj, field_name) {
         // watch on foreign cache for foreign object
         () => {
             let id = foreign_model.__id(obj, foreign_ids_names)
-            return id ? foreign_model.cache[id] : null
+            return id ? foreign_model.cache.get(id) : null
         },
         // update foreign field
         (foreign_obj, prev, reaction) => {

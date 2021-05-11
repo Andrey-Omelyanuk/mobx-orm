@@ -19,24 +19,49 @@ function field_one(obj: Model, field_name: string) {
 }
 
 
-export default function one(remote_model: any, remote_foreign_field?: string) {
+export default function one(remote_model: any, ...remote_foreign_ids_names: string[]) {
     return function (cls: any, field_name: string) {
         let model = cls.prototype.constructor
         if (model.fields === undefined) model.fields = {}
         // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_field = remote_foreign_field ? remote_foreign_field : `${model.name.toLowerCase()}`
+        remote_foreign_ids_names = remote_foreign_ids_names.length ? remote_foreign_ids_names: [`${model.name.toLowerCase()}_id`]
         model.fields[field_name] = { 
             decorator: field_one,
             settings: {
                 remote_model: remote_model,
-                remote_foreign_field: remote_foreign_field 
+                remote_foreign_ids_names: remote_foreign_ids_names
             } 
         } 
         
-        if (remote_model.fields[remote_foreign_field].settings['one'])
-            // TODO: do better message and add test for this case
-            throw(`Duplicate declaration of the one field for ${field_name}`)
-        remote_model.fields[remote_foreign_field].settings['one'] = field_name
+        // watch for remote object in the cache 
+        observe(remote_model.cache, (remote_change: any) => {
+            let remote_obj
+            switch (remote_change.type) {
+                case 'add':
+                    remote_obj = remote_change.newValue
+                    remote_obj.disposers.set(`one ${field_name}` ,autorun(() => {
+                        let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
+                        if (obj) {
+                            if (obj[field_name])
+                                // TODO better name of error
+                                // TODO add test for this case
+                                throw ('One: bad')
+                            obj[field_name] = remote_obj
+                        }
+                    }))
+                    break
+                case 'delete':
+                    remote_obj = remote_change.oldValue
+                    if (remote_obj.disposers.get(`one ${field_name}`)) {
+                        remote_obj.disposers.get(`one ${field_name}`)()
+                        remote_obj.disposers.delete(`one ${field_name}`)
+                    }
+                    let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
+                    if (obj) 
+                        obj[field_name] = null
+                    break
+            }
+        })
 
         // // watch foreign fields on exists remote object 
         // for (let remote_object of Object.values(store.models[remote_model_name].objects)) {
@@ -69,12 +94,6 @@ export default function one(remote_model: any, remote_foreign_field?: string) {
         //             })
         //             break
         //         // remote object was ejected
-        //         case 'remove':
-        //             // TODO: check memory leaks (unsubscribe observer in 'add' section)
-        //             let obj = remote_change.oldValue[foreign_field_on_remote_model]
-        //             if (obj) 
-        //                 obj[field_name] = null
-        //             break
         //     }
         // })
     }
