@@ -1,84 +1,115 @@
-// import { observable, observe, extendObservable } from 'mobx'
-// import { Model } from '../model'
+import { intercept, observe, observable, extendObservable, reaction, autorun } from 'mobx'
+import { Model } from '../model'
 
 
-// function field_many(obj: Model, field_name: string) {
-//     // make observable and set default value
-//     extendObservable(obj, {
-//         [field_name]: []
-//     })
+function field_many(obj: Model, field_name) {
 
-// }
+    let edit_mode = false
+    let remote_model            = obj.model.fields[field_name].settings.remote_model
+    let remote_foreign_ids_name = obj.model.fields[field_name].settings.remote_foreign_ids_names
 
+    // make observable and set default value
+    extendObservable(obj, {
+        [field_name]: null 
+    })
 
-// export default function many(remote_model_name: any, foreign_field_on_remote_model: string) {
-//     return function (cls: any, field_name: string) {
-//         // It can be wrong name "Function" because we wrapped class in decorator before.
-//         // let model_name = cls.constructor.name === 'Function' ? cls.prototype.constructor.name : cls.constructor.name
-//         let model_name = cls.getModelName()
+    // 1. checks before set new changes
+    intercept(obj, <any>field_name, (change) => {
+        if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor === remote_model.__proto__))
+                throw new Error(`You can set only instance of "${remote_model.__proto__.name}" or null`)
+        return change
+    })
 
-//         // detect class name
-//         if (typeof remote_model_name === 'function')
-//             remote_model_name = remote_model_name.constructor.name == 'Function'
-//                 ? remote_model_name.prototype.constructor.name
-//                 : remote_model_name.constructor.name
-//         //
-//         if (!store.models[model_name])          store.registerModel(model_name)
-//         if (!store.models[remote_model_name])   store.registerModel(remote_model_name)
-//         store.registerModelField(model_name, 'many', field_name, {
-//             remote_model_name               : remote_model_name,
-//             foreign_field_on_remote_model   : foreign_field_on_remote_model
-//         })
+    // 2. after changes run trigger for "change foreign_id"
+    observe(obj, field_name, (change:any) => {
+        let old_remote_obj = change.oldValue
+        let new_remote_obj = change.newValue
 
-//         // register into mobx
-//         observable(cls, field_name)
+        if (new_remote_obj === old_remote_obj || edit_mode)
+            return  // it will help stop endless loop A.b -> B.a_id -> A.b -> B.a_id ...
 
-//         // watch foreign fields on exists remote object 
-//         for (let remote_object of Object.values(store.models[remote_model_name].objects)) {
-//             observe(remote_object, <any>foreign_field_on_remote_model, (remote_foreign_field_change) => {
-//                 // remove old
-//                 if (remote_foreign_field_change.oldValue) 
-//                     remote_foreign_field_change.oldValue[field_name] = null
-//                 // add new
-//                 if (remote_foreign_field_change.newValue)
-//                     remote_foreign_field_change.newValue[field_name] = remote_object
-//             })
-//         }
+        edit_mode = true
+        try {
+            // remove foreign ids on the old remote obj
+            if (old_remote_obj) {
+                for (let id_name of remote_foreign_ids_name) {
+                    old_remote_obj[id_name] = null 
+                }
+            }
+            // set foreign ids on the remote obj 
+            if (new_remote_obj) {
+                let obj_ids = obj.model.ids 
+                for (var i = 0; i < remote_foreign_ids_name.length; i++) {
+                    // do not touch if it the same
+                    if (new_remote_obj[remote_foreign_ids_name[i]] != obj[obj_ids[i]])
+                        new_remote_obj[remote_foreign_ids_name[i]] = obj[obj_ids[i]]
+                }
+            }
+            edit_mode = false
+        }
+        catch(e) {
+            // TODO: we need to test rallback
+            // // rollback changes!
+            // if (change.oldValue === null) {
+            //     for (var i = 0; i < foreign_ids_names.length; i++) {
+            //         obj[foreign_ids_names[i]] = null 
+            //     }
+            // }
+            // else {
+            //     let obj_ids = change.oldValue.model.ids
+            //     for (var i = 0; i < foreign_ids_names.length; i++) {
+            //         obj[foreign_ids_names[i]] = change.oldValue[obj_ids[i]]
+            //     }
+            // }
+            // edit_mode = false
+            // throw e
+        }
+    })
+}
 
-//         // watch for all foreign objects
-//         observe(store.models[remote_model_name].objects, (remote_change: any) => {
-//             switch (remote_change.type) {
-//                 // remote object was injected
-//                 case 'add':
-//                     // add to many  
-//                     if (remote_change.newValue[foreign_field_on_remote_model])
-//                         remote_change.newValue[foreign_field_on_remote_model][field_name].push(remote_change.newValue)
-//                     // watch foreign field on remote object 
-//                     observe(remote_change.newValue, foreign_field_on_remote_model, (remote_foreign_field_change) => {
-//                         // remote old
-//                         if (remote_foreign_field_change.oldValue) {
-//                             let object_with_many = remote_foreign_field_change.oldValue
-//                             let index = object_with_many[field_name].indexOf(remote_change.newValue)
-//                             if (index > -1) {
-//                                 object_with_many[field_name].splice(index, 1)
-//                             }
-//                         }
-//                         // add new
-//                         if (remote_foreign_field_change.newValue)
-//                             remote_foreign_field_change.newValue[field_name].push(remote_change.newValue)
-//                     })
-//                     break
-//                 // object was removed 
-//                 case 'remove':
-//                     let object_with_many = remote_change.oldValue[foreign_field_on_remote_model]
-//                     if (object_with_many) {
-//                         let index = object_with_many[field_name].indexOf(remote_change.oldValue)
-//                         if (index > -1) {
-//                             object_with_many[field_name].splice(index, 1)
-//                         }
-//                     }
-//                     break
-//             }
-//         })
-//     }
-// }
+export default function many(remote_model: any, ...remote_foreign_ids_names: string[]) {
+    return function (cls: any, field_name: string) {
+        let model = cls.prototype.constructor
+        if (model.fields === undefined) model.fields = {}
+        // if it is empty then try auto detect it (it works only with single id) 
+        remote_foreign_ids_names = remote_foreign_ids_names.length ? remote_foreign_ids_names: [`${model.name.toLowerCase()}_id`]
+        model.fields[field_name] = { 
+            decorator: field_many,
+            settings: {
+                remote_model: remote_model,
+                remote_foreign_ids_names: remote_foreign_ids_names
+            } 
+        } 
+        
+        // watch for remote object in the cache 
+        observe(remote_model.cache, (remote_change: any) => {
+            let remote_obj
+            switch (remote_change.type) {
+                case 'add':
+                    remote_obj = remote_change.newValue
+                    remote_obj.disposers.set(`one ${field_name}` ,autorun(() => {
+                        let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
+                        if (obj) {
+                            // TODO: is it not bad?
+                            // if (obj[field_name])
+                            //     // TODO better name of error
+                            //     // TODO add test for this case
+                            //     throw ('One: bad')
+                            obj[field_name] = remote_obj
+                        }
+                    }))
+                    break
+                case 'delete':
+                    remote_obj = remote_change.oldValue
+                    if (remote_obj.disposers.get(`one ${field_name}`)) {
+                        remote_obj.disposers.get(`one ${field_name}`)()
+                        remote_obj.disposers.delete(`one ${field_name}`)
+                    }
+                    let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
+                    if (obj) 
+                        obj[field_name] = null
+                    break
+            }
+        })
+    }
+}

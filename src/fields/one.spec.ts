@@ -5,7 +5,7 @@ import field from './field'
 import one from './one'
 
 
-describe('One', () => {
+describe('Field: One', () => {
 
     function declare() {
         @model class A extends Model {
@@ -134,49 +134,56 @@ describe('One', () => {
         expect(a.b).toBeNull()
     })
 
-    // it('set from null to obj', async () => {
-    //     const {A, B} = declare()
-    //     one(B)(A, 'b') 
+    it('set from null to obj', async () => {
+        const {A, B} = declare()
+        one(B)(A, 'b') 
 
-    //     let a = new A({id: 1})
-    //     let b = new B({id: 2})
+        let a = new A({id: 1})
+        let b = new B({id: 2})
 
-    //     expect(a.b).toBeNull()
-    //     a.b = b
-    //     expect(a.b).toBe(b)
-    //     expect(b.a_id).toBe(a.id)
-    // })
+        expect(a.b).toBeNull()
+        expect(b.a_id).toBeNull()
+        runInAction(() => {
+            a.b = b
+        })
+        expect(a.b).toBe(b)
+        expect(b.a_id).toBe(a.id)
+    })
 
-    // it('set from obj_a to obj_b', async () => {
-    //     const {A, B} = declare()
-    //     one(B)(A, 'b') 
+    it('set from obj_a to obj_b', async () => {
+        const {A, B} = declare()
+        one(B)(A, 'b') 
 
-    //     let a = new A({id: 1})
-    //     let b = new B({id: 2, a_id: 1})
-    //     let c = new B({id: 3 })
+        let a = new A({id: 1})
+        let b = new B({id: 2, a_id: 1})
+        let c = new B({id: 3 })
 
-    //     expect(a.b).toBe(b)
-    //     expect(b.a_id).toBe(a.id)
-    //     a.b = c
-    //     expect(a.b).toBe(c)
-    //     expect(b.a_id).toBeNull()
-    //     expect(c.a_id).toBe(a.id)
-    // })
+        expect(a.b).toBe(b)
+        expect(b.a_id).toBe(a.id)
+        expect(c.a_id).toBeNull()
+        runInAction(() => {
+            a.b = c
+        })
+        expect(a.b).toBe(c)
+        expect(b.a_id).toBeNull()
+        expect(c.a_id).toBe(a.id)
+    })
 
-    // it('set from obj to null', async () => {
-    //     const {A, B} = declare()
-    //     one(B)(A, 'b') 
+    it('set from obj to null', async () => {
+        const {A, B} = declare()
+        one(B)(A, 'b') 
 
-    //     let a = new A({id: 1})
-    //     let b = new B({id: 2, a_id: 1})
+        let a = new A({id: 1})
+        let b = new B({id: 2, a_id: 1})
 
-    //     expect(a.b).toBe(b)
-    //     expect(b.a_id).toBe(a.id)
-    //     a.b = null
-    //     expect(a.b).toBeNull()
-    // })
-
-
+        expect(a.b).toBe(b)
+        expect(b.a_id).toBe(a.id)
+        runInAction(() => {
+            a.b = null
+        })
+        expect(a.b).toBeNull()
+        expect(b.a_id).toBeNull()
+    })
 
     // // TODO
     // // it('remote model created before', async ()=> {

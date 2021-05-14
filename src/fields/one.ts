@@ -2,8 +2,11 @@ import { intercept, observe, observable, extendObservable, reaction, autorun } f
 import { Model } from '../model'
 
 
-function field_one(obj: Model, field_name: string) {
-    let remote_model = obj.model.fields[field_name].settings.remote_model
+function field_one(obj: Model, field_name) {
+
+    let edit_mode = false
+    let remote_model            = obj.model.fields[field_name].settings.remote_model
+    let remote_foreign_ids_name = obj.model.fields[field_name].settings.remote_foreign_ids_names
 
     // make observable and set default value
     extendObservable(obj, {
@@ -15,6 +18,52 @@ function field_one(obj: Model, field_name: string) {
         if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor === remote_model.__proto__))
                 throw new Error(`You can set only instance of "${remote_model.__proto__.name}" or null`)
         return change
+    })
+
+    // 2. after changes run trigger for "change foreign_id"
+    observe(obj, field_name, (change:any) => {
+        let old_remote_obj = change.oldValue
+        let new_remote_obj = change.newValue
+
+        if (new_remote_obj === old_remote_obj || edit_mode)
+            return  // it will help stop endless loop A.b -> B.a_id -> A.b -> B.a_id ...
+
+        edit_mode = true
+        try {
+            // remove foreign ids on the old remote obj
+            if (old_remote_obj) {
+                for (let id_name of remote_foreign_ids_name) {
+                    old_remote_obj[id_name] = null 
+                }
+            }
+            // set foreign ids on the remote obj 
+            if (new_remote_obj) {
+                let obj_ids = obj.model.ids 
+                for (var i = 0; i < remote_foreign_ids_name.length; i++) {
+                    // do not touch if it the same
+                    if (new_remote_obj[remote_foreign_ids_name[i]] != obj[obj_ids[i]])
+                        new_remote_obj[remote_foreign_ids_name[i]] = obj[obj_ids[i]]
+                }
+            }
+            edit_mode = false
+        }
+        catch(e) {
+            // TODO: we need to test rallback
+            // // rollback changes!
+            // if (change.oldValue === null) {
+            //     for (var i = 0; i < foreign_ids_names.length; i++) {
+            //         obj[foreign_ids_names[i]] = null 
+            //     }
+            // }
+            // else {
+            //     let obj_ids = change.oldValue.model.ids
+            //     for (var i = 0; i < foreign_ids_names.length; i++) {
+            //         obj[foreign_ids_names[i]] = change.oldValue[obj_ids[i]]
+            //     }
+            // }
+            // edit_mode = false
+            // throw e
+        }
     })
 }
 
@@ -42,10 +91,11 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
                     remote_obj.disposers.set(`one ${field_name}` ,autorun(() => {
                         let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
                         if (obj) {
-                            if (obj[field_name])
-                                // TODO better name of error
-                                // TODO add test for this case
-                                throw ('One: bad')
+                            // TODO: is it not bad?
+                            // if (obj[field_name])
+                            //     // TODO better name of error
+                            //     // TODO add test for this case
+                            //     throw ('One: bad')
                             obj[field_name] = remote_obj
                         }
                     }))
@@ -62,39 +112,5 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
                     break
             }
         })
-
-        // // watch foreign fields on exists remote object 
-        // for (let remote_object of Object.values(store.models[remote_model_name].objects)) {
-        //     observe(remote_object, <any>foreign_field_on_remote_model, (remote_foreign_field_change) => {
-        //         // remove old
-        //         if (remote_foreign_field_change.oldValue) 
-        //             remote_foreign_field_change.oldValue[field_name] = null
-        //         // add new
-        //         if (remote_foreign_field_change.newValue)
-        //             remote_foreign_field_change.newValue[field_name] = remote_object
-        //     })
-        // }
-
-        // // watch for remote object that related to one-field
-        // observe(store.models[remote_model_name].objects, (remote_change) => {
-        //     switch (remote_change.type) {
-        //         // remote object was injected
-        //         case 'add':
-        //             // add to one  
-        //             if (remote_change.newValue[foreign_field_on_remote_model])
-        //                 remote_change.newValue[foreign_field_on_remote_model][field_name] = remote_change.newValue
-        //             // watch foreign field on remote object 
-        //             observe(remote_change.newValue, foreign_field_on_remote_model, (remote_foreign_field_change) => {
-        //                 // remove old
-        //                 if (remote_foreign_field_change.oldValue) 
-        //                     remote_foreign_field_change.oldValue[field_name] = null
-        //                 // add new
-        //                 if (remote_foreign_field_change.newValue)
-        //                     remote_foreign_field_change.newValue[field_name] = remote_change.newValue
-        //             })
-        //             break
-        //         // remote object was ejected
-        //     }
-        // })
     }
 }
