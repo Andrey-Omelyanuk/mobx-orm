@@ -1,7 +1,7 @@
 import { model, Model } from '../model'
 import id from '../fields/id'
 import field from '../fields/field'
-import local, { LocalAdapter } from './local'
+import { local, LocalAdapter } from './local'
 
 
 describe('Adapter: Local', () => {
@@ -39,8 +39,15 @@ describe('Adapter: Local', () => {
         expect(a.id).toBeNull()
         expect(a.a).toBe('test')
         await a.save()
-        expect(a.id).not.toBeNull()
+        expect(a.id).toBe(1)
         expect(a.a).toBe('test')
+    })
+
+    it('save (multi create)', async ()=> {
+        const A = declare()
+        let a = new A(); await a.save(); expect(a.id).toBe(1)
+        let b = new A(); await b.save(); expect(b.id).toBe(2)
+        let c = new A(); await c.save(); expect(c.id).toBe(3)
     })
 
     it('save (edit)', async ()=> {
@@ -55,7 +62,7 @@ describe('Adapter: Local', () => {
         const A = declare()
         let a = new A({id: 1, a: 'test'})
 
-        expect(a.id).toBe(a)
+        expect(a.id).toBe(1)
         expect(a.a ).toBe('test')
         await a.delete()
         expect(a.id).toBeNull()
@@ -69,9 +76,8 @@ describe('Adapter: Local', () => {
             @field  a: string
         }
         let adapter: LocalAdapter<A> = (<any>A).adapter
-
-        // TODO it should be exception "Not implemented"
-        let objs: A[] = await adapter.load()
+        expect(() => { adapter.load() })
+            .toThrow(new Error(`Not implemented`))
     })
 
 })

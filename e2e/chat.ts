@@ -1,65 +1,65 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { store , Model, model, id, field, foreign, many, datetime, number } from '../dist/mobx-orm'
+import { action } from 'mobx'
+import { Model, model, local, id, field, foreign, many } from '../src/index'
 
 
 describe('e2e: Chat.', () => {
-    store.clear()
 
-    @model
-    class User extends Model {
-        @id    id           : number
-        @field first_name   : string
-        @field last_name    : string
-        @many('Message', 'user') messages: Message[]
+    function declare() {
 
-        get full_name() : string { return `${this.first_name} ${this.last_name}` }
-    }
+        @local('user')
+        @model class User extends Model {
+            @id     id          : number
+            @field  first_name  : string
+            @field  last_name   : string
+                    messages    : Message[]
 
-    @model
-    class Channel extends Model {
-        @id id : number
-        @many('Message', 'channel') messages : Message[]
-
-        async sendMessage(user: User, text: string) {
-            let message = new Message()
-            message.channel = this
-            message.user    = user
-            message.text    = text
-            message.created = new Date()
-            return message.save()
+            get full_name() : string { return `${this.first_name} ${this.last_name}` }
         }
-    }
 
-    @model
-    class Message extends Model {
-        @id         id          : number
-        @datetime   created     : Date
-        @field      text        : string
-        @number     channel_id  : number
-        @number     user_id     : number
+        @local('channel')
+        @model class Channel extends Model {
+            @id id      : number
+                messages: Message[]
 
-        @foreign('Channel') channel : Channel
-        @foreign('User')    user    : User
-    }
+            @action
+            async sendMessage(user: User, text: string) {
+                let message = new Message({channel: this, user: user, text: text, created: new Date()})
+                return message.save()
+            }
+        }
 
-    beforeEach(async ()=> {
-        store.clearModel('User')
-        store.clearModel('Channel')
-        store.clearModel('Message')
-    })
+        @local('message')
+        @model class Message extends Model {
+            @id    id          : number
+            @field created     : Date
+            @field text        : string
+            @field channel_id  : number
+            @field user_id     : number
+
+            @foreign(Channel) channel : Channel
+            @foreign(User)    user    : User
+        }
+        many(Message, 'user_id'   )(User, 'messages') 
+        many(Message, 'channel_id')(Channel, 'messages') 
+
+        return { User: User, Channel: Channel, Message: Message }
+    } 
 
     it('init', async ()=> {
+        const {User, Channel, Message} = declare()
         let channelA = new Channel(); channelA.save()
         let channelB = new Channel(); channelB.save()
         let userA = new User({first_name: 'A', last_name: 'X'}); userA.save()
         let userB = new User({first_name: 'B', last_name: 'X'}); userB.save()
 
-        expect(User   .all().length).toBe(2)
-        expect(Channel.all().length).toBe(2)
-        expect(Message.all().length).toBe(0)
+        expect((<any>User   ).cache.size).toBe(2)
+        expect((<any>Channel).cache.size).toBe(2)
+        expect((<any>Message).cache.size).toBe(0)
     })
 
     it('Send messages', async ()=> {
+        const {User, Channel, Message} = declare()
         let channelA = new Channel(); channelA.save()
         let channelB = new Channel(); channelB.save()
         let userA = new User({first_name: 'A', last_name: 'X'}); userA.save()
@@ -78,7 +78,7 @@ describe('e2e: Chat.', () => {
         expect(userA.messages.length).toBe(3)
         expect(userA.messages[0].text).toBe('First  message from userA')
 
-        userA.messages[0].delete()
+        await userA.messages[0].delete()
         expect(userA.messages.length).toBe(2)
         expect(userA.messages[0].text).toBe('Second message from userA')
         expect(userA.messages[1].text).toBe('Third  message from userA')

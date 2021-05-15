@@ -69,15 +69,20 @@ export abstract class Model {
 
     // delete object from the repo 
     async delete() {
-        return this.model.adapter.delete(this)
+        await this.model.adapter.delete(this)
+        // reset ids
+        for(let id_name of this.model.ids)
+            this[id_name] = null
     }
 
     // add obj to the cache
     @action inject() {
         if (this.__id === null)                    
             throw new Error(`Object should have id!`)
-        if (this.model.cache.has(this.__id))  
+        if (this.model.cache.has(this.__id)) {
+            debugger
             throw new Error(`Object with id "${this.__id}" already exist in the cache of model: "${this.model.name}")`)
+        }
         this.model.cache.set(this.__id, this)
     }
 

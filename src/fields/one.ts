@@ -1,4 +1,4 @@
-import { intercept, observe, observable, extendObservable, reaction, autorun } from 'mobx'
+import { intercept, observe, observable, extendObservable, reaction, autorun, runInAction } from 'mobx'
 import { Model } from '../model'
 
 
@@ -96,7 +96,7 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
                             //     // TODO better name of error
                             //     // TODO add test for this case
                             //     throw ('One: bad')
-                            obj[field_name] = remote_obj
+                            runInAction(() => { obj[field_name] = remote_obj })
                         }
                     }))
                     break
@@ -108,7 +108,7 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
                     }
                     let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
                     if (obj) 
-                        obj[field_name] = null
+                        runInAction(() => { obj[field_name] = null })
                     break
             }
         })

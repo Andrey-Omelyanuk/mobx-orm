@@ -1,4 +1,4 @@
-import { intercept, observe, observable, extendObservable, reaction, autorun } from 'mobx'
+import { intercept, observe, observable, extendObservable, reaction, autorun, runInAction } from 'mobx'
 import { Model } from '../model'
 
 
@@ -10,39 +10,47 @@ function field_many(obj: Model, field_name) {
 
     // make observable and set default value
     extendObservable(obj, {
-        [field_name]: null 
+        [field_name]: []
     })
 
     // 1. checks before set new changes
-    intercept(obj, <any>field_name, (change) => {
-        if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor === remote_model.__proto__))
-                throw new Error(`You can set only instance of "${remote_model.__proto__.name}" or null`)
+    intercept(obj[field_name], (change: any) => {
+        // TODO
+        // if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor === remote_model.__proto__))
+        //         throw new Error(`You can set only instance of "${remote_model.__proto__.name}" or null`)
+
+        // TODO: if we push exist obj then ignore it? and not duplicate
+        // TODO: create a test for this case 
+        // remote obj can be in the many 
+        // for (let new_remote_obj of change.added) {
+        //     const i = obj[field_name].indexOf(new_remote_obj)
+        //     if (i == -1)
+        //         throw new Error(`"${new_remote_obj.model.name}" id:"${new_remote_obj.__id}" alredy in many "${obj.model.name}" id:"${field_name}"`)
+        // }
         return change
     })
 
     // 2. after changes run trigger for "change foreign_id"
-    observe(obj, field_name, (change:any) => {
-        let old_remote_obj = change.oldValue
-        let new_remote_obj = change.newValue
+    observe(obj[field_name], (change:any) => {
+        if (change.type !== 'splice')
+            return 
 
-        if (new_remote_obj === old_remote_obj || edit_mode)
-            return  // it will help stop endless loop A.b -> B.a_id -> A.b -> B.a_id ...
+        let old_remote_objs = change.removed
+        let new_remote_objs = change.added
 
         edit_mode = true
         try {
-            // remove foreign ids on the old remote obj
-            if (old_remote_obj) {
-                for (let id_name of remote_foreign_ids_name) {
+            // remove foreign ids on the old remote objs
+            for(let old_remote_obj of old_remote_objs)
+                for (let id_name of remote_foreign_ids_name)
                     old_remote_obj[id_name] = null 
-                }
-            }
-            // set foreign ids on the remote obj 
-            if (new_remote_obj) {
-                let obj_ids = obj.model.ids 
+            // set foreign ids on the remote objs 
+            let obj_ids = obj.model.ids 
+            for(let new_remote_obj of new_remote_objs) {
                 for (var i = 0; i < remote_foreign_ids_name.length; i++) {
                     // do not touch if it the same
                     if (new_remote_obj[remote_foreign_ids_name[i]] != obj[obj_ids[i]])
-                        new_remote_obj[remote_foreign_ids_name[i]] = obj[obj_ids[i]]
+                        new_remote_obj[remote_foreign_ids_name[i]]  = obj[obj_ids[i]]
                 }
             }
             edit_mode = false
@@ -87,27 +95,27 @@ export default function many(remote_model: any, ...remote_foreign_ids_names: str
             switch (remote_change.type) {
                 case 'add':
                     remote_obj = remote_change.newValue
-                    remote_obj.disposers.set(`one ${field_name}` ,autorun(() => {
+                    remote_obj.disposers.set(`many ${field_name}` ,autorun(() => {
                         let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
                         if (obj) {
-                            // TODO: is it not bad?
-                            // if (obj[field_name])
-                            //     // TODO better name of error
-                            //     // TODO add test for this case
-                            //     throw ('One: bad')
-                            obj[field_name] = remote_obj
+                            const i = obj[field_name].indexOf(remote_obj)
+                            if (i == -1)
+                                runInAction(() => { obj[field_name].push(remote_obj) })
                         }
                     }))
                     break
                 case 'delete':
                     remote_obj = remote_change.oldValue
-                    if (remote_obj.disposers.get(`one ${field_name}`)) {
-                        remote_obj.disposers.get(`one ${field_name}`)()
-                        remote_obj.disposers.delete(`one ${field_name}`)
+                    if (remote_obj.disposers.get(`many ${field_name}`)) {
+                        remote_obj.disposers.get(`many ${field_name}`)()
+                        remote_obj.disposers.delete(`many ${field_name}`)
                     }
                     let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
-                    if (obj) 
-                        obj[field_name] = null
+                    if (obj) {
+                        const i = obj[field_name].indexOf(remote_obj)
+                        if (i > -1)
+                            runInAction(() => { obj[field_name].splice(i, 1); })
+                    } 
                     break
             }
         })

@@ -43,15 +43,11 @@ export class RestAdapter<M extends Model> implements Adapter<M> {
         return obj
     }
     async delete(obj: M) : Promise<any> {
-        await this.http.delete(`${this.api}/${obj.__id}/`)
-        // reset ids
-        for(let id_name of obj.model.ids) {
-            obj[id_name] = null
-        }
+        return this.http.delete(`${this.api}/${obj.__id}/`)
     }
 
     async load (where={}, order_by=[], limit=50, offset = 0) : Promise<M[]> {
-        // build query string 
+        // TODO build query string 
         let query = ''
 
         let data = await this.http.get(`${this.api}/?${query}`)
@@ -66,10 +62,9 @@ export class RestAdapter<M extends Model> implements Adapter<M> {
 }
 
 // model decorator
-export default function rest(http, api: string) {
+export function rest(http, api: string) {
     return (cls) => {
         let adapter = new RestAdapter(cls, http, api)
         cls.__proto__.adapter = adapter 
-        // return cls
     }
 }

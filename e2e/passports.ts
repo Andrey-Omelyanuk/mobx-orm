@@ -1,17 +1,15 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { store , Model, model, id, field, foreign, one, many, datetime, number } from '../dist/mobx-orm'
+import { Model, model, local, id, field, foreign, one, many } from '../src/index'
 
 
 describe('Other tests: Passports.', () => {
-    store.clear()
 
-    @model
-    class User extends Model {
-        @id     id           : number
-        @field  user_name    : string
-
-        @one ('Passport', 'user') passport: Passport
-        @many('Key'     , 'user') keys    : Key[]
+    @local('user')
+    @model class User extends Model {
+        @id     id          : number
+        @field  user_name   : string
+                passport    : Passport
+                keys        : Key[]
 
         async generateNewKey() {
             let new_key = new Key({user_id: this.id})
@@ -31,31 +29,33 @@ describe('Other tests: Passports.', () => {
         }
     }
 
-    @model
-    class Passport extends Model {
-        @id       id            : number
-        @datetime created       : Date
-        @number   user_id       : number
-        @field    first_name    : string
-        @field    last_name     : string
+    @local('passport')
+    @model class Passport extends Model {
+        @id     id            : number
+        @field  created       : Date
+        @field  user_id       : number
+        @field  first_name    : string
+        @field  last_name     : string
 
-        @foreign('User') user : User
+        @foreign(User) user : User
 
         constructor(init_data?) {
             super(init_data)
             this.created = new Date()
         }
     }
+    one(Passport, 'user_id')(User, 'passport') 
 
-    @model
-    class Key extends Model {
-        @id         id      : number
-        @datetime   created : Date
-        @field      private : string
-        @field      public  : string
-        @number     user_id : number
 
-        @foreign('User') user : User
+    @local('key')
+    @model class Key extends Model {
+        @id     id      : number
+        @field  created : Date
+        @field  private : string
+        @field  public  : string
+        @field  user_id : number
+
+        @foreign(User) user : User
 
         constructor(init_data?) {
             super(init_data)
@@ -75,25 +75,26 @@ describe('Other tests: Passports.', () => {
             return action
         }
     }
+    many(Key, 'user_id')(User, 'keys') 
 
     enum ActionType {
         ACCEPT = 1,
         REJECT = 2
     }
 
-    @model
-    class Action extends Model {
+    @local('action')
+    @model class Action extends Model {
         @id         id          : number
-        @datetime   timestamp   : Date
-        @number     passport_id : number
-        @number     key_id      : number
-        @number     type        : ActionType
-        @number     signer_id   : number
-        @field      sign        : string
+        @field  timestamp   : Date
+        @field  passport_id : number
+        @field  key_id      : number
+        @field  type        : ActionType
+        @field  signer_id   : number
+        @field  sign        : string
 
-        @foreign('Passport') passport: Passport
-        @foreign('Key'     ) key     : Key
-        @foreign('Key'     ) signer  : Key
+        @foreign(Passport) passport: Passport
+        @foreign(Key     ) key     : Key
+        @foreign(Key     ) signer  : Key
 
         constructor(init_data?) {
             super(init_data)
