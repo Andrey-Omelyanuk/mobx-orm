@@ -4,7 +4,7 @@ import { Model } from "./model"
 
 export default class Query<M extends Model> {
 
-    @observable items       : Model[] = []   // TODO: do not allow to change items outside
+    @observable items       : M[] = []   // TODO: do not allow to change items outside
     @observable filters     : object = {}
     @observable order_by    : string[] = []
     @observable page        : number = 0
