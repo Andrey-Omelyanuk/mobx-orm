@@ -1,4 +1,4 @@
-import { autorun, makeObservable, observable } from "mobx"
+import { autorun, makeObservable, observable, runInAction } from "mobx"
 import { Model } from "./model"
 
 
@@ -15,21 +15,26 @@ export default class Query<M extends Model> {
     private autoUpdateDisposer
 
     constructor(model, filters?, order_by?, page?, page_size?) {
+        if (filters  ) this.filters = filters
+        if (order_by ) this.order_by = order_by
+        if (page     ) this.page = page
+        if (page_size) this.page_size = page_size
         makeObservable(this)
         this.autoUpdateDisposer = autorun(async () => {
-            this.is_ready = false
+            runInAction(() => this.is_ready = false)
             try {
-                this.items = await model.adapter.load(
+                let data = await model.adapter.load(
                     this.filters, 
                     this.order_by, 
                     this.page_size, 
                     this.page*this.page_size
                     )
+                runInAction(() => this.items = data)
             }
             catch (e) {
-                this.error = e
+                runInAction(() => this.error = e)
             }
-            this.is_ready = true
+            runInAction(() => this.is_ready = true)
         }) 
     }
 
