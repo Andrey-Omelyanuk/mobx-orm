@@ -135,6 +135,15 @@ describe('Model', () => {
         expect(del).toHaveBeenCalledWith(a)
     })
 
+    it('constructor: obj with id should be pushed to cache by default', async () => {
+        @model class A extends Model { 
+            @id id : number 
+        }
+        expect((<any>A).cache.size).toBe(0)
+        let a = new A({id: 1}) 
+        expect((<any>A).cache.size).toBe(1)
+    })
+
     it('obj.inject/eject', async () => {
         // TODO need to split the test into small tests
         let a

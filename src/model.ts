@@ -126,7 +126,15 @@ export function model(constructor) {
 
         runInAction(() => {
             // push init_data to object 
+            // ids should be the last
+            let ids = []
             for (let field_name in obj._init_data) {
+                if (obj.model.ids && obj.model.ids.includes(field_name))
+                    ids.push(field_name)
+                else
+                    obj[field_name] = obj._init_data[field_name]
+            }
+            for (let field_name of ids) {
                 obj[field_name] = obj._init_data[field_name]
             }
         })

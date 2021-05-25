@@ -1,12 +1,13 @@
 declare class Query<M extends Model> {
-    items: Model[];
+    items: M[];
     filters: object;
     order_by: string[];
     page: number;
     page_size: number;
     is_ready: boolean;
     error: string;
-    private autoUpdateDisposer;
+    private disposers;
+    private disposer_objects;
     constructor(model: any, filters?: any, order_by?: any, page?: any, page_size?: any);
     destroy(): void;
 }

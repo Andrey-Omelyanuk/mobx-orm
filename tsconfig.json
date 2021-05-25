@@ -3,7 +3,7 @@
     "compilerOptions": {
         "outDir"    : "lib",
         "baseUrl"   : ".",
-        "module"    : "es2015",
+        "module"    : "es2020",
         "target"    : "es5",
         "downlevelIteration": true,
         "moduleResolution"              : "node",
@@ -17,7 +17,7 @@
         "declaration"                   : false,
         "lib": [      
             "dom",
-            "es2017"
+            "es2020"
         ],
         "paths": {
             "@/*": ["src/*"] 

@@ -19,7 +19,7 @@ services:
     # entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/e2e/**/chat.ts'"]
 
     # entrypoint: ["sh", "-c", "yarn install && yarn test"]
-    # entrypoint: ["sh", "-c", "yarn install && node node_modules/.bin/jest --testMatch='**/src/**/local.spec.ts'"]
-    # entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/many.spec.ts'"]
+    # entrypoint: ["sh", "-c", "yarn install && node node_modules/.bin/jest --testMatch='**/src/**/query.spec.ts'"]
+    # entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/query.spec.ts'"]
     # entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand"]
     # chrome://inspect/#devices
