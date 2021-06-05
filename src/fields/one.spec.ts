@@ -23,7 +23,7 @@ describe('Field: One', () => {
         const {A, B} = declare()
         one(B, 'a_id')(A, 'b') 
         expect((<any>A).fields['b'].decorator instanceof Function).toBeTruthy()
-        expect((<any>A).fields['b'].settings.remote_model).toBe(B)
+        expect((<any>A).fields['b'].settings.remote_model).toBe((B as any).__proto__)
         expect((<any>A).fields['b'].settings.remote_foreign_ids_names).toEqual(['a_id'])
     })
 
@@ -41,7 +41,7 @@ describe('Field: One', () => {
 
         one(B, 'a_id1', 'a_id2')(A, 'b') 
         expect((<any>A).fields['b'].decorator instanceof Function).toBeTruthy()
-        expect((<any>A).fields['b'].settings.remote_model).toBe(B)
+        expect((<any>A).fields['b'].settings.remote_model).toBe((B as any).__proto__)
         expect((<any>A).fields['b'].settings.remote_foreign_ids_names).toEqual(['a_id1', 'a_id2'])
     })
 
@@ -49,7 +49,7 @@ describe('Field: One', () => {
         const {A, B} = declare()
         one(B)(A, 'b') 
         expect((<any>A).fields['b'].decorator instanceof Function).toBeTruthy()
-        expect((<any>A).fields['b'].settings.remote_model).toBe(B)
+        expect((<any>A).fields['b'].settings.remote_model).toBe((B as any).__proto__)
         expect((<any>A).fields['b'].settings.remote_foreign_ids_names).toEqual(['a_id'])
     })
 
@@ -68,11 +68,11 @@ describe('Field: One', () => {
         one(A)(B, 'a_one')
 
         expect((<any>A).fields['b_one'].decorator instanceof Function).toBeTruthy()
-        expect((<any>A).fields['b_one'].settings.remote_model).toBe(B)
+        expect((<any>A).fields['b_one'].settings.remote_model).toBe((B as any).__proto__)
         expect((<any>A).fields['b_one'].settings.remote_foreign_ids_names).toEqual(['a_id'])
 
         expect((<any>B).fields['a_one'].decorator instanceof Function).toBeTruthy()
-        expect((<any>B).fields['a_one'].settings.remote_model).toBe(A)
+        expect((<any>B).fields['a_one'].settings.remote_model).toBe((A as any).__proto__)
         expect((<any>B).fields['a_one'].settings.remote_foreign_ids_names).toEqual(['b_id'])
     })
 

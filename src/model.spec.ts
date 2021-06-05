@@ -104,7 +104,7 @@ describe('Model', () => {
         @model class A extends Model {}
         let a = new A()
         // TODO is it make sense obj.model ? 
-        expect(a.model).toBe(a.constructor)
+        expect(a.model).toBe((<any>a.constructor).__proto__)
     })
 
     it('obj.save()', async () => {

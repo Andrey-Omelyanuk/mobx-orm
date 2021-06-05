@@ -15,8 +15,8 @@ function field_one(obj: Model, field_name) {
 
     // 1. checks before set new changes
     intercept(obj, <any>field_name, (change) => {
-        if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor === remote_model.__proto__))
-                throw new Error(`You can set only instance of "${remote_model.__proto__.name}" or null`)
+        if (change.newValue !== null && !(change.newValue.model === remote_model))
+                throw new Error(`You can set only instance of "${remote_model.name}" or null`)
         return change
     })
 
@@ -69,6 +69,7 @@ function field_one(obj: Model, field_name) {
 
 
 export default function one(remote_model: any, ...remote_foreign_ids_names: string[]) {
+    remote_model = remote_model.__proto__ // band-aid
     return function (cls: any, field_name: string) {
         let model = cls.prototype.constructor
         if (model.fields === undefined) model.fields = {}

@@ -22,7 +22,7 @@ declare abstract class Model {
     static __id(obj: any, ids: []): string | null;
     private readonly _init_data;
     private disposers;
-    constructor(init_data?: any);
+    constructor(...args: any[]);
     get __id(): string | null;
     get model(): any;
     save(): Promise<any>;

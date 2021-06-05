@@ -26,8 +26,9 @@ function field_foreign(obj, field_name) {
     // Setter
     // 1. checks before set new changes
     intercept(obj, field_name, (change) => {
-        if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor == foreign_model.__proto__))
-            throw new Error(`You can set only instance of "${foreign_model.__proto__.name}" or null`)
+        if (change.newValue !== null && !(change.newValue.model == foreign_model)) {
+            throw new Error(`You can set only instance of "${foreign_model.name}" or null`)
+        }
         return change
     })
     // 2. after changes run trigger for "change foreign_id"
@@ -89,7 +90,9 @@ function field_foreign(obj, field_name) {
 
 
 export default function foreign(foreign_model: any, ...foreign_ids_names: string[]) {
+    foreign_model = foreign_model.__proto__ // band-aid
     return function (cls: any, field_name: string) {
+        debugger
         let model = cls.constructor
         if (model.fields === undefined) model.fields = {}
         // register field 

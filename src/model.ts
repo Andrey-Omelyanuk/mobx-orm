@@ -47,10 +47,7 @@ export abstract class Model {
     private readonly _init_data
     private disposers = new Map()
 
-    constructor(init_data?) {
-        // we have to save init data for detect changes
-        this._init_data = init_data ? init_data : {}
-    }
+    constructor (...args) { }
 
     // build id string from ids fields and return it
     @computed get __id() : string | null {
@@ -59,7 +56,7 @@ export abstract class Model {
 
     // TODO: any is band-aid 
     get model() : any {
-        return this.constructor
+        return (<any>this.constructor).__proto__
     }
 
     // create or update object in the repo 
@@ -106,11 +103,15 @@ export function model(constructor) {
 
     // the new constructor
     let f : any = function (...args) {
-        let c : any = function () { return original.apply(this, args) }
+        // let c : any = function () { return original.apply(this, args) }
+        let c : any = class extends original { constructor (...args) { super(...args) } }
+
         c.__proto__ = original
-        c.prototype = original.prototype
+        // c.prototype = original.prototype
         let obj = new c()
         makeObservable(obj)
+        // we have to save init data for detect changes
+        obj._init_data = args[0] ? args[0] : {}
 
         // save default values from class declaration to init_data
         for (let field_name in obj.model.fields) {

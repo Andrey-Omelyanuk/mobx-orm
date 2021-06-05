@@ -17,7 +17,7 @@ describe('Field: foreign', () => {
             @foreign(A)  a   : A 
         }
         expect((<any>B).fields['a'].decorator instanceof Function).toBeTruthy()
-        expect((<any>B).fields['a'].settings.foreign_model).toBe(A)
+        expect((<any>B).fields['a'].settings.foreign_model).toBe((A as any).__proto__)
         expect((<any>B).fields['a'].settings.foreign_ids_names).toEqual(['a_id'])
     })
 
@@ -33,7 +33,7 @@ describe('Field: foreign', () => {
             @foreign(A, 'a_id1', 'a_id2') a: A 
         }
         expect((<any>B).fields['a'].decorator instanceof Function).toBeTruthy()
-        expect((<any>B).fields['a'].settings.foreign_model).toBe(A)
+        expect((<any>B).fields['a'].settings.foreign_model).toBe((A as any).__proto__)
         expect((<any>B).fields['a'].settings.foreign_ids_names).toEqual(['a_id1', 'a_id2'])
     })
 
@@ -47,7 +47,7 @@ describe('Field: foreign', () => {
             @foreign(A) a: A 
         }
         expect((<any>B).fields['a'].decorator instanceof Function).toBeTruthy()
-        expect((<any>B).fields['a'].settings.foreign_model).toBe(A)
+        expect((<any>B).fields['a'].settings.foreign_model).toBe((A as any).__proto__)
         expect((<any>B).fields['a'].settings.foreign_ids_names).toEqual(['a_id'])
     })
 
@@ -66,10 +66,10 @@ describe('Field: foreign', () => {
         foreign(B)(A.prototype, 'b') 
 
         expect((<any>A).fields['b'].decorator instanceof Function).toBeTruthy()
-        expect((<any>A).fields['b'].settings.foreign_model).toBe(B)
+        expect((<any>A).fields['b'].settings.foreign_model).toBe((B as any).__proto__)
         expect((<any>A).fields['b'].settings.foreign_ids_names).toEqual(['b_id'])
         expect((<any>B).fields['a'].decorator instanceof Function).toBeTruthy()
-        expect((<any>B).fields['a'].settings.foreign_model).toBe(A)
+        expect((<any>B).fields['a'].settings.foreign_model).toBe((A as any).__proto__)
         expect((<any>B).fields['a'].settings.foreign_ids_names).toEqual(['a_id'])
     })
 
@@ -127,6 +127,7 @@ describe('Field: foreign', () => {
         expect(b.a).toBeNull()
 
         let a = new A({id: 1})
+        debugger
         expect(b.a).toBe(a)
     })
 
