@@ -1,15 +1,20 @@
 declare class Query<M extends Model> {
+    private model;
     items: M[];
     filters: object;
     order_by: string[];
     page: number;
     page_size: number;
     is_ready: boolean;
+    is_updating: boolean;
     error: string;
     private disposers;
     private disposer_objects;
-    constructor(model: any, filters?: any, order_by?: any, page?: any, page_size?: any);
+    constructor(model: any, filters?: object, order_by?: string[], page?: number, page_size?: number);
     destroy(): void;
+    update(): Promise<M[]>;
+    private should_be_in_the_list;
+    ready(): Promise<Boolean>;
 }
 
 declare abstract class Model {
@@ -17,7 +22,7 @@ declare abstract class Model {
     private static adapter;
     private static cache;
     private static fields;
-    static load(filter?: {}, order_by?: {}, page?: number, page_size?: number): Query<Model>;
+    static load(filter?: {}, order_by?: string[], page?: number, page_size?: number): Query<Model>;
     static clearCache(): void;
     static __id(obj: any, ids: []): string | null;
     private readonly _init_data;
