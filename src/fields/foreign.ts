@@ -92,7 +92,6 @@ function field_foreign(obj, field_name) {
 export default function foreign(foreign_model: any, ...foreign_ids_names: string[]) {
     foreign_model = foreign_model.__proto__ // band-aid
     return function (cls: any, field_name: string) {
-        debugger
         let model = cls.constructor
         if (model.fields === undefined) model.fields = {}
         // register field 

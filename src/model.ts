@@ -19,7 +19,7 @@ export abstract class Model {
     }
 
 
-    static load(filter = {}, order_by = {}, page = 0, page_size = 50) {
+    static load(filter = {}, order_by: string[] = [], page: number = 0, page_size: number = 50) {
         return new Query(this, filter, order_by, page, page_size)
     }
 
@@ -77,7 +77,6 @@ export abstract class Model {
         if (this.__id === null)                    
             throw new Error(`Object should have id!`)
         if (this.model.cache.has(this.__id)) {
-            debugger
             throw new Error(`Object with id "${this.__id}" already exist in the cache of model: "${this.model.name}")`)
         }
         this.model.cache.set(this.__id, this)

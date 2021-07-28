@@ -127,7 +127,6 @@ describe('Field: foreign', () => {
         expect(b.a).toBeNull()
 
         let a = new A({id: 1})
-        debugger
         expect(b.a).toBe(a)
     })
 

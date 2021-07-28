@@ -1,7 +1,7 @@
 import { Model, model } from './model'
 import id    from './fields/id'
 import field from './fields/field'
-import query from './query'
+import { mock_adapter } from './spec-utils'
 
 
 describe('Model', () => {
@@ -45,10 +45,14 @@ describe('Model', () => {
     })
 
     it('Model.load()', async () => {
+        @mock_adapter()
         @model class A extends Model {}
-        let query = A.load()
+        let load = jest.spyOn((<any>A).__proto__.adapter, 'load')
 
+        let query = A.load()
+        await query.ready()
         expect(query.is_ready).toBe(true)
+        expect(load).toHaveBeenCalledTimes(1)
     })
 
     it('Model.clearCache()', async () => {
