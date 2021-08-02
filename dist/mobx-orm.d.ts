@@ -13,6 +13,7 @@ declare class Query<M extends Model> {
     constructor(model: any, filters?: object, order_by?: string[], page?: number, page_size?: number);
     destroy(): void;
     update(): Promise<M[]>;
+    private watch_obj;
     private should_be_in_the_list;
     ready(): Promise<Boolean>;
 }
