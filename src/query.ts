@@ -44,27 +44,10 @@ export default class Query<M extends Model> {
             }
         ))
 
-        // watch to the cache for changes, and update items if needed
+        // watch the cache for changes, and update items if needed
         this.disposers.push(observe(this.model.cache, (change: any) => {
             if (change.type == 'add') {
-                let __id = change.name
-                let obj  = change.newValue
-
-                if (this.should_be_in_the_list(obj, this.filters))
-                    this.items.push(obj)
-
-                this.disposer_objects[__id] = reaction(
-                    () => {
-                        return this.should_be_in_the_list(obj, this.filters)
-                    }, 
-                    (shold_be_in_the_list) => {
-                        let i = this.items.indexOf(obj)
-                        if (shold_be_in_the_list && i == -1)
-                            this.items.push(obj)
-                        if (!shold_be_in_the_list && i != -1)
-                            this.items.splice(i, 1)
-                    } 
-                )
+                this.watch_obj(change.newValue)
             }
             if (change.type == "delete") {
                 let __id = change.name
@@ -76,6 +59,11 @@ export default class Query<M extends Model> {
                     this.items.splice(i, 1)
             }
         }))
+
+        // watch all exist objects of model 
+        for(let [id, obj] of this.model.cache) {
+            this.watch_obj(obj)
+        }
     }
 
     // query should be destroyed explicitly
@@ -98,6 +86,21 @@ export default class Query<M extends Model> {
             runInAction(() => this.is_ready = true)
             runInAction(() => this.is_updating = false)
         } )
+    }
+
+    //
+    private watch_obj(obj) {
+        this.disposer_objects[obj.__id] = autorun(
+            () => {
+                let should_be_in_the_list = this.should_be_in_the_list(obj, this.filters)
+                if (should_be_in_the_list) {
+                    let i = this.items.indexOf(obj)
+                    if (should_be_in_the_list && i == -1)
+                        this.items.push(obj)
+                    if (!should_be_in_the_list && i != -1)
+                        this.items.splice(i, 1)
+                }
+            })
     }
 
     //

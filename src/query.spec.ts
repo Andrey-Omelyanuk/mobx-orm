@@ -243,4 +243,23 @@ describe('Query', () => {
         q.destroy()
     })
 
+    it('Query items should containt exist objects and new objects', async () => {
+        @mock_adapter()
+        @model class A extends Model {
+            @id    id: number
+        }
+
+        let a1 = new A({id: 1})
+        let a2 = new A({id: 2})
+        let q = A.load(); await q.ready()
+                                    expect(q.items.length).toBe(2)
+        let a3 = new A({id: 3});    expect(q.items.length).toBe(3)
+        let a4 = new A({id: 4});    expect(q.items.length).toBe(4)
+        await a1.delete();          expect(q.items.length).toBe(3)
+        await a2.delete();          expect(q.items.length).toBe(2)
+        await a3.delete();          expect(q.items.length).toBe(1)
+        await a4.delete();          expect(q.items.length).toBe(0)
+
+        q.destroy()
+    })
 })
