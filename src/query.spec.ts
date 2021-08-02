@@ -243,7 +243,7 @@ describe('Query', () => {
         q.destroy()
     })
 
-    it('Query items should containt exist objects and new objects', async () => {
+    it('query.items should contain exist objects and new objects', async () => {
         @mock_adapter()
         @model class A extends Model {
             @id    id: number
