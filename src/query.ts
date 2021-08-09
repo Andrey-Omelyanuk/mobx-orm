@@ -1,12 +1,13 @@
-import { action, autorun, makeObservable, observable, observe, reaction, runInAction } from "mobx"
+import { action, autorun, computed, makeObservable, observable, observe, reaction, runInAction } from "mobx"
 import { Model } from "./model"
 
 // TODO: do not allow to change obj.items outside
 
 export default class Query<M extends Model> {
 
-    private     model       : any            // TODO: what type it should be?
-    @observable items       : M[] = []       // they fill from cache only! don't fill it from the update method
+                private __model: any
+    @observable private __items: M[] = []
+
     @observable filters     : object = {}
     @observable order_by    : string[] = []
     @observable page        : number = 0
@@ -20,7 +21,7 @@ export default class Query<M extends Model> {
 
     //
     constructor(model: any, filters?: object, order_by?: string[], page?: number, page_size?: number) {
-        this.model = model
+        this.__model = model
         if (filters  ) this.filters   = filters
         if (order_by ) this.order_by  = order_by
         if (page     ) this.page      = page
@@ -45,7 +46,7 @@ export default class Query<M extends Model> {
         ))
 
         // watch the cache for changes, and update items if needed
-        this.disposers.push(observe(this.model.cache, (change: any) => {
+        this.disposers.push(observe(this.__model.cache, (change: any) => {
             if (change.type == 'add') {
                 this.watch_obj(change.newValue)
             }
@@ -61,7 +62,7 @@ export default class Query<M extends Model> {
         }))
 
         // watch all exist objects of model 
-        for(let [id, obj] of this.model.cache) {
+        for(let [id, obj] of this.__model.cache) {
             this.watch_obj(obj)
         }
     }
@@ -73,7 +74,7 @@ export default class Query<M extends Model> {
 
     @action update(): Promise<M[]> {
         this.is_updating = true
-        return this.model.adapter.load(
+        return this.__model.adapter.load(
             this.filters, 
             this.order_by, 
             this.page_size, 
@@ -88,6 +89,26 @@ export default class Query<M extends Model> {
         } )
     }
 
+    ready(): Promise<Boolean> {
+        return new Promise((resolve, reject) => { 
+            autorun((reaction) => {
+                if (this.is_ready) {
+                    reaction.dispose()
+                    resolve(this.is_ready) 
+                }
+            })
+        })
+    }
+    
+    get items(): M[] {
+        // TODO: sort items
+        return this.__items
+    }
+
+    get model(): any {
+        return this.__model
+    }
+
     //
     private watch_obj(obj) {
         this.disposer_objects[obj.__id] = autorun(
@@ -96,9 +117,10 @@ export default class Query<M extends Model> {
                 if (should_be_in_the_list) {
                     let i = this.items.indexOf(obj)
                     if (should_be_in_the_list && i == -1)
-                        this.items.push(obj)
+                        runInAction(() => this.items.push(obj))
+                        
                     if (!should_be_in_the_list && i != -1)
-                        this.items.splice(i, 1)
+                        runInAction(() => this.items.splice(i, 1))
                 }
             })
     }
@@ -115,18 +137,5 @@ export default class Query<M extends Model> {
         else
             return true
     }
-
-    // TODO: convert observeble to promise?
-    ready(): Promise<Boolean> {
-        return new Promise((resolve, reject) => { 
-            autorun((reaction) => {
-                if (this.is_ready) {
-                    reaction.dispose()
-                    resolve(this.is_ready) 
-                }
-            })
-        })
-    }
-
 }
 
