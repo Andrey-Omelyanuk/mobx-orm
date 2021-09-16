@@ -9,48 +9,109 @@ import { mock_adapter } from './spec-utils'
 
 describe('Query', () => {
 
-    it('init default', async () => {
-        @mock_adapter()
-        @model class A extends Model {}
-        let load = jest.spyOn((<any>A).__proto__.adapter, 'load')
+    @mock_adapter()
+    @model class A extends Model {
+        @id id: number
+    }
+    let q: Query<A>
 
-        let q = new Query<A>(A);
-        // defaults
-        expect(q.items).toEqual([])
-        expect(q.filters).toEqual({})
-        expect(q.order_by).toEqual([])
-        expect(q.page).toBe(0)
-        expect(q.page_size).toBe(50)
-        expect(q.is_ready).toBe(false)
-        expect(q.error).toEqual('')
-        // side effect
-        await q.ready();           
-        expect(load).toHaveBeenCalledTimes(1) 
-        expect(load).toHaveBeenCalledWith(q.filters, q.order_by, q.page_size, q.page*q.page_size )
 
-        q.destroy()
+    beforeEach(() => {
+        A.clearCache()
     })
 
-    // it('change items', async () => {
-    //     // TODO
-    // })
+    afterEach(() => {
+    })
 
-    it('change filters', async () => {
-        @mock_adapter()
-        @model class A extends Model {}
-        let load = jest.spyOn((<any>A).__proto__.adapter, 'load')
+    describe('constructor', () => {
 
-        let q = new Query<A>(A); await q.ready()
-        // the load will be triggered when query is created 
-        expect(load).toHaveBeenCalledTimes(1) 
-        expect(load).toHaveBeenCalledWith(q.filters, q.order_by, q.page_size, q.page*q.page_size )
-        // change filters
-        runInAction(() => { q.filters = {} })
-        // the load will be triggered only once for an action
-        expect(load).toHaveBeenCalledTimes(2) 
-        expect(load).toHaveBeenCalledWith(q.filters, q.order_by, q.page_size, q.page*q.page_size )
+        it('default', async () => {
+            let load = jest.spyOn((<any>A).__proto__.adapter, 'load')
+            let q = new Query<A>(A)
+            // defaults
+            expect(q.items).toEqual([])
+            expect(q.filters).toEqual({})
+            expect(q.order_by).toEqual([])
+            expect(q.page).toBe(0)
+            expect(q.page_size).toBe(50)
+            expect(q.is_ready).toBe(false)
+            expect(q.error).toEqual('')
+            // side effect
+            await q.ready();           
+            expect(load).toHaveBeenCalledTimes(1) 
+            expect(load).toHaveBeenCalledWith(q.filters, q.order_by, q.page_size, q.page*q.page_size )
 
-        q.destroy()
+            q.destroy()
+        })
+    })
+
+    describe('filters', () => {
+        beforeEach(async () => {
+        })
+        it('is observible', async () => {
+        })
+
+        it('default', async () => {
+        })
+
+        it('set', async () => {
+            @mock_adapter()
+            @model class A extends Model {}
+            let load = jest.spyOn((<any>A).__proto__.adapter, 'load')
+
+            let q = new Query<A>(A); await q.ready()
+            // the load will be triggered when query is created 
+            expect(load).toHaveBeenCalledTimes(1) 
+            expect(load).toHaveBeenCalledWith(q.filters, q.order_by, q.page_size, q.page*q.page_size )
+            // change filters
+            runInAction(() => { q.filters = {} })
+            // the load will be triggered only once for an action
+            expect(load).toHaveBeenCalledTimes(2) 
+            expect(load).toHaveBeenCalledWith(q.filters, q.order_by, q.page_size, q.page*q.page_size )
+
+            q.destroy()
+        })
+
+        it('set from X', async () => {
+        })
+
+        it('side effect X', async () => {
+        })
+    })
+
+    describe('order_by', () => {
+    })
+
+    describe('is_ready', () => {
+        it('default: false, the query is not ready after creation', async () => {
+            let q = new Query<A>(A);    expect(q.is_ready).toBe(false)
+            q.destroy()
+        })
+        it('should be true in the next tick', async () => {
+            let q = new Query<A>(A);    expect(q.is_ready).toBe(false)
+            await q.ready();            expect(q.is_ready).toBe(true)
+            q.destroy()
+        })
+        // it('if set to true then ready() is restarted', async () => {
+        //     let q = new Query<A>(A);    expect(q.is_ready).toBe(false)
+        //     await q.ready();            expect(q.is_ready).toBe(true)
+        //     q.destroy()
+        // })
+    })
+
+    describe('ready', () => {
+        it('is promise', async () => {
+            let   q = new Query<A>(A);  expect(q.is_ready).toBe(false) 
+            await q.ready();            expect(q.is_ready).toBe(true)  
+            await q.ready();            expect(q.is_ready).toBe(true)  // double check
+
+            runInAction(() => { q.is_ready = false }); 
+            q.ready().then(() => {      expect(q.is_ready).toBe(true) });                  
+                                        expect(q.is_ready).toBe(false)
+            runInAction(() => { q.is_ready = true }); 
+            
+            q.destroy()
+        })
     })
 
     it('change order_by', async () => {
@@ -131,39 +192,6 @@ describe('Query', () => {
         q.destroy()
     })
 
-    it('change is_ready', async () => {
-        @mock_adapter()
-        @model class A extends Model {}
-
-        let q = new Query<A>(A);    expect(q.is_ready).toBe(false)
-        await q.ready();            expect(q.is_ready).toBe(true)
-
-        q.destroy()
-    })
-
-    // it('change error', async () => {
-    //     // TODO
-    // })
-
-    // it('destroy', async () => {
-    //     // TODO
-    // })
-
-    it('ready is promise', async () => {
-        @mock_adapter()
-        @model class A extends Model {}
-
-        let q = new Query<A>(A);    expect(q.is_ready).toBe(false)
-        await q.ready();            expect(q.is_ready).toBe(true)
-        await q.ready();            expect(q.is_ready).toBe(true)
-
-        runInAction(() => { q.is_ready = false }); 
-        q.ready().then(() => {      expect(q.is_ready).toBe(true) });                  
-                                    expect(q.is_ready).toBe(false)
-        runInAction(() => { q.is_ready = true }); 
-        
-        q.destroy()
-    })
 
     it('update', async () => {
         @mock_adapter()

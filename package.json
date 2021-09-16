@@ -1,5 +1,5 @@
 {
-  "name"        : "mobx-orm",
+  "name"        : "@Andrey-Omelyanuk/mobx-orm",
   "description" : "Reactive ORM based on MobX",
   "version"     : "1.0.0-beta5",
   "license"     : "MIT",
@@ -8,14 +8,18 @@
     "type": "git",
     "url" : "https://github.com/Andrey-Omelyanuk/mobx-orm"
   },
+  "publishConfig": {
+    "registry":"https://npm.pkg.github.com"
+  },
 	"main"        : "dist/mobx-orm.js",
   "jsnext:main" : "dist/mobx-orm.es2015.js",
   "typings"     : "dist/mobx-orm.d.ts",
   "dependencies": {
-    "mobx"  : "~6.3.0" 
+    "mobx"  : "^6.3.0" 
   },
   "scripts": {
     "build" : "rollup -c",
+    "dev"   : "jest --testMatch='**/src/**/*.spec.ts' --watchAll",
     "test"  : "jest --testMatch='**/src/**/*.spec.ts'",
     "e2e"   : "jest --testMatch='**/e2e/**/*.ts'"
   },
