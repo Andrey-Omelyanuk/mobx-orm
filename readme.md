@@ -10,14 +10,6 @@ Warning: it is not mobx-orm from npm package
 Check ./e2e tests for understanding how to use the lib.
 
 
-How to use with docker:
-
-# run docker
-docker-compose up -d
-# connect to docker
-docker-compose exec front sh
-# install packages
-yarn install
-# run tests
-yarn test
-yarn e2e
+# For Developers:
+I recommend use docker for development. See the `makefile` file.
+If you don't want to use docker then you can see `scripts` commands into `package.json`
