@@ -4,7 +4,6 @@ import Query from './query'
 
 
 export abstract class Model {
-
     // this private static properties will be copied to real model in the model decorator
     private static ids          : any[]
     private static adapter      : Adapter<Model>
@@ -18,13 +17,28 @@ export abstract class Model {
         }
     }
 
-
     static load(filter = {}, order_by: string[] = [], page: number = 0, page_size: number = 50) {
         return new Query(this, filter, order_by, page, page_size)
     }
 
+    // update cache from list and return updated objs
+    static update(objs: object[]): Model[] {
+        let updated_objs = []
+        for(let obj of objs) {
+            let __id = this.__id(obj)
+            if (this.cache.has(__id)) {
+
+            }
+            else {
+                // objs.push(new this.cls(obj))
+                // this.cache.set(__id, obj)
+            }
+        }
+        return updated_objs
+    }
+
     static clearCache() {
-        // we need it for run triggers on id fields 
+        // for clear cache we need just to set null into id fields
         for (let obj of this.cache.values()) {
             for (let id_field_name of this.ids) {
                 obj[id_field_name] = null
@@ -32,10 +46,9 @@ export abstract class Model {
         }
     }
 
-    // TODO push it to utils
-    static __id(obj, ids: []) : string | null {
+    static __id(obj) : string | null {
         let id = '' 
-        for (let id_name of ids) {
+        for (let id_name of this.ids) {
             // if any id field is null then we should return null because id is not complite
             if (obj[id_name] === null || obj[id_name] === undefined) 
                 return null
@@ -49,9 +62,8 @@ export abstract class Model {
 
     constructor (...args) { }
 
-    // build id string from ids fields and return it
     @computed get __id() : string | null {
-        return Model.__id(this, this.model.ids)
+        return Model.__id(this)
     }
 
     // TODO: any is band-aid 

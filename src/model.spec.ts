@@ -6,43 +6,50 @@ import { mock_adapter } from './spec-utils'
 
 describe('Model', () => {
 
-    it('init model empty', async () => {
-        @model class A extends Model {}
-        expect((<any>A).cache.size).toBe(0)
+    describe('init', () => {
+        it('good: model empty', async () => {
+            @model class A extends Model {}
+            expect((<any>A).cache.size).toBe(0)
+        })
+
+        it('good: default property', async () => {
+            @model class A extends Model {
+                @field a : number = 1 
+                @field b : number 
+            }
+            let a = new A(); expect(a.a).toBe(1); expect(a.b).toBeNull()
+        })
+
+        it('good: init property from constructor', async () => {
+            @model class A extends Model {
+                @field a : number = 1 
+                @field b : number 
+            }
+
+            let a
+            a = new A({a: 2});      expect(a.a).toBe(2); expect(a.b).toBeNull()
+            a = new A({b: 2});      expect(a.a).toBe(1); expect(a.b).toBe(2)
+            a = new A({a: 2, b: 2});expect(a.a).toBe(2); expect(a.b).toBe(2)
+        })
+
+        it('good: static methods and properties should be stay on the model', async () => {
+            @model class A extends Model {
+                static test_property = 'test'
+                static test_method() {}
+            }
+            expect(A.test_property).toBe('test')
+            expect(A.test_method instanceof Function).toBeTruthy()
+        })
     })
 
-    it('init model: default property', async () => {
-        let a
-        @model class A extends Model {
-            @field a : number = 1 
-            @field b : number 
-        }
-
-        a = new A()
-        expect(a.a).toBe(1)
-        expect(a.b).toBeNull()
-
-        a = new A({a: 2})
-        expect(a.a).toBe(2)
-        expect(a.b).toBeNull()
-
-        a = new A({b: 2})
-        expect(a.a).toBe(1)
-        expect(a.b).toBe(2)
-
-        a = new A({a: 2, b: 2})
-        expect(a.a).toBe(2)
-        expect(a.b).toBe(2)
+    describe('change properties', () => {
     })
 
-    it('init model: static methods and properties', async () => {
-        @model class A extends Model {
-            static test_property = 'test'
-            static test_method() {}
-        }
-        expect(A.test_property).toBe('test')
-        expect(A.test_method instanceof Function).toBeTruthy()
+    describe('call methods', () => {
     })
+
+
+
 
     it('Model.load()', async () => {
         @mock_adapter()
