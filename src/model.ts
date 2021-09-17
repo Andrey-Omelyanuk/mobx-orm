@@ -17,8 +17,12 @@ export abstract class Model {
         }
     }
 
-    static load(filter = {}, order_by: string[] = [], page: number = 0, page_size: number = 50) {
-        return new Query(this, filter, order_by, page, page_size)
+    static load(filter?, order_by?: string[]) {
+        return new Query(this, filter, order_by)
+    }
+
+    static loadPage(filter = {}, order_by: string[] = [], page: number = 0, page_size: number = 50) {
+        // return new Query(this, filter, order_by, page, page_size)
     }
 
     // update cache from list and return updated objs
@@ -73,7 +77,15 @@ export abstract class Model {
 
     // create or update object in the repo 
     async save() {
-        return this.model.adapter.save(this)
+        let raw_obj = await this.model.adapter.save(this)
+        // update values
+        for(let field_name in this.model.fields) {
+            // skip not null ids 
+            let is_id = this.model.ids.includes(field_name)
+            if (is_id && this[field_name] !== null)
+                continue
+            this[field_name] = raw_obj[field_name]
+        }
     }
 
     // delete object from the repo 

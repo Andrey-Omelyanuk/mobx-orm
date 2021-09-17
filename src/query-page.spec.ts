@@ -32,6 +32,8 @@ describe('Query', () => {
             expect(q.items).toEqual([])
             expect(q.filters).toEqual({})
             expect(q.order_by).toEqual([])
+            expect(q.page).toBe(0)
+            expect(q.page_size).toBe(50)
             expect(q.is_ready).toBe(false)
             expect(q.error).toEqual('')
             // side effect
