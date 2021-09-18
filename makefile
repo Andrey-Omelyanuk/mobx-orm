@@ -31,5 +31,5 @@ e2e:
 	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn e2e 
 
 publish:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn build 
+	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn test && yarn e2e && yarn build 
 	npm publish	

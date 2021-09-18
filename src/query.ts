@@ -2,12 +2,22 @@ import { action, autorun, makeObservable, observable, observe, reaction, runInAc
 import { Model } from "./model"
 
 
+/*
+Reactive items:
+- delete from the cache -> delete from items
+- add to the cache 
+    - the new obj is match the filters  -> add the obj to items
+- obj was changed 
+    - не было но уже    попадание по фильтрам -> add the obj to items
+    -    было но уже не попадание по фильтрам -> remove the obj from items
+*/
+
 export default class Query<M extends Model> {
 
     @observable filters     : object      = {}
     @observable order_by    : string[]    = []
 
-    get items      () { return this.__items       } // TODO: sort it
+    get items      () { return this.__items       }
     get is_ready   () { return this.__is_ready    }
     get is_updating() { return this.__is_updating }
     get error      () { return this.__error       }
@@ -23,12 +33,13 @@ export default class Query<M extends Model> {
 
     constructor(model: any, filters?: object, order_by?: string[]) {
         this.model    = model
-        this.filters  = filters
-        this.order_by = order_by
+        if (filters  ) this.filters   = filters
+        if (order_by ) this.order_by  = order_by
         makeObservable(this)
 
-        this.update() // update when the query is created
-                      // update if   the query is changed
+        // update when the query is created
+        this.update() 
+        // update if   the query is changed
         this.disposers.push(reaction(
             () => { return { filter: this.filters, order_by : this.order_by }},
             () => { this.update() }
