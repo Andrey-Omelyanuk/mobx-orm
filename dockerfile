@@ -1,9 +1,8 @@
 FROM node:16.7.0-alpine3.14 as base
 
-WORKDIR /build
-COPY package.json .
-COPY yarn.lock    . 
-RUN yarn install && yarn cache clean --force
+# COPY package.json .
+# COPY yarn.lock    . 
+# RUN yarn install && yarn cache clean --force
 
 WORKDIR /app
 VOLUME [ "/app" ]

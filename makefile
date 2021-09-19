@@ -9,27 +9,20 @@ rebuild:
 	docker build --no-cache -t mobx-orm .
 
 dev:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn dev
+	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn dev 
 
-# ports:
-# - 9229:9229
-# entrypoint: ["sh", "-c", "yarn install && node node_modules/.bin/jest --testMatch='**/e2e/**/passports.ts'"]
-# entrypoint: ["sh", "-c", "yarn install && node node_modules/.bin/jest --testMatch='**/src/**/one.spec.ts'"]
-# entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/e2e/**/chat.ts'"]
-# entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/foreign.spec.ts'"]
-# entrypoint: ["sh", "-c", "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand"]
-
-# TODO: finish debug
 # chrome://inspect/#devices
 debug:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn dev
+	docker run --rm -it -p 9229:9229 -v ${current_dir}:/app mobx-orm \
+		yarn install && \
+		node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/*.spec.ts'
 
 test:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn test
+	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn test
 
 e2e:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn e2e 
+	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn e2e 
 
 publish:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn test && yarn e2e && yarn build 
+	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn test && yarn e2e && yarn build 
 	npm publish	
