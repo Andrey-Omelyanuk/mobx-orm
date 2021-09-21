@@ -39,10 +39,11 @@ export default class Query<M extends Model> {
 
         // update when the query is created
         this.update() 
-        // update if   the query is changed
+        // update if filters was changed
+        // watch only filters, if order was changed then we don't need to update, just resort
         this.disposers.push(reaction(
-            () => { return { filter: this.filters, order_by : this.order_by }},
-            () => { this.update() }
+            () => { filter: this.filters },
+            () => { this.update()        }
         ))
 
         // watch the cache for changes, and update items if needed
