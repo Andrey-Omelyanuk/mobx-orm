@@ -2,15 +2,20 @@ import { Model } from '../model'
 import Adapter  from './adapter'
 
 /*
+You can use this adapter for mock data or for unit test
 */
 
-let store = {}
+let store: any = {}
 
 export class LocalAdapter<M extends Model> implements Adapter<M> {
-    constructor(
-        private cls,
-        private store_name: string) {
-        store[store_name] = {}
+
+    readonly cls: any
+    readonly store_name: string
+
+    constructor(cls: any) {
+        this.cls = cls
+        this.store_name = this.cls.constructor.__proto__
+        store[this.store_name] = {}
     }
 
     async save(obj: M) : Promise<M> {
@@ -23,9 +28,9 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
             }
             let max = Math.max.apply(null, ids)
             for(let name_id of obj.model.ids) {
-                obj[name_id] = max + 1
+                (<any>obj)[name_id] = max + 1
             }
-            store[this.store_name][obj.__id] = obj
+            store[this.store_name][(<any>obj).__id] = obj
         }
         // edit
         else {
@@ -43,9 +48,13 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
 }
 
 // model decorator
-export function local(api: string) {
-    return (cls) => {
-        let adapter = new LocalAdapter(cls, api)
+export function local() {
+    return (cls: any) => {
+        let adapter = new LocalAdapter(cls)
         cls.__proto__.adapter = adapter 
     }
+}
+
+export function init_local_data(cls: any, data: any[]) {
+
 }

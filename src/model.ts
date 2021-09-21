@@ -25,20 +25,12 @@ export abstract class Model {
         // return new Query(this, filter, order_by, page, page_size)
     }
 
-    // update cache from list and return updated objs
-    static update(objs: object[]): Model[] {
-        let updated_objs = []
-        for(let obj of objs) {
-            let __id = this.__id(obj)
-            if (this.cache.has(__id)) {
-
-            }
-            else {
-                // objs.push(new this.cls(obj))
-                // this.cache.set(__id, obj)
-            }
+    // TODO: finish it
+    static updateCache(raw_obj): Model {
+        let __id = this.__id(raw_obj)
+        if (this.cache.has(__id)) {
         }
-        return updated_objs
+        return 
     }
 
     static clearCache() {
@@ -61,7 +53,7 @@ export abstract class Model {
         return id
     }
 
-    private readonly _init_data
+    private readonly __init_data: any 
     private disposers = new Map()
 
     constructor (...args) { }
@@ -97,6 +89,7 @@ export abstract class Model {
     }
 
     // add obj to the cache
+    // TODO: inject and eject should be on Model, not on instance
     @action inject() {
         if (this.__id === null)                    
             throw new Error(`Object should have id!`)

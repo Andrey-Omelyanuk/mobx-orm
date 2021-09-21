@@ -5,6 +5,7 @@
         "baseUrl"   : ".",
         "module"    : "es2020",
         "target"    : "es2017",
+        // "strict"    : true,
         "downlevelIteration": true,
         "moduleResolution"              : "node",
         "stripInternal"                 : true,

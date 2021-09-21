@@ -1,18 +1,84 @@
+import { local } from './adapters/local'
 import { Model, model } from './model'
 import id    from './fields/id'
 import field from './fields/field'
-import { mock_adapter } from './spec-utils'
 
 
 describe('Model', () => {
 
+    describe('Model.ids', () => {
+    })
+    describe('Model.adapter', () => {
+    })
+    describe('Model.cache', () => {
+    })
+    describe('Model.fields', () => {
+    })
+    describe('Model.load()', () => {
+    })
+    describe('Model.loadPage()', () => {
+    })
+    describe('Model.updateCache()', () => {
+    })
+    describe('Model.clearCache()', () => {
+    })
+    describe('Model.__id()', () => {
+    })
+
+    describe('obj.__init_data()', () => {
+    })
+    describe('obj.disposers()', () => {
+    })
+    describe('obj.constructor()', () => {
+    })
+    describe('obj.__id', () => {
+    })
+
+    describe('obj.model', () => {
+        it('value', async () => {
+            @model class A extends Model {}
+            let a = new A()
+            // TODO is it make sense obj.model ? 
+            expect(a.model).toBe((<any>a.constructor).__proto__)
+        })
+        it('readonly', async() => {
+        })
+    })
+
+    describe('obj.save', () => {
+        it('save', async () => {
+            let adapter = {save: async (obj)=>{}}
+            let save = jest.spyOn(adapter, 'save')
+            @model class A extends Model { 
+                @id id : number 
+            }
+            (<any>A).__proto__.adapter = adapter
+            let a = new A() 
+
+            await a.save()	
+            expect(save).toHaveBeenCalledTimes(1)
+            expect(save).toHaveBeenCalledWith(a)
+        })
+        it('double save without await', async() => {
+        })
+        it('double save with await', async() => {
+        })
+    })
+
+    describe('obj.delete', () => {
+    })
+    describe('obj.inject()', () => {
+    })
+    describe('obj.eject()', () => {
+    })
+
     describe('init', () => {
-        it('good: model empty', async () => {
+        it('init empty', async () => {
             @model class A extends Model {}
             expect((<any>A).cache.size).toBe(0)
         })
 
-        it('good: default property', async () => {
+        it('init default property', async () => {
             @model class A extends Model {
                 @field a : number = 1 
                 @field b : number 
@@ -20,7 +86,7 @@ describe('Model', () => {
             let a = new A(); expect(a.a).toBe(1); expect(a.b).toBeNull()
         })
 
-        it('good: init property from constructor', async () => {
+        it('init property from constructor', async () => {
             @model class A extends Model {
                 @field a : number = 1 
                 @field b : number 
@@ -32,7 +98,7 @@ describe('Model', () => {
             a = new A({a: 2, b: 2});expect(a.a).toBe(2); expect(a.b).toBe(2)
         })
 
-        it('good: static methods and properties should be stay on the model', async () => {
+        it('static methods and properties should be stay on the model', async () => {
             @model class A extends Model {
                 static test_property = 'test'
                 static test_method() {}
@@ -42,17 +108,15 @@ describe('Model', () => {
         })
     })
 
-    describe('change properties', () => {
-    })
 
-    describe('call methods', () => {
+    describe('obj', () => {
     })
 
 
 
 
     it('Model.load()', async () => {
-        @mock_adapter()
+        @local()
         @model class A extends Model {}
         let load = jest.spyOn((<any>A).__proto__.adapter, 'load')
 
@@ -109,27 +173,6 @@ describe('Model', () => {
         expect(a1.id_a).toBe(1)
         expect(a1.id_b).toBe(1)
         expect(a1.__id).toBe('1 :1 :')
-    })
-
-    it('obj.model', async () => {
-        @model class A extends Model {}
-        let a = new A()
-        // TODO is it make sense obj.model ? 
-        expect(a.model).toBe((<any>a.constructor).__proto__)
-    })
-
-    it('obj.save()', async () => {
-        let adapter = {save: async (obj)=>{}}
-        let save = jest.spyOn(adapter, 'save')
-        @model class A extends Model { 
-            @id id : number 
-        }
-        (<any>A).__proto__.adapter = adapter
-        let a = new A() 
-
-        await a.save()	
-        expect(save).toHaveBeenCalledTimes(1)
-        expect(save).toHaveBeenCalledWith(a)
     })
 
     it('obj.delete()', async () => {

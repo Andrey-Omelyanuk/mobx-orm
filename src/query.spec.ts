@@ -3,49 +3,45 @@ import { Model, model } from './model'
 import id from './fields/id'
 import Query from './query'
 import field from './fields/field'
-import { mock_adapter } from './spec-utils'
-
+import { local, init_local_data } from './adapters/local' 
 
 
 describe('Query', () => {
 
-    @mock_adapter()
+    @local()
     @model class A extends Model {
-        @id id: number
+        @id     id !: number
+        @field   a !: number|null
+        @field   b !: string|null 
+        @field   c !: boolean|null
     }
-    let q: Query<A>
+    let data_set = [
+        [0, 5   , 'a'   , true  ],
+        [1, null, 'c'   , false ],
+        [2, 2   , null  , false ],
+        [3, 2   , 'f'   , null  ],
+        [4, 1   , 'a'   , true  ],
+    ]
 
+    let query: Query<A>
+    let load : any
 
-    beforeEach(() => {
+    beforeAll(() => {
+        init_local_data(A, data_set)
+    })
+
+    beforeEach(async () => {
+        load  = jest.spyOn((<any>A).__proto__.adapter, 'load')
+        query = new Query<A>(A)
+        await query.ready() 
+    })
+
+    afterEach(async () => {
+        query.destroy()
         A.clearCache()
     })
 
-    afterEach(() => {
-    })
-
-    describe('constructor', () => {
-
-        it('default', async () => {
-            let load = jest.spyOn((<any>A).__proto__.adapter, 'load')
-            let q = new Query<A>(A)
-            // defaults
-            expect(q.items).toEqual([])
-            expect(q.filters).toEqual({})
-            expect(q.order_by).toEqual([])
-            expect(q.is_ready).toBe(false)
-            expect(q.error).toEqual('')
-            // side effect
-            await q.ready();           
-            expect(load).toHaveBeenCalledTimes(1) 
-            expect(load).toHaveBeenCalledWith(q.filters, q.order_by, q.page_size, q.page*q.page_size )
-
-            q.destroy()
-        })
-    })
-
     describe('filters', () => {
-        beforeEach(async () => {
-        })
         it('is observible', async () => {
         })
 
@@ -53,21 +49,15 @@ describe('Query', () => {
         })
 
         it('set', async () => {
-            @mock_adapter()
-            @model class A extends Model {}
-            let load = jest.spyOn((<any>A).__proto__.adapter, 'load')
-
-            let q = new Query<A>(A); await q.ready()
+            let q = query 
             // the load will be triggered when query is created 
             expect(load).toHaveBeenCalledTimes(1) 
-            expect(load).toHaveBeenCalledWith(q.filters, q.order_by, q.page_size, q.page*q.page_size )
+            expect(load).toHaveBeenCalledWith(q.filters, q.order_by)
             // change filters
             runInAction(() => { q.filters = {} })
             // the load will be triggered only once for an action
             expect(load).toHaveBeenCalledTimes(2) 
-            expect(load).toHaveBeenCalledWith(q.filters, q.order_by, q.page_size, q.page*q.page_size )
-
-            q.destroy()
+            expect(load).toHaveBeenCalledWith(q.filters, q.order_by)
         })
 
         it('set from X', async () => {
@@ -78,6 +68,62 @@ describe('Query', () => {
     })
 
     describe('order_by', () => {
+        it('is observible', async () => {
+            // TODO
+        })
+        it('set value', async () => {
+            // default
+            expect(query.order_by).toEqual([])
+            expect(load).toHaveBeenCalledTimes(1)
+            expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
+            expect(query.items.map((i) => i.id)).toEqual([0, 1, 2, 3, 4])
+            // number field
+            query.order_by = ['a']
+            await query.ready() // wait update
+            expect(query.order_by).toEqual(['a'])
+            expect(load).toHaveBeenCalledTimes(2)
+            expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
+            expect(query.items.map((i) => i.id)).toEqual([4, 2, 3, 0, 1])
+            // number field (revert)
+            query.order_by = ['-a']
+            // string field 
+            query.order_by = ['b']
+            // string field (revert)
+            query.order_by = ['-b']
+            // boolean field 
+            query.order_by = ['c']
+            // boolean field (revert)
+            query.order_by = ['-c']
+            // empty 
+            query.order_by = []
+            await query.ready() // wait update
+            expect(query.order_by).toEqual([])
+            // expect(load).toHaveBeenCalledTimes(2)
+            expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
+            expect(query.items.map((i) => i.id)).toEqual([0, 1, 2, 3, 4])
+            // error: set not exist field
+            query.order_by = ['x']
+            // error: set number
+            query.order_by = <any>2
+            // error: set null 
+            query.order_by = <any>null 
+            // error: set undefined
+            query.order_by = <any>undefined
+        })
+    })
+
+    describe('constructor', () => {
+        it('default', async () => {
+            // defaults
+            expect(query.model   ).toBe(A)
+            expect(query.items   ).toEqual([])
+            expect(query.filters ).toEqual({})
+            expect(query.order_by).toEqual([])
+            expect(query.is_ready).toBe(false)
+            expect(query.error   ).toEqual('')
+            expect(load).toHaveBeenCalledTimes(1) 
+            expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
+        })
     })
 
     describe('is_ready', () => {
