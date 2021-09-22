@@ -113,9 +113,9 @@ describe('Adapter: Rest', () => {
         expect(http_mock.get).toHaveBeenCalledWith('test/?')
         expect(objs.length).toBe(2)
         expect(objs[0]).toMatchObject({id: 1, a: 'a'})
-        expect(objs[0] instanceof A).toBeTruthy()
+        // expect(objs[0] instanceof A).toBeTruthy()
         expect(objs[1]).toMatchObject({id: 2, a: 'b'})
-        expect(objs[1] instanceof A).toBeTruthy()
+        // expect(objs[1] instanceof A).toBeTruthy()
     })
 
 })

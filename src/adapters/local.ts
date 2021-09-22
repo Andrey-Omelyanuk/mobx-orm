@@ -5,7 +5,7 @@ import Adapter  from './adapter'
 You can use this adapter for mock data or for unit test
 */
 
-let store: any = {}
+export let store: any = {}
 
 export class LocalAdapter<M extends Model> implements Adapter<M> {
 
@@ -14,12 +14,11 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
 
     constructor(cls: any) {
         this.cls = cls
-        this.store_name = this.cls.constructor.__proto__
+        this.store_name = this.cls.__proto__.name
         store[this.store_name] = {}
     }
 
     async save(obj: M) : Promise<M> {
-        // create 
         if (obj.__id === null) {
             // calculate and set new ID
             let ids = [0]
@@ -30,19 +29,18 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
             for(let name_id of obj.model.ids) {
                 (<any>obj)[name_id] = max + 1
             }
-            store[this.store_name][(<any>obj).__id] = obj
         }
-        // edit
-        else {
-            store[this.store_name][obj.__id] = obj
-        }
+
+        store[this.store_name][obj.__id] = obj.raw_obj 
+
         return obj
     }
+
     async delete(obj: M) : Promise<any> {
         delete store[this.store_name][obj.__id]
     }
 
-    load (where={}, order_by=[], limit=50, offset = 0) : Promise<M[]> {
+    load (where?, order_by?, limit?, offset?) : Promise<M[]> {
         throw('Not implemented')
     }
 }
@@ -56,5 +54,5 @@ export function local() {
 }
 
 export function init_local_data(cls: any, data: any[]) {
-
+    // TODO
 }

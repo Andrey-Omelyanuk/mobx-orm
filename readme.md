@@ -13,3 +13,13 @@ Check ./e2e tests for understanding how to use the lib.
 # For Developers:
 I recommend use docker for development. See the `makefile` file.
 If you don't want to use docker then you can see `scripts` commands into `package.json`
+
+Notes:
+
+```sh
+# dev on local
+node_modules/.bin/jest --testMatch='**/src/**/model.spec.ts' --watchAll
+node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/local.spec.ts'
+chrome://inspect/#devices
+
+```

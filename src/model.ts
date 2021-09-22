@@ -59,12 +59,20 @@ export abstract class Model {
     constructor (...args) { }
 
     @computed get __id() : string | null {
-        return Model.__id(this)
+        return this.model.__id(this)
     }
 
     // TODO: any is band-aid 
     get model() : any {
         return (<any>this.constructor).__proto__
+    }
+
+    get raw_obj() : any {
+        let raw_obj: any = {}
+        for(let field_name in this.model.fields) {
+            raw_obj[field_name] = this[field_name]
+        }
+        return raw_obj
     }
 
     // create or update object in the repo 
@@ -76,7 +84,7 @@ export abstract class Model {
             let is_id = this.model.ids.includes(field_name)
             if (is_id && this[field_name] !== null)
                 continue
-            this[field_name] = raw_obj[field_name]
+            runInAction(() => this[field_name] = raw_obj[field_name] ) 
         }
     }
 
