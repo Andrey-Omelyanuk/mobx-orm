@@ -37,22 +37,6 @@ describe('Model', () => {
         jest.clearAllMocks();
     })
 
-    describe('Model.ids', () => {
-        // TODO
-    })
-
-    describe('Model.adapter', () => {
-        // TODO
-    })
-
-    describe('Model.cache', () => {
-        // TODO
-    })
-
-    describe('Model.fields', () => {
-        // TODO
-    })
-
     describe('Model.load()', () => {
         it('empty args', async () => {
             let query = A.load()
@@ -135,6 +119,7 @@ describe('Model', () => {
         })
     })
 
+    // TODO: do not test private, it should be size effect of another action
     describe('obj.__init_data()', () => {
         // TODO
         it('obj.__init_data', async () => {
@@ -154,9 +139,7 @@ describe('Model', () => {
             expect((<any>a)._init_data).toEqual({id_a: 1, id_b: 1})
         })
     })
-    describe('obj.disposers()', () => {
-        // TODO
-    })
+
     describe('obj.constructor()', () => {
         // TODO
         it('constructor: obj with id should be pushed to cache by default', async () => {
@@ -197,6 +180,10 @@ describe('Model', () => {
     })
 
     describe('obj.raw_obj', () => {
+        // TODO
+    })
+
+    describe('obj.is_changed', () => {
         // TODO
     })
 

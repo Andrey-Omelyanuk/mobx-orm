@@ -62,7 +62,6 @@ export abstract class Model {
         return this.model.__id(this)
     }
 
-    // TODO: any is band-aid 
     get model() : any {
         return (<any>this.constructor).__proto__
     }
@@ -73,6 +72,11 @@ export abstract class Model {
             raw_obj[field_name] = this[field_name]
         }
         return raw_obj
+    }
+
+    get is_changed() : boolean {
+        // TODO
+        return false
     }
 
     // create or update object in the repo 

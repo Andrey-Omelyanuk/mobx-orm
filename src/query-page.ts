@@ -99,11 +99,11 @@ export default class Query<M extends Model> {
             this.page*this.page_size
         )
         .catch((err) => { 
-            runInAction(() => this.error = err)
+            runInAction(() => this.__error = err)
         })
         .finally(() => {
-            runInAction(() => this.is_ready = true)
-            runInAction(() => this.is_updating = false)
+            runInAction(() => this.__is_ready = true)
+            runInAction(() => this.__is_updating = false)
         } )
     }
 
