@@ -1,13 +1,25 @@
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
-import Adapter from './adapters/adapter'
-import Query from './query'
+import Adapter   from './adapters/adapter'
+import Query     from './query'
+import QueryPage from './query-page'
 
 
 export abstract class Model {
+    private static id_separator: string = '-'
     // this private static properties will be copied to real model in the model decorator
-    private static ids          : any[]
     private static adapter      : Adapter<Model>
     private static cache        : Map<string, Model>
+    // we have 3 types of fields
+    // - ids (cannot be changed, order of keys is important)
+    // - fields
+    // - relations (not exist on outside)
+    private static ids: Map<string, {
+            // can decorator be different?
+            decorator   : (obj: Model, field_name: string) => void,
+            settings    : any,
+            serialize   : any,
+            deserialize : any
+        }>
     private static fields       : {
         [field_name: string]: {
             decorator   : (obj: Model, field_name: string) => void,
@@ -16,27 +28,44 @@ export abstract class Model {
             deserialize : any
         }
     }
+    // relateions is a list of field only foreign, one or many types
+    private static relations    : {
+        [field_name: string]: {
+            decorator   : (obj: Model, field_name: string) => void,
+            settings    : any
+            // there is no serializer of deserializer because 
+            // it is derivative and does not come from outside
+        }
+    }
 
     static load(filter?, order_by?: string[]) {
         return new Query(this, filter, order_by)
     }
 
-    static loadPage(filter = {}, order_by: string[] = [], page: number = 0, page_size: number = 50) {
-        // return new Query(this, filter, order_by, page, page_size)
+    static loadPage(filter?, order_by?: string[], page?: number, page_size?: number) {
+        return new QueryPage(this, filter, order_by, page, page_size)
     }
 
-    // TODO: finish it
     static updateCache(raw_obj): Model {
+        // TODO runInAction(() => this[field_name] = raw_obj[field_name] ) 
         let __id = this.__id(raw_obj)
+        let obj
         if (this.cache.has(__id)) {
+            obj = this.cache.get(__id)
+            for(let field_name in this.fields) {
+                obj[field_name] = raw_obj[field_name]
+            }
         }
-        return 
+        else {
+            obj = new (<any>this)(raw_obj)
+        }
+        return obj
     }
 
     static clearCache() {
         // for clear cache we need just to set null into id fields
         for (let obj of this.cache.values()) {
-            for (let id_field_name of this.ids) {
+            for (let id_field_name of this.ids.keys()) {
                 obj[id_field_name] = null
             }
         }
@@ -44,12 +73,13 @@ export abstract class Model {
 
     static __id(obj) : string | null {
         let id = '' 
-        for (let id_name of this.ids) {
+        for (let id_field_name of this.ids.keys()) {
             // if any id field is null then we should return null because id is not complite
-            if (obj[id_name] === null || obj[id_name] === undefined) 
+            if (obj[id_field_name] === null || obj[id_field_name] === undefined) 
                 return null
-            id += `${obj[id_name]} :`
+            id += `${obj[id_field_name]}${this.id_separator}`
         }
+        id = id.slice(0, -(this.id_separator.length))
         return id
     }
 
@@ -68,6 +98,9 @@ export abstract class Model {
 
     get raw_obj() : any {
         let raw_obj: any = {}
+        for(let id_field_name in this.model.ids.keys()) {
+            raw_obj[id_field_name] = this[id_field_name]
+        }
         for(let field_name in this.model.fields) {
             raw_obj[field_name] = this[field_name]
         }
@@ -75,29 +108,25 @@ export abstract class Model {
     }
 
     get is_changed() : boolean {
-        // TODO
-        return false
+        let is_changed = false
+        for(let field_name in this.model.fields) {
+            if (this[field_name] != this.__init_data[field_name]) {
+                is_changed = true
+            }
+        }
+        return is_changed 
     }
 
-    // create or update object in the repo 
     async save() {
         let raw_obj = await this.model.adapter.save(this)
-        // update values
-        for(let field_name in this.model.fields) {
-            // skip not null ids 
-            let is_id = this.model.ids.includes(field_name)
-            if (is_id && this[field_name] !== null)
-                continue
-            runInAction(() => this[field_name] = raw_obj[field_name] ) 
-        }
+        this.model.updateCache(raw_obj)
     }
 
-    // delete object from the repo 
     async delete() {
         await this.model.adapter.delete(this)
         // reset ids
-        for(let id_name of this.model.ids)
-            this[id_name] = null
+        for(let id_field_name of this.model.ids.keys())
+            this[id_field_name] = null
     }
 
     // add obj to the cache
@@ -127,46 +156,31 @@ export function model(constructor) {
     var original = constructor
 
     original.cache = observable(new Map())
-    // makeObservable(original, { cache: observable })
 
     // the new constructor
     let f : any = function (...args) {
-        // let c : any = function () { return original.apply(this, args) }
         let c : any = class extends original { constructor (...args) { super(...args) } }
+            c.__proto__ = original
 
-        c.__proto__ = original
-        // c.prototype = original.prototype
-        let obj = new c()
+        let obj   = new c()
+        let model = obj.model
         makeObservable(obj)
-        // we have to save init data for detect changes
-        obj._init_data = args[0] ? args[0] : {}
 
-        // save default values from class declaration to init_data
-        for (let field_name in obj.model.fields) {
-            if (obj._init_data[field_name] === undefined && obj[field_name] !== undefined) {
-                obj._init_data[field_name] = obj[field_name]
-            }
+        if (model.ids === undefined) 
+            throw(`No one id field was declared on model ${model.name}`)
+
+        // apply id-fields decorators
+        for (let id_field_name of model.ids.keys()) {
+            model.ids.get(id_field_name).decorator(obj, id_field_name)
         }
-
         // apply fields decorators
-        for (let field_name in obj.model.fields) {
-            obj.model.fields[field_name].decorator(obj, field_name)
+        for (let field_name in model.fields) {
+            model.fields[field_name].decorator(obj, field_name)
         }
 
-        runInAction(() => {
-            // push init_data to object 
-            // ids should be the last
-            let ids = []
-            for (let field_name in obj._init_data) {
-                if (obj.model.ids && obj.model.ids.includes(field_name))
-                    ids.push(field_name)
-                else
-                    obj[field_name] = obj._init_data[field_name]
-            }
-            for (let field_name of ids) {
-                obj[field_name] = obj._init_data[field_name]
-            }
-        })
+        // update the object from args
+        let raw_obj = args[0] ? args[0] : {}
+        model.updateCache(raw_obj)
 
         return obj
     }

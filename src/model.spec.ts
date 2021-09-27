@@ -54,22 +54,47 @@ describe('Model', () => {
             expect(load).toHaveBeenCalledWith({a: 1}, ['-b'])
         })
 
-        it('error: with wrong args', async () => {
-            // TODO
-            // let query = A.load({y: 1}, ['xxx'] )
-            // await query.ready()
-            // expect(query.is_ready).toBe(true)
-            // expect(load).toHaveBeenCalledTimes(1)
-            // expect(load).toHaveBeenCalledWith({y: 1}, ['xxx'])
-        })
+        // it('error: with wrong args', async () => {
+        //     let query = A.load({y: 1}, ['xxx'] )
+        //     await query.ready()
+        //     expect(query.is_ready).toBe(true)
+        //     expect(load).toHaveBeenCalledTimes(1)
+        //     expect(load).toHaveBeenCalledWith({y: 1}, ['xxx'])
+        // })
     })
 
     describe('Model.loadPage()', () => {
-        // TODO
+        it('empty args', async () => {
+            let query = A.loadPage()
+            await query.ready()
+            expect(query.is_ready).toBe(true)
+            expect(load).toHaveBeenCalledTimes(1)
+            expect(load).toHaveBeenCalledWith({}, [], 50, 0)
+        })
+
+        it('with args', async () => {
+            let query = A.loadPage({a: 1}, ['-b'], 2, 30 )
+            await query.ready()
+            expect(query.is_ready).toBe(true)
+            expect(load).toHaveBeenCalledTimes(1)
+            expect(load).toHaveBeenCalledWith({a: 1}, ['-b'], 30, 60)
+        })
     })
 
     describe('Model.updateCache()', () => {
-        // TODO
+        it('new object', async () => {
+            let obj = A.updateCache({id: 1, a: 2, b: 'test', c: true})
+            expect(obj).toMatchObject({id: 1, a: 2, b: 'test', c: true})
+            expect(obj.model.cache.get(obj.__id)).toBe(obj)
+        })
+
+        it('update exist object', async () => {
+            let a = new A({id: 1, a: 2, b: 'test', c: true})
+            let obj = A.updateCache({id: 1, b: 'hello'})
+            expect(obj).toMatchObject({id: 1, a: 2, b: 'hello', c: true})
+            expect(obj.model.cache.get(obj.__id)).toBe(obj)
+            expect(obj).toBe(a)
+        })
     })
 
     describe('Model.clearCache()', () => {
@@ -95,21 +120,21 @@ describe('Model', () => {
     describe('Model.__id()', () => {
 
         it('get id from raw object', async () => {
-            expect(A.__id({id: 1})).toBe('1 :')
+            expect(A.__id({id: 1})).toBe('1')
         })
 
         it('get composite id from raw object', async () => {
-            expect(B.__id({id1: 1, id2: 1})).toBe('1 :1 :')
+            expect(B.__id({id1: 1, id2: 1})).toBe('1-1')
         })
 
         it('get id from model instance', async () => {
             let a = new A({id: 1})
-            expect(A.__id(a)).toBe('1 :')
+            expect(A.__id(a)).toBe('1')
         })
 
         it('get composite id from model instance', async () => {
             let b = new B({id1: 1, id2: 1 })
-            expect(B.__id(b)).toBe('1 :1 :')
+            expect(B.__id(b)).toBe('1-1')
         })
 
         it('return null if id is not complite', async () => {
@@ -163,7 +188,7 @@ describe('Model', () => {
             let a1 = new A({id_a: 1, id_b: 1})
             expect(a1.id_a).toBe(1)
             expect(a1.id_b).toBe(1)
-            expect(a1.__id).toBe('1 :1 :')
+            expect(a1.__id).toBe('1-1')
         })
     })
 
@@ -241,12 +266,12 @@ describe('Model', () => {
 
         it('error: inject second time', async () => {
             let a = new A({id: 1}) // eject automaticaly when id initialazed
-            expect(() => { a.inject() }).toThrow(new Error(`Object with id \"1 :\" already exist in the cache of model: \"A\")`))
+            expect(() => { a.inject() }).toThrow(new Error(`Object with id \"1-\" already exist in the cache of model: \"A\")`))
         })
 
         it('error: try to inject another object with the same id', async () => {
             let a = new A({id: 1}) // eject automaticaly when id initialaze
-            expect(() => { new A({id: 1}) }).toThrow(new Error(`Object with id \"1 :\" already exist in the cache of model: \"A\")`))
+            expect(() => { new A({id: 1}) }).toThrow(new Error(`Object with id \"1-\" already exist in the cache of model: \"A\")`))
         })
 
         it('error: try to inject object without id', async () => {
@@ -289,6 +314,8 @@ describe('Model', () => {
         it('init empty', async () => {
             @model class A extends Model {}
             expect((<any>A).cache.size).toBe(0)
+            expect(() => { new A() })
+                .toThrow(new Error(`No one id field was declared on model A`))
         })
 
         it('init default property', async () => {

@@ -44,8 +44,8 @@ export default class Query<M extends Model> {
         this.model = model
         if (filters     ) this.filters      = filters
         if (order_by    ) this.order_by     = order_by
-        if (page        ) this.page         = page
-        if (page_size   ) this.page_size    = page_size
+        this.page      = page      === undefined ?  0 : page
+        this.page_size = page_size === undefined ? 50 : page_size
         if (auto_update ) this.auto_update  = auto_update 
         makeObservable(this)
 

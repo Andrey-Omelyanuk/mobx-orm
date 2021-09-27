@@ -40,8 +40,9 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         delete store[this.store_name][obj.__id]
     }
 
-    load (where?, order_by?, limit?, offset?) : Promise<M[]> {
-        throw('Not implemented')
+    async load (where?, order_by?, limit?, offset?) : Promise<M[]> {
+        // TODO
+        return
     }
 }
 

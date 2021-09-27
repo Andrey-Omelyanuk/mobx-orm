@@ -5,8 +5,8 @@ import { Model } from '../model'
 function field_many(obj: Model, field_name) {
 
     let edit_mode = false
-    let remote_model            = obj.model.fields[field_name].settings.remote_model
-    let remote_foreign_ids_name = obj.model.fields[field_name].settings.remote_foreign_ids_names
+    let remote_model            = obj.model.relations[field_name].settings.remote_model
+    let remote_foreign_ids_name = obj.model.relations[field_name].settings.remote_foreign_ids_names
 
     // make observable and set default value
     extendObservable(obj, {
@@ -78,10 +78,10 @@ function field_many(obj: Model, field_name) {
 export default function many(remote_model: any, ...remote_foreign_ids_names: string[]) {
     return function (cls: any, field_name: string) {
         let model = cls.prototype.constructor
-        if (model.fields === undefined) model.fields = {}
+        if (model.relations === undefined) model.relations = {}
         // if it is empty then try auto detect it (it works only with single id) 
         remote_foreign_ids_names = remote_foreign_ids_names.length ? remote_foreign_ids_names: [`${model.name.toLowerCase()}_id`]
-        model.fields[field_name] = { 
+        model.relations[field_name] = { 
             decorator: field_many,
             settings: {
                 remote_model: remote_model,

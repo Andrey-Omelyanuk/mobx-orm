@@ -3,7 +3,7 @@ import {intercept, observe, extendObservable, observable, autorun, when, reactio
 
 function field_foreign(obj, field_name) {
     let edit_mode = false
-    let settings = obj.model.fields[field_name].settings
+    let settings = obj.model.relateions[field_name].settings
     let foreign_model     = settings.foreign_model
     let foreign_ids_names = settings.foreign_ids_names
 
@@ -93,9 +93,9 @@ export default function foreign(foreign_model: any, ...foreign_ids_names: string
     foreign_model = foreign_model.__proto__ // band-aid
     return function (cls: any, field_name: string) {
         let model = cls.constructor
-        if (model.fields === undefined) model.fields = {}
+        if (model.relations === undefined) model.relations = {}
         // register field 
-        model.fields[field_name] = { 
+        model.relations[field_name] = { 
             decorator: field_foreign,
             settings: {
                 foreign_model: foreign_model,
