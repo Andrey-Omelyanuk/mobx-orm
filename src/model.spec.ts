@@ -156,13 +156,13 @@ describe('Model', () => {
             }
 
             a = new A()
-            expect((<any>a)._init_data).toEqual({id_b: 2})
+            expect((<any>a).__init_data).toEqual({}) // init_data does not contain ids
 
             a = new A({id_a: 1})
-            expect((<any>a)._init_data).toEqual({id_a: 1, id_b: 2})
+            expect((<any>a).__init_data).toEqual({}) // init_data does not contain ids
 
             a = new A({id_a: 1, id_b: 1})
-            expect((<any>a)._init_data).toEqual({id_a: 1, id_b: 1})
+            expect((<any>a).__init_data).toEqual({}) // init_data does not contain ids
         })
     })
 
@@ -267,12 +267,12 @@ describe('Model', () => {
 
         it('error: inject second time', async () => {
             let a = new A({id: 1}) // eject automaticaly when id initialazed
-            expect(() => { a.inject() }).toThrow(new Error(`Object with id \"1-\" already exist in the cache of model: \"A\")`))
+            expect(() => { a.inject() }).toThrow(new Error(`Object with id \"1\" already exist in the cache of model: \"A\")`))
         })
 
         it('error: try to inject another object with the same id', async () => {
             let a = new A({id: 1}) // eject automaticaly when id initialaze
-            expect(() => { new A({id: 1}) }).toThrow(new Error(`Object with id \"1-\" already exist in the cache of model: \"A\")`))
+            expect(() => { new A({id: 1}) }).toThrow(new Error(`Object with id \"1\" already exist in the cache of model: \"A\")`))
         })
 
         it('error: try to inject object without id', async () => {
@@ -325,7 +325,7 @@ describe('Model', () => {
                 @field a : number = 1 
                 @field b : number 
             }
-            let a = new A(); expect(a.a).toBe(1); expect(a.b).toBeNull()
+            let a = new A(); expect(a.a).toBe(1); expect(a.b).toBeUndefined()
         })
 
         it('init property from constructor', async () => {
@@ -336,7 +336,7 @@ describe('Model', () => {
             }
 
             let a
-            a = new A({a: 2});      expect(a).toMatchObject({a: 2, b: null})
+            a = new A({a: 2});      expect(a).toMatchObject({a: 2, b: undefined })
             a = new A({b: 2});      expect(a).toMatchObject({a: 1, b: 2})
             a = new A({a: 2, b: 2});expect(a).toMatchObject({a: 2, b: 2})
         })

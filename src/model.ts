@@ -47,14 +47,16 @@ export abstract class Model {
         return new QueryPage(this, filter, order_by, page, page_size)
     }
 
-    static updateCache(raw_obj): Model {
+    @action static updateCache(raw_obj): Model {
         // TODO runInAction(() => this[field_name] = raw_obj[field_name] ) 
         let __id = this.__id(raw_obj)
         let obj
         if (this.cache.has(__id)) {
             obj = this.cache.get(__id)
             for(let field_name in this.fields) {
-                obj[field_name] = raw_obj[field_name]
+                if (raw_obj[field_name] !== undefined) {
+                    obj[field_name] = raw_obj[field_name]
+                }
             }
         }
         else {
@@ -179,18 +181,20 @@ export function model(constructor) {
             model.fields[field_name].decorator(obj, field_name)
         }
 
-        // update the object from args
-        if (args[0]) {
-            let raw_obj = args[0]
-            for(let field_name in raw_obj) {
-                obj[field_name] = raw_obj[field_name]
+        runInAction(() => {
+            // update the object from args
+            if (args[0]) {
+                let raw_obj = args[0]
+                for(let field_name in raw_obj) {
+                    obj[field_name] = raw_obj[field_name]
+                }
             }
-        }
-        // save __init_data
-        obj.__init_data = {}
-        for (let field_name in model.fields) {
-            obj.__init_data[field_name] = obj[field_name]
-        }
+            // save __init_data
+            obj.__init_data = {}
+            for (let field_name in model.fields) {
+                obj.__init_data[field_name] = obj[field_name]
+            }
+        })
         return obj
     }
 
