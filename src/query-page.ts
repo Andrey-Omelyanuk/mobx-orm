@@ -16,6 +16,8 @@ need_to_update =
 auto_update = 
 */
 
+// TODO get total count - we need to count pages num
+
 export default class Query<M extends Model> {
 
     @observable filters     : object      = {}

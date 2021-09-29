@@ -44,6 +44,10 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         // TODO
         return
     }
+
+    async getTotalCount(where?): Promise<number> {
+        return 100
+    }
 }
 
 // model decorator

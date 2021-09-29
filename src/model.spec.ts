@@ -129,6 +129,7 @@ describe('Model', () => {
 
         it('get id from model instance', async () => {
             let a = new A({id: 1})
+            debugger
             expect(A.__id(a)).toBe('1')
         })
 
@@ -320,6 +321,7 @@ describe('Model', () => {
 
         it('init default property', async () => {
             @model class A extends Model {
+                @id    id: number
                 @field a : number = 1 
                 @field b : number 
             }
@@ -328,14 +330,15 @@ describe('Model', () => {
 
         it('init property from constructor', async () => {
             @model class A extends Model {
+                @id    id: number
                 @field a : number = 1 
                 @field b : number 
             }
 
             let a
-            a = new A({a: 2});      expect(a.a).toBe(2); expect(a.b).toBeNull()
-            a = new A({b: 2});      expect(a.a).toBe(1); expect(a.b).toBe(2)
-            a = new A({a: 2, b: 2});expect(a.a).toBe(2); expect(a.b).toBe(2)
+            a = new A({a: 2});      expect(a).toMatchObject({a: 2, b: null})
+            a = new A({b: 2});      expect(a).toMatchObject({a: 1, b: 2})
+            a = new A({a: 2, b: 2});expect(a).toMatchObject({a: 2, b: 2})
         })
 
         it('static methods and properties should be stay on the model', async () => {

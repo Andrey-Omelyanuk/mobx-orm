@@ -1,3 +1,4 @@
+import { field } from 'dist/mobx-orm'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import Adapter   from './adapters/adapter'
 import Query     from './query'
@@ -179,9 +180,17 @@ export function model(constructor) {
         }
 
         // update the object from args
-        let raw_obj = args[0] ? args[0] : {}
-        model.updateCache(raw_obj)
-
+        if (args[0]) {
+            let raw_obj = args[0]
+            for(let field_name in raw_obj) {
+                obj[field_name] = raw_obj[field_name]
+            }
+        }
+        // save __init_data
+        obj.__init_data = {}
+        for (let field_name in model.fields) {
+            obj.__init_data[field_name] = obj[field_name]
+        }
         return obj
     }
 
