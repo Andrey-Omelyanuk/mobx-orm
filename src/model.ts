@@ -48,16 +48,17 @@ export abstract class Model {
     }
 
     @action static updateCache(raw_obj): Model {
-        // TODO runInAction(() => this[field_name] = raw_obj[field_name] ) 
         let __id = this.__id(raw_obj)
         let obj
         if (this.cache.has(__id)) {
-            obj = this.cache.get(__id)
-            for(let field_name in this.fields) {
-                if (raw_obj[field_name] !== undefined) {
-                    obj[field_name] = raw_obj[field_name]
+            runInAction(() => {
+                obj = this.cache.get(__id)
+                for(let field_name in this.fields) {
+                    if (raw_obj[field_name] !== undefined) {
+                        obj[field_name] = raw_obj[field_name]
+                    }
                 }
-            }
+            })
         }
         else {
             obj = new (<any>this)(raw_obj)
@@ -74,9 +75,10 @@ export abstract class Model {
         }
     }
 
-    static __id(obj) : string | null {
+    static __id(obj, ids?) : string | null {
         let id = '' 
-        for (let id_field_name of this.ids.keys()) {
+        if (ids === undefined) ids = Array.from(this.ids.keys()) 
+        for (let id_field_name of ids) {
             // if any id field is null then we should return null because id is not complite
             if (obj[id_field_name] === null || obj[id_field_name] === undefined) 
                 return null
@@ -120,9 +122,18 @@ export abstract class Model {
         return is_changed 
     }
 
-    async save() {
-        let raw_obj = await this.model.adapter.save(this)
+    async create() {
+        let raw_obj = await this.model.adapter.create(this)
         this.model.updateCache(raw_obj)
+    }
+
+    async update() {
+        let raw_obj = await this.model.adapter.update(this)
+        this.model.updateCache(raw_obj)
+    }
+
+    async save() {
+        return this.__id === null ? this.create() : this.update()
     }
 
     async delete() {
@@ -179,6 +190,10 @@ export function model(constructor) {
         // apply fields decorators
         for (let field_name in model.fields) {
             model.fields[field_name].decorator(obj, field_name)
+        }
+        // apply relations decorators
+        for (let field_name in model.relations) {
+            model.relations[field_name].decorator(obj, field_name)
         }
 
         runInAction(() => {

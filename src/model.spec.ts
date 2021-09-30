@@ -2,6 +2,7 @@ import { local } from './adapters/local'
 import { Model, model } from './model'
 import id    from './fields/id'
 import field from './fields/field'
+import { runInAction } from 'mobx'
 
 
 describe('Model', () => {
@@ -21,13 +22,12 @@ describe('Model', () => {
         @field   a : number
     }
 
-    let load: any
-    let save: any
-    let del : any
+    let load: any, create: any, update: any, del: any
 
     beforeAll(async () => {
         load = jest.spyOn((<any>A).__proto__.adapter, 'load')
-        save = jest.spyOn((<any>A).__proto__.adapter, 'save')
+        create = jest.spyOn((<any>A).__proto__.adapter, 'create')
+        update = jest.spyOn((<any>A).__proto__.adapter, 'update')
         del  = jest.spyOn((<any>A).__proto__.adapter, 'delete')
     })
 
@@ -213,21 +213,47 @@ describe('Model', () => {
         // TODO
     })
 
+    describe('obj.create', () => {
+
+        it('create a new obj without id', async () => {
+            let a = new A() 
+            await a.create()	
+            expect(create).toHaveBeenCalledTimes(1)
+            expect(create).toHaveBeenCalledWith(a)
+        })
+
+        it('create a new obj with id', async () => {
+            let a = new A({id: 1}) 
+            await a.create()	
+            expect(create).toHaveBeenCalledTimes(1)
+            expect(create).toHaveBeenCalledWith(a)
+        })
+    })
+
+    describe('obj.update', () => {
+
+        it('update exist object', async () => {
+            let a = new A() 
+            await a.create()	
+
+            runInAction(() => { a.a = 1 })
+            await a.update()
+            expect(update).toHaveBeenCalledTimes(1)
+            expect(update).toHaveBeenCalledWith(a)
+        })
+
+        // TODO
+        // it('update not exist object', async () => {
+        // })
+    })
+
     describe('obj.save', () => {
 
         it('save', async () => {
             let a = new A() 
             await a.save()	
-            expect(save).toHaveBeenCalledTimes(1)
-            expect(save).toHaveBeenCalledWith(a)
-        })
-
-        it('double save without await', async() => {
-            // TODO
-        })
-
-        it('double save with await', async() => {
-            // TODO
+            expect(create).toHaveBeenCalledTimes(1)
+            expect(create).toHaveBeenCalledWith(a)
         })
     })
 

@@ -1,4 +1,5 @@
 import { Model, model } from '../model'
+import id from './id'
 import field from './field'
 
 
@@ -22,15 +23,17 @@ describe('Field: field', () => {
 
     it('create object', async () => {
         @model class A extends Model { 
+            @id    id
             @field a: number 
         }
 
         let a = new A()
-        expect(a.a).toBeNull()
+        expect(a.a).toBeUndefined()
     })
 
     it('create object with default id in class property', async () => {
         @model class A extends Model {
+            @id    id
             @field a: number = 1
         }
 
@@ -40,6 +43,7 @@ describe('Field: field', () => {
 
     it('create object with value ', async () => {
         @model class A extends Model { 
+            @id    id
             @field a: number 
         }
 
@@ -49,11 +53,12 @@ describe('Field: field', () => {
 
     it('create object and set value ', async () => {
         @model class A extends Model { 
+            @id    id
             @field a: number 
         }
         let a = new A()
 
-        expect(a.a).toBeNull()
+        expect(a.a).toBeUndefined()
         a.a = 1
         expect(a.a).toBe(1)
     })

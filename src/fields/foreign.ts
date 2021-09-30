@@ -3,7 +3,7 @@ import {intercept, observe, extendObservable, observable, autorun, when, reactio
 
 function field_foreign(obj, field_name) {
     let edit_mode = false
-    let settings = obj.model.relateions[field_name].settings
+    let settings = obj.model.relations[field_name].settings
     let foreign_model     = settings.foreign_model
     let foreign_ids_names = settings.foreign_ids_names
 
@@ -12,6 +12,7 @@ function field_foreign(obj, field_name) {
         [field_name]: null 
     })
 
+    debugger
     reaction(
         // watch on foreign cache for foreign object
         () => {
@@ -48,8 +49,9 @@ function field_foreign(obj, field_name) {
                 }
             }
             else {
+                debugger
                 // if foreign set to obj then update ids from the obj's ids
-                let obj_ids = change.newValue.model.ids
+                let obj_ids: any = Array.from(change.newValue.model.ids.keys())
                 for (var i = 0; i < foreign_ids_names.length; i++) {
                     // do not touch if it the same
                     if (obj[foreign_ids_names[i]] != change.newValue[obj_ids[i]])

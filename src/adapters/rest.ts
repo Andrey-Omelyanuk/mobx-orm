@@ -11,7 +11,7 @@ export class RestAdapter<M extends Model> implements Adapter<M> {
         private api: string) {
     }
 
-    async save(obj: M) : Promise<any> {
+    async create(obj: M) : Promise<object> {
         // gather data from obj
         let data = {}
         for(let field_name in obj.model.fields) {
@@ -20,12 +20,26 @@ export class RestAdapter<M extends Model> implements Adapter<M> {
             }
         }
         // create or update 
-        if (obj.__id === null) return await this.http.post(`${this.api}/`, data)
-        else                   return await this.http.put (`${this.api}/${obj.__id}/`, data)
+        return await this.http.post(`${this.api}/`, data)
+    }
+
+    async update(obj: M) : Promise<object> {
+        // gather data from obj
+        let data = {}
+        for(let field_name in obj.model.fields) {
+            if (obj[field_name] !== null) {
+                data[field_name] = obj[field_name]
+            }
+        }
+        return await this.http.put (`${this.api}/${obj.__id}/`, data)
     }
 
     async delete(obj: M) : Promise<any> {
         return this.http.delete(`${this.api}/${obj.__id}/`)
+    }
+
+    async getTotalCount(where?): Promise<number> {
+        return 10
     }
 
     async load (where={}, order_by=[], limit=50, offset = 0) : Promise<M[]> {

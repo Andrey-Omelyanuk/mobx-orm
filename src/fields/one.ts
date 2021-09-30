@@ -38,7 +38,7 @@ function field_one(obj: Model, field_name) {
             }
             // set foreign ids on the remote obj 
             if (new_remote_obj) {
-                let obj_ids = obj.model.ids 
+                let obj_ids: any = Array.from(obj.model.ids.keys())
                 for (var i = 0; i < remote_foreign_ids_name.length; i++) {
                     // do not touch if it the same
                     if (new_remote_obj[remote_foreign_ids_name[i]] != obj[obj_ids[i]])
@@ -75,7 +75,7 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
         if (model.relations === undefined) model.relations = {}
         // if it is empty then try auto detect it (it works only with single id) 
         remote_foreign_ids_names = remote_foreign_ids_names.length ? remote_foreign_ids_names: [`${model.name.toLowerCase()}_id`]
-        model.relateions[field_name] = { 
+        model.relations[field_name] = { 
             decorator: field_one,
             settings: {
                 remote_model: remote_model,

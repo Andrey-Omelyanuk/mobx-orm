@@ -12,13 +12,17 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
     readonly cls: any
     readonly store_name: string
 
+    static getStoreName(cls) {
+        return cls.__proto__.name
+    }
+
     constructor(cls: any) {
         this.cls = cls
-        this.store_name = this.cls.__proto__.name
+        this.store_name = LocalAdapter.getStoreName(cls) 
         store[this.store_name] = {}
     }
 
-    async save(obj: M) : Promise<M> {
+    async create(obj: M) : Promise<object> {
         if (obj.__id === null) {
             // calculate and set new ID
             let ids = [0]
@@ -26,13 +30,17 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
                 ids.push(parseInt(id))
             }
             let max = Math.max.apply(null, ids)
-            for(let name_id of obj.model.ids) {
-                (<any>obj)[name_id] = max + 1
+            for(let field_name_id of obj.model.ids.keys()) {
+                (<any>obj)[field_name_id] = max + 1
             }
         }
 
         store[this.store_name][obj.__id] = obj.raw_obj 
+        return obj
+    }
 
+    async update(obj: M) : Promise<object> {
+        store[this.store_name][obj.__id] = obj.raw_obj 
         return obj
     }
 
@@ -59,5 +67,9 @@ export function local() {
 }
 
 export function init_local_data(cls: any, data: any[]) {
-    // TODO
+    let objs = {} 
+    for(let obj of data) {
+        objs[cls.__id(obj)] = obj
+    }
+    store[LocalAdapter.getStoreName(cls)] = objs
 }

@@ -8,8 +8,8 @@ describe('Field: id', () => {
         @model class A extends Model {
             @id id: number
         }
-        expect((<any>A).ids).toEqual(['id'])
-        expect((<any>A).fields['id'].decorator instanceof Function).toBeTruthy()
+        expect(Array.from((<any>A).ids.keys())).toEqual(['id'])
+        expect((<any>A).ids.get('id').decorator instanceof Function).toBeTruthy()
     })
 
     it('declare multi ids', async () => {
@@ -17,9 +17,9 @@ describe('Field: id', () => {
             @id id_a: number
             @id id_b: number
         }
-        expect((<any>A).ids).toEqual(['id_a', 'id_b'])
-        expect((<any>A).fields['id_a'].decorator instanceof Function).toBeTruthy()
-        expect((<any>A).fields['id_b'].decorator instanceof Function).toBeTruthy()
+        expect(Array.from((<any>A).ids.keys())).toEqual(['id_a', 'id_b'])
+        expect((<any>A).ids.get('id_a').decorator instanceof Function).toBeTruthy()
+        expect((<any>A).ids.get('id_b').decorator instanceof Function).toBeTruthy()
     })
 
     it('create object', async () => {
@@ -37,7 +37,8 @@ describe('Field: id', () => {
         }
 
         let a = new A()
-        expect(a.id).toBe(1)
+        // Don't use defauls for ids field
+        expect(a.id).toBeNull()
     })
 
     it('create object with value ', async () => {
