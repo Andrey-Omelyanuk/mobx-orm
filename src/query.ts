@@ -105,7 +105,7 @@ export default class Query<M extends Model> {
             })
         })
     }
-    
+
     private watch_obj(obj) {
         this.disposer_objects[obj.__id] = autorun(
             () => {

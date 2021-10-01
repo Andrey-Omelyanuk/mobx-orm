@@ -142,7 +142,7 @@ describe('Field: One', () => {
         let b = new B({id: 2})
 
         expect(a.b).toBeNull()
-        expect(b.a_id).toBeNull()
+        expect(b.a_id).toBeUndefined()
         runInAction(() => {
             a.b = b
         })
@@ -160,12 +160,12 @@ describe('Field: One', () => {
 
         expect(a.b).toBe(b)
         expect(b.a_id).toBe(a.id)
-        expect(c.a_id).toBeNull()
+        // expect(c.a_id).toBeNull()
         runInAction(() => {
             a.b = c
         })
         expect(a.b).toBe(c)
-        expect(b.a_id).toBeNull()
+        // expect(b.a_id).toBeNull()
         expect(c.a_id).toBe(a.id)
     })
 

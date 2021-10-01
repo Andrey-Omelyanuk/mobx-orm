@@ -18,7 +18,7 @@ Notes:
 
 ```sh
 # dev on local
-node_modules/.bin/jest --testMatch='**/src/**/model.spec.ts' --watchAll
+node_modules/.bin/jest --testMatch='**/src/**/*.spec.ts' --watchAll
 node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/local.spec.ts'
 chrome://inspect/#devices
 

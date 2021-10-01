@@ -45,7 +45,7 @@ function field_many(obj: Model, field_name) {
                 for (let id_name of remote_foreign_ids_name)
                     old_remote_obj[id_name] = null 
             // set foreign ids on the remote objs 
-            let obj_ids = obj.model.ids 
+            let obj_ids: any = Array.from(obj.model.ids.keys())
             for(let new_remote_obj of new_remote_objs) {
                 for (var i = 0; i < remote_foreign_ids_name.length; i++) {
                     // do not touch if it the same
