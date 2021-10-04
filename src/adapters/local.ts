@@ -9,7 +9,7 @@ type RawObject = any
 
 export let store: any = {}
 
-export class LocalAdapter extends Adapter<Model> {
+export class LocalAdapter<M extends Model> extends Adapter<M> {
 
     readonly store_name: string
 

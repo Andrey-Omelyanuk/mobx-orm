@@ -1,6 +1,7 @@
 import { field } from 'dist/mobx-orm'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import Adapter   from './adapters/adapter'
+import QueryBase from './query-base'
 import Query     from './query'
 import QueryPage from './query-page'
 
@@ -59,8 +60,8 @@ export abstract class Model {
         this.cache.delete(obj.__id)
     }
 
-    static load(filter?, order_by?: string[]) {
-        return new Query(this, filter, order_by)
+    static load(filters?, order_by?: string[]): QueryBase<Model>  {
+        return new Query<Model>(this.adapter, this.cache, filters, order_by)
     }
 
     static loadPage(filter?, order_by?: string[], page?: number, page_size?: number) {

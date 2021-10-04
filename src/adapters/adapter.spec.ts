@@ -3,7 +3,7 @@ import id       from '../fields/id'
 import Adapter  from './adapter'
 
 
-describe('Adapter: Local', () => {
+describe('Adapter', () => {
 
     type RawObject = any 
 

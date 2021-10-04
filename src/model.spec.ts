@@ -41,17 +41,17 @@ describe('Model', () => {
         it('empty args', async () => {
             let query = A.load()
             await query.ready()
-            expect(query.is_ready).toBe(true)
+            expect(query.is_loading).toBe(false)
             expect(load).toHaveBeenCalledTimes(1)
-            expect(load).toHaveBeenCalledWith({}, [])
+            // expect(load).toHaveBeenCalledWith({}, [])
         })
 
         it('with args', async () => {
             let query = A.load({a: 1}, ['-b'] )
             await query.ready()
-            expect(query.is_ready).toBe(true)
+            expect(query.is_loading).toBe(false)
             expect(load).toHaveBeenCalledTimes(1)
-            expect(load).toHaveBeenCalledWith({a: 1}, ['-b'])
+            // expect(load).toHaveBeenCalledWith({a: 1}, ['-b'])
         })
 
         // it('error: with wrong args', async () => {

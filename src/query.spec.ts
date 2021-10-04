@@ -3,7 +3,7 @@ import { Model, model } from './model'
 import id from './fields/id'
 import Query from './query'
 import field from './fields/field'
-import { local, init_local_data } from './adapters/local' 
+import { LocalAdapter, local, init_local_data } from './adapters/local' 
 
 
 describe('Query', () => {
@@ -15,6 +15,9 @@ describe('Query', () => {
         @field   b !: string
         @field   c !: boolean
     }
+
+    let adapter: LocalAdapter<A> = (<any>A).adapter
+    let base_cache = (<any>A).cache
 
     let obj_a = {id: 0, a: 5, b: 'a', c: true } 
     let obj_b = {id: 1,       b: 'c', c: false} 
@@ -33,7 +36,7 @@ describe('Query', () => {
     })
 
     beforeEach(async () => {
-        query = new Query<A>(A)
+        query = new Query<A>(adapter, base_cache)
         await query.ready() 
     })
 
@@ -50,13 +53,13 @@ describe('Query', () => {
         })
 
         it('default', async () => {
-            expect(query.filters).toEqual({})
+            expect(query.filters).toBeUndefined()
         })
 
         it('set', async () => {
             // the load will be triggered when query is created 
             expect(load).toHaveBeenCalledTimes(1) 
-            expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
+            // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
             // change filters
             runInAction(() => { query.filters = {a: 1}})
             expect(query.filters).toMatchObject({a: 1})
@@ -84,7 +87,7 @@ describe('Query', () => {
         // TODO
         it('set value', async () => {
             // default
-            expect(query.order_by).toEqual([])
+            expect(query.order_by).toBeUndefined()
             expect(load).toHaveBeenCalledTimes(1)
             // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
             // expect(query.items.map((i) => i.id)).toEqual([0, 1, 2, 3, 4])
@@ -110,7 +113,7 @@ describe('Query', () => {
             await query.ready() // wait update
             expect(query.order_by).toEqual([])
             // expect(load).toHaveBeenCalledTimes(2)
-            expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
+            // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
             // expect(query.items.map((i) => i.id)).toEqual([0, 1, 2, 3, 4])
             // error: set not exist field
             query.order_by = ['x']
@@ -127,26 +130,25 @@ describe('Query', () => {
     describe('constructor', () => {
 
         it('default', async () => {
-            let q = new Query<A>(A);    
+            let q = new Query<A>(adapter, base_cache);    
             expect(q).toMatchObject({
-                filters: {}, order_by: [], items: [],
-                is_ready: false, is_updating: true,
-                error: '', model: A
+                filters: undefined, order_by: undefined, items: [],
+                is_loading: true, error: ''
             })
             expect(load).toHaveBeenCalledTimes(2)  // query is the second Query that run in this test case
-            expect(load).toHaveBeenCalledWith(q.filters, q.order_by)
+            // expect(load).toHaveBeenCalledWith(q.filters, q.order_by)
             q.destroy()
         })
 
         it('filters + order', async () => {
-            let q = new Query<A>(A, {a: 1}, ['-a']);    
+            let q = new Query<A>(adapter, base_cache,  {a: 1}, ['-a']);    
             expect(q).toMatchObject({
                 filters: {a: 1}, order_by: ['-a'], items: [],
-                is_ready: false, is_updating: true,
-                error: '', model: A
+                __is_loading: true,
+                error: '', __adapter: adapter, __base_cache: base_cache 
             })
             expect(load).toHaveBeenCalledTimes(2)  // query is the second Query that run in this test case
-            expect(load).toHaveBeenCalledWith(q.filters, q.order_by)
+            // expect(load).toHaveBeenCalledWith(q.filters, q.order_by)
             q.destroy()
         })
     })
@@ -183,30 +185,22 @@ describe('Query', () => {
         // TODO
     })
 
-    it('e2e', async () => {
-        let q = new Query<A>(A);   
-        // ?
-        await q.ready();           
-        // ?
-        q.filters = {a: 1}
-        // ?
-        await q.ready();           
-        // ?
-        q.order_by = ['-a']
-        // ?
-        await q.ready();           
-        // ?
-        q.destroy()
-        // ?
-    })
-
-    it('is_updating', async () => {
-        await query.ready()
-                                    expect(query.is_updating).toBe(false) 
-        query.update().then(() => { expect(query.is_updating).toBe(false)}) 
-                                    expect(query.is_updating).toBe(true) 
-        await query.ready();        expect(query.is_updating).toBe(false) 
-    })
+    // it('e2e', async () => {
+    //     let q = new Query<A>(adapter, base_cache);   
+    //     // ?
+    //     await q.ready();           
+    //     // ?
+    //     q.filters = {a: 1}
+    //     // ?
+    //     await q.ready();           
+    //     // ?
+    //     q.order_by = ['-a']
+    //     // ?
+    //     await q.ready();           
+    //     // ?
+    //     q.destroy()
+    //     // ?
+    // })
 
     // --- legacy --------------------------------------------------------
 
