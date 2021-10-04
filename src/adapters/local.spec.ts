@@ -38,14 +38,14 @@ describe('Adapter: Local', () => {
     describe('constructor', () => {
         it('create a new instance', async ()=> {
             let adapter = new LocalAdapter(A)
-            expect(adapter.cls).toBe(A)
+            expect(adapter.model).toBe(A)
             expect(adapter.store_name).toBe('A')
         })
 
         it('decorate the model', async ()=> {
             @local()
             @model class A extends Model {}
-            expect((<any>A).adapter.cls).toBe(A)
+            expect((<any>A).adapter.model).toBe(A)
             expect((<any>A).adapter.store_name).toBe('A')
         })
     })
@@ -53,17 +53,16 @@ describe('Adapter: Local', () => {
     describe('create', () => {
 
         it('create', async ()=> {
-            let a = new A({a: 1})
-            expect(a.id).toBeNull()
-            expect(store['A']).toEqual({})
-            expect(create).toHaveBeenCalledTimes(0)
-            await a.create()
-            expect(a.id).toBe(1)
-            expect(store['A']).toEqual({
-                [A.__id(a)]: a.raw_obj, 
-            })
-            expect(create).toHaveBeenCalledTimes(1)
-            expect(create).toHaveBeenCalledWith(a)
+            let a = new A({a: 1});      expect(a.id).toBeNull()
+                                        expect(store['A']).toEqual({})
+                                        expect(create).toHaveBeenCalledTimes(0)
+            let b = await a.create();   expect(a).toBe(b)
+                                        expect(a.id).toBe(1)
+                                        expect(store['A']).toEqual({
+                                            [a.__id]: a.raw_obj, 
+                                        })
+                                        expect(create).toHaveBeenCalledTimes(1)
+                                        expect(create).toHaveBeenCalledWith(a)
         })
 
         it('create few objets', async ()=> {
@@ -135,24 +134,21 @@ describe('Adapter: Local', () => {
     describe('init_local_data', () => {
 
         it('empty', async ()=> {
-            let store_name = LocalAdapter.getStoreName(A)
             init_local_data(A, [])
-            expect(store[store_name]).toEqual({})
+            expect(store['A']).toEqual({})
         })
 
         it('with some data', async ()=> {
-            let store_name = LocalAdapter.getStoreName(A)
             let data_set = [
                 {id: 1, a: 1, b: 'a', c: true },
                 {id: 2, a: 2, b: 'b', c: false},
             ]
             init_local_data(A, data_set)
-            expect(store[store_name][A.__id(data_set[0])]).toMatchObject(data_set[0])
-            expect(store[store_name][A.__id(data_set[1])]).toMatchObject(data_set[1])
+            expect(store['A'][A.__id(data_set[0])]).toMatchObject(data_set[0])
+            expect(store['A'][A.__id(data_set[1])]).toMatchObject(data_set[1])
         })
 
         it('override data', async ()=> {
-            let store_name = LocalAdapter.getStoreName(A)
             let data_set_a = [
                 {id: 1, a: 1, b: 'a', c: true },
                 {id: 2, a: 2, b: 'b', c: false},
@@ -164,7 +160,7 @@ describe('Adapter: Local', () => {
 
             init_local_data(A, data_set_a)
             init_local_data(A, data_set_b)
-            expect(store[store_name][A.__id(data_set_b[0])]).toMatchObject(data_set_b[0])
+            expect(store['A'][A.__id(data_set_b[0])]).toMatchObject(data_set_b[0])
         })
 
         // TODO

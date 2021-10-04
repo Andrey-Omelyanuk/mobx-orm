@@ -39,6 +39,26 @@ export abstract class Model {
         }
     }
 
+    // add obj to the cache
+    @action static inject(obj: Model) {
+        debugger
+        if (obj.__id === null)                    
+            throw new Error(`Object should have id!`)
+        if (this.cache.has(obj.__id)) {
+            throw new Error(`Object with id "${obj.__id}" already exist in the cache of model: "${this.name}")`)
+        }
+        this.cache.set(obj.__id, obj)
+    }
+
+    // remove obj from the cache
+    @action static eject(obj: Model) {
+        if (obj.__id === null)
+            return                   
+        if (!this.cache.has(obj.__id)) 
+            throw new Error(`Object with id "${obj.__id}" not exist in the cache of model: ${this.name}")`)
+        this.cache.delete(obj.__id)
+    }
+
     static load(filter?, order_by?: string[]) {
         return new Query(this, filter, order_by)
     }
@@ -53,11 +73,7 @@ export abstract class Model {
         if (this.cache.has(__id)) {
             runInAction(() => {
                 obj = this.cache.get(__id)
-                for(let field_name in this.fields) {
-                    if (raw_obj[field_name] !== undefined) {
-                        obj[field_name] = raw_obj[field_name]
-                    }
-                }
+                obj.updateFromRaw(raw_obj)
             })
         }
         else {
@@ -103,12 +119,17 @@ export abstract class Model {
 
     get raw_obj() : any {
         let raw_obj: any = {}
-        for(let id_field_name in this.model.ids.keys()) {
-            raw_obj[id_field_name] = this[id_field_name]
+        for(let id_field_name of this.model.ids.keys()) {
+            if(this[id_field_name] !== undefined) {
+                raw_obj[id_field_name] = this[id_field_name]
+            }
         }
         for(let field_name in this.model.fields) {
-            raw_obj[field_name] = this[field_name]
+            if(this[field_name] !== undefined) {
+                raw_obj[field_name] = this[field_name]
+            }
         }
+        raw_obj.__id = this.__id
         return raw_obj
     }
 
@@ -122,46 +143,26 @@ export abstract class Model {
         return is_changed 
     }
 
-    async create() {
-        let raw_obj = await this.model.adapter.create(this)
-        this.model.updateCache(raw_obj)
-    }
+    async create() { return await this.model.adapter.create(this) }
+    async update() { return await this.model.adapter.update(this) }
+    async delete() { return await this.model.adapter.delete(this) }
+    async save  () { return this.__id === null ? this.create() : this.update() }
 
-    async update() {
-        let raw_obj = await this.model.adapter.update(this)
-        this.model.updateCache(raw_obj)
-    }
-
-    async save() {
-        return this.__id === null ? this.create() : this.update()
-    }
-
-    async delete() {
-        await this.model.adapter.delete(this)
-        // reset ids
-        for(let id_field_name of this.model.ids.keys())
-            this[id_field_name] = null
-    }
-
-    // add obj to the cache
-    // TODO: inject and eject should be on Model, not on instance
-    @action inject() {
-        if (this.__id === null)                    
-            throw new Error(`Object should have id!`)
-        if (this.model.cache.has(this.__id)) {
-            throw new Error(`Object with id "${this.__id}" already exist in the cache of model: "${this.model.name}")`)
+    @action updateFromRaw(raw_obj) {
+        // keys
+        for (let id_field_name of this.model.ids.keys()) {
+            if (raw_obj[id_field_name] !== undefined && this[id_field_name] != raw_obj[id_field_name] ) {
+                this[id_field_name] = raw_obj[id_field_name]
+            }
         }
-        this.model.cache.set(this.__id, this)
+        // fields
+        for(let field_name in this.model.fields) {
+            if (raw_obj[field_name] !== undefined) {
+                this[field_name] = raw_obj[field_name]
+            }
+        }
     }
 
-    // remove obj from the cache
-    @action eject() {
-        if (this.__id === null)
-            return                   
-        if (!this.model.cache.has(this.__id)) 
-            throw new Error(`Object with id "${this.__id}" not exist in the cache of model: ${this.model.name}")`)
-        this.model.cache.delete(this.__id)
-    }
 }
 
 
@@ -200,8 +201,17 @@ export function model(constructor) {
             // update the object from args
             if (args[0]) {
                 let raw_obj = args[0]
-                for(let field_name in raw_obj) {
-                    obj[field_name] = raw_obj[field_name]
+                // id-fields
+                for (let id_field_name of model.ids.keys()) {
+                    if (raw_obj[id_field_name] !== undefined) {
+                        obj[id_field_name] = raw_obj[id_field_name]
+                    }
+                }
+                // fields 
+                for (let field_name in model.fields) {
+                    if (raw_obj[field_name] !== undefined) {
+                        obj[field_name] = raw_obj[field_name]
+                    }
                 }
             }
             // save __init_data

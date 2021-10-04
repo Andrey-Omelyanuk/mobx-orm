@@ -24,7 +24,7 @@ function field_ID (obj , field_name) {
             throw new Error(`You cannot change id field: ${field_name}. ${obj[field_name]} to ${change.newValue}`)
         if (obj[field_name] !== null && change.newValue === null) {
             try {
-                obj.eject()
+                obj.model.eject(obj)
             }
             catch (err) {
                 let ignore_error = `Object with id "${obj.__id}" not exist in the model cache: ${obj.model.name}")`
@@ -39,7 +39,7 @@ function field_ID (obj , field_name) {
     observe(obj, field_name, (change) => {
         // if id is complete
         if (obj.__id !== null) 
-            obj.inject()
+            obj.model.inject(obj)
     })
 
 }

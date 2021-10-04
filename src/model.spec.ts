@@ -272,7 +272,7 @@ describe('Model', () => {
 
         it('inject automaticaly when id initialized', async () => {
             let a = new A({}) 
-            let inject = jest.spyOn(a, 'inject')
+            let inject = jest.spyOn(a.model, 'inject')
 
             expect((<any>A).cache.size).toBe(0)
             expect(inject).toHaveBeenCalledTimes(0)
@@ -284,16 +284,16 @@ describe('Model', () => {
 
         it('inject after eject', async () => {
             let a = new A({id: 1}) 
-            a.eject()
+            a.model.eject(a)
             expect((<any>A).cache.size).toBe(0)
-            a.inject()   
+            a.model.inject(a)   
             expect((<any>A).cache.size).toBe(1)
             expect((<any>A).cache.get(a.__id)).toBe(a)
         })
 
         it('error: inject second time', async () => {
             let a = new A({id: 1}) // eject automaticaly when id initialazed
-            expect(() => { a.inject() }).toThrow(new Error(`Object with id \"1\" already exist in the cache of model: \"A\")`))
+            expect(() => { a.model.inject(a) }).toThrow(new Error(`Object with id \"1\" already exist in the cache of model: \"A\")`))
         })
 
         it('error: try to inject another object with the same id', async () => {
@@ -303,7 +303,7 @@ describe('Model', () => {
 
         it('error: try to inject object without id', async () => {
             let a = new A()
-            expect(() => { a.inject() }).toThrow(new Error(`Object should have id!`))
+            expect(() => { a.model.inject(a) }).toThrow(new Error(`Object should have id!`))
         })
 
     })
@@ -314,21 +314,21 @@ describe('Model', () => {
             let a = new A({id: 1}) 
             expect((<any>A).cache.size).toBe(1)
             expect((<any>A).cache.get(a.__id)).toBe(a)
-            a.eject()
+            a.model.eject(a)
             expect((<any>A).cache.size).toBe(0)
         })
 
         it('eject object without id', async () => {
             let a = new A({}) 
             expect((<any>A).cache.size).toBe(0)
-            a.eject() // nothing happend
+            a.model.eject(a) // nothing happend
             expect((<any>A).cache.size).toBe(0)
         })
 
         it('error: eject second time', async () => {
             let a = new A({id: 1})
-            a.eject() 
-            expect(() => { a.eject () })
+            a.model.eject(a) 
+            expect(() => { a.model.eject(a) })
                 .toThrow(new Error(`Object with id "${a.__id}" not exist in the cache of model: ${a.model.name}")`))
         })
     })

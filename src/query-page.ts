@@ -77,7 +77,9 @@ export default class Query<M extends Model> {
                 delete this.disposer_objects[__id]
                 let i = this.items.indexOf(obj)
                 if (i != -1)
-                    this.items.splice(i, 1)
+                    runInAction(() => {
+                        this.items.splice(i, 1)
+                    })
             }
         }))
 

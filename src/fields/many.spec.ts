@@ -21,7 +21,7 @@ describe('Field: Many', () => {
 
     it('declare the many with single id', async () => {
         const {A, B} = declare()
-        many(B, 'a_id')(A, 'bs') 
+        many(B, 'a_id')(A, 'bs')
         expect((<any>A).relations['bs'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).relations['bs'].settings.remote_model).toBe(B)
         expect((<any>A).relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id'])
@@ -39,7 +39,7 @@ describe('Field: Many', () => {
             @field       a_id2: number
         }
 
-        many(B, 'a_id1', 'a_id2')(A, 'bs') 
+        many(B, 'a_id1', 'a_id2')(A, 'bs')
         expect((<any>A).relations['bs'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).relations['bs'].settings.remote_model).toBe(B)
         expect((<any>A).relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id1', 'a_id2'])
@@ -47,7 +47,7 @@ describe('Field: Many', () => {
 
     it('declare the many with auto detect single id', async () => {
         const {A, B} = declare()
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
         expect((<any>A).relations['bs'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).relations['bs'].settings.remote_model).toBe(B)
         expect((<any>A).relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id'])
@@ -64,7 +64,7 @@ describe('Field: Many', () => {
             @field      a_id: number
                           as: A[]
         }
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
         many(A)(B, 'as')
 
         expect((<any>A).relations['bs'].decorator instanceof Function).toBeTruthy()
@@ -78,7 +78,7 @@ describe('Field: Many', () => {
 
     it('should be [] by default', async () => {
         const {A, B} = declare()
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
 
         let a = new A()
         expect(a.bs).toEqual([])
@@ -86,7 +86,7 @@ describe('Field: Many', () => {
 
     it('should contain a remote object if the object is exist in cache', async () => {
         const {A, B} = declare()
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
 
         let a = new A({id: 1})
         let b = new B({id: 2, a_id: 1})
@@ -95,7 +95,7 @@ describe('Field: Many', () => {
 
     it('should contain [] if the object is not in the cache', async () => {
         const {A, B} = declare()
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
 
         let a = new A()
         let b = new B({id: 2, a_id: 1})
@@ -104,7 +104,7 @@ describe('Field: Many', () => {
 
     it('should contain [] if the remote object is not in the cache', async () => {
         const {A, B} = declare()
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
 
         let a = new A({id: 1})
         let b = new B({a_id: 1})
@@ -113,7 +113,7 @@ describe('Field: Many', () => {
 
     it('remote object create later', async () => {
         const {A, B} = declare()
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
         let a = new A({id: 1})
 
         expect(a.bs).toEqual([])
@@ -123,7 +123,7 @@ describe('Field: Many', () => {
 
     it('remote object delete later', async () => {
         const {A, B} = declare()
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
         let a = new A({id: 1})
         let b = new B({id: 2, a_id: 1})
 
@@ -136,13 +136,13 @@ describe('Field: Many', () => {
 
     it('add obj to many ', async () => {
         const {A, B} = declare()
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
 
         let a = new A({id: 1})
         let b = new B({id: 2})
 
         expect(a.bs).toEqual([])
-        // expect(b.a_id).toBeNull()
+        expect(b.a_id).toBeUndefined()
         runInAction(() => {
             a.bs.push(b)
         })
@@ -153,7 +153,7 @@ describe('Field: Many', () => {
 
     it('remove obj from many', async () => {
         const {A, B} = declare()
-        many(B)(A, 'bs') 
+        many(B)(A, 'bs')
 
         let a = new A({id: 1})
         let b = new B({id: 2, a_id: 1})

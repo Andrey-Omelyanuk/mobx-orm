@@ -21,7 +21,7 @@ describe('Field: One', () => {
 
     it('declare the one with single id', async () => {
         const {A, B} = declare()
-        one(B, 'a_id')(A, 'b') 
+        one(B, 'a_id')(A, 'b')
         expect((<any>A).relations['b'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).relations['b'].settings.remote_model).toBe((B as any).__proto__)
         expect((<any>A).relations['b'].settings.remote_foreign_ids_names).toEqual(['a_id'])
@@ -39,7 +39,7 @@ describe('Field: One', () => {
             @field       a_id2: number
         }
 
-        one(B, 'a_id1', 'a_id2')(A, 'b') 
+        one(B, 'a_id1', 'a_id2')(A, 'b')
         expect((<any>A).relations['b'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).relations['b'].settings.remote_model).toBe((B as any).__proto__)
         expect((<any>A).relations['b'].settings.remote_foreign_ids_names).toEqual(['a_id1', 'a_id2'])
@@ -47,7 +47,7 @@ describe('Field: One', () => {
 
     it('declare the one with auto detect single id', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
         expect((<any>A).relations['b'].decorator instanceof Function).toBeTruthy()
         expect((<any>A).relations['b'].settings.remote_model).toBe((B as any).__proto__)
         expect((<any>A).relations['b'].settings.remote_foreign_ids_names).toEqual(['a_id'])
@@ -64,7 +64,7 @@ describe('Field: One', () => {
             @field      a_id: number
                         a_one: A
         }
-        one(B)(A, 'b_one') 
+        one(B)(A, 'b_one')
         one(A)(B, 'a_one')
 
         expect((<any>A).relations['b_one'].decorator instanceof Function).toBeTruthy()
@@ -78,7 +78,7 @@ describe('Field: One', () => {
 
     it('should be null by default', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
 
         let a = new A()
         expect(a.b).toBeNull()
@@ -86,7 +86,7 @@ describe('Field: One', () => {
 
     it('should contain a remote object if the object is exist in cache', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
 
         let a = new A({id: 1})
         let b = new B({id: 2, a_id: 1})
@@ -95,7 +95,7 @@ describe('Field: One', () => {
 
     it('should contain null if the object is not in the cache', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
 
         let a = new A()
         let b = new B({id: 2, a_id: 1})
@@ -104,7 +104,7 @@ describe('Field: One', () => {
 
     it('should contain null if the remote object is not in the cache', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
 
         let a = new A({id: 1})
         let b = new B({a_id: 1})
@@ -113,7 +113,7 @@ describe('Field: One', () => {
 
     it('remote object create later', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
         let a = new A({id: 1})
 
         expect(a.b).toBeNull()
@@ -123,7 +123,7 @@ describe('Field: One', () => {
 
     it('remote object delete later', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
         let a = new A({id: 1})
         let b = new B({id: 2, a_id: 1})
 
@@ -136,7 +136,7 @@ describe('Field: One', () => {
 
     it('set from null to obj', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
 
         let a = new A({id: 1})
         let b = new B({id: 2})
@@ -152,7 +152,7 @@ describe('Field: One', () => {
 
     it('set from obj_a to obj_b', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
 
         let a = new A({id: 1})
         let b = new B({id: 2, a_id: 1})
@@ -160,7 +160,7 @@ describe('Field: One', () => {
 
         expect(a.b).toBe(b)
         expect(b.a_id).toBe(a.id)
-        // expect(c.a_id).toBeNull()
+        expect(c.a_id).toBeUndefined()
         runInAction(() => {
             a.b = c
         })
@@ -171,7 +171,7 @@ describe('Field: One', () => {
 
     it('set from obj to null', async () => {
         const {A, B} = declare()
-        one(B)(A, 'b') 
+        one(B)(A, 'b')
 
         let a = new A({id: 1})
         let b = new B({id: 2, a_id: 1})

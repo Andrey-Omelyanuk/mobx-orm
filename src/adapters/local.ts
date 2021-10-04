@@ -5,24 +5,21 @@ import Adapter  from './adapter'
 You can use this adapter for mock data or for unit test
 */
 
+type RawObject = any 
+
 export let store: any = {}
 
-export class LocalAdapter<M extends Model> implements Adapter<M> {
+export class LocalAdapter extends Adapter<Model> {
 
-    readonly cls: any
     readonly store_name: string
 
-    static getStoreName(cls) {
-        return cls.__proto__.name
-    }
-
-    constructor(cls: any) {
-        this.cls = cls
-        this.store_name = LocalAdapter.getStoreName(cls) 
+    constructor(model: any) {
+        super(model)
+        this.store_name = model.__proto__.name
         store[this.store_name] = {}
     }
 
-    async create(obj: M) : Promise<object> {
+    async __create(obj: RawObject) : Promise<RawObject> {
         if (obj.__id === null) {
             // calculate and set new ID
             let ids = [0]
@@ -30,32 +27,33 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
                 ids.push(parseInt(id))
             }
             let max = Math.max.apply(null, ids)
-            for(let field_name_id of obj.model.ids.keys()) {
-                (<any>obj)[field_name_id] = max + 1
+            for(let field_name_id of this.model.ids.keys()) {
+                obj[field_name_id] = max + 1
             }
         }
-
-        store[this.store_name][obj.__id] = obj.raw_obj 
+        obj.__id = this.model.__id(obj)
+        store[this.store_name][this.model.__id(obj)] = obj
         return obj
     }
 
-    async update(obj: M) : Promise<object> {
-        store[this.store_name][obj.__id] = obj.raw_obj 
+    async __update(obj: RawObject) : Promise<RawObject> {
+        store[this.store_name][obj.__id] = obj
         return obj
     }
 
-    async delete(obj: M) : Promise<any> {
+    async __delete(obj: RawObject) : Promise<RawObject> {
         delete store[this.store_name][obj.__id]
+        return obj
     }
 
-    async load (where?, order_by?, limit?, offset?) : Promise<M[]> {
+    async __load (where?, order_by?, limit?, offset?) : Promise<RawObject[]> {
         // TODO
-        return
+        return []
     }
 
-    async getTotalCount(where?): Promise<number> {
-        return 100
-    }
+    // async getTotalCount(where?): Promise<number> {
+    //     return 100
+    // }
 }
 
 // model decorator
@@ -66,10 +64,10 @@ export function local() {
     }
 }
 
-export function init_local_data(cls: any, data: any[]) {
+export function init_local_data(model: any, data: any[]) {
     let objs = {} 
     for(let obj of data) {
-        objs[cls.__id(obj)] = obj
+        objs[model.__id(obj)] = obj
     }
-    store[LocalAdapter.getStoreName(cls)] = objs
+    store[model.__proto__.name] = objs
 }
