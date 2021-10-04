@@ -52,7 +52,7 @@ export abstract class Model {
 
     // remove obj from the cache
     @action static eject(obj: Model) {
-        if (this.__id === null)
+        if (obj.__id === null)
             return                   
         if (!this.cache.has(obj.__id)) 
             throw new Error(`Object with id "${obj.__id}" not exist in the cache of model: ${this.name}")`)
@@ -119,7 +119,7 @@ export abstract class Model {
 
     get raw_obj() : any {
         let raw_obj: any = {}
-        for(let id_field_name in this.model.ids.keys()) {
+        for(let id_field_name of this.model.ids.keys()) {
             if(this[id_field_name] !== undefined) {
                 raw_obj[id_field_name] = this[id_field_name]
             }
@@ -151,7 +151,7 @@ export abstract class Model {
     @action updateFromRaw(raw_obj) {
         // keys
         for (let id_field_name of this.model.ids.keys()) {
-            if (raw_obj[id_field_name] !== undefined) {
+            if (raw_obj[id_field_name] !== undefined && this[id_field_name] != raw_obj[id_field_name] ) {
                 this[id_field_name] = raw_obj[id_field_name]
             }
         }

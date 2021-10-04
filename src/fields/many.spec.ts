@@ -142,7 +142,7 @@ describe('Field: Many', () => {
         let b = new B({id: 2})
 
         expect(a.bs).toEqual([])
-        expect(b.a_id).toBeNull()
+        expect(b.a_id).toBeUndefined()
         runInAction(() => {
             a.bs.push(b)
         })
