@@ -65,7 +65,7 @@ export abstract class Model {
     }
 
     static loadPage(filter?, order_by?: string[], page?: number, page_size?: number) {
-        return new QueryPage(this, filter, order_by, page, page_size)
+        return new QueryPage(this.adapter, this.cache, filter, order_by, page, page_size)
     }
 
     @action static updateCache(raw_obj): Model {

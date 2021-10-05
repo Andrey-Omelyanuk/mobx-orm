@@ -2,9 +2,10 @@ import { model, Model } from '../model'
 import id from '../fields/id'
 import field from '../fields/field'
 import { local, LocalAdapter, store, init_local_data } from './local'
+import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
 
 
-describe('Adapter: Local', () => {
+describe('LocalAdapter', () => {
 
     @local()
     @model class A extends Model { 
@@ -14,16 +15,13 @@ describe('Adapter: Local', () => {
         @field  c : boolean
     }
 
-    let load    : any
-    let create  : any
-    let update  : any
-    let del     : any
+    let cache: Map<string, A>
+    let adapter: LocalAdapter<A>
+
 
     beforeAll(() => {
-        load   = jest.spyOn((<any>A).__proto__.adapter, 'load')
-        create = jest.spyOn((<any>A).__proto__.adapter, 'create')
-        update = jest.spyOn((<any>A).__proto__.adapter, 'update')
-        del    = jest.spyOn((<any>A).__proto__.adapter, 'delete')
+        cache = (<any>A).__proto__.cache
+        adapter = (<any>A).__proto__.adapter
     })
 
     beforeEach(async () => {
@@ -55,21 +53,17 @@ describe('Adapter: Local', () => {
         it('create', async ()=> {
             let a = new A({a: 1});      expect(a.id).toBeNull()
                                         expect(store['A']).toEqual({})
-                                        expect(create).toHaveBeenCalledTimes(0)
             let b = await a.create();   expect(a).toBe(b)
                                         expect(a.id).toBe(1)
                                         expect(store['A']).toEqual({
                                             [a.__id]: a.raw_obj, 
                                         })
-                                        expect(create).toHaveBeenCalledTimes(1)
-                                        expect(create).toHaveBeenCalledWith(a)
         })
 
         it('create few objets', async ()=> {
             let a = new A(); await a.create(); expect(a.id).toBe(1)
             let b = new A(); await b.create(); expect(b.id).toBe(2)
             let c = new A(); await c.create(); expect(c.id).toBe(3)
-            expect(create).toHaveBeenCalledTimes(3)
             expect(store['A']).toEqual({
                 [A.__id(a)]: a.raw_obj, 
                 [A.__id(b)]: b.raw_obj, 
@@ -93,8 +87,6 @@ describe('Adapter: Local', () => {
             expect(store['A']).toEqual({
                 [A.__id(a)]: a.raw_obj, 
             })
-            expect(update).toHaveBeenCalledTimes(1)
-            expect(update).toHaveBeenCalledWith(a)
         })
 
         // TODO
@@ -118,17 +110,18 @@ describe('Adapter: Local', () => {
     })
 
     describe('load', () => {
-    //     // TODO
-    //     it('load', async ()=> {
-    //         @local()
-    //         @model class A extends Model {
-    //             @id    id: number
-    //             @field  a: string
-    //         }
-    //         let adapter: LocalAdapter<A> = (<any>A).adapter
-    //         expect(() => { adapter.load() })
-    //             .toThrow(new Error(`Not implemented`))
-    //     })
+        // TODO: this test should be in adapter.spec.ts
+        it('load', async ()=> {
+            init_local_data(A, data_set)
+            let objs = await adapter.load()
+            expect(objs).toEqual([
+                cache.get(A.__id(obj_a)),
+                cache.get(A.__id(obj_b)),
+                cache.get(A.__id(obj_c)),
+                cache.get(A.__id(obj_d)),
+                cache.get(A.__id(obj_e)),
+            ])
+        })
     })
 
     describe('init_local_data', () => {

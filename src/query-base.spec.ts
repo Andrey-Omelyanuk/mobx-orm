@@ -10,7 +10,7 @@ describe('Adapter', () => {
     @model class A extends Model { @id id : number }
 
     class Query<M extends Model> extends QueryBase<M> {
-        __load(objs: M[]) {}
+        __load(objs: M[]) { this.__items = objs }
     	constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[], page?: number, page_size?: number) {
 			super(adapter, base_cache, filters, order_by, page, page_size)
 		}
@@ -39,12 +39,17 @@ describe('Adapter', () => {
         let page_size = 33
         let query = new Query<A>(adapter, (<any>A).cache, filters, order_by, page, page_size);
         expect(query).toMatchObject({
-            __adapter: adapter,
-            __base_cache: (<any>A).cache,
             filters: filters,
             order_by: order_by,
             page: page,
-            page_size: page_size
+            page_size: page_size,
+            items: [],
+            is_loading: false,
+            error: '',
+            __adapter: adapter,
+            __base_cache: (<any>A).cache,
+            __disposers: [],
+            __disposer_objects: {}
         })
     })
 

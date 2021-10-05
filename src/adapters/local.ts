@@ -47,8 +47,11 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     }
 
     async __load (where?, order_by?, limit?, offset?) : Promise<RawObject[]> {
-        // TODO
-        return []
+        let raw_objs = Object.values(store[this.store_name])
+        if (limit !== undefined && offset !== undefined) {
+            raw_objs = raw_objs.slice(offset, offset+limit)
+        }
+        return raw_objs 
     }
 
     // async getTotalCount(where?): Promise<number> {
@@ -64,7 +67,7 @@ export function local() {
     }
 }
 
-export function init_local_data(model: any, data: any[]) {
+export function init_local_data(model: any, data: RawObject[]) {
     let objs = {} 
     for(let obj of data) {
         objs[model.__id(obj)] = obj
