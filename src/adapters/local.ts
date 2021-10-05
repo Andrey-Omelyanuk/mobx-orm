@@ -9,17 +9,34 @@ type RawObject = any
 
 export let store: any = {}
 
+function timeout(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export class LocalAdapter<M extends Model> extends Adapter<M> {
 
     readonly store_name: string
 
-    constructor(model: any) {
+    // delays for simulate real usage, use it only for tests
+    delay: number 
+
+    init_local_data(data: RawObject[]) {
+        let objs = {} 
+        for(let obj of data) {
+            objs[this.model.__id(obj)] = obj
+        }
+        store[this.store_name] = objs
+    }
+
+    constructor(model: any, store_name?: string) {
         super(model)
-        this.store_name = model.__proto__.name
+        this.store_name = store_name ? store_name : model.__proto__.name
         store[this.store_name] = {}
     }
 
     async __create(obj: RawObject) : Promise<RawObject> {
+        if (this.delay) await timeout(this.delay) 
+
         if (obj.__id === null) {
             // calculate and set new ID
             let ids = [0]
@@ -37,16 +54,20 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     }
 
     async __update(obj: RawObject) : Promise<RawObject> {
+        if (this.delay) await timeout(this.delay) 
         store[this.store_name][obj.__id] = obj
         return obj
     }
 
     async __delete(obj: RawObject) : Promise<RawObject> {
+        if (this.delay) await timeout(this.delay) 
         delete store[this.store_name][obj.__id]
         return obj
     }
 
     async __load (where?, order_by?, limit?, offset?) : Promise<RawObject[]> {
+        if (this.delay) await timeout(this.delay) 
+
         let raw_objs = Object.values(store[this.store_name])
         if (limit !== undefined && offset !== undefined) {
             raw_objs = raw_objs.slice(offset, offset+limit)
@@ -67,10 +88,3 @@ export function local() {
     }
 }
 
-export function init_local_data(model: any, data: RawObject[]) {
-    let objs = {} 
-    for(let obj of data) {
-        objs[model.__id(obj)] = obj
-    }
-    store[model.__proto__.name] = objs
-}
