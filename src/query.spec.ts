@@ -3,7 +3,8 @@ import { Model, model } from './model'
 import id from './fields/id'
 import Query from './query'
 import field from './fields/field'
-import { LocalAdapter, local, init_local_data } from './adapters/local' 
+import { LocalAdapter, local } from './adapters/local' 
+import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from './test.utils' 
 
 
 describe('Query', () => {
@@ -19,19 +20,11 @@ describe('Query', () => {
     let adapter: LocalAdapter<A> = (<any>A).adapter
     let base_cache = (<any>A).cache
 
-    let obj_a = {id: 0, a: 5, b: 'a', c: true } 
-    let obj_b = {id: 1,       b: 'c', c: false} 
-    let obj_c = {id: 2, a: 2,         c: false} 
-    let obj_d = {id: 3, a: 2, b: 'f'          } 
-    let obj_e = {id: 4, a: 1, b: 'a', c: true } 
-
-    let data_set = [ obj_a, obj_b, obj_c, obj_d, obj_e ]
-
     let query: Query<A>
     let load : any
 
     beforeAll(() => {
-        init_local_data(A, data_set)
+        adapter.init_local_data(data_set)
         load  = jest.spyOn((<any>A).__proto__.adapter, 'load')
     })
 

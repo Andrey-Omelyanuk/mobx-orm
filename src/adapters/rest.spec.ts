@@ -1,7 +1,7 @@
 import { model, Model } from '../model'
 import id from '../fields/id'
 import field from '../fields/field'
-import { rest, RestAdapter } from './rest'
+// import { rest, RestAdapter } from './rest'
 
 // TODO
 

@@ -3,7 +3,7 @@ import { Model, model } from './model'
 import id from './fields/id'
 import QueryPage from './query-page'
 import field from './fields/field'
-import { LocalAdapter, local, init_local_data } from './adapters/local' 
+import { LocalAdapter, local } from './adapters/local' 
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from './test.utils' 
 
 
@@ -27,7 +27,7 @@ describe('QueryPage', () => {
 
     beforeAll(() => {
         cache = (<any>A).__proto__.cache
-        init_local_data(A, data_set)
+        adapter.init_local_data(data_set)
         load  = jest.spyOn((<any>A).__proto__.adapter, 'load')
     })
 

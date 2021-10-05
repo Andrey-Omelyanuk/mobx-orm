@@ -1,7 +1,7 @@
 import { model, Model } from '../model'
 import id from '../fields/id'
 import field from '../fields/field'
-import { local, LocalAdapter, store, init_local_data } from './local'
+import { local, LocalAdapter, store } from './local'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
 
 
@@ -112,7 +112,7 @@ describe('LocalAdapter', () => {
     describe('load', () => {
         // TODO: this test should be in adapter.spec.ts
         it('load', async ()=> {
-            init_local_data(A, data_set)
+            adapter.init_local_data(data_set)
             let objs = await adapter.load()
             expect(objs).toEqual([
                 cache.get(A.__id(obj_a)),
@@ -127,7 +127,7 @@ describe('LocalAdapter', () => {
     describe('init_local_data', () => {
 
         it('empty', async ()=> {
-            init_local_data(A, [])
+            adapter.init_local_data([])
             expect(store['A']).toEqual({})
         })
 
@@ -136,7 +136,7 @@ describe('LocalAdapter', () => {
                 {id: 1, a: 1, b: 'a', c: true },
                 {id: 2, a: 2, b: 'b', c: false},
             ]
-            init_local_data(A, data_set)
+            adapter.init_local_data(data_set)
             expect(store['A'][A.__id(data_set[0])]).toMatchObject(data_set[0])
             expect(store['A'][A.__id(data_set[1])]).toMatchObject(data_set[1])
         })
@@ -151,8 +151,8 @@ describe('LocalAdapter', () => {
                 {id: 2, a: 2, b: 'b', c: false},
             ]
 
-            init_local_data(A, data_set_a)
-            init_local_data(A, data_set_b)
+            adapter.init_local_data(data_set_a)
+            adapter.init_local_data(data_set_b)
             expect(store['A'][A.__id(data_set_b[0])]).toMatchObject(data_set_b[0])
         })
 
