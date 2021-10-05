@@ -1,69 +1,91 @@
-declare class Query<M extends Model> {
-    private model;
-    items: M[];
+declare type RawObject$1 = any;
+declare abstract class Adapter<M extends Model> {
+    abstract __create(obj: RawObject$1): Promise<object>;
+    abstract __update(obj: RawObject$1): Promise<object>;
+    abstract __delete(obj: RawObject$1): Promise<object>;
+    abstract __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject$1[]>;
+    readonly model: any;
+    constructor(model: any);
+    create(obj: M): Promise<M>;
+    update(obj: M): Promise<M>;
+    delete(obj: M): Promise<M>;
+    load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<M[]>;
+}
+
+declare abstract class Query$2<M extends Model> {
     filters: object;
     order_by: string[];
     page: number;
     page_size: number;
-    is_ready: boolean;
-    is_updating: boolean;
-    error: string;
-    private disposers;
-    private disposer_objects;
-    constructor(model: any, filters?: object, order_by?: string[], page?: number, page_size?: number);
+    get items(): M[];
+    get is_loading(): boolean;
+    get error(): string;
+    readonly __base_cache: any;
+    readonly __adapter: Adapter<M>;
+    __items: M[];
+    __is_loading: boolean;
+    __error: string;
+    __disposers: any[];
+    __disposer_objects: {};
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[], page?: number, page_size?: number);
     destroy(): void;
-    update(): Promise<M[]>;
-    private watch_obj;
-    private should_be_in_the_list;
+    abstract __load(objs: M[]): any;
+    load(): Promise<void>;
     ready(): Promise<Boolean>;
+    __is_matched(obj: any): boolean;
+}
+
+declare class Query$1<M extends Model> extends Query$2<M> {
+    __load(objs: M[]): void;
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[], page?: number, page_size?: number);
+    private watch_obj;
 }
 
 declare abstract class Model {
-    private static ids;
+    private static id_separator;
     private static adapter;
     private static cache;
+    private static ids;
     private static fields;
-    static load(filter?: {}, order_by?: string[], page?: number, page_size?: number): Query<Model>;
+    private static relations;
+    static inject(obj: Model): void;
+    static eject(obj: Model): void;
+    static load(filters?: any, order_by?: string[]): Query$2<Model>;
+    static loadPage(filter?: any, order_by?: string[], page?: number, page_size?: number): Query$1<Model>;
+    static updateCache(raw_obj: any): Model;
     static clearCache(): void;
-    static __id(obj: any, ids: []): string | null;
-    private readonly _init_data;
+    static __id(obj: any, ids?: any): string | null;
+    private readonly __init_data;
     private disposers;
     constructor(...args: any[]);
     get __id(): string | null;
     get model(): any;
+    get raw_obj(): any;
+    get is_changed(): boolean;
+    create(): Promise<any>;
+    update(): Promise<any>;
+    delete(): Promise<any>;
     save(): Promise<any>;
-    delete(): Promise<void>;
-    inject(): void;
-    eject(): void;
+    updateFromRaw(raw_obj: any): void;
 }
 declare function model(constructor: any): any;
 
-interface Adapter<M extends Model> {
-    save: (obj: M) => Promise<M>;
-    delete: (obj: M) => Promise<M>;
-    load: (where: any, order_by: any, limit: any, offset: any) => Promise<M[]>;
+declare class Query<M extends Model> extends Query$2<M> {
+    __load(objs: M[]): void;
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[]);
+    private watch_obj;
 }
 
-declare class LocalAdapter<M extends Model> implements Adapter<M> {
-    private cls;
-    private store_name;
-    constructor(cls: any, store_name: string);
-    save(obj: M): Promise<M>;
-    delete(obj: M): Promise<any>;
-    load(where?: {}, order_by?: any[], limit?: number, offset?: number): Promise<M[]>;
+declare type RawObject = any;
+declare class LocalAdapter<M extends Model> extends Adapter<M> {
+    readonly store_name: string;
+    constructor(model: any);
+    __create(obj: RawObject): Promise<RawObject>;
+    __update(obj: RawObject): Promise<RawObject>;
+    __delete(obj: RawObject): Promise<RawObject>;
+    __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject[]>;
 }
-declare function local(api: string): (cls: any) => void;
-
-declare class RestAdapter<M extends Model> implements Adapter<M> {
-    private cls;
-    private http;
-    private api;
-    constructor(cls: any, http: any, api: string);
-    save(obj: M): Promise<M>;
-    delete(obj: M): Promise<any>;
-    load(where?: {}, order_by?: any[], limit?: number, offset?: number): Promise<M[]>;
-}
-declare function rest(http: any, api: string): (cls: any) => void;
+declare function local(): (cls: any) => void;
 
 declare function id(cls: any, field_name: string): void;
 
@@ -75,4 +97,4 @@ declare function one(remote_model: any, ...remote_foreign_ids_names: string[]): 
 
 declare function many(remote_model: any, ...remote_foreign_ids_names: string[]): (cls: any, field_name: string) => void;
 
-export { Adapter, LocalAdapter, Model, Query, RestAdapter, field, foreign, id, local, many, model, one, rest };
+export { Adapter, LocalAdapter, Model, Query, Query$2 as QueryBase, Query$1 as QueryPage, field, foreign, id, local, many, model, one };
