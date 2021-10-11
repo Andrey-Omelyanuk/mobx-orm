@@ -60,11 +60,11 @@ export abstract class Model {
         this.cache.delete(obj.__id)
     }
 
-    static load(filters?, order_by?: string[]): QueryBase<Model>  {
+    static load(filters?, order_by?: string[]): Query<Model>  {
         return new Query<Model>(this.adapter, this.cache, filters, order_by)
     }
 
-    static loadPage(filter?, order_by?: string[], page?: number, page_size?: number) {
+    static loadPage(filter?, order_by?: string[], page?: number, page_size?: number): QueryPage<Model> {
         return new QueryPage(this.adapter, this.cache, filter, order_by, page, page_size)
     }
 
