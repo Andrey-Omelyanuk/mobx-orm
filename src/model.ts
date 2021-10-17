@@ -68,6 +68,11 @@ export abstract class Model {
         return new QueryPage(this.adapter, this.cache, filter, order_by, page, page_size)
     }
 
+    // return obj from the cache
+    static get(__id: string) {
+        return this.cache.get(__id)
+    }
+
     @action static updateCache(raw_obj): Model {
         let __id = this.__id(raw_obj)
         let obj
@@ -118,20 +123,27 @@ export abstract class Model {
         return (<any>this.constructor).__proto__
     }
 
+    // it is raw_data + ids
     get raw_obj() : any {
-        let raw_obj: any = {}
+        let raw_obj: any = this.raw_data
         for(let id_field_name of this.model.ids.keys()) {
             if(this[id_field_name] !== undefined) {
                 raw_obj[id_field_name] = this[id_field_name]
             }
         }
-        for(let field_name in this.model.fields) {
-            if(this[field_name] !== undefined) {
-                raw_obj[field_name] = this[field_name]
-            }
-        }
         raw_obj.__id = this.__id
         return raw_obj
+    }
+
+    // data only from fields (no ids)
+    get raw_data() : any {
+        let raw_data: any = {}
+        for(let field_name in this.model.fields) {
+            if(this[field_name] !== undefined) {
+                raw_data[field_name] = this[field_name]
+            }
+        }
+        return raw_data
     }
 
     get is_changed() : boolean {

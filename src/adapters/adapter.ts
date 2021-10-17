@@ -2,6 +2,9 @@ import { Model } from '../model'
 
 type RawObject = any 
 
+// TODO: reset __init_data after create/update/delete
+// TODO: __init_data should not include the ids
+
 export default abstract class  Adapter<M extends Model> {
 
     // abstract getTotalCount: (where?) => Promise<number>

@@ -1,6 +1,7 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
 import { Model, model, local, id, field, foreign, one, many } from '../src/index'
 
+// TODO: update the tests
 
 describe('Other tests: Passports.', () => {
 

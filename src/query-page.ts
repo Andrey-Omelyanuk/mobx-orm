@@ -1,24 +1,10 @@
-import { action, autorun, computed, makeObservable, observable, observe, reaction, runInAction } from "mobx"
+import { reaction, action, runInAction } from "mobx"
 import { Model } from "./model"
 import Adapter from "./adapters/adapter"
 import QueryBase from './query-base'
 
-/*
-Поведение реактивности items
 
-actions:
-    - удаление объекта который в items -> update() ? or just delete from items?
-    - добавление в кэш
-        - попадание по фильтрам -> update() ? or show `query should to update`?
-    - изменение в кэш
-        - не было но уже    попадание по фильтрам -> update()  ? or show `query should to update`?
-        -    было но уже не попадание по фильтрам -> update() ? or show `query should to update`?
-
-need_to_update = 
-auto_update = 
-*/
-
-// TODO get total count - we need to count pages num
+// TODO: implement need_to_update
 
 export default class Query<M extends Model> extends QueryBase<M> {
 
@@ -28,6 +14,17 @@ export default class Query<M extends Model> extends QueryBase<M> {
             this.__items.push(...objs)
         })
     }
+
+    // TODO: add actions for QueryBase and QueryPage
+    // TODO: Query should know nothing about pages!
+    // @action setFilters(filters : any     ) { this.filters  = filters  }
+    // @action setOrderBy(order_by: string[]) { this.order_by = order_by }
+    // @action firstPage() { this.page = 0 }
+    // @action prevPage () { this.page = this.page < 0 ? this.page - 1 : 0 }
+    // @action nextPage () { this.page = this.page + 1 }
+    // @action lastPage () { this.page = 9999 } // TODO: need to know total row count
+    // @action setPageSize(page_size: number) { this.page_size = page_size }
+
 
     constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[], page?: number, page_size?: number) {
         super(adapter, base_cache, filters, order_by)
@@ -46,46 +43,5 @@ export default class Query<M extends Model> extends QueryBase<M> {
              }},
             () => { this.load() }
         ))
-
-        // // watch the cache for changes, and update items if needed
-        // this.__disposers.push(observe(this.__base_cache, (change: any) => {
-        //     if (change.type == 'add') {
-        //         this.watch_obj(change.newValue)
-        //     }
-        //     if (change.type == "delete") {
-        //         let __id = change.name
-        //         let obj  = change.oldValue
-        //         this.__disposer_objects[__id]()
-        //         delete this.__disposer_objects[__id]
-        //         let i = this.items.indexOf(obj)
-        //         if (i != -1)
-        //             runInAction(() => {
-        //                 this.items.splice(i, 1)
-        //             })
-        //     }
-        // }))
-
-        // // watch all exist objects of model 
-        // for(let [id, obj] of this.__base_cache) {
-        //     this.watch_obj(obj)
-        // }
     }
-
-    //
-    private watch_obj(obj) {
-        this.__disposer_objects[obj.__id] = autorun(
-            () => {
-                let should_be_in_the_list = this.__is_matched(obj)
-                if (should_be_in_the_list) {
-                    let i = this.items.indexOf(obj)
-                    if (should_be_in_the_list && i == -1)
-                        runInAction(() => this.items.push(obj))
-                        
-                    if (!should_be_in_the_list && i != -1)
-                        runInAction(() => this.items.splice(i, 1))
-                }
-            })
-    }
-
 }
-
