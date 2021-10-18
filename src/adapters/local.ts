@@ -65,19 +65,49 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         return obj
     }
 
+    async __find(where) : Promise<RawObject> {
+        if (this.delay) await timeout(this.delay) 
+        // TODO: apply where, and throw error if no obj or multi objs
+        let raw_obj = Object.values(store[this.store_name])[0]
+        return raw_obj
+    }
+
     async __load (where?, order_by?, limit?, offset?) : Promise<RawObject[]> {
         if (this.delay) await timeout(this.delay) 
+        let raw_objs = []
+        // filter
+        if (where) {
+            for(let raw_obj of Object.values(store[this.store_name])) {
 
-        let raw_objs = Object.values(store[this.store_name])
+            }
+        }
+        else {
+            raw_objs = Object.values(store[this.store_name])
+        }
+
+        // order_by (sort)
+        if (order_by) {
+            raw_objs = raw_objs.sort((obj_a, obj_b) => {
+                let res
+                for(let sort_by_field of order_by) {
+
+                }
+                return 0
+            })
+        }
+
+        // page
         if (limit !== undefined && offset !== undefined) {
             raw_objs = raw_objs.slice(offset, offset+limit)
         }
         return raw_objs 
     }
 
-    // async getTotalCount(where?): Promise<number> {
-    //     return 100
-    // }
+    async getTotalCount(where?): Promise<number> {
+        let objs = []
+        // Object.values(store[this.store_name])
+        return objs.length
+    }
 }
 
 // model decorator
@@ -88,3 +118,7 @@ export function local() {
     }
 }
 
+// let where = [
+//             ["field_a", "==", 10, "and", "field_b == 20"],
+//     "or",   ["field_a", "<=",  5, "and", "field_b", "contain", "test"]
+// ]

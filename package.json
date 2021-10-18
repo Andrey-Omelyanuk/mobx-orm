@@ -15,7 +15,7 @@
   "jsnext:main" : "dist/mobx-orm.es2015.js",
   "typings"     : "dist/mobx-orm.d.ts",
   "dependencies": {
-    "mobx"  : "^6.3.0" 
+    "mobx"  : "^6.3.0"
   },
   "scripts": {
     "build" : "rollup -c",

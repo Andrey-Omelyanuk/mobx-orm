@@ -62,7 +62,9 @@ export abstract class Model {
 
     // TODO: implement find method, it should load single object from Adapter
     // and add find method to Adapter too
-    // static find(filters) : Model {}
+    static async find(filters) : Promise<Model> {
+        return this.adapter.find(filters) 
+    }
 
     static load(filters?, order_by?: string[]): Query<Model>  {
         return new Query<Model>(this.adapter, this.cache, filters, order_by)
