@@ -60,6 +60,10 @@ export abstract class Model {
         this.cache.delete(obj.__id)
     }
 
+    // TODO: implement find method, it should load single object from Adapter
+    // and add find method to Adapter too
+    // static find(filters) : Model {}
+
     static load(filters?, order_by?: string[]): Query<Model>  {
         return new Query<Model>(this.adapter, this.cache, filters, order_by)
     }
