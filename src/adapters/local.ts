@@ -1,11 +1,10 @@
-import { Model } from '../model'
+import { Model, RawObject } from '../model'
 import Adapter  from './adapter'
 
 /*
 You can use this adapter for mock data or for unit test
 */
 
-type RawObject = any 
 
 export let store: any = {}
 

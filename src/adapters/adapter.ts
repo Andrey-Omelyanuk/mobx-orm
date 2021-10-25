@@ -1,9 +1,5 @@
-import { Model } from '../model'
+import { Model, RawObject } from '../model'
 
-type RawObject = any 
-
-// TODO: reset __init_data after create/update/delete
-// TODO: __init_data should not include the ids
 
 export default abstract class  Adapter<M extends Model> {
 
@@ -24,19 +20,19 @@ export default abstract class  Adapter<M extends Model> {
     async create(obj: M) : Promise<M> {
         let raw_obj = await this.__create(obj.raw_obj)
         obj.updateFromRaw(raw_obj)
+        obj.refresh_init_data()
         return obj
     }
 
     async update(obj: M) : Promise<M> {
         let raw_obj = await this.__update(obj.raw_obj)
         obj.updateFromRaw(raw_obj)
+        obj.refresh_init_data()
         return obj
     }
 
     async delete(obj: M) : Promise<M> {
         let raw_obj = await this.__delete(obj.raw_obj)
-        // reset ids
-        debugger
         for(let id_field_name of this.model.ids.keys())
             obj[id_field_name] = null
         return obj

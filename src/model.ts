@@ -6,6 +6,9 @@ import Query     from './query'
 import QueryPage from './query-page'
 
 
+export type RawObject = any 
+
+
 export abstract class Model {
     private static id_separator: string = '-'
     // this private static properties will be copied to real model in the model decorator
@@ -116,7 +119,7 @@ export abstract class Model {
         return id
     }
 
-    private readonly __init_data: any 
+    private __init_data: any 
     private disposers = new Map()
 
     constructor (...args) { }
@@ -166,6 +169,13 @@ export abstract class Model {
     async update() { return await this.model.adapter.update(this) }
     async delete() { return await this.model.adapter.delete(this) }
     async save  () { return this.__id === null ? this.create() : this.update() }
+
+    @action refresh_init_data() {
+        if(this.__init_data === undefined) this.__init_data = {}
+        for (let field_name in this.model.fields) {
+            this.__init_data[field_name] = this[field_name]
+        }
+    }
 
     @action updateFromRaw(raw_obj) {
         // keys
@@ -233,12 +243,8 @@ export function model(constructor) {
                     }
                 }
             }
-            // save __init_data
-            obj.__init_data = {}
-            for (let field_name in model.fields) {
-                obj.__init_data[field_name] = obj[field_name]
-            }
         })
+        obj.refresh_init_data()
         return obj
     }
 
