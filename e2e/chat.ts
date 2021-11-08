@@ -1,5 +1,4 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { action } from 'mobx'
 import { Model, model, local, id, field, foreign, many } from '../src/index'
 
 
@@ -7,7 +6,7 @@ describe('e2e: Chat.', () => {
 
     function declare() {
 
-        @local('user')
+        @local()
         @model class User extends Model {
             @id     id          : number
             @field  first_name  : string
@@ -17,19 +16,18 @@ describe('e2e: Chat.', () => {
             get full_name() : string { return `${this.first_name} ${this.last_name}` }
         }
 
-        @local('channel')
+        @local()
         @model class Channel extends Model {
             @id id      : number
                 messages: Message[]
 
-            @action
             async sendMessage(user: User, text: string) {
                 let message = new Message({channel: this, user: user, text: text, created: new Date()})
                 return message.save()
             }
         }
 
-        @local('message')
+        @local()
         @model class Message extends Model {
             @id    id          : number
             @field created     : Date
@@ -48,10 +46,10 @@ describe('e2e: Chat.', () => {
 
     it('init', async ()=> {
         const {User, Channel, Message} = declare()
-        let channelA = new Channel(); channelA.save()
-        let channelB = new Channel(); channelB.save()
-        let userA = new User({first_name: 'A', last_name: 'X'}); userA.save()
-        let userB = new User({first_name: 'B', last_name: 'X'}); userB.save()
+        let channelA = new Channel(); await channelA.save()
+        let channelB = new Channel(); await channelB.save()
+        let userA = new User({first_name: 'A', last_name: 'X'}); await userA.save()
+        let userB = new User({first_name: 'B', last_name: 'X'}); await userB.save()
 
         expect((<any>User   ).cache.size).toBe(2)
         expect((<any>Channel).cache.size).toBe(2)
@@ -60,16 +58,17 @@ describe('e2e: Chat.', () => {
 
     it('Send messages', async ()=> {
         const {User, Channel, Message} = declare()
-        let channelA = new Channel(); channelA.save()
-        let channelB = new Channel(); channelB.save()
-        let userA = new User({first_name: 'A', last_name: 'X'}); userA.save()
-        let userB = new User({first_name: 'B', last_name: 'X'}); userB.save()
+        let channelA = new Channel(); await channelA.save()
+        let channelB = new Channel(); await channelB.save()
+        let userA = new User({first_name: 'A', last_name: 'X'}); await userA.save()
+        let userB = new User({first_name: 'B', last_name: 'X'}); await userB.save()
 
         await channelA.sendMessage(userA, 'First  message from userA')
         await channelA.sendMessage(userA, 'Second message from userA')
         await channelA.sendMessage(userB, 'First  message from userB')
         await channelA.sendMessage(userA, 'Third  message from userA')
 
+        expect(channelA.messages.length).toBe(4)
         expect(channelA.messages[0].text).toBe('First  message from userA')
         expect(channelA.messages[1].text).toBe('Second message from userA')
         expect(channelA.messages[2].text).toBe('First  message from userB')

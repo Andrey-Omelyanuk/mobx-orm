@@ -20,9 +20,9 @@ debug:
 test:
 	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn test
 
-e2e:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn e2e 
+test-e2e:
+	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn build && yarn e2e 
 
 publish:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn test && yarn e2e && yarn build 
+	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn test && yarn build && yarn e2e 
 	npm publish	

@@ -5,7 +5,7 @@ import { Model, model, local, id, field, foreign, one, many } from '../src/index
 
 describe('Other tests: Passports.', () => {
 
-    @local('user')
+    @local()
     @model class User extends Model {
         @id     id          : number
         @field  user_name   : string
@@ -30,7 +30,7 @@ describe('Other tests: Passports.', () => {
         }
     }
 
-    @local('passport')
+    @local()
     @model class Passport extends Model {
         @id     id            : number
         @field  created       : Date
@@ -48,7 +48,7 @@ describe('Other tests: Passports.', () => {
     one(Passport, 'user_id')(User, 'passport') 
 
 
-    @local('key')
+    @local()
     @model class Key extends Model {
         @id     id      : number
         @field  created : Date
@@ -83,7 +83,7 @@ describe('Other tests: Passports.', () => {
         REJECT = 2
     }
 
-    @local('action')
+    @local()
     @model class Action extends Model {
         @id         id          : number
         @field  timestamp   : Date

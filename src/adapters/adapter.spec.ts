@@ -65,7 +65,7 @@ describe('Adapter', () => {
     it('find', async ()=> {
                                             expect(__find).toHaveBeenCalledTimes(0)
         let obj = await adapter.find({});   expect(__find).toHaveBeenCalledTimes(1)
-                                            expect(__find).toHaveBeenCalledWith(undefined)
+                                            expect(__find).toHaveBeenCalledWith({})
                                             expect(obj).toBe(cache.get(A.__id(obj_a)))
     })
 
