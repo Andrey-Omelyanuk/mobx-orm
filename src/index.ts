@@ -4,7 +4,7 @@ import Query from './query'
 import QueryPage from './query-page' 
 // adapters
 import Adapter from './adapters/adapter'
-import { local, LocalAdapter } from './adapters/local'
+import LocalAdapter, { local } from './adapters/local'
 // fields
 import id               from './fields/id'
 import field            from './fields/field'
