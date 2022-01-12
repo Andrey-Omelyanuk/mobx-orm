@@ -8,11 +8,13 @@ You can use this adapter for mock data or for unit test
 
 export let store: any = {}
 
+
 function timeout(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export class LocalAdapter<M extends Model> extends Adapter<M> {
+
+export default class LocalAdapter<M extends Model> extends Adapter<M> {
 
     readonly store_name: string
 
@@ -109,6 +111,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     }
 }
 
+
 // model decorator
 export function local() {
     return (cls: any) => {
@@ -117,6 +120,7 @@ export function local() {
     }
 }
 
+// TODO: where example
 // let where = [
 //             ["field_a", "==", 10, "and", "field_b == 20"],
 //     "or",   ["field_a", "<=",  5, "and", "field_b", "contain", "test"]

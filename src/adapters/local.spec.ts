@@ -1,7 +1,7 @@
 import { model, Model } from '../model'
 import id from '../fields/id'
 import field from '../fields/field'
-import { local, LocalAdapter, store } from './local'
+import LocalAdapter, { local, store } from './local'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
 
 

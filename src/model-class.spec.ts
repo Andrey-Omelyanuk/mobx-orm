@@ -42,7 +42,7 @@ describe('Model Class', () => {
         it('empty args', async () => {
             let query = A.load()
             await query.ready()
-            expect(query.is_loading).toBe(false)
+            expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)
             // expect(load).toHaveBeenCalledWith({}, [])
         })
@@ -50,7 +50,7 @@ describe('Model Class', () => {
         it('with args', async () => {
             let query = A.load({a: 1}, ['-b'] )
             await query.ready()
-            expect(query.is_loading).toBe(false)
+            expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)
             // expect(load).toHaveBeenCalledWith({a: 1}, ['-b'])
         })

@@ -3,7 +3,7 @@ import { Model, model } from './model'
 import id from './fields/id'
 import QueryPage from './query-page'
 import field from './fields/field'
-import { LocalAdapter, local } from './adapters/local' 
+import LocalAdapter, { local } from './adapters/local' 
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from './test.utils' 
 
 
@@ -18,21 +18,18 @@ describe('QueryPage', () => {
         @field   c !: boolean
     }
 
-    let adapter: LocalAdapter<A> = (<any>A).adapter
-    let base_cache = (<any>A).cache
-
-    let cache: Map<string, A> 
+    const adapter   : LocalAdapter<A> = (<any>A).adapter
+    const cache     : Map<string, A>  = (<any> A).cache
     let query: QueryPage<A>
     let load : any
 
     beforeAll(() => {
-        cache = (<any>A).__proto__.cache
         adapter.init_local_data(data_set)
         load  = jest.spyOn((<any>A).__proto__.adapter, 'load')
     })
 
     beforeEach(async () => {
-        query = new QueryPage<A>(adapter, base_cache)
+        query = new QueryPage<A>(adapter, cache)
         await query.ready() 
     })
 
@@ -43,7 +40,7 @@ describe('QueryPage', () => {
     })
 
     describe('constructor', () => {
-        it('defaults', async () => {
+        it('...', async () => {
             expect(query).toMatchObject({
                 __adapter: adapter,
                 __base_cache: (<any>A).cache,
@@ -59,7 +56,6 @@ describe('QueryPage', () => {
         it('call load when a query was created ', async () => {
         })
     })
-
 
     it('e2e', async () => {
         expect(load).toHaveBeenCalledTimes(1) 
@@ -84,13 +80,13 @@ describe('QueryPage', () => {
             cache.get(A.__id(obj_e)),
         ])
 
-        await query.ready()
+        await query.loading()
         expect(query.items).toEqual([])
 
         runInAction(() => {
             query.page_size = 2
         })
-        await query.ready()
+        await query.loading()
         expect(query.items).toEqual([
             cache.get(A.__id(obj_c)),
             cache.get(A.__id(obj_d)),

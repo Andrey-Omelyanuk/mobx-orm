@@ -3,7 +3,7 @@ import { Model, model } from './model'
 import id from './fields/id'
 import Query from './query'
 import field from './fields/field'
-import { LocalAdapter, local } from './adapters/local' 
+import LocalAdapter, { local } from './adapters/local' 
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from './test.utils' 
 
 
@@ -17,8 +17,8 @@ describe('Query', () => {
         @field   c !: boolean
     }
 
-    let adapter: LocalAdapter<A> = (<any>A).adapter
-    let base_cache = (<any>A).cache
+    const adapter   : LocalAdapter<A> = (<any>A).adapter
+    const cache     : Map<string, A>  = (<any> A).cache
 
     let query: Query<A>
     let load : any
@@ -29,7 +29,7 @@ describe('Query', () => {
     })
 
     beforeEach(async () => {
-        query = new Query<A>(adapter, base_cache)
+        query = new Query<A>(adapter, cache)
         await query.ready() 
     })
 
