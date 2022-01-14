@@ -3,6 +3,8 @@ import { Model, model } from '../model'
 import id from './id'
 import field from './field'
 import many from './many'
+import { local } from '../adapters/local'
+import foreign from './foreign'
 
 
 describe('Field: Many', () => {
@@ -146,7 +148,6 @@ describe('Field: Many', () => {
         runInAction(() => {
             a.bs.push(b)
         })
-        // expect(a.bs.length).toBe(1)
         expect(a.bs).toEqual([b])
         expect(b.a_id).toBe(a.id)
     })
@@ -166,6 +167,37 @@ describe('Field: Many', () => {
         })
         expect(a.bs).toEqual([])
         expect(b.a_id).toBeNull()
+    })
+
+    it('e2e', async () => {
+
+        @local()
+        @model class Program extends Model { 
+            @id    id 	: number 
+            @field name	: string
+
+            sets   : ProgramSet []
+        }
+        @local()
+        @model class ProgramSet extends Model { 
+            @id     id          : number 
+            @field  order       : number
+            @field  program_id  : number 
+            @foreign(Program) program : Program 
+        }
+        many(ProgramSet)(Program, 'sets') 
+        let p_1 = new Program({name: 'p_1'}); await p_1.save()
+        let p_2 = new Program({name: 'p_2'}); await p_2.save()
+        let p_3 = new Program({name: 'p_3'}); await p_3.save()
+
+        let ps_1 = new ProgramSet({program_id: p_1.id, order: 1}); await ps_1.save()
+        let ps_2 = new ProgramSet({program_id: p_1.id, order: 2}); await ps_2.save()
+        let ps_3 = new ProgramSet({program_id: p_1.id, order: 3}); await ps_3.save()
+        let ps_4 = new ProgramSet({program_id: p_2.id, order: 4}); await ps_4.save()
+
+        expect(ps_1.program).toEqual(p_1)
+        expect(p_1.sets).toEqual([ps_1, ps_2, ps_3])
+        expect(p_2.sets).toEqual([ps_4])
     })
 
 })
