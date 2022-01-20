@@ -10,22 +10,22 @@ export type RawObject = any
 
 
 export abstract class Model {
-    private static id_separator: string = '-'
-    // this private static properties will be copied to real model in the model decorator
-    private static adapter      : Adapter<Model>
-    private static cache        : Map<string, Model>
+    static __id_separator : string = '-'
+    // this static properties will be copied to real model in the model decorator
+    static adapter      : Adapter<Model>  // TODO: add __adapter
+    static cache  : Map<string, Model>    // TODO: add __cache
     // we have 3 types of fields
     // - ids (cannot be changed, order of keys is important)
     // - fields
     // - relations (not exist on outside)
-    private static ids: Map<string, {
+    static ids: Map<string, {   // TODO: rename to __ids
             // can decorator be different?
             decorator   : (obj: Model, field_name: string) => void,
             settings    : any,
             serialize   : any,
             deserialize : any
         }>
-    private static fields       : {
+    static fields       : {     // TODO: rename to __fields
         [field_name: string]: {
             decorator   : (obj: Model, field_name: string) => void,
             settings    : any,
@@ -34,7 +34,7 @@ export abstract class Model {
         }
     }
     // relateions is a list of field only foreign, one or many types
-    private static relations    : {
+    static relations    : {     // TODO: rename to __relations
         [field_name: string]: {
             decorator   : (obj: Model, field_name: string) => void,
             settings    : any
@@ -113,14 +113,14 @@ export abstract class Model {
             // if any id field is null then we should return null because id is not complite
             if (obj[id_field_name] === null || obj[id_field_name] === undefined) 
                 return null
-            id += `${obj[id_field_name]}${this.id_separator}`
+            id += `${obj[id_field_name]}${this.__id_separator}`
         }
-        id = id.slice(0, -(this.id_separator.length))
+        id = id.slice(0, -(this.__id_separator.length))
         return id
     }
 
-    private __init_data: any 
-    private disposers = new Map()
+    __init_data: any   
+    disposers = new Map()   // TODO: rename to __disposers
 
     constructor (...args) { }
 

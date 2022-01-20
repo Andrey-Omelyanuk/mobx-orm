@@ -25,7 +25,7 @@ describe('QueryBase', () => {
     let adapter_load: any
 
     beforeEach(() => {
-        query        = new Query<A>(adapter, (<any>A).cache)
+        query        = new Query<A>(adapter, A.cache)
         query_load   = jest.spyOn(query, '__load')
         adapter_load = jest.spyOn(adapter, 'load')
     })
@@ -53,7 +53,7 @@ describe('QueryBase', () => {
                 is_ready    : false,
                 error       : '',
                 __adapter   : adapter,
-                __base_cache: (<any>A).cache,
+                __base_cache: A.cache,
                 __disposers : [],
                 __disposer_objects: {}
             })

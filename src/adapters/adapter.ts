@@ -20,7 +20,7 @@ export default abstract class  Adapter<M extends Model> {
     async create(obj: M) : Promise<M> {
         let raw_obj = await this.__create(obj.raw_obj)
         obj.updateFromRaw(raw_obj)
-        obj.refresh_init_data()
+        obj.refresh_init_data() // backend can return default values and they should be in __init_data
         return obj
     }
 
@@ -38,11 +38,13 @@ export default abstract class  Adapter<M extends Model> {
         return obj
     }
 
+    /* Returns ONE object */
     async find(where): Promise<M> {
         let raw_obj = await this.__find(where)
         return this.model.updateCache(raw_obj)
     }
 
+    /* Returns MANY objects */
     async load(where?, order_by?, limit?, offset?):Promise<M[]> {
         let raw_objs = await this.__load(where, order_by, limit, offset)
         let objs: M[] = []

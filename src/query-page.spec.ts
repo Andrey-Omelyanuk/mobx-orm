@@ -19,13 +19,13 @@ describe('QueryPage', () => {
     }
 
     const adapter   : LocalAdapter<A> = (<any>A).adapter
-    const cache     : Map<string, A>  = (<any> A).cache
+    const cache     : Map<string, A>  = (<any>A).cache
     let query: QueryPage<A>
     let load : any
 
     beforeAll(() => {
         adapter.init_local_data(data_set)
-        load  = jest.spyOn((<any>A).__proto__.adapter, 'load')
+        load  = jest.spyOn(A.adapter, 'load')
     })
 
     beforeEach(async () => {
@@ -43,7 +43,7 @@ describe('QueryPage', () => {
         it('...', async () => {
             expect(query).toMatchObject({
                 __adapter: adapter,
-                __base_cache: (<any>A).cache,
+                __base_cache: A.cache,
                 filters: undefined,
                 order_by: undefined ,
                 page: 0,

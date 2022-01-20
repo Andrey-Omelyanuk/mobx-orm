@@ -1,12 +1,13 @@
 import { model, Model, RawObject } from '../model'
 import id from '../fields/id'
+import field from '../fields/field'
 import Adapter  from './adapter'
 import { obj_a, obj_b } from '../test.utils' 
 
 
 describe('Adapter', () => {
 
-    @model class A extends Model { @id id : number }
+    @model class A extends Model { @id id : number; @field x: string }
 
     class TestAdapter extends Adapter<A> {
         async __create(obj: RawObject) : Promise<RawObject> { obj.id = 1; return obj }
@@ -39,7 +40,6 @@ describe('Adapter', () => {
     })
 
     it('create', async ()=> {
-        // TODO: test __init_data
         let a = new A({});                  expect(__create).toHaveBeenCalledTimes(0)
                                             expect(a.id).toBe(null)
         let b = await adapter.create(a);    expect(b).toBe(a)
@@ -48,10 +48,12 @@ describe('Adapter', () => {
     })
 
     it('update', async ()=> {
-        // TODO: test __init_data
-        let a = new A({id: 1});             expect(__update).toHaveBeenCalledTimes(0)
+        let a = new A({id: 1, x: 'test'});  expect(__update).toHaveBeenCalledTimes(0)
+                                            expect(a.__init_data).toEqual({x: 'test'})
+            a.x = 'xxx';                    expect(a.__init_data).toEqual({x: 'test'})
         let b = await adapter.update(a);    expect(b).toBe(a)
                                             expect(__update).toHaveBeenCalledTimes(1)
+                                            expect(a.__init_data).toEqual({x: 'xxx'})
     })
 
     it('delete', async ()=> {

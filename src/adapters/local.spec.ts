@@ -43,7 +43,7 @@ describe('LocalAdapter', () => {
         it('decorate the model', async ()=> {
             @local()
             @model class A extends Model {}
-            expect((<any>A).adapter.model).toBe(A)
+            expect(A.adapter.model).toBe(A)
             expect((<any>A).adapter.store_name).toBe('A')
         })
     })

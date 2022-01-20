@@ -26,10 +26,10 @@ describe('Model Class', () => {
     let load: any, create: any, update: any, del: any
 
     beforeAll(async () => {
-        load = jest.spyOn((<any>A).__proto__.adapter, 'load')
-        create = jest.spyOn((<any>A).__proto__.adapter, 'create')
-        update = jest.spyOn((<any>A).__proto__.adapter, 'update')
-        del  = jest.spyOn((<any>A).__proto__.adapter, 'delete')
+        load   = jest.spyOn(A.adapter, 'load')
+        create = jest.spyOn(A.adapter, 'create')
+        update = jest.spyOn(A.adapter, 'update')
+        del    = jest.spyOn(A.adapter, 'delete')
     })
 
     afterEach(async () => {
@@ -104,17 +104,17 @@ describe('Model Class', () => {
             // id will add objects to the cache
             let a = new A({id: 1})
             let b = new A({id: 2})
-            expect((<any>A).cache.size).toBe(2)
+            expect(A.cache.size).toBe(2)
             A.clearCache()
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
             expect(a.id).toBeNull()
             expect(b.id).toBeNull()
         })
 
         it('clear empty cache', async () => {
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
             A.clearCache()
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
         })
     })
 

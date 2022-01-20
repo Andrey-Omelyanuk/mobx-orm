@@ -25,10 +25,10 @@ describe('Model Instance', () => {
     let load: any, create: any, update: any, del: any
 
     beforeAll(async () => {
-        load = jest.spyOn((<any>A).__proto__.adapter, 'load')
-        create = jest.spyOn((<any>A).__proto__.adapter, 'create')
-        update = jest.spyOn((<any>A).__proto__.adapter, 'update')
-        del  = jest.spyOn((<any>A).__proto__.adapter, 'delete')
+        load   = jest.spyOn(A.adapter, 'load')
+        create = jest.spyOn(A.adapter, 'create')
+        update = jest.spyOn(A.adapter, 'update')
+        del    = jest.spyOn(A.adapter, 'delete')
     })
 
     afterEach(async () => {
@@ -48,13 +48,13 @@ describe('Model Instance', () => {
             }
 
             a = new A()
-            expect((<any>a).__init_data).toEqual({}) // init_data does not contain ids
+            expect(a.__init_data).toEqual({}) // init_data does not contain ids
 
             a = new A({id_a: 1})
-            expect((<any>a).__init_data).toEqual({}) // init_data does not contain ids
+            expect(a.__init_data).toEqual({}) // init_data does not contain ids
 
             a = new A({id_a: 1, id_b: 1})
-            expect((<any>a).__init_data).toEqual({}) // init_data does not contain ids
+            expect(a.__init_data).toEqual({}) // init_data does not contain ids
         })
     })
 
@@ -64,9 +64,9 @@ describe('Model Instance', () => {
             @model class A extends Model { 
                 @id id : number 
             }
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
             let a = new A({id: 1}) 
-            expect((<any>A).cache.size).toBe(1)
+            expect(A.cache.size).toBe(1)
         })
     })
 
@@ -166,21 +166,21 @@ describe('Model Instance', () => {
             let a = new A({}) 
             let inject = jest.spyOn(a.model, 'inject')
 
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
             expect(inject).toHaveBeenCalledTimes(0)
             a.id = 1
-            expect((<any>A).cache.size).toBe(1)
-            expect((<any>A).cache.get(a.__id)).toBe(a)
+            expect(A.cache.size).toBe(1)
+            expect(A.cache.get(a.__id)).toBe(a)
             expect(inject).toHaveBeenCalledTimes(1)
         })
 
         it('inject after eject', async () => {
             let a = new A({id: 1}) 
             a.model.eject(a)
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
             a.model.inject(a)   
-            expect((<any>A).cache.size).toBe(1)
-            expect((<any>A).cache.get(a.__id)).toBe(a)
+            expect(A.cache.size).toBe(1)
+            expect(A.cache.get(a.__id)).toBe(a)
         })
 
         it('error: inject second time', async () => {
@@ -204,17 +204,17 @@ describe('Model Instance', () => {
 
         it('eject injected object', async () => {
             let a = new A({id: 1}) 
-            expect((<any>A).cache.size).toBe(1)
-            expect((<any>A).cache.get(a.__id)).toBe(a)
+            expect(A.cache.size).toBe(1)
+            expect(A.cache.get(a.__id)).toBe(a)
             a.model.eject(a)
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
         })
 
         it('eject object without id', async () => {
             let a = new A({}) 
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
             a.model.eject(a) // nothing happend
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
         })
 
         it('error: eject second time', async () => {
@@ -232,7 +232,7 @@ describe('Model Instance', () => {
     describe('init', () => {
         it('init empty', async () => {
             @model class A extends Model {}
-            expect((<any>A).cache.size).toBe(0)
+            expect(A.cache.size).toBe(0)
             expect(() => { new A() })
                 .toThrow(new Error(`No one id field was declared on model A`))
         })

@@ -18,14 +18,14 @@ describe('Query', () => {
     }
 
     const adapter   : LocalAdapter<A> = (<any>A).adapter
-    const cache     : Map<string, A>  = (<any> A).cache
+    const cache     : Map<string, A>  = (<any>A).cache
 
     let query: Query<A>
     let load : any
 
     beforeAll(() => {
         adapter.init_local_data(data_set)
-        load  = jest.spyOn((<any>A).__proto__.adapter, 'load')
+        load  = jest.spyOn(A.adapter, 'load')
     })
 
     beforeEach(async () => {
