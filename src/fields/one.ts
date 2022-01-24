@@ -14,7 +14,7 @@ function field_one(obj: Model, field_name) {
     })
 
     // 1. checks before set new changes
-    intercept(obj, <any>field_name, (change) => {
+    intercept(obj, field_name, (change) => {
         if (change.newValue !== null && !(change.newValue.model === remote_model))
                 throw new Error(`You can set only instance of "${remote_model.name}" or null`)
         return change
