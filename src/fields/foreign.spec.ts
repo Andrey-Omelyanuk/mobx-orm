@@ -16,9 +16,9 @@ describe('Field: foreign', () => {
             @field       a_id: number
             @foreign(A)  a   : A 
         }
-        expect(B.relations['a'].decorator instanceof Function).toBeTruthy()
-        expect(B.relations['a'].settings.foreign_model).toBe((A as any).__proto__)
-        expect(B.relations['a'].settings.foreign_ids_names).toEqual(['a_id'])
+        expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
+        expect(B.__relations['a'].settings.foreign_model).toBe((A as any).__proto__)
+        expect(B.__relations['a'].settings.foreign_ids_names).toEqual(['a_id'])
     })
 
     it('declare foreign with multi ids', async () => {
@@ -32,9 +32,9 @@ describe('Field: foreign', () => {
             @field a_id2: number
             @foreign(A, 'a_id1', 'a_id2') a: A 
         }
-        expect(B.relations['a'].decorator instanceof Function).toBeTruthy()
-        expect(B.relations['a'].settings.foreign_model).toBe((A as any).__proto__)
-        expect(B.relations['a'].settings.foreign_ids_names).toEqual(['a_id1', 'a_id2'])
+        expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
+        expect(B.__relations['a'].settings.foreign_model).toBe((A as any).__proto__)
+        expect(B.__relations['a'].settings.foreign_ids_names).toEqual(['a_id1', 'a_id2'])
     })
 
     it('declare foreign with auto detect single id', async () => {
@@ -46,9 +46,9 @@ describe('Field: foreign', () => {
             @field a_id: number
             @foreign(A) a: A 
         }
-        expect(B.relations['a'].decorator instanceof Function).toBeTruthy()
-        expect(B.relations['a'].settings.foreign_model).toBe((A as any).__proto__)
-        expect(B.relations['a'].settings.foreign_ids_names).toEqual(['a_id'])
+        expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
+        expect(B.__relations['a'].settings.foreign_model).toBe((A as any).__proto__)
+        expect(B.__relations['a'].settings.foreign_ids_names).toEqual(['a_id'])
     })
 
     it('cross declare', async () => {
@@ -65,12 +65,12 @@ describe('Field: foreign', () => {
         // we have to use this band-aid for use cross foreigns
         foreign(B)(A.prototype, 'b') 
 
-        expect(A.relations['b'].decorator instanceof Function).toBeTruthy()
-        expect(A.relations['b'].settings.foreign_model).toBe((B as any).__proto__)
-        expect(A.relations['b'].settings.foreign_ids_names).toEqual(['b_id'])
-        expect(B.relations['a'].decorator instanceof Function).toBeTruthy()
-        expect(B.relations['a'].settings.foreign_model).toBe((A as any).__proto__)
-        expect(B.relations['a'].settings.foreign_ids_names).toEqual(['a_id'])
+        expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()
+        expect(A.__relations['b'].settings.foreign_model).toBe((B as any).__proto__)
+        expect(A.__relations['b'].settings.foreign_ids_names).toEqual(['b_id'])
+        expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
+        expect(B.__relations['a'].settings.foreign_model).toBe((A as any).__proto__)
+        expect(B.__relations['a'].settings.foreign_ids_names).toEqual(['a_id'])
     })
 
     it('should be null by default', async () => {

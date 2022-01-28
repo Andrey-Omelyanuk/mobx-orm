@@ -5,8 +5,8 @@ import { Model } from '../model'
 function field_one(obj: Model, field_name) {
 
     let edit_mode = false
-    let remote_model            = obj.model.relations[field_name].settings.remote_model
-    let remote_foreign_ids_name = obj.model.relations[field_name].settings.remote_foreign_ids_names
+    let remote_model            = obj.model.__relations[field_name].settings.remote_model
+    let remote_foreign_ids_name = obj.model.__relations[field_name].settings.remote_foreign_ids_names
 
     // make observable and set default value
     extendObservable(obj, {
@@ -72,10 +72,10 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
     remote_model = remote_model.__proto__ // band-aid
     return function (cls: any, field_name: string) {
         let model = cls.prototype.constructor
-        if (model.relations === undefined) model.relations = {}
+        if (model.__relations === undefined) model.__relations = {}
         // if it is empty then try auto detect it (it works only with single id) 
         remote_foreign_ids_names = remote_foreign_ids_names.length ? remote_foreign_ids_names: [`${model.name.toLowerCase()}_id`]
-        model.relations[field_name] = { 
+        model.__relations[field_name] = { 
             decorator: field_one,
             settings: {
                 remote_model: remote_model,
@@ -89,7 +89,7 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
             switch (remote_change.type) {
                 case 'add':
                     remote_obj = remote_change.newValue
-                    remote_obj.disposers.set(`one ${field_name}` ,autorun(() => {
+                    remote_obj.__disposers.set(`one ${field_name}` ,autorun(() => {
                         let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
                         if (obj) {
                             // TODO: is it not bad?
@@ -103,9 +103,9 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
                     break
                 case 'delete':
                     remote_obj = remote_change.oldValue
-                    if (remote_obj.disposers.get(`one ${field_name}`)) {
-                        remote_obj.disposers.get(`one ${field_name}`)()
-                        remote_obj.disposers.delete(`one ${field_name}`)
+                    if (remote_obj.__disposers.get(`one ${field_name}`)) {
+                        remote_obj.__disposers.get(`one ${field_name}`)()
+                        remote_obj.__disposers.delete(`one ${field_name}`)
                     }
                     let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
                     if (obj) 

@@ -24,9 +24,9 @@ describe('Field: Many', () => {
     it('declare the many with single id', async () => {
         const {A, B} = declare()
         many(B, 'a_id')(A, 'bs')
-        expect(A.relations['bs'].decorator instanceof Function).toBeTruthy()
-        expect(A.relations['bs'].settings.remote_model).toBe(B)
-        expect(A.relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id'])
+        expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
+        expect(A.__relations['bs'].settings.remote_model).toBe(B)
+        expect(A.__relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id'])
     })
 
     it('declare the many with multi ids', async () => {
@@ -42,17 +42,17 @@ describe('Field: Many', () => {
         }
 
         many(B, 'a_id1', 'a_id2')(A, 'bs')
-        expect(A.relations['bs'].decorator instanceof Function).toBeTruthy()
-        expect(A.relations['bs'].settings.remote_model).toBe(B)
-        expect(A.relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id1', 'a_id2'])
+        expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
+        expect(A.__relations['bs'].settings.remote_model).toBe(B)
+        expect(A.__relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id1', 'a_id2'])
     })
 
     it('declare the many with auto detect single id', async () => {
         const {A, B} = declare()
         many(B)(A, 'bs')
-        expect(A.relations['bs'].decorator instanceof Function).toBeTruthy()
-        expect(A.relations['bs'].settings.remote_model).toBe(B)
-        expect(A.relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id'])
+        expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
+        expect(A.__relations['bs'].settings.remote_model).toBe(B)
+        expect(A.__relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id'])
     })
 
     it('cross declare', async () => {
@@ -69,13 +69,13 @@ describe('Field: Many', () => {
         many(B)(A, 'bs')
         many(A)(B, 'as')
 
-        expect(A.relations['bs'].decorator instanceof Function).toBeTruthy()
-        expect(A.relations['bs'].settings.remote_model).toBe(B)
-        expect(A.relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id'])
+        expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
+        expect(A.__relations['bs'].settings.remote_model).toBe(B)
+        expect(A.__relations['bs'].settings.remote_foreign_ids_names).toEqual(['a_id'])
 
-        expect(B.relations['as'].decorator instanceof Function).toBeTruthy()
-        expect(B.relations['as'].settings.remote_model).toBe(A)
-        expect(B.relations['as'].settings.remote_foreign_ids_names).toEqual(['b_id'])
+        expect(B.__relations['as'].decorator instanceof Function).toBeTruthy()
+        expect(B.__relations['as'].settings.remote_model).toBe(A)
+        expect(B.__relations['as'].settings.remote_foreign_ids_names).toEqual(['b_id'])
     })
 
     it('should be [] by default', async () => {

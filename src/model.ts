@@ -34,7 +34,7 @@ export abstract class Model {
         }
     }
     // relateions is a list of field only foreign, one or many types
-    static relations    : {     // TODO: rename to __relations
+    static __relations : {
         [field_name: string]: {
             decorator   : (obj: Model, field_name: string) => void,
             settings    : any
@@ -120,7 +120,7 @@ export abstract class Model {
     }
 
     __init_data: any   
-    disposers = new Map()   // TODO: rename to __disposers
+    __disposers = new Map()
 
     constructor (...args) { }
 
@@ -221,9 +221,9 @@ export function model(constructor) {
         for (let field_name in model.fields) {
             model.fields[field_name].decorator(obj, field_name)
         }
-        // apply relations decorators
-        for (let field_name in model.relations) {
-            model.relations[field_name].decorator(obj, field_name)
+        // apply __relations decorators
+        for (let field_name in model.__relations) {
+            model.__relations[field_name].decorator(obj, field_name)
         }
 
         runInAction(() => {
