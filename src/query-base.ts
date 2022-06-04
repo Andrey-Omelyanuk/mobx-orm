@@ -1,11 +1,12 @@
 import { action, autorun, makeObservable, observable, observe, reaction, runInAction } from "mobx"
 import Adapter from "./adapters/adapter"
 import { Model } from "./model"
+import { Filter } from './filters'
 
 
 export default abstract class Query<M extends Model> {
 
-    @observable filters     : object  
+    @observable filters     : Filter
     @observable order_by    : string[]
     @observable page        : number
     @observable page_size   : number
@@ -25,7 +26,7 @@ export default abstract class Query<M extends Model> {
     __disposers = []
     __disposer_objects = {}
 
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[], page?: number, page_size?: number) {
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[], page?: number, page_size?: number) {
 		this.__base_cache = base_cache
 		this.__adapter    = adapter
         if (filters  ) this.filters   = filters
@@ -89,14 +90,5 @@ export default abstract class Query<M extends Model> {
                 }
             })
         })
-    }
-
-    __is_matched(obj) {
-        for(let key in this.filters) {
-            if (obj[key] != this.filters[key]) {
-                return false
-            }
-        }
-        return true
     }
 }

@@ -3,6 +3,7 @@ import id           from './fields/id'
 import Adapter      from './adapters/adapter'
 import LocalAdapter from './adapters/local'
 import QueryBase    from './query-base'
+import { Filter, EQ } from './filters'
 
 
 describe('QueryBase', () => {
@@ -13,7 +14,7 @@ describe('QueryBase', () => {
     // QueryBase is an abstract class and we have to create a new class and inherit it from QueryBase
     class Query<M extends Model> extends QueryBase<M> {
         __load(objs: M[]) { this.__items = objs }
-    	constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[], page?: number, page_size?: number) {
+    	constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[], page?: number, page_size?: number) {
 			super(adapter, base_cache, filters, order_by, page, page_size)
 		}
     }
@@ -38,7 +39,7 @@ describe('QueryBase', () => {
 
     describe('constructor', () => {
         it('...', async ()=> {
-            let filters     = {id: 1}
+            let filters     = EQ('id', 1)
             let order_by    = ['id']
             let page        = 1
             let page_size   = 33

@@ -4,16 +4,20 @@ import Adapter   from './adapters/adapter'
 import QueryBase from './query-base'
 import Query     from './query'
 import QueryPage from './query-page'
+import { Filter } from './filters'
 
 
 export type RawObject = any 
 
+// NOTE:
+// the __  prefix of naming - I borrow it from python. 
+// It means don't use it but if you have no choice then you can use it.
 
 export abstract class Model {
     static __id_separator : string = '-'
     // this static properties will be copied to real model in the model decorator
-    static adapter      : Adapter<Model>  // TODO: add __adapter
-    static cache  : Map<string, Model>    // TODO: add __cache
+    static adapter  : Adapter<Model>  // TODO: add __adapter
+    static cache    : Map<string, Model>    // TODO: add __cache
     // we have 3 types of fields
     // - ids (cannot be changed, order of keys is important)
     // - fields
@@ -65,21 +69,28 @@ export abstract class Model {
 
     // TODO: implement find method, it should load single object from Adapter
     // and add find method to Adapter too
-    static async find(filters) : Promise<Model> {
+    static async find(filters: Filter) : Promise<Model> {
         return this.adapter.find(filters) 
     }
 
-    static load(filters?, order_by?: string[]): Query<Model>  {
+    static load(filters?: Filter, order_by?: string[]): Query<Model>  {
         return new Query<Model>(this.adapter, this.cache, filters, order_by)
     }
 
-    static loadPage(filter?, order_by?: string[], page?: number, page_size?: number): QueryPage<Model> {
+    static loadPage(filter?: Filter, order_by?: string[], page?: number, page_size?: number): QueryPage<Model> {
         return new QueryPage(this.adapter, this.cache, filter, order_by, page, page_size)
     }
 
     // return obj from the cache
     static get(__id: string) {
         return this.cache.get(__id)
+    }
+
+    // TODO: what is it?
+    static filter(): Array<Model> {
+        let objs: Array<Model> = [] 
+
+        return objs
     }
 
     @action static updateCache(raw_obj): Model {

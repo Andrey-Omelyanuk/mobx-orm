@@ -1,4 +1,5 @@
 import { observable, observe, intercept, extendObservable } from 'mobx'
+import { RawObject } from '../model'
 
 /*
 1. you can setup id only once!
@@ -49,4 +50,53 @@ export default function id(cls, field_name: string) {
     let model = cls.constructor
     if (model.ids === undefined) model.ids = new Map()
     model.ids.set(field_name, { decorator: field_ID })
+}
+
+abstract class ModelX {
+    get raw_obj() : any {
+        return {}
+    }
+}
+
+function ModelExt<T>() {
+  abstract class Model extends ModelX{
+    /* static methods */
+    public static list: T[] = [];
+    public static async fetch(): Promise<T[]> {
+      return null!;
+    }
+    /*  instance methods */
+    public save(): Promise<T> {
+      return null!
+    }
+  }
+  return Model;
+}
+class User extends ModelExt<User>() {
+}
+let users: Promise<User[]> = User.fetch()
+
+
+abstract class  Adapter<M extends ModelX> {
+
+    // abstract getTotalCount: (where?) => Promise<number>
+    abstract __create(obj: RawObject): Promise<object>
+    abstract __update(obj: RawObject): Promise<object>
+    abstract __delete(obj: RawObject): Promise<object>
+    abstract __find(where): Promise<object>
+    abstract __load(where?, order_by?, limit?, offset?): Promise<RawObject[]>
+    abstract getTotalCount(where?): Promise<number>
+
+    readonly model: any
+
+    constructor(model: any) {
+        this.model = model 
+    }
+
+    async create(obj: M) : Promise<M> {
+        let raw_obj = await this.__create(obj.raw_obj)
+        // obj.updateFromRaw(raw_obj)
+        // obj.refresh_init_data() // backend can return default values and they should be in __init_data
+        return obj
+    }
 }

@@ -2,6 +2,7 @@ import { reaction, action, runInAction } from "mobx"
 import { Model } from "./model"
 import Adapter from "./adapters/adapter"
 import QueryBase from './query-base'
+import { Filter } from "./filters"
 
 
 // TODO: implement need_to_update
@@ -26,7 +27,7 @@ export default class Query<M extends Model> extends QueryBase<M> {
     // @action setPageSize(page_size: number) { this.page_size = page_size }
 
 
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[], page?: number, page_size?: number) {
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[], page?: number, page_size?: number) {
         super(adapter, base_cache, filters, order_by)
         if(this.page === undefined) this.page = 0
         if(this.page_size === undefined) this.page_size = 50

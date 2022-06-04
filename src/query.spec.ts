@@ -5,6 +5,7 @@ import Query from './query'
 import field from './fields/field'
 import LocalAdapter, { local } from './adapters/local' 
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from './test.utils' 
+import { EQ } from './filters'
 
 
 describe('Query', () => {
@@ -54,8 +55,9 @@ describe('Query', () => {
             expect(load).toHaveBeenCalledTimes(1) 
             // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
             // change filters
-            runInAction(() => { query.filters = {a: 1}})
-            expect(query.filters).toMatchObject({a: 1})
+            let filters = EQ('a', 1)
+            runInAction(() => { query.filters = filters  })
+            expect(query.filters).toMatchObject(filters)
             // the load will be triggered only once for an action
             // expect(load).toHaveBeenCalledTimes(2) 
             // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)

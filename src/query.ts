@@ -2,6 +2,7 @@ import { action, autorun, makeObservable, observable, observe, reaction, runInAc
 import { Model } from "./model"
 import Adapter from "./adapters/adapter"
 import QeuryBase from './query-base'
+import { Filter } from "./filters"
 
 
 /*
@@ -23,7 +24,7 @@ export default class Query<M extends Model> extends QeuryBase<M> {
         })
     }
 
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[]) {
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[]) {
         super(adapter, base_cache, filters, order_by)
 
         this.load() // load when query is created
@@ -62,7 +63,7 @@ export default class Query<M extends Model> extends QeuryBase<M> {
     private watch_obj(obj) {
         this.__disposer_objects[obj.__id] = autorun(
             () => {
-                let should = this.__is_matched(obj)
+                let should = !this.filters || this.filters.is_match(obj)
                 let i = this.items.indexOf(obj)
                 // should be in the items and it is not in the items? add it to the items
                 if ( should && i == -1) runInAction(() => this.items.push(obj))

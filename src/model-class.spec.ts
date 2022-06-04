@@ -4,6 +4,7 @@ import { Model, model } from './model'
 import id    from './fields/id'
 import field from './fields/field'
 import { runInAction } from 'mobx'
+import { EQ } from './filters'
 
 
 describe('Model Class', () => {
@@ -48,7 +49,7 @@ describe('Model Class', () => {
         })
 
         it('with args', async () => {
-            let query = A.load({a: 1}, ['-b'] )
+            let query = A.load(EQ('a', 1), ['-b'] )
             await query.ready()
             expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)
@@ -74,7 +75,7 @@ describe('Model Class', () => {
         })
 
         it('with args', async () => {
-            let query = A.loadPage({a: 1}, ['-b'], 2, 30 )
+            let query = A.loadPage(EQ('a', 1), ['-b'], 2, 30 )
             await query.ready()
             // expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)
