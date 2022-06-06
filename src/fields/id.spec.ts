@@ -8,8 +8,8 @@ describe('Field: id', () => {
         @model class A extends Model {
             @id id: number
         }
-        expect(Array.from(A.ids.keys())).toEqual(['id'])
-        expect(A.ids.get('id').decorator instanceof Function).toBeTruthy()
+        expect(Array.from(A.__ids.keys())).toEqual(['id'])
+        expect(A.__ids.get('id').decorator instanceof Function).toBeTruthy()
     })
 
     it('declare multi ids', async () => {
@@ -17,9 +17,9 @@ describe('Field: id', () => {
             @id id_a: number
             @id id_b: number
         }
-        expect(Array.from(A.ids.keys())).toEqual(['id_a', 'id_b'])
-        expect(A.ids.get('id_a').decorator instanceof Function).toBeTruthy()
-        expect(A.ids.get('id_b').decorator instanceof Function).toBeTruthy()
+        expect(Array.from(A.__ids.keys())).toEqual(['id_a', 'id_b'])
+        expect(A.__ids.get('id_a').decorator instanceof Function).toBeTruthy()
+        expect(A.__ids.get('id_b').decorator instanceof Function).toBeTruthy()
     })
 
     it('create object', async () => {
@@ -89,9 +89,9 @@ describe('Field: id', () => {
         }
         let a = new A()
 
-        expect(A.cache.size).toBe(0)
+        expect(A.__cache.size).toBe(0)
         a.id = 1
-        expect(A.cache.get(a.__id)).toBe(a)
+        expect(A.__cache.get(a.__id)).toBe(a)
     })
 
     it('side effect: eject from the cache', async () => {
@@ -100,9 +100,9 @@ describe('Field: id', () => {
         }
         let a = new A({id: 1})
 
-        expect(A.cache.get(a.__id)).toBe(a)
+        expect(A.__cache.get(a.__id)).toBe(a)
         a.id = null
-        expect(A.cache.size).toBe(0)
+        expect(A.__cache.size).toBe(0)
     })
 
 })

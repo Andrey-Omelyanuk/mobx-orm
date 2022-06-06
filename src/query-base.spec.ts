@@ -20,13 +20,13 @@ describe('QueryBase', () => {
     }
 
     const adapter     : LocalAdapter<A> = new LocalAdapter(A)
-    const cache       : Map<string, A>  = (<any> A).cache
+    const cache       : Map<string, A>  = (<any> A).__cache
     let query       : Query<A>
     let query_load  : any
     let adapter_load: any
 
     beforeEach(() => {
-        query        = new Query<A>(adapter, A.cache)
+        query        = new Query<A>(adapter, A.__cache)
         query_load   = jest.spyOn(query, '__load')
         adapter_load = jest.spyOn(adapter, 'load')
     })
@@ -54,7 +54,7 @@ describe('QueryBase', () => {
                 is_ready    : false,
                 error       : '',
                 __adapter   : adapter,
-                __base_cache: A.cache,
+                __base_cache: A.__cache,
                 __disposers : [],
                 __disposer_objects: {}
             })

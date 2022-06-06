@@ -45,7 +45,7 @@ function field_many(obj: Model, field_name) {
                 for (let id_name of remote_foreign_ids_name)
                     old_remote_obj[id_name] = null 
             // set foreign ids on the remote objs 
-            let obj_ids: any = Array.from(obj.model.ids.keys())
+            let obj_ids: any = Array.from(obj.model.__ids.keys())
             for(let new_remote_obj of new_remote_objs) {
                 for (var i = 0; i < remote_foreign_ids_name.length; i++) {
                     // do not touch if it the same
@@ -90,13 +90,13 @@ export default function many(remote_model: any, ...remote_foreign_ids_names: str
         } 
         
         // watch for remote object in the cache 
-        observe(remote_model.cache, (remote_change: any) => {
+        observe(remote_model.__cache, (remote_change: any) => {
             let remote_obj
             switch (remote_change.type) {
                 case 'add':
                     remote_obj = remote_change.newValue
                     remote_obj.__disposers.set(`many ${field_name}` ,autorun(() => {
-                        let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
+                        let obj =  model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names))
                         if (obj) {
                             const i = obj[field_name].indexOf(remote_obj)
                             if (i == -1)
@@ -110,7 +110,7 @@ export default function many(remote_model: any, ...remote_foreign_ids_names: str
                         remote_obj.__disposers.get(`many ${field_name}`)()
                         remote_obj.__disposers.delete(`many ${field_name}`)
                     }
-                    let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
+                    let obj =  model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names))
                     if (obj) {
                         const i = obj[field_name].indexOf(remote_obj)
                         if (i > -1)

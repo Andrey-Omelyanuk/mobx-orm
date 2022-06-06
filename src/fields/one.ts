@@ -38,7 +38,7 @@ function field_one(obj: Model, field_name) {
             }
             // set foreign ids on the remote obj 
             if (new_remote_obj) {
-                let obj_ids: any = Array.from(obj.model.ids.keys())
+                let obj_ids: any = Array.from(obj.model.__ids.keys())
                 for (var i = 0; i < remote_foreign_ids_name.length; i++) {
                     // do not touch if it the same
                     if (new_remote_obj[remote_foreign_ids_name[i]] != obj[obj_ids[i]])
@@ -84,13 +84,13 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
         } 
         
         // watch for remote object in the cache 
-        observe(remote_model.cache, (remote_change: any) => {
+        observe(remote_model.__cache, (remote_change: any) => {
             let remote_obj
             switch (remote_change.type) {
                 case 'add':
                     remote_obj = remote_change.newValue
                     remote_obj.__disposers.set(`one ${field_name}` ,autorun(() => {
-                        let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
+                        let obj =  model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names))
                         if (obj) {
                             // TODO: is it not bad?
                             // if (obj[field_name])
@@ -107,7 +107,7 @@ export default function one(remote_model: any, ...remote_foreign_ids_names: stri
                         remote_obj.__disposers.get(`one ${field_name}`)()
                         remote_obj.__disposers.delete(`one ${field_name}`)
                     }
-                    let obj =  model.cache.get(model.__id(remote_obj, remote_foreign_ids_names))
+                    let obj =  model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names))
                     if (obj) 
                         runInAction(() => { obj[field_name] = null })
                     break

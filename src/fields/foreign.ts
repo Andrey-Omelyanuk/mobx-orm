@@ -17,7 +17,7 @@ function field_foreign(obj, field_name) {
         // watch on foreign cache for foreign object
         () => {
             let id = foreign_model.__id(obj, foreign_ids_names)
-            return id ? foreign_model.cache.get(id) : null
+            return id ? foreign_model.__cache.get(id) : null
         },
         // update foreign field
         (foreign_obj, prev, reaction) => {
@@ -51,7 +51,7 @@ function field_foreign(obj, field_name) {
             else {
                 debugger
                 // if foreign set to obj then update ids from the obj's ids
-                let obj_ids: any = Array.from(change.newValue.model.ids.keys())
+                let obj_ids: any = Array.from(change.newValue.model.__ids.keys())
                 for (var i = 0; i < foreign_ids_names.length; i++) {
                     // do not touch if it the same
                     if (obj[foreign_ids_names[i]] != change.newValue[obj_ids[i]])
@@ -68,7 +68,7 @@ function field_foreign(obj, field_name) {
                 }
             }
             else {
-                let obj_ids = change.oldValue.model.ids
+                let obj_ids = change.oldValue.model.__ids
                 for (var i = 0; i < foreign_ids_names.length; i++) {
                     obj[foreign_ids_names[i]] = change.oldValue[obj_ids[i]]
                 }

@@ -16,20 +16,20 @@ export type RawObject = any
 export abstract class Model {
     static __id_separator : string = '-'
     // this static properties will be copied to real model in the model decorator
-    static adapter  : Adapter<Model>  // TODO: add __adapter
-    static cache    : Map<string, Model>    // TODO: add __cache
+    static __adapter  : Adapter<Model> 
+    static __cache    : Map<string, Model>
     // we have 3 types of fields
     // - ids (cannot be changed, order of keys is important)
     // - fields
     // - relations (not exist on outside)
-    static ids: Map<string, {   // TODO: rename to __ids
+    static __ids: Map<string, {
             // can decorator be different?
             decorator   : (obj: Model, field_name: string) => void,
             settings    : any,
             serialize   : any,
             deserialize : any
         }>
-    static fields       : {     // TODO: rename to __fields
+    static __fields       : {
         [field_name: string]: {
             decorator   : (obj: Model, field_name: string) => void,
             settings    : any,
@@ -52,38 +52,38 @@ export abstract class Model {
         debugger
         if (obj.__id === null)                    
             throw new Error(`Object should have id!`)
-        if (this.cache.has(obj.__id)) {
+        if (this.__cache.has(obj.__id)) {
             throw new Error(`Object with id "${obj.__id}" already exist in the cache of model: "${this.name}")`)
         }
-        this.cache.set(obj.__id, obj)
+        this.__cache.set(obj.__id, obj)
     }
 
     // remove obj from the cache
     @action static eject(obj: Model) {
         if (obj.__id === null)
             return                   
-        if (!this.cache.has(obj.__id)) 
+        if (!this.__cache.has(obj.__id)) 
             throw new Error(`Object with id "${obj.__id}" not exist in the cache of model: ${this.name}")`)
-        this.cache.delete(obj.__id)
+        this.__cache.delete(obj.__id)
     }
 
     // TODO: implement find method, it should load single object from Adapter
     // and add find method to Adapter too
     static async find(filters: Filter) : Promise<Model> {
-        return this.adapter.find(filters) 
+        return this.__adapter.find(filters) 
     }
 
     static load(filters?: Filter, order_by?: string[]): Query<Model>  {
-        return new Query<Model>(this.adapter, this.cache, filters, order_by)
+        return new Query<Model>(this.__adapter, this.__cache, filters, order_by)
     }
 
     static loadPage(filter?: Filter, order_by?: string[], page?: number, page_size?: number): QueryPage<Model> {
-        return new QueryPage(this.adapter, this.cache, filter, order_by, page, page_size)
+        return new QueryPage(this.__adapter, this.__cache, filter, order_by, page, page_size)
     }
 
     // return obj from the cache
     static get(__id: string) {
-        return this.cache.get(__id)
+        return this.__cache.get(__id)
     }
 
     // TODO: what is it?
@@ -96,9 +96,9 @@ export abstract class Model {
     @action static updateCache(raw_obj): Model {
         let __id = this.__id(raw_obj)
         let obj
-        if (this.cache.has(__id)) {
+        if (this.__cache.has(__id)) {
             runInAction(() => {
-                obj = this.cache.get(__id)
+                obj = this.__cache.get(__id)
                 obj.updateFromRaw(raw_obj)
             })
         }
@@ -110,8 +110,8 @@ export abstract class Model {
 
     static clearCache() {
         // for clear cache we need just to set null into id fields
-        for (let obj of this.cache.values()) {
-            for (let id_field_name of this.ids.keys()) {
+        for (let obj of this.__cache.values()) {
+            for (let id_field_name of this.__ids.keys()) {
                 obj[id_field_name] = null
             }
         }
@@ -119,7 +119,7 @@ export abstract class Model {
 
     static __id(obj, ids?) : string | null {
         let id = '' 
-        if (ids === undefined) ids = Array.from(this.ids.keys()) 
+        if (ids === undefined) ids = Array.from(this.__ids.keys()) 
         for (let id_field_name of ids) {
             // if any id field is null then we should return null because id is not complite
             if (obj[id_field_name] === null || obj[id_field_name] === undefined) 
@@ -146,7 +146,7 @@ export abstract class Model {
     // it is raw_data + ids
     get raw_obj() : any {
         let raw_obj: any = this.raw_data
-        for(let id_field_name of this.model.ids.keys()) {
+        for(let id_field_name of this.model.__ids.keys()) {
             if(this[id_field_name] !== undefined) {
                 raw_obj[id_field_name] = this[id_field_name]
             }
@@ -158,7 +158,7 @@ export abstract class Model {
     // data only from fields (no ids)
     get raw_data() : any {
         let raw_data: any = {}
-        for(let field_name in this.model.fields) {
+        for(let field_name in this.model.__fields) {
             if(this[field_name] !== undefined) {
                 raw_data[field_name] = this[field_name]
             }
@@ -168,7 +168,7 @@ export abstract class Model {
 
     get is_changed() : boolean {
         let is_changed = false
-        for(let field_name in this.model.fields) {
+        for(let field_name in this.model.__fields) {
             if (this[field_name] != this.__init_data[field_name]) {
                 is_changed = true
             }
@@ -176,27 +176,27 @@ export abstract class Model {
         return is_changed 
     }
 
-    async create() { return await this.model.adapter.create(this) }
-    async update() { return await this.model.adapter.update(this) }
-    async delete() { return await this.model.adapter.delete(this) }
+    async create() { return await this.model.__adapter.create(this) }
+    async update() { return await this.model.__adapter.update(this) }
+    async delete() { return await this.model.__adapter.delete(this) }
     async save  () { return this.__id === null ? this.create() : this.update() }
 
     @action refresh_init_data() {
         if(this.__init_data === undefined) this.__init_data = {}
-        for (let field_name in this.model.fields) {
+        for (let field_name in this.model.__fields) {
             this.__init_data[field_name] = this[field_name]
         }
     }
 
     @action updateFromRaw(raw_obj) {
         // keys
-        for (let id_field_name of this.model.ids.keys()) {
+        for (let id_field_name of this.model.__ids.keys()) {
             if (raw_obj[id_field_name] !== undefined && this[id_field_name] != raw_obj[id_field_name] ) {
                 this[id_field_name] = raw_obj[id_field_name]
             }
         }
         // fields
-        for(let field_name in this.model.fields) {
+        for(let field_name in this.model.__fields) {
             if (raw_obj[field_name] !== undefined) {
                 this[field_name] = raw_obj[field_name]
             }
@@ -210,7 +210,7 @@ export abstract class Model {
 export function model(constructor) {
     var original = constructor
 
-    original.cache = observable(new Map())
+    original.__cache = observable(new Map())
 
     // the new constructor
     let f : any = function (...args) {
@@ -221,16 +221,16 @@ export function model(constructor) {
         let model = obj.model
         makeObservable(obj)
 
-        if (model.ids === undefined) 
+        if (model.__ids === undefined) 
             throw(`No one id field was declared on model ${model.name}`)
 
         // apply id-fields decorators
-        for (let id_field_name of model.ids.keys()) {
-            model.ids.get(id_field_name).decorator(obj, id_field_name)
+        for (let id_field_name of model.__ids.keys()) {
+            model.__ids.get(id_field_name).decorator(obj, id_field_name)
         }
         // apply fields decorators
-        for (let field_name in model.fields) {
-            model.fields[field_name].decorator(obj, field_name)
+        for (let field_name in model.__fields) {
+            model.__fields[field_name].decorator(obj, field_name)
         }
         // apply __relations decorators
         for (let field_name in model.__relations) {
@@ -242,13 +242,13 @@ export function model(constructor) {
             if (args[0]) {
                 let raw_obj = args[0]
                 // id-fields
-                for (let id_field_name of model.ids.keys()) {
+                for (let id_field_name of model.__ids.keys()) {
                     if (raw_obj[id_field_name] !== undefined) {
                         obj[id_field_name] = raw_obj[id_field_name]
                     }
                 }
                 // fields 
-                for (let field_name in model.fields) {
+                for (let field_name in model.__fields) {
                     if (raw_obj[field_name] !== undefined) {
                         obj[field_name] = raw_obj[field_name]
                     }

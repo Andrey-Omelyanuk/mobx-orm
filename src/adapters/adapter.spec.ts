@@ -21,7 +21,7 @@ describe('Adapter', () => {
     let adapter: TestAdapter, cache: Map<string, A>, __load: any, __create: any, __update: any, __delete: any, __find: any
 
     beforeAll(() => {
-        cache = (<any>A).__proto__.cache
+        cache = (<any>A).__proto__.__cache
         adapter = new TestAdapter(A) 
         __load   = jest.spyOn(adapter, '__load')
         __create = jest.spyOn(adapter, '__create')

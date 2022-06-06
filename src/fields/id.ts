@@ -48,8 +48,8 @@ function field_ID (obj , field_name) {
 
 export default function id(cls, field_name: string) {
     let model = cls.constructor
-    if (model.ids === undefined) model.ids = new Map()
-    model.ids.set(field_name, { decorator: field_ID })
+    if (model.__ids === undefined) model.__ids = new Map()
+    model.__ids.set(field_name, { decorator: field_ID })
 }
 
 abstract class ModelX {

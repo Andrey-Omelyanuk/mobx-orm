@@ -9,7 +9,7 @@ describe('Field: field', () => {
         @model class A extends Model {
             @field a: number
         }
-        expect(A.fields['a'].decorator instanceof Function).toBeTruthy()
+        expect(A.__fields['a'].decorator instanceof Function).toBeTruthy()
     })
 
     it('declare multi fields', async () => {
@@ -17,8 +17,8 @@ describe('Field: field', () => {
             @field a: number
             @field b: number
         }
-        expect(A.fields['a'].decorator instanceof Function).toBeTruthy()
-        expect(A.fields['b'].decorator instanceof Function).toBeTruthy()
+        expect(A.__fields['a'].decorator instanceof Function).toBeTruthy()
+        expect(A.__fields['b'].decorator instanceof Function).toBeTruthy()
     })
 
     it('create object', async () => {

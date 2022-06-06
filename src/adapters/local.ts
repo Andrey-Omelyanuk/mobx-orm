@@ -45,7 +45,7 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
                 ids.push(parseInt(id))
             }
             let max = Math.max.apply(null, ids)
-            for(let field_name_id of this.model.ids.keys()) {
+            for(let field_name_id of this.model.__ids.keys()) {
                 obj[field_name_id] = max + 1
             }
         }
@@ -116,7 +116,7 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
 export function local() {
     return (cls: any) => {
         let adapter = new LocalAdapter(cls)
-        cls.__proto__.adapter = adapter 
+        cls.__proto__.__adapter = adapter 
     }
 }
 

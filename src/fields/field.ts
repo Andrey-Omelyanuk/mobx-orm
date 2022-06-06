@@ -10,7 +10,7 @@ export function field_field(obj, field_name) {
 
 export default function field(cls, field_name: string) {
     let model = cls.constructor
-    if (model.fields === undefined) model.fields = {}
+    if (model.__fields === undefined) model.__fields = {}
 
-    model.fields[field_name] = { decorator: field_field }  // register field 
+    model.__fields[field_name] = { decorator: field_field }  // register field 
 }

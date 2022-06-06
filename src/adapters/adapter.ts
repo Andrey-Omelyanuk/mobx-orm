@@ -33,7 +33,7 @@ export default abstract class  Adapter<M extends Model> {
 
     async delete(obj: M) : Promise<M> {
         let raw_obj = await this.__delete(obj.raw_obj)
-        for(let id_field_name of this.model.ids.keys())
+        for(let id_field_name of this.model.__ids.keys())
             obj[id_field_name] = null
         return obj
     }

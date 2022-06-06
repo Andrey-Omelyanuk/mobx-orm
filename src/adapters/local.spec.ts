@@ -20,8 +20,8 @@ describe('LocalAdapter', () => {
 
 
     beforeAll(() => {
-        cache = (<any>A).__proto__.cache
-        adapter = (<any>A).__proto__.adapter
+        cache = (<any>A).__proto__.__cache
+        adapter = (<any>A).__proto__.__adapter
     })
 
     beforeEach(async () => {
@@ -43,8 +43,8 @@ describe('LocalAdapter', () => {
         it('decorate the model', async ()=> {
             @local()
             @model class A extends Model {}
-            expect(A.adapter.model).toBe(A)
-            expect((<any>A).adapter.store_name).toBe('A')
+            expect(A.__adapter.model).toBe(A)
+            expect((<any>A).__adapter.store_name).toBe('A')
         })
     })
 

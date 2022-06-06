@@ -27,10 +27,10 @@ describe('Model Class', () => {
     let load: any, create: any, update: any, del: any
 
     beforeAll(async () => {
-        load   = jest.spyOn(A.adapter, 'load')
-        create = jest.spyOn(A.adapter, 'create')
-        update = jest.spyOn(A.adapter, 'update')
-        del    = jest.spyOn(A.adapter, 'delete')
+        load   = jest.spyOn(A.__adapter, 'load')
+        create = jest.spyOn(A.__adapter, 'create')
+        update = jest.spyOn(A.__adapter, 'update')
+        del    = jest.spyOn(A.__adapter, 'delete')
     })
 
     afterEach(async () => {
@@ -87,14 +87,14 @@ describe('Model Class', () => {
         it('new object', async () => {
             let obj = A.updateCache({id: 1, a: 2, b: 'test', c: true})
             expect(obj).toMatchObject({id: 1, a: 2, b: 'test', c: true})
-            expect(obj.model.cache.get(obj.__id)).toBe(obj)
+            expect(obj.model.__cache.get(obj.__id)).toBe(obj)
         })
 
         it('update exist object', async () => {
             let a = new A({id: 1, a: 2, b: 'test', c: true})
             let obj = A.updateCache({id: 1, b: 'hello'})
             expect(obj).toMatchObject({id: 1, a: 2, b: 'hello', c: true})
-            expect(obj.model.cache.get(obj.__id)).toBe(obj)
+            expect(obj.model.__cache.get(obj.__id)).toBe(obj)
             expect(obj).toBe(a)
         })
     })
@@ -105,17 +105,17 @@ describe('Model Class', () => {
             // id will add objects to the cache
             let a = new A({id: 1})
             let b = new A({id: 2})
-            expect(A.cache.size).toBe(2)
+            expect(A.__cache.size).toBe(2)
             A.clearCache()
-            expect(A.cache.size).toBe(0)
+            expect(A.__cache.size).toBe(0)
             expect(a.id).toBeNull()
             expect(b.id).toBeNull()
         })
 
         it('clear empty cache', async () => {
-            expect(A.cache.size).toBe(0)
+            expect(A.__cache.size).toBe(0)
             A.clearCache()
-            expect(A.cache.size).toBe(0)
+            expect(A.__cache.size).toBe(0)
         })
     })
 

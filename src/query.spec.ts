@@ -18,15 +18,15 @@ describe('Query', () => {
         @field   c !: boolean
     }
 
-    const adapter   : LocalAdapter<A> = (<any>A).adapter
-    const cache     : Map<string, A>  = (<any>A).cache
+    const adapter   : LocalAdapter<A> = (<any>A).__adapter
+    const cache     : Map<string, A>  = (<any>A).__cache
 
     let query: Query<A>
     let load : any
 
     beforeAll(() => {
         adapter.init_local_data(data_set)
-        load  = jest.spyOn(A.adapter, 'load')
+        load  = jest.spyOn(A.__adapter, 'load')
     })
 
     beforeEach(async () => {
