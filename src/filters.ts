@@ -13,6 +13,7 @@ export abstract class Filter {
     abstract is_match(obj: any) : boolean 
 }
 
+// TODO: to_str should be able to change, currently we cannot do this
 export function EQ(field, value=null) {
     class EQ extends Filter {
         to_str  (        ): string  { return `${this.field}__eq=${this.value}` }

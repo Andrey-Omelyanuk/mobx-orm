@@ -1,5 +1,5 @@
-// import 'reflect-metadata'
-import {intercept, observe, extendObservable, observable, autorun, when, reaction} from 'mobx'
+import {intercept, observe, extendObservable, reaction} from 'mobx'
+
 
 function field_foreign(obj, field_name) {
     let edit_mode = false
@@ -12,17 +12,17 @@ function field_foreign(obj, field_name) {
         [field_name]: null 
     })
 
-    debugger
     reaction(
         // watch on foreign cache for foreign object
         () => {
-            let id = foreign_model.__id(obj, foreign_ids_names)
-            return id ? foreign_model.__cache.get(id) : null
+            let __id = foreign_model.__id(obj, foreign_ids_names)
+            return __id ? foreign_model.__cache.get(__id) : null
         },
         // update foreign field
         (foreign_obj, prev, reaction) => {
             obj[field_name] = foreign_obj ? foreign_obj : null 
-        })
+        }
+    )
 
     // Setter
     // 1. checks before set new changes
@@ -49,7 +49,6 @@ function field_foreign(obj, field_name) {
                 }
             }
             else {
-                debugger
                 // if foreign set to obj then update ids from the obj's ids
                 let obj_ids: any = Array.from(change.newValue.model.__ids.keys())
                 for (var i = 0; i < foreign_ids_names.length; i++) {
@@ -86,13 +85,11 @@ function field_foreign(obj, field_name) {
                 new_foreign_obj[settings.one] = obj 
             }
         }
-
     })
 }
 
-
 export default function foreign(foreign_model: any, ...foreign_ids_names: string[]) {
-    foreign_model = foreign_model.__proto__ // band-aid
+    foreign_model = foreign_model.__proto__ // TODO: band-aid
     return function (cls: any, field_name: string) {
         let model = cls.constructor
         if (model.__relations === undefined) model.__relations = {}
@@ -105,14 +102,5 @@ export default function foreign(foreign_model: any, ...foreign_ids_names: string
                 foreign_ids_names: foreign_ids_names.length ? foreign_ids_names : [`${field_name}_id`]
             } 
         } 
-
-        // TODO finish it
-        // watch on the foreign cache 
-        // if foreign obj was created then it should be attached to foreign
-        // if foreign obj was deleted then it should be removed from foreign
-        // e.i. update foreign obj when foreign ids was changed
-        // reaction(() => foreign_model.cache, (value, prev_value, reaction) => {
-        //     debugger
-        // })
     }
 }

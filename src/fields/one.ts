@@ -1,4 +1,4 @@
-import { intercept, observe, observable, extendObservable, reaction, autorun, runInAction } from 'mobx'
+import { intercept, observe, extendObservable, autorun, runInAction } from 'mobx'
 import { Model } from '../model'
 
 
