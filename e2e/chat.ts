@@ -22,7 +22,7 @@ describe('e2e: Chat.', () => {
                 messages: Message[]
 
             async sendMessage(user: User, text: string) {
-                let message = new Message({channel: this, user: user, text: text, created: new Date()})
+                let message = new Message({channel_id: this.id, user_id: user.id, text: text, created: new Date()})
                 return message.save()
             }
         }
