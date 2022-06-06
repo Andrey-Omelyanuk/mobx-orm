@@ -1,7 +1,5 @@
-import { field } from 'dist/mobx-orm'
 import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import Adapter   from './adapters/adapter'
-import QueryBase from './query-base'
 import Query     from './query'
 import QueryPage from './query-page'
 import { Filter } from './filters'

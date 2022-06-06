@@ -30,7 +30,7 @@ describe('QueryPage', () => {
 
     beforeEach(async () => {
         query = new QueryPage<A>(adapter, cache)
-        await query.ready() 
+        await query.load()
     })
 
     afterEach(async () => {

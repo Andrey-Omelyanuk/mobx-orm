@@ -27,8 +27,6 @@ export default class Query<M extends Model> extends QeuryBase<M> {
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[]) {
         super(adapter, base_cache, filters, order_by)
 
-        this.load() // load when query is created
-
         // update if filters was changed
         // watch only filters, if order was changed then we don't need to update, just resort
         this.__disposers.push(reaction(

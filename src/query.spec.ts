@@ -31,7 +31,7 @@ describe('Query', () => {
 
     beforeEach(async () => {
         query = new Query<A>(adapter, cache)
-        await query.ready() 
+        await query.load()
     })
 
     afterEach(async () => {

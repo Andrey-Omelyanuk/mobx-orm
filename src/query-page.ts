@@ -1,4 +1,4 @@
-import { reaction, action, runInAction } from "mobx"
+import { reaction, runInAction } from "mobx"
 import { Model } from "./model"
 import Adapter from "./adapters/adapter"
 import QueryBase from './query-base'
@@ -31,8 +31,6 @@ export default class Query<M extends Model> extends QueryBase<M> {
         super(adapter, base_cache, filters, order_by)
         if(this.page === undefined) this.page = 0
         if(this.page_size === undefined) this.page_size = 50
-
-        this.load() // load when query is created
 
         // update if query is changed
         this.__disposers.push(reaction(
