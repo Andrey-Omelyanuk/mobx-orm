@@ -1,7 +1,7 @@
 {
   "name"        : "@Andrey-Omelyanuk/mobx-orm",
   "description" : "Reactive ORM based on MobX",
-  "version"     : "1.0.0-beta9",
+  "version"     : "1.0.12",
   "license"     : "MIT",
   "author"      : "Andrey Omelyanuk",
   "repository"  : {
@@ -31,6 +31,7 @@
     "@types/jest"               : "^28.1.1", 
 
     "rollup"                    : "^2.75.5",
+    "rollup-plugin-typescript2" : "^0.30.0",
     "@rollup/plugin-typescript" : "^8.3.2",
     "rollup-plugin-terser"      : "^7.0.2",
     "rollup-plugin-dts"         : "^4.2.2" 
