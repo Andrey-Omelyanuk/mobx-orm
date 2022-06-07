@@ -1,81 +1,80 @@
 import { makeObservable, observable } from "mobx"
 
-// TODO: to_str should be able to change, currently we cannot do this
 
-export abstract class Filter {
-    readonly    field: string
+export enum FilterType {
+    EQ, NOT_EQ,
+    IN, NOT_IN,
+    AND, OR,
+}
+
+export class Filter {
+    @observable type : FilterType 
+    @observable field: string
     @observable value: any
-    constructor(field, value) {
+
+    constructor(type: FilterType = null, field: string = null, value: any = null) {
+        this.type  = type 
         this.field = field
         this.value = value
         makeObservable(this)
     }
-    abstract to_str  (        ) : string
-    abstract is_match(obj: any) : boolean 
-}
-
-export function EQ(field: string, value=null) : Filter {
-    class EQ extends Filter {
-        to_str(): string  { 
-            return `${this.field}__eq=${this.value}` 
-        }
-        is_match(obj: any): boolean { 
-            return obj[this.field] == this.value 
-        }
-    }
-    return new EQ(field, value) 
-}
-
-export function IN(field: string, value=null) : Filter {
-    class IN extends Filter {
-        to_str(): string {
-            return `${this.field}__in=${this.value.join(',')}` 
-        }
-        is_match(obj: any): boolean {
-            return this.value.includes(obj[this.field])
+    to_str(): string {
+        let temp 
+        if (this.type === null || this.value === null) return ''
+        switch (this.type) {
+            case FilterType.EQ:
+                return `${this.field}__eq=${this.value}` 
+            case FilterType.IN:
+                return `${this.field}__in=${this.value.join(',')}` 
+            case FilterType.AND:
+                temp = []
+                for (let filter of this.value)
+                    temp.push(filter.to_str())
+                return temp.join('&') 
+            case FilterType.OR:
+                temp = []
+                for (let filter of this.value)
+                    temp.push(filter.to_str())
+                return temp.join('|') 
+            default:
+                return '' 
         }
     }
-    return new IN(field, value) 
+    is_match(obj: any) : boolean {
+        switch (this.type) {
+            case FilterType.EQ:
+                return obj[this.field] == this.value 
+            case FilterType.IN:
+                return this.value.includes(obj[this.field])
+            case FilterType.AND:
+                for(let filter of this.value)
+                    if (!filter.is_match(obj))
+                        return false
+                return true 
+            case FilterType.OR:
+                for(let filter of this.value)
+                    if (filter.is_match(obj))
+                        return true 
+                return false 
+            default:
+                // unknown type of filter == any obj is match
+                return true 
+        }
+    }
+}
+
+export function EQ(field: string = null, value: any = null) : Filter {
+    return new Filter(FilterType.EQ, field, value) 
+}
+
+export function IN(field: string = null, value: any[] = null) : Filter {
+    return new Filter(FilterType.IN, field, value) 
 }
 
 export function AND(...filters: Filter[]) : Filter {
-    class AND extends Filter {
-        to_str(): string { 
-            let strings = []
-            for (let filter of this.value) {
-                strings.push(filter.to_str())
-            }
-            return strings.join('&') 
-        }
-        is_match(obj: any): boolean { 
-            for(let filter of this.value) {
-                if (!filter.is_match(obj)) {
-                    return false
-                }
-            }
-            return true 
-        }
-    }
-    return new AND('', filters) 
+    return new Filter(FilterType.AND, null, filters) 
 }
 
 export function OR(...filters: Filter[]) : Filter {
-    class OR extends Filter {
-        to_str(): string { 
-            let strings = []
-            for (let filter of this.value) {
-                strings.push(filter.to_str())
-            }
-            return strings.join('|') 
-        }
-        is_match(obj: any): boolean { 
-            for(let filter of this.value) {
-                if (filter.is_match(obj)) {
-                    return true 
-                }
-            }
-            return false 
-        }
-    }
-    return new OR('', filters) 
+    return new Filter(FilterType.OR, null, filters) 
 }

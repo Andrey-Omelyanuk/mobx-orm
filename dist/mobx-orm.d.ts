@@ -14,15 +14,24 @@ declare abstract class Adapter<M extends Model> {
     load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<M[]>;
 }
 
-declare abstract class Filter {
-    readonly field: string;
-    value: any;
-    constructor(field: any, value: any);
-    abstract to_str(): string;
-    abstract is_match(obj: any): boolean;
+declare enum FilterType {
+    EQ = 0,
+    NOT_EQ = 1,
+    IN = 2,
+    NOT_IN = 3,
+    AND = 4,
+    OR = 5
 }
-declare function EQ(field: string, value?: any): Filter;
-declare function IN(field: string, value?: any): Filter;
+declare class Filter {
+    type: FilterType;
+    field: string;
+    value: any;
+    constructor(type?: FilterType, field?: string, value?: any);
+    to_str(): string;
+    is_match(obj: any): boolean;
+}
+declare function EQ(field?: string, value?: any): Filter;
+declare function IN(field?: string, value?: any[]): Filter;
 declare function AND(...filters: Filter[]): Filter;
 declare function OR(...filters: Filter[]): Filter;
 
@@ -139,4 +148,4 @@ declare function one(remote_model: any, ...remote_foreign_ids_names: string[]): 
 
 declare function many(remote_model: any, ...remote_foreign_ids_names: string[]): (cls: any, field_name: string) => void;
 
-export { AND, Adapter, EQ, Filter, IN, LocalAdapter, Model, OR, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawObject, field, foreign, id, local, many, model, one };
+export { AND, Adapter, EQ, Filter, FilterType, IN, LocalAdapter, Model, OR, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawObject, field, foreign, id, local, many, model, one };

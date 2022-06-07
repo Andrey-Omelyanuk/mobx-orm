@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.13
+   * mobx-orm.js v1.0.14
    * Released under the MIT license.
    */
 
@@ -34,9 +34,23 @@ function __metadata(metadataKey, metadataValue) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
 }
 
-// TODO: to_str should be able to change, currently we cannot do this
+var FilterType;
+(function (FilterType) {
+    FilterType[FilterType["EQ"] = 0] = "EQ";
+    FilterType[FilterType["NOT_EQ"] = 1] = "NOT_EQ";
+    FilterType[FilterType["IN"] = 2] = "IN";
+    FilterType[FilterType["NOT_IN"] = 3] = "NOT_IN";
+    FilterType[FilterType["AND"] = 4] = "AND";
+    FilterType[FilterType["OR"] = 5] = "OR";
+})(FilterType || (FilterType = {}));
 class Filter {
-    constructor(field, value) {
+    constructor(type = null, field = null, value = null) {
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "field", {
             enumerable: true,
             configurable: true,
@@ -49,76 +63,79 @@ class Filter {
             writable: true,
             value: void 0
         });
+        this.type = type;
         this.field = field;
         this.value = value;
         makeObservable(this);
     }
+    to_str() {
+        let temp;
+        if (this.type === null || this.value === null)
+            return '';
+        switch (this.type) {
+            case FilterType.EQ:
+                return `${this.field}__eq=${this.value}`;
+            case FilterType.IN:
+                return `${this.field}__in=${this.value.join(',')}`;
+            case FilterType.AND:
+                temp = [];
+                for (let filter of this.value)
+                    temp.push(filter.to_str());
+                return temp.join('&');
+            case FilterType.OR:
+                temp = [];
+                for (let filter of this.value)
+                    temp.push(filter.to_str());
+                return temp.join('|');
+            default:
+                return '';
+        }
+    }
+    is_match(obj) {
+        switch (this.type) {
+            case FilterType.EQ:
+                return obj[this.field] == this.value;
+            case FilterType.IN:
+                return this.value.includes(obj[this.field]);
+            case FilterType.AND:
+                for (let filter of this.value)
+                    if (!filter.is_match(obj))
+                        return false;
+                return true;
+            case FilterType.OR:
+                for (let filter of this.value)
+                    if (filter.is_match(obj))
+                        return true;
+                return false;
+            default:
+                // unknown type of filter == any obj is match
+                return true;
+        }
+    }
 }
+__decorate([
+    observable,
+    __metadata("design:type", Number)
+], Filter.prototype, "type", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", String)
+], Filter.prototype, "field", void 0);
 __decorate([
     observable,
     __metadata("design:type", Object)
 ], Filter.prototype, "value", void 0);
-function EQ(field, value = null) {
-    class EQ extends Filter {
-        to_str() {
-            return `${this.field}__eq=${this.value}`;
-        }
-        is_match(obj) {
-            return obj[this.field] == this.value;
-        }
-    }
-    return new EQ(field, value);
+function EQ(field = null, value = null) {
+    return new Filter(FilterType.EQ, field, value);
 }
-function IN(field, value = null) {
-    class IN extends Filter {
-        to_str() {
-            return `${this.field}__in=${this.value.join(',')}`;
-        }
-        is_match(obj) {
-            return this.value.includes(obj[this.field]);
-        }
-    }
-    return new IN(field, value);
+function IN(field = null, value = null) {
+    return new Filter(FilterType.IN, field, value);
 }
 function AND(...filters) {
-    class AND extends Filter {
-        to_str() {
-            let strings = [];
-            for (let filter of this.value) {
-                strings.push(filter.to_str());
-            }
-            return strings.join('&');
-        }
-        is_match(obj) {
-            for (let filter of this.value) {
-                if (!filter.is_match(obj)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-    return new AND('', filters);
+    return new Filter(FilterType.AND, null, filters);
 }
 function OR(...filters) {
-    class OR extends Filter {
-        to_str() {
-            let strings = [];
-            for (let filter of this.value) {
-                strings.push(filter.to_str());
-            }
-            return strings.join('|');
-        }
-        is_match(obj) {
-            for (let filter of this.value) {
-                if (filter.is_match(obj)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-    return new OR('', filters);
+    return new Filter(FilterType.OR, null, filters);
 }
 
 class Query$2 {
@@ -1204,5 +1221,5 @@ function many(remote_model, ...remote_foreign_ids_names) {
     };
 }
 
-export { AND, Adapter, EQ, Filter, IN, LocalAdapter, Model, OR, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, field, foreign, id, local, many, model, one };
+export { AND, Adapter, EQ, Filter, FilterType, IN, LocalAdapter, Model, OR, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, field, foreign, id, local, many, model, one };
 //# sourceMappingURL=mobx-orm.es2015.js.map
