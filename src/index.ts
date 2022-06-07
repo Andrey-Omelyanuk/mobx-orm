@@ -11,6 +11,8 @@ import field            from './fields/field'
 import foreign          from './fields/foreign'
 import one              from './fields/one'
 import many             from './fields/many'
+// filters 
+import { Filter, EQ, IN, AND, OR } from './filters' 
 
 export {
     model, Model, RawObject,
@@ -26,4 +28,6 @@ export {
     foreign,
     one,
     many,
+    // filters
+    Filter, EQ, IN, AND, OR,
 }

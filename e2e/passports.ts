@@ -1,5 +1,5 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { Model, model, local, id, field, foreign, one, many } from '../src/index'
+import { Model, model, local, id, field, foreign, one, many } from '../dist/mobx-orm'
 
 // TODO: update the tests
 

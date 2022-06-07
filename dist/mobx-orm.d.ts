@@ -14,8 +14,20 @@ declare abstract class Adapter<M extends Model> {
     load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<M[]>;
 }
 
+declare abstract class Filter {
+    readonly field: string;
+    value: any;
+    constructor(field: any, value: any);
+    abstract to_str(): string;
+    abstract is_match(obj: any): boolean;
+}
+declare function EQ(field: string, value?: any): Filter;
+declare function IN(field: string, value?: any): Filter;
+declare function AND(...filters: Filter[]): Filter;
+declare function OR(...filters: Filter[]): Filter;
+
 declare abstract class Query$2<M extends Model> {
-    filters: object;
+    filters: Filter;
     order_by: string[];
     page: number;
     page_size: number;
@@ -31,46 +43,63 @@ declare abstract class Query$2<M extends Model> {
     __error: string;
     __disposers: any[];
     __disposer_objects: {};
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[], page?: number, page_size?: number);
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[], page?: number, page_size?: number);
     destroy(): void;
     abstract __load(objs: M[]): any;
     load(): Promise<void>;
     shadowLoad(): Promise<void>;
     ready(): Promise<Boolean>;
     loading(): Promise<Boolean>;
-    __is_matched(obj: any): boolean;
 }
 
 declare class Query$1<M extends Model> extends Query$2<M> {
     __load(objs: M[]): void;
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[]);
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[]);
     private watch_obj;
 }
 
 declare class Query<M extends Model> extends Query$2<M> {
     __load(objs: M[]): void;
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: object, order_by?: string[], page?: number, page_size?: number);
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[], page?: number, page_size?: number);
 }
 
 declare type RawObject = any;
 declare abstract class Model {
-    private static id_separator;
-    private static adapter;
-    private static cache;
-    private static ids;
-    private static fields;
-    private static relations;
+    static __id_separator: string;
+    static __adapter: Adapter<Model>;
+    static __cache: Map<string, Model>;
+    static __ids: Map<string, {
+        decorator: (obj: Model, field_name: string) => void;
+        settings: any;
+        serialize: any;
+        deserialize: any;
+    }>;
+    static __fields: {
+        [field_name: string]: {
+            decorator: (obj: Model, field_name: string) => void;
+            settings: any;
+            serialize: any;
+            deserialize: any;
+        };
+    };
+    static __relations: {
+        [field_name: string]: {
+            decorator: (obj: Model, field_name: string) => void;
+            settings: any;
+        };
+    };
     static inject(obj: Model): void;
     static eject(obj: Model): void;
-    static find(filters: any): Promise<Model>;
-    static load(filters?: any, order_by?: string[]): Query$1<Model>;
-    static loadPage(filter?: any, order_by?: string[], page?: number, page_size?: number): Query<Model>;
+    static find(filters: Filter): Promise<Model>;
+    static load(filters?: Filter, order_by?: string[]): Query$1<Model>;
+    static loadPage(filter?: Filter, order_by?: string[], page?: number, page_size?: number): Query<Model>;
     static get(__id: string): Model;
+    static filter(): Array<Model>;
     static updateCache(raw_obj: any): Model;
     static clearCache(): void;
     static __id(obj: any, ids?: any): string | null;
-    private __init_data;
-    private disposers;
+    __init_data: any;
+    __disposers: Map<any, any>;
     constructor(...args: any[]);
     get __id(): string | null;
     get model(): any;
@@ -110,4 +139,4 @@ declare function one(remote_model: any, ...remote_foreign_ids_names: string[]): 
 
 declare function many(remote_model: any, ...remote_foreign_ids_names: string[]): (cls: any, field_name: string) => void;
 
-export { Adapter, LocalAdapter, Model, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawObject, field, foreign, id, local, many, model, one };
+export { AND, Adapter, EQ, Filter, IN, LocalAdapter, Model, OR, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawObject, field, foreign, id, local, many, model, one };

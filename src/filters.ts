@@ -1,5 +1,6 @@
 import { makeObservable, observable } from "mobx"
 
+// TODO: to_str should be able to change, currently we cannot do this
 
 export abstract class Filter {
     readonly    field: string
@@ -13,8 +14,7 @@ export abstract class Filter {
     abstract is_match(obj: any) : boolean 
 }
 
-// TODO: to_str should be able to change, currently we cannot do this
-export function EQ(field, value=null) {
+export function EQ(field: string, value=null) : Filter {
     class EQ extends Filter {
         to_str  (        ): string  { return `${this.field}__eq=${this.value}` }
         is_match(obj: any): boolean { return obj[this.field] == this.value }
@@ -22,7 +22,7 @@ export function EQ(field, value=null) {
     return new EQ(field, value) 
 }
 
-export function IN(field, value=null) {
+export function IN(field: string, value=null) : Filter {
     class IN extends Filter {
         to_str  (        ): string  { return `${this.field}__in=${this.value.join(',')}` }
         is_match(obj: any): boolean { return this.value.includes(obj[this.field]) }
@@ -30,7 +30,7 @@ export function IN(field, value=null) {
     return new IN(field, value) 
 }
 
-export function AND(...filters) {
+export function AND(...filters: Filter[]) : Filter {
     class AND extends Filter {
         to_str(): string { 
             let strings = []
@@ -51,7 +51,7 @@ export function AND(...filters) {
     return new AND('', filters) 
 }
 
-export function OR(...filters) {
+export function OR(...filters: Filter[]) : Filter {
     class OR extends Filter {
         to_str(): string { 
             let strings = []
