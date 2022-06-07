@@ -131,7 +131,6 @@ describe('Model Class', () => {
 
         it('get id from model instance', async () => {
             let a = new A({id: 1})
-            debugger
             expect(A.__id(a)).toBe('1')
         })
 

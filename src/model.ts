@@ -47,7 +47,6 @@ export abstract class Model {
 
     // add obj to the cache
     @action static inject(obj: Model) {
-        debugger
         if (obj.__id === null)                    
             throw new Error(`Object should have id!`)
         if (this.__cache.has(obj.__id)) {

@@ -16,16 +16,24 @@ export abstract class Filter {
 
 export function EQ(field: string, value=null) : Filter {
     class EQ extends Filter {
-        to_str  (        ): string  { return `${this.field}__eq=${this.value}` }
-        is_match(obj: any): boolean { return obj[this.field] == this.value }
+        to_str(): string  { 
+            return `${this.field}__eq=${this.value}` 
+        }
+        is_match(obj: any): boolean { 
+            return obj[this.field] == this.value 
+        }
     }
     return new EQ(field, value) 
 }
 
 export function IN(field: string, value=null) : Filter {
     class IN extends Filter {
-        to_str  (        ): string  { return `${this.field}__in=${this.value.join(',')}` }
-        is_match(obj: any): boolean { return this.value.includes(obj[this.field]) }
+        to_str(): string {
+            return `${this.field}__in=${this.value.join(',')}` 
+        }
+        is_match(obj: any): boolean {
+            return this.value.includes(obj[this.field])
+        }
     }
     return new IN(field, value) 
 }

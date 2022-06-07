@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.0-beta9
+   * mobx-orm.js v1.0.13
    * Released under the MIT license.
    */
 
@@ -60,15 +60,23 @@ __decorate([
 ], Filter.prototype, "value", void 0);
 function EQ(field, value = null) {
     class EQ extends Filter {
-        to_str() { return `${this.field}__eq=${this.value}`; }
-        is_match(obj) { return obj[this.field] == this.value; }
+        to_str() {
+            return `${this.field}__eq=${this.value}`;
+        }
+        is_match(obj) {
+            return obj[this.field] == this.value;
+        }
     }
     return new EQ(field, value);
 }
 function IN(field, value = null) {
     class IN extends Filter {
-        to_str() { return `${this.field}__in=${this.value.join(',')}`; }
-        is_match(obj) { return this.value.includes(obj[this.field]); }
+        to_str() {
+            return `${this.field}__in=${this.value.join(',')}`;
+        }
+        is_match(obj) {
+            return this.value.includes(obj[this.field]);
+        }
     }
     return new IN(field, value);
 }
@@ -412,7 +420,6 @@ class Model {
     }
     // add obj to the cache
     static inject(obj) {
-        debugger;
         if (obj.__id === null)
             throw new Error(`Object should have id!`);
         if (this.__cache.has(obj.__id)) {
