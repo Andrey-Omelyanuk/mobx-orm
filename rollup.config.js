@@ -18,7 +18,11 @@ export default [
         input: './src/index.ts',
         output: [
             {   file        : pkg['main'],
-                format      : "cjs",
+                format      : "umd",
+                name        : 'mobx-orm',
+                globals: {
+                    'mobx': 'mobx'
+                },
                 sourcemap   : pkg['main'] + '.map',
                 banner,
             },
