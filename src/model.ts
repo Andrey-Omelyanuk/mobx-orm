@@ -71,11 +71,11 @@ export abstract class Model {
         return this.__adapter.find(filters) 
     }
 
-    static load(filters?: Filter, order_by?: string[]): Query<Model>  {
+    static getQuery(filters?: Filter, order_by?: string[]): Query<Model>  {
         return new Query<Model>(this.__adapter, this.__cache, filters, order_by)
     }
 
-    static loadPage(filter?: Filter, order_by?: string[], page?: number, page_size?: number): QueryPage<Model> {
+    static getQueryPage(filter?: Filter, order_by?: string[], page?: number, page_size?: number): QueryPage<Model> {
         return new QueryPage(this.__adapter, this.__cache, filter, order_by, page, page_size)
     }
 

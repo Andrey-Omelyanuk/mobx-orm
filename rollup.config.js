@@ -32,7 +32,7 @@ export default [
             typescript({
                 exclude: ["e2e/", "**/*.spec.ts"]
             }),
-            terser(),
+            // terser(),
         ],
         external: [
             ...Object.keys(pkg.dependencies || {}),

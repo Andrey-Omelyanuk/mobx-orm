@@ -41,7 +41,7 @@ describe('Model Class', () => {
 
     describe('Model.load()', () => {
         it('empty args', async () => {
-            let query = A.load()
+            let query = A.getQuery()
             await query.load()
             expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)
@@ -49,7 +49,7 @@ describe('Model Class', () => {
         })
 
         it('with args', async () => {
-            let query = A.load(EQ('a', 1), ['-b'] )
+            let query = A.getQuery(EQ('a', 1), ['-b'] )
             await query.load()
             expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)
@@ -67,7 +67,7 @@ describe('Model Class', () => {
 
     describe('Model.loadPage()', () => {
         it('empty args', async () => {
-            let query = A.loadPage()
+            let query = A.getQueryPage()
             await query.load()
             // expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)
@@ -75,7 +75,7 @@ describe('Model Class', () => {
         })
 
         it('with args', async () => {
-            let query = A.loadPage(EQ('a', 1), ['-b'], 2, 30 )
+            let query = A.getQueryPage(EQ('a', 1), ['-b'], 2, 30 )
             await query.load()
             // expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)

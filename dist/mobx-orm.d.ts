@@ -91,8 +91,8 @@ declare abstract class Model {
     static inject(obj: Model): void;
     static eject(obj: Model): void;
     static find(filters: Filter): Promise<Model>;
-    static load(filters?: Filter, order_by?: string[]): Query$1<Model>;
-    static loadPage(filter?: Filter, order_by?: string[], page?: number, page_size?: number): Query<Model>;
+    static getQuery(filters?: Filter, order_by?: string[]): Query$1<Model>;
+    static getQueryPage(filter?: Filter, order_by?: string[], page?: number, page_size?: number): Query<Model>;
     static get(__id: string): Model;
     static filter(): Array<Model>;
     static updateCache(raw_obj: any): Model;
