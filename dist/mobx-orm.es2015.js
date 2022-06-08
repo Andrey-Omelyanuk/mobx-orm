@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.14
+   * mobx-orm.js v1.0.15
    * Released under the MIT license.
    */
 
@@ -79,13 +79,19 @@ class Filter {
                 return `${this.field}__in=${this.value.join(',')}`;
             case FilterType.AND:
                 temp = [];
-                for (let filter of this.value)
-                    temp.push(filter.to_str());
+                for (let filter of this.value) {
+                    let str = filter.to_str();
+                    if (str)
+                        temp.push(str);
+                }
                 return temp.join('&');
             case FilterType.OR:
                 temp = [];
-                for (let filter of this.value)
-                    temp.push(filter.to_str());
+                for (let filter of this.value) {
+                    let str = filter.to_str();
+                    if (str)
+                        temp.push(str);
+                }
                 return temp.join('|');
             default:
                 return '';
@@ -94,15 +100,17 @@ class Filter {
     is_match(obj) {
         switch (this.type) {
             case FilterType.EQ:
-                return obj[this.field] == this.value;
+                return this.field && this.value !== null ? obj[this.field] == this.value : true;
             case FilterType.IN:
-                return this.value.includes(obj[this.field]);
+                return this.field && (this.value !== null && this.value.length) ? this.value.includes(obj[this.field]) : true;
             case FilterType.AND:
                 for (let filter of this.value)
                     if (!filter.is_match(obj))
                         return false;
                 return true;
             case FilterType.OR:
+                if (!this.value.length)
+                    return true;
                 for (let filter of this.value)
                     if (filter.is_match(obj))
                         return true;

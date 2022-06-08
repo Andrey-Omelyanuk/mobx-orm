@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.14
+   * mobx-orm.js v1.0.15
    * Released under the MIT license.
    */
 
@@ -83,13 +83,19 @@
                     return `${this.field}__in=${this.value.join(',')}`;
                 case exports.FilterType.AND:
                     temp = [];
-                    for (let filter of this.value)
-                        temp.push(filter.to_str());
+                    for (let filter of this.value) {
+                        let str = filter.to_str();
+                        if (str)
+                            temp.push(str);
+                    }
                     return temp.join('&');
                 case exports.FilterType.OR:
                     temp = [];
-                    for (let filter of this.value)
-                        temp.push(filter.to_str());
+                    for (let filter of this.value) {
+                        let str = filter.to_str();
+                        if (str)
+                            temp.push(str);
+                    }
                     return temp.join('|');
                 default:
                     return '';
@@ -98,15 +104,17 @@
         is_match(obj) {
             switch (this.type) {
                 case exports.FilterType.EQ:
-                    return obj[this.field] == this.value;
+                    return this.field && this.value !== null ? obj[this.field] == this.value : true;
                 case exports.FilterType.IN:
-                    return this.value.includes(obj[this.field]);
+                    return this.field && (this.value !== null && this.value.length) ? this.value.includes(obj[this.field]) : true;
                 case exports.FilterType.AND:
                     for (let filter of this.value)
                         if (!filter.is_match(obj))
                             return false;
                     return true;
                 case exports.FilterType.OR:
+                    if (!this.value.length)
+                        return true;
                     for (let filter of this.value)
                         if (filter.is_match(obj))
                             return true;
