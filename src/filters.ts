@@ -25,7 +25,7 @@ export class Filter {
             case FilterType.EQ:
                 return `${this.field}__eq=${this.value}` 
             case FilterType.IN:
-                return `${this.field}__in=${this.value.join(',')}` 
+                return this.value.length ? `${this.field}__in=${this.value.join(',')}` : ''
             case FilterType.AND:
                 temp = []
                 for (let filter of this.value) {

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.15
+   * mobx-orm.js v1.0.16
    * Released under the MIT license.
    */
 
@@ -76,7 +76,7 @@ class Filter {
             case FilterType.EQ:
                 return `${this.field}__eq=${this.value}`;
             case FilterType.IN:
-                return `${this.field}__in=${this.value.join(',')}`;
+                return this.value.length ? `${this.field}__in=${this.value.join(',')}` : '';
             case FilterType.AND:
                 temp = [];
                 for (let filter of this.value) {
@@ -353,7 +353,7 @@ class Query$1 extends Query$2 {
         super(adapter, base_cache, filters, order_by);
         // update if filters was changed
         // watch only filters, if order was changed then we don't need to update, just resort
-        this.__disposers.push(reaction(() => { this.filters; }, () => { this.load(); }));
+        this.__disposers.push(reaction(() => { var _a; return (_a = this.filters) === null || _a === void 0 ? void 0 : _a.to_str(); }, () => this.load()));
         // watch the cache for changes, and update items if needed
         this.__disposers.push(observe(this.__base_cache, (change) => {
             if (change.type == 'add') {

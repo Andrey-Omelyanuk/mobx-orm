@@ -59,6 +59,7 @@ describe('Filters', () => {
         it('IN', () => {
             expect(IN('A', [1,2,3]).to_str()).toBe('A__in=1,2,3')
             expect(IN('B', [3]    ).to_str()).toBe('B__in=3')
+            expect(IN('B', []     ).to_str()).toBe('')
             expect(IN().to_str()).toBe('')
             expect(IN('A').to_str()).toBe('')
         })
