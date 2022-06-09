@@ -2,11 +2,11 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.16
+   * mobx-orm.js v1.0.17
    * Released under the MIT license.
    */
 
-import { observable, makeObservable, action, runInAction, autorun, reaction, observe, computed, extendObservable, intercept } from 'mobx';
+import { observable, action, makeObservable, runInAction, autorun, reaction, observe, computed, extendObservable, intercept } from 'mobx';
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -45,13 +45,13 @@ var FilterType;
 })(FilterType || (FilterType = {}));
 class Filter {
     constructor(type = null, field = null, value = null) {
-        Object.defineProperty(this, "type", {
+        Object.defineProperty(this, "field", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "field", {
+        Object.defineProperty(this, "type", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -67,6 +67,24 @@ class Filter {
         this.field = field;
         this.value = value;
         makeObservable(this);
+    }
+    set_from_str(str) {
+        switch (this.type) {
+            case FilterType.EQ:
+                this.value = str;
+                break;
+            case FilterType.IN:
+                this.value = str.length ? str.split(',') : [];
+                break;
+            case FilterType.AND:
+                str.split('&');
+                // TODO
+                break;
+            case FilterType.OR:
+                str.split('|');
+                // TODO
+                break;
+        }
     }
     to_str() {
         let temp;
@@ -127,12 +145,14 @@ __decorate([
 ], Filter.prototype, "type", void 0);
 __decorate([
     observable,
-    __metadata("design:type", String)
-], Filter.prototype, "field", void 0);
-__decorate([
-    observable,
     __metadata("design:type", Object)
 ], Filter.prototype, "value", void 0);
+__decorate([
+    action,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], Filter.prototype, "set_from_str", null);
 function EQ(field = null, value = null) {
     return new Filter(FilterType.EQ, field, value);
 }

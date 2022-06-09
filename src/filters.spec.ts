@@ -29,14 +29,12 @@ describe('Filters', () => {
     describe('edit', () => {
         it('EQ', () => {
             let f = EQ('A', 1) 
-            runInAction(() => f.field = 'B'); expect(f).toMatchObject({field: 'B', value: 1})
-            runInAction(() => f.value = 2  ); expect(f).toMatchObject({field: 'B', value: 2})
+            runInAction(() => f.value = 2  ); expect(f).toMatchObject({field: 'A', value: 2})
         })
         it('IN', () => {
             let f = IN('A', [1]) 
-            runInAction(() => f.field = 'B'     ); expect(f).toMatchObject({field: 'B', value: [1]})
-            runInAction(() => f.value.push(2)   ); expect(f).toMatchObject({field: 'B', value: [1, 2]})
-            runInAction(() => f.value = [3]     ); expect(f).toMatchObject({field: 'B', value: [3]})
+            runInAction(() => f.value.push(2)   ); expect(f).toMatchObject({field: 'A', value: [1, 2]})
+            runInAction(() => f.value = [3]     ); expect(f).toMatchObject({field: 'A', value: [3]})
         })
         it('AND', () => {
             let f = AND(EQ('A', 1)) 
@@ -72,6 +70,25 @@ describe('Filters', () => {
             expect(OR(EQ('A', 1), EQ('B', 2)      ).to_str()).toBe('A__eq=1|B__eq=2')
             expect(OR(EQ('A', 1), IN('C', [1,2,3])).to_str()).toBe('A__eq=1|C__in=1,2,3')
             expect(OR(EQ(), IN()).to_str()).toBe('')
+        })
+    })
+    describe('set_from_str', () => {
+        it('EQ', () => {
+            let filter = EQ('A');
+            filter.set_from_str('test'); expect(filter).toMatchObject({field: 'A', value: 'test'})
+            filter.set_from_str('1')   ; expect(filter).toMatchObject({field: 'A', value: '1'})
+            filter.set_from_str('')    ; expect(filter).toMatchObject({field: 'A', value: ''})
+        })
+        it('IN', () => {
+            let filter = IN('A');
+            filter.set_from_str('1,2,3'); expect(filter).toMatchObject({field: 'A', value: ['1', '2', '3']})
+            filter.set_from_str('test'); expect(filter).toMatchObject({field: 'A', value: ['test']})
+            filter.set_from_str('1')   ; expect(filter).toMatchObject({field: 'A', value: ['1']})
+            filter.set_from_str('')    ; expect(filter).toMatchObject({field: 'A', value: []})
+        })
+        it('AND', () => {
+        })
+        it('OR', () => {
         })
     })
     describe('is_match', () => {
@@ -132,7 +149,6 @@ describe('Filters', () => {
         reaction(()=> [filter.type, filter.field, filter.value], () => { count = count + 1 })
 
         runInAction(() => { filter.type  = FilterType.AND   }); expect(count).toBe(1)
-        runInAction(() => { filter.field = 'B'              }); expect(count).toBe(2)
-        runInAction(() => { filter.value = 2                }); expect(count).toBe(3)
+        runInAction(() => { filter.value = 2                }); expect(count).toBe(2)
     })
 })

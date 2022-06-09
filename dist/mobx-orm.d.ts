@@ -23,10 +23,11 @@ declare enum FilterType {
     OR = 5
 }
 declare class Filter {
+    readonly field: string;
     type: FilterType;
-    field: string;
     value: any;
     constructor(type?: FilterType, field?: string, value?: any);
+    set_from_str(str: string): void;
     to_str(): string;
     is_match(obj: any): boolean;
 }

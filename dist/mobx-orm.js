@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.16
+   * mobx-orm.js v1.0.17
    * Released under the MIT license.
    */
 
@@ -49,13 +49,13 @@
     })(exports.FilterType || (exports.FilterType = {}));
     class Filter {
         constructor(type = null, field = null, value = null) {
-            Object.defineProperty(this, "type", {
+            Object.defineProperty(this, "field", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
                 value: void 0
             });
-            Object.defineProperty(this, "field", {
+            Object.defineProperty(this, "type", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
@@ -71,6 +71,24 @@
             this.field = field;
             this.value = value;
             mobx.makeObservable(this);
+        }
+        set_from_str(str) {
+            switch (this.type) {
+                case exports.FilterType.EQ:
+                    this.value = str;
+                    break;
+                case exports.FilterType.IN:
+                    this.value = str.length ? str.split(',') : [];
+                    break;
+                case exports.FilterType.AND:
+                    str.split('&');
+                    // TODO
+                    break;
+                case exports.FilterType.OR:
+                    str.split('|');
+                    // TODO
+                    break;
+            }
         }
         to_str() {
             let temp;
@@ -131,12 +149,14 @@
     ], Filter.prototype, "type", void 0);
     __decorate([
         mobx.observable,
-        __metadata("design:type", String)
-    ], Filter.prototype, "field", void 0);
-    __decorate([
-        mobx.observable,
         __metadata("design:type", Object)
     ], Filter.prototype, "value", void 0);
+    __decorate([
+        mobx.action,
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [String]),
+        __metadata("design:returntype", void 0)
+    ], Filter.prototype, "set_from_str", null);
     function EQ(field = null, value = null) {
         return new Filter(exports.FilterType.EQ, field, value);
     }

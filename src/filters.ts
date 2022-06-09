@@ -1,4 +1,4 @@
-import { makeObservable, observable } from "mobx"
+import { action, makeObservable, observable } from "mobx"
 
 
 export enum FilterType {
@@ -8,8 +8,8 @@ export enum FilterType {
 }
 
 export class Filter {
+    readonly    field: string
     @observable type : FilterType 
-    @observable field: string
     @observable value: any
 
     constructor(type: FilterType = null, field: string = null, value: any = null) {
@@ -17,6 +17,26 @@ export class Filter {
         this.field = field
         this.value = value
         makeObservable(this)
+    }
+    @action set_from_str(str: string) {
+        let tmp
+        switch (this.type) {
+            case FilterType.EQ:
+                this.value = str 
+                break
+            case FilterType.IN:
+                this.value = str.length ? str.split(',') : []
+                break
+            case FilterType.AND:
+                tmp = str.split('&')
+                // TODO
+                break
+            case FilterType.OR:
+                tmp = str.split('|')
+                // TODO
+                break
+        }
+
     }
     to_str(): string {
         let temp 
