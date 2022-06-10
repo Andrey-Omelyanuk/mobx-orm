@@ -36,6 +36,9 @@ export default class Query<M extends Model> extends QeuryBase<M> {
 
         // watch the cache for changes, and update items if needed
         this.__disposers.push(observe(this.__base_cache, (change: any) => {
+            // if query is loading then ignore any changes from cache
+            if (this.__is_loading) return 
+
             if (change.type == 'add') {
                 this.watch_obj(change.newValue)
             }

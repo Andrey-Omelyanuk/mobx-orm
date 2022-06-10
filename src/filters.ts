@@ -69,9 +69,14 @@ export class Filter {
     is_match(obj: any) : boolean {
         switch (this.type) {
             case FilterType.EQ:
-                return this.field && this.value !== null ? obj[this.field] == this.value : true
+                return this.value !== null ? obj[this.field] == this.value : true
             case FilterType.IN:
-                return this.field && (this.value !== null && this.value.length) ? this.value.includes(obj[this.field]) : true
+                if (this.value === null || !this.value.length) return true
+                for (let v of this.value) {
+                    if (v == obj[this.field]) return true
+                }
+                return false
+                // return this.value !== null && this.value.length ? this.value.includes(String(obj[this.field])) : true
             case FilterType.AND:
                 for(let filter of this.value)
                     if (!filter.is_match(obj))

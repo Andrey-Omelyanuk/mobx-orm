@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.18
+   * mobx-orm.js v1.0.20
    * Released under the MIT license.
    */
 
@@ -123,9 +123,16 @@
         is_match(obj) {
             switch (this.type) {
                 case exports.FilterType.EQ:
-                    return this.field && this.value !== null ? obj[this.field] == this.value : true;
+                    return this.value !== null ? obj[this.field] == this.value : true;
                 case exports.FilterType.IN:
-                    return this.field && (this.value !== null && this.value.length) ? this.value.includes(obj[this.field]) : true;
+                    if (this.value === null || !this.value.length)
+                        return true;
+                    for (let v of this.value) {
+                        if (v == obj[this.field])
+                            return true;
+                    }
+                    return false;
+                // return this.value !== null && this.value.length ? this.value.includes(String(obj[this.field])) : true
                 case exports.FilterType.AND:
                     for (let filter of this.value)
                         if (!filter.is_match(obj))
@@ -381,6 +388,9 @@
             this.__disposers.push(mobx.reaction(() => { var _a; return (_a = this.filters) === null || _a === void 0 ? void 0 : _a.getURLSearchParams(); }, () => this.load()));
             // watch the cache for changes, and update items if needed
             this.__disposers.push(mobx.observe(this.__base_cache, (change) => {
+                // if query is loading then ignore any changes from cache
+                if (this.__is_loading)
+                    return;
                 if (change.type == 'add') {
                     this.watch_obj(change.newValue);
                 }

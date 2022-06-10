@@ -52,8 +52,8 @@ describe('Filters', () => {
             expect(EQ('A', 1).is_match({B: 2})).toBe(false)
             expect(EQ('B', 1).is_match({A: 1})).toBe(false)
             expect(EQ('A'   ).is_match({A: 1})).toBe(true)
-            expect(EQ(null, 1).is_match({A: 1})).toBe(true)
-            expect(EQ('' , 1).is_match({A: 1})).toBe(true)
+            expect(EQ(null, 1).is_match({A: 1})).toBe(false)
+            expect(EQ(''  , 1).is_match({A: 1})).toBe(false)
         })
         it('IN', () => {
             expect(IN('A', [1,2,3]).is_match({A: 1})).toBe(true)
@@ -63,9 +63,9 @@ describe('Filters', () => {
             expect(IN('A', [1,2,3]).is_match({A: 1})).toBe(true)
             expect(IN('A', [1,2,3]).is_match({B: 1})).toBe(false)
             expect(IN('A', [2,3,4]).is_match({A: 1})).toBe(false)
-            expect(IN('A'   , []     ).is_match({A: 1})).toBe(true)
-            expect(IN('A'            ).is_match({A: 1})).toBe(true)
-            expect(IN(''    , [2,3,4]).is_match({A: 1})).toBe(true)
+            expect(IN('A', []     ).is_match({A: 1})).toBe(true)
+            expect(IN('A'         ).is_match({A: 1})).toBe(true)
+            expect(IN('A', ['2']  ).is_match({A: 2})).toBe(true)
         })
         it('AND', () => {
             expect(AND(EQ('A', 1), EQ('B', 1)).is_match({A: 1, B: 1})).toBe(true)
@@ -78,6 +78,8 @@ describe('Filters', () => {
             expect(AND(EQ('A'), EQ('A', 1)).is_match({A: 1, B: 2})).toBe(true)
             expect(AND(EQ('A'), EQ('A', 2)).is_match({A: 1, B: 2})).toBe(false)
             expect(AND(                   ).is_match({A: 1, B: 2})).toBe(true)
+
+            expect(AND(IN('asset_id', ['2']), IN('ledger_id'), IN('code'), IN('custom')).is_match({asset_id: 2, code: 2})).toBe(true)
         })
         it('OR', () => {
             expect(OR(EQ('A', 1), EQ('B', 1)).is_match({A: 1, B: 1})).toBe(true)
@@ -124,6 +126,8 @@ describe('Filters', () => {
 
         f = AND(); f.setFromURI("A__in=bar&foo=baz"); expect(f).toMatchObject({field: null, value: []})
         f = OR (); f.setFromURI("A__in=bar&foo=baz"); expect(f).toMatchObject({field: null, value: []})
+        // TODO
+        // f = AND(IN('A')); f.setFromURI("A__in=bar&foo=baz"); expect(f).toMatchObject({field: null, value: []})
     })
 
     it('toURISearchParams', () => {
