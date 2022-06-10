@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.17
+   * mobx-orm.js v1.0.18
    * Released under the MIT license.
    */
 
@@ -72,52 +72,53 @@
             this.value = value;
             mobx.makeObservable(this);
         }
-        set_from_str(str) {
+        setFromURI(uri) {
+            let search_params = new URLSearchParams(uri);
+            let value = search_params.get(this.getURIField());
             switch (this.type) {
                 case exports.FilterType.EQ:
-                    this.value = str;
+                    this.value = value;
                     break;
                 case exports.FilterType.IN:
-                    this.value = str.length ? str.split(',') : [];
+                    this.value = value ? value.split(',') : [];
                     break;
                 case exports.FilterType.AND:
-                    str.split('&');
-                    // TODO
-                    break;
                 case exports.FilterType.OR:
-                    str.split('|');
-                    // TODO
-                    break;
-            }
-        }
-        to_str() {
-            let temp;
-            if (this.type === null || this.value === null)
-                return '';
-            switch (this.type) {
-                case exports.FilterType.EQ:
-                    return `${this.field}__eq=${this.value}`;
-                case exports.FilterType.IN:
-                    return this.value.length ? `${this.field}__in=${this.value.join(',')}` : '';
-                case exports.FilterType.AND:
-                    temp = [];
-                    for (let filter of this.value) {
-                        let str = filter.to_str();
-                        if (str)
-                            temp.push(str);
-                    }
-                    return temp.join('&');
-                case exports.FilterType.OR:
-                    temp = [];
-                    for (let filter of this.value) {
-                        let str = filter.to_str();
-                        if (str)
-                            temp.push(str);
-                    }
-                    return temp.join('|');
                 default:
                     return '';
             }
+        }
+        getURIField() {
+            switch (this.type) {
+                case exports.FilterType.EQ:
+                    return `${this.field}__eq`;
+                case exports.FilterType.IN:
+                    return `${this.field}__in`;
+                case exports.FilterType.AND:
+                case exports.FilterType.OR:
+                default:
+                    return '';
+            }
+        }
+        getURLSearchParams() {
+            var _a;
+            let search_params = new URLSearchParams();
+            switch (this.type) {
+                case exports.FilterType.EQ:
+                    this.value && search_params.set(this.getURIField(), this.value);
+                    break;
+                case exports.FilterType.IN:
+                    ((_a = this.value) === null || _a === void 0 ? void 0 : _a.length) && search_params.set(this.getURIField(), this.value);
+                    break;
+                case exports.FilterType.AND:
+                    for (let filter of this.value) {
+                        let child = filter.getURLSearchParams();
+                        child.forEach((value, key) => search_params.set(key, value));
+                    }
+                    break;
+                case exports.FilterType.OR:
+            }
+            return search_params;
         }
         is_match(obj) {
             switch (this.type) {
@@ -156,11 +157,11 @@
         __metadata("design:type", Function),
         __metadata("design:paramtypes", [String]),
         __metadata("design:returntype", void 0)
-    ], Filter.prototype, "set_from_str", null);
-    function EQ(field = null, value = null) {
+    ], Filter.prototype, "setFromURI", null);
+    function EQ(field, value = null) {
         return new Filter(exports.FilterType.EQ, field, value);
     }
-    function IN(field = null, value = null) {
+    function IN(field, value = null) {
         return new Filter(exports.FilterType.IN, field, value);
     }
     function AND(...filters) {
@@ -377,7 +378,7 @@
             super(adapter, base_cache, filters, order_by);
             // update if filters was changed
             // watch only filters, if order was changed then we don't need to update, just resort
-            this.__disposers.push(mobx.reaction(() => { var _a; return (_a = this.filters) === null || _a === void 0 ? void 0 : _a.to_str(); }, () => this.load()));
+            this.__disposers.push(mobx.reaction(() => { var _a; return (_a = this.filters) === null || _a === void 0 ? void 0 : _a.getURLSearchParams(); }, () => this.load()));
             // watch the cache for changes, and update items if needed
             this.__disposers.push(mobx.observe(this.__base_cache, (change) => {
                 if (change.type == 'add') {

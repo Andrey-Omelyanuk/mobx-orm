@@ -30,7 +30,7 @@ export default class Query<M extends Model> extends QeuryBase<M> {
         // update if filters was changed
         // watch only filters, if order was changed then we don't need to update, just resort
         this.__disposers.push(reaction(
-            () => this.filters?.to_str(), 
+            () => this.filters?.getURLSearchParams(), 
             () => this.load()
         ))
 

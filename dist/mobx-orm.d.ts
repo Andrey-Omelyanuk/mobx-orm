@@ -27,12 +27,13 @@ declare class Filter {
     type: FilterType;
     value: any;
     constructor(type?: FilterType, field?: string, value?: any);
-    set_from_str(str: string): void;
-    to_str(): string;
+    setFromURI(uri: string): string;
+    getURIField(): string;
+    getURLSearchParams(): URLSearchParams;
     is_match(obj: any): boolean;
 }
-declare function EQ(field?: string, value?: any): Filter;
-declare function IN(field?: string, value?: any[]): Filter;
+declare function EQ(field: string, value?: any): Filter;
+declare function IN(field: string, value?: any[]): Filter;
 declare function AND(...filters: Filter[]): Filter;
 declare function OR(...filters: Filter[]): Filter;
 

@@ -18,53 +18,53 @@ export class Filter {
         this.value = value
         makeObservable(this)
     }
-    @action set_from_str(str: string) {
-        let tmp
+    @action setFromURI(uri: string) {
+        let search_params = new URLSearchParams(uri)
+        let value = search_params.get(this.getURIField()) 
         switch (this.type) {
             case FilterType.EQ:
-                this.value = str 
+                this.value = value  
                 break
             case FilterType.IN:
-                this.value = str.length ? str.split(',') : []
+                this.value = value ? value.split(',') : [] 
                 break
             case FilterType.AND:
-                tmp = str.split('&')
-                // TODO
-                break
             case FilterType.OR:
-                tmp = str.split('|')
-                // TODO
-                break
-        }
-
-    }
-    to_str(): string {
-        let temp 
-        if (this.type === null || this.value === null) return ''
-        switch (this.type) {
-            case FilterType.EQ:
-                return `${this.field}__eq=${this.value}` 
-            case FilterType.IN:
-                return this.value.length ? `${this.field}__in=${this.value.join(',')}` : ''
-            case FilterType.AND:
-                temp = []
-                for (let filter of this.value) {
-                    let str = filter.to_str()
-                    if (str)
-                        temp.push(str)
-                }
-                return temp.join('&') 
-            case FilterType.OR:
-                temp = []
-                for (let filter of this.value){
-                    let str = filter.to_str()
-                    if (str)
-                        temp.push(str)
-                }
-                return temp.join('|') 
             default:
                 return '' 
         }
+    }
+    getURIField(): string {
+        switch (this.type) {
+            case FilterType.EQ:
+                return `${this.field}__eq` 
+            case FilterType.IN:
+                return `${this.field}__in`
+            case FilterType.AND:
+            case FilterType.OR:
+            default:
+                return '' 
+        }
+    }
+    getURLSearchParams(): URLSearchParams{
+        let search_params = new URLSearchParams()
+        switch (this.type) {
+            case FilterType.EQ:
+                this.value && search_params.set(this.getURIField(), this.value)
+                break
+            case FilterType.IN:
+                this.value?.length && search_params.set(this.getURIField(), this.value)
+                break
+            case FilterType.AND:
+                for(let filter of this.value) {
+                    let child = filter.getURLSearchParams() 
+                    child.forEach((value, key) => search_params.set(key, value))
+                }
+                break
+            case FilterType.OR:
+            default:
+        }
+        return search_params
     }
     is_match(obj: any) : boolean {
         switch (this.type) {
@@ -90,11 +90,11 @@ export class Filter {
     }
 }
 
-export function EQ(field: string = null, value: any = null) : Filter {
+export function EQ(field: string, value: any = null) : Filter {
     return new Filter(FilterType.EQ, field, value) 
 }
 
-export function IN(field: string = null, value: any[] = null) : Filter {
+export function IN(field: string, value: any[] = null) : Filter {
     return new Filter(FilterType.IN, field, value) 
 }
 
