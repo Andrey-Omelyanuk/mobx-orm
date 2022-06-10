@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.20
+   * mobx-orm.js v1.0.21
    * Released under the MIT license.
    */
 
@@ -83,6 +83,10 @@
                     this.value = value ? value.split(',') : [];
                     break;
                 case exports.FilterType.AND:
+                    for (let child of this.value) {
+                        child.setFromURI(uri);
+                    }
+                    break;
                 case exports.FilterType.OR:
                 default:
                     return '';

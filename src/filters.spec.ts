@@ -126,8 +126,9 @@ describe('Filters', () => {
 
         f = AND(); f.setFromURI("A__in=bar&foo=baz"); expect(f).toMatchObject({field: null, value: []})
         f = OR (); f.setFromURI("A__in=bar&foo=baz"); expect(f).toMatchObject({field: null, value: []})
-        // TODO
-        // f = AND(IN('A')); f.setFromURI("A__in=bar&foo=baz"); expect(f).toMatchObject({field: null, value: []})
+
+        f = AND(IN('A')         ); f.setFromURI("A__in=bar&foo=baz"); expect(f).toMatchObject({field: null, value: [{field: 'A', value: ['bar']}]})
+        f = AND(IN('A'), EQ('B')); f.setFromURI("A__in=1&B__eq=2"  ); expect(f).toMatchObject({field: null, value: [{field: 'A', value: ['1']}, {field: 'B', value: '2'}]})
     })
 
     it('toURISearchParams', () => {

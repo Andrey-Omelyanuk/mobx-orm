@@ -29,6 +29,10 @@ export class Filter {
                 this.value = value ? value.split(',') : [] 
                 break
             case FilterType.AND:
+                for(let child of this.value) {
+                    child.setFromURI(uri) 
+                }
+                break
             case FilterType.OR:
             default:
                 return '' 
