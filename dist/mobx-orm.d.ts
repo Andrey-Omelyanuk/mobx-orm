@@ -38,12 +38,14 @@ declare function IN(field: string, value?: any[]): Filter;
 declare function AND(...filters: Filter[]): Filter;
 declare function OR(...filters: Filter[]): Filter;
 
+declare type ORDER_BY = Map<string, boolean>;
 declare abstract class Query$2<M extends Model> {
     filters: Filter;
-    order_by: string[];
+    order_by: ORDER_BY;
     page: number;
     page_size: number;
-    get items(): M[];
+    need_to_update: boolean;
+    abstract get items(): any;
     get is_loading(): boolean;
     get is_ready(): boolean;
     get error(): string;
@@ -55,7 +57,7 @@ declare abstract class Query$2<M extends Model> {
     __error: string;
     __disposers: any[];
     __disposer_objects: {};
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[], page?: number, page_size?: number);
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number);
     destroy(): void;
     abstract __load(objs: M[]): any;
     load(): Promise<void>;
@@ -65,14 +67,16 @@ declare abstract class Query$2<M extends Model> {
 }
 
 declare class Query$1<M extends Model> extends Query$2<M> {
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY);
+    get items(): M[];
     __load(objs: M[]): void;
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[]);
-    private watch_obj;
+    __watch_obj(obj: any): void;
 }
 
 declare class Query<M extends Model> extends Query$2<M> {
     __load(objs: M[]): void;
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[], page?: number, page_size?: number);
+    get items(): M[];
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number);
 }
 
 declare type RawObject = any;
@@ -103,8 +107,8 @@ declare abstract class Model {
     static inject(obj: Model): void;
     static eject(obj: Model): void;
     static find(filters: Filter): Promise<Model>;
-    static getQuery(filters?: Filter, order_by?: string[]): Query$1<Model>;
-    static getQueryPage(filter?: Filter, order_by?: string[], page?: number, page_size?: number): Query<Model>;
+    static getQuery(filters?: Filter, order_by?: ORDER_BY): Query$1<Model>;
+    static getQueryPage(filter?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number): Query<Model>;
     static get(__id: string): Model;
     static filter(): Array<Model>;
     static updateCache(raw_obj: any): Model;

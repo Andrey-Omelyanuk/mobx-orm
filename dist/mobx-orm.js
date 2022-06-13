@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.22
+   * mobx-orm.js v1.0.23
    * Released under the MIT license.
    */
 
@@ -188,6 +188,7 @@
         return new Filter(exports.FilterType.OR, null, filters);
     }
 
+    const ASC = true;
     class Query$2 {
         constructor(adapter, base_cache, filters, order_by, page, page_size) {
             Object.defineProperty(this, "filters", {
@@ -209,6 +210,12 @@
                 value: void 0
             });
             Object.defineProperty(this, "page_size", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "need_to_update", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
@@ -264,17 +271,24 @@
             });
             this.__base_cache = base_cache;
             this.__adapter = adapter;
+            this.order_by = order_by ? order_by : new Map();
             if (filters)
                 this.filters = filters;
-            if (order_by)
-                this.order_by = order_by;
             if (page)
                 this.page = page;
             if (page_size)
                 this.page_size = page_size;
             mobx.makeObservable(this);
+            this.__disposers.push(mobx.reaction(() => {
+                var _a;
+                return {
+                    filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.getURLSearchParams(),
+                    order_by: this.order_by,
+                    page: this.page,
+                    page_size: this.page_size,
+                };
+            }, () => { mobx.runInAction(() => this.need_to_update = true); }));
         }
-        get items() { return this.__items; }
         get is_loading() { return this.__is_loading; }
         get is_ready() { return this.__is_ready; }
         get error() { return this.__error; }
@@ -336,7 +350,7 @@
     ], Query$2.prototype, "filters", void 0);
     __decorate([
         mobx.observable,
-        __metadata("design:type", Array)
+        __metadata("design:type", Object)
     ], Query$2.prototype, "order_by", void 0);
     __decorate([
         mobx.observable,
@@ -346,6 +360,10 @@
         mobx.observable,
         __metadata("design:type", Number)
     ], Query$2.prototype, "page_size", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], Query$2.prototype, "need_to_update", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Array)
@@ -385,55 +403,96 @@
         -    было но уже не попадание по фильтрам -> remove the obj from items
     */
     class Query$1 extends Query$2 {
-        __load(objs) {
-            mobx.runInAction(() => {
-                this.__items.splice(0, this.__items.length);
-                this.__items.push(...objs);
-            });
-        }
         constructor(adapter, base_cache, filters, order_by) {
             super(adapter, base_cache, filters, order_by);
-            // update if filters was changed
-            // watch only filters, if order was changed then we don't need to update, just resort
-            this.__disposers.push(mobx.reaction(() => { var _a; return (_a = this.filters) === null || _a === void 0 ? void 0 : _a.getURLSearchParams(); }, () => this.load()));
             // watch the cache for changes, and update items if needed
             this.__disposers.push(mobx.observe(this.__base_cache, (change) => {
                 // if query is loading then ignore any changes from cache
                 if (this.__is_loading)
                     return;
                 if (change.type == 'add') {
-                    this.watch_obj(change.newValue);
+                    this.__watch_obj(change.newValue);
                 }
                 if (change.type == "delete") {
                     let __id = change.name;
                     let obj = change.oldValue;
                     this.__disposer_objects[__id]();
                     delete this.__disposer_objects[__id];
-                    let i = this.items.indexOf(obj);
+                    let i = this.__items.indexOf(obj);
                     if (i != -1)
                         mobx.runInAction(() => {
-                            this.items.splice(i, 1);
+                            this.__items.splice(i, 1);
                         });
                 }
             }));
-            // watch all exist objects of model 
+            this.__disposers.push(mobx.reaction(() => this.need_to_update, () => {
+                for (let [id, obj] of this.__base_cache) {
+                    this.__watch_obj(obj);
+                }
+            }));
+            // ch all exist objects of model 
             for (let [id, obj] of this.__base_cache) {
-                this.watch_obj(obj);
+                this.__watch_obj(obj);
             }
         }
-        watch_obj(obj) {
+        get items() {
+            let __items = this.__items.map(x => x); // copy __items (not deep)
+            if (this.order_by.size) {
+                let compare = (a, b) => {
+                    for (const [key, value] of this.order_by) {
+                        if (value === ASC) {
+                            if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
+                                return 1;
+                            if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
+                                return -1;
+                            if (a[key] < b[key])
+                                return -1;
+                            if (a[key] > b[key])
+                                return 1;
+                        }
+                        else {
+                            if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
+                                return -1;
+                            if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
+                                return 1;
+                            if (a[key] < b[key])
+                                return 1;
+                            if (a[key] > b[key])
+                                return -1;
+                        }
+                    }
+                    return 0;
+                };
+                __items.sort(compare);
+            }
+            return __items;
+        }
+        __load(objs) {
+            mobx.runInAction(() => {
+                this.__items.splice(0, this.__items.length);
+                this.__items.push(...objs);
+            });
+        }
+        __watch_obj(obj) {
+            if (this.__disposer_objects[obj.__id])
+                this.__disposer_objects[obj.__id]();
             this.__disposer_objects[obj.__id] = mobx.autorun(() => {
                 let should = !this.filters || this.filters.is_match(obj);
-                let i = this.items.indexOf(obj);
+                let i = this.__items.indexOf(obj);
                 // should be in the items and it is not in the items? add it to the items
                 if (should && i == -1)
-                    mobx.runInAction(() => this.items.push(obj));
+                    mobx.runInAction(() => this.__items.push(obj));
                 // should not be in the items and it is in the items? remove it from the items
                 if (!should && i != -1)
-                    mobx.runInAction(() => this.items.splice(i, 1));
+                    mobx.runInAction(() => this.__items.splice(i, 1));
             });
         }
     }
+    __decorate([
+        mobx.computed,
+        __metadata("design:type", Object),
+        __metadata("design:paramtypes", [])
+    ], Query$1.prototype, "items", null);
 
     // TODO: implement need_to_update
     class Query extends Query$2 {
@@ -443,6 +502,7 @@
                 this.__items.push(...objs);
             });
         }
+        get items() { return this.__items; }
         // TODO: add actions for QueryBase and QueryPage
         // TODO: Query should know nothing about pages!
         // @action setFilters(filters : any     ) { this.filters  = filters  }
@@ -454,19 +514,12 @@
         // @action setPageSize(page_size: number) { this.page_size = page_size }
         constructor(adapter, base_cache, filters, order_by, page, page_size) {
             super(adapter, base_cache, filters, order_by);
-            if (this.page === undefined)
-                this.page = 0;
-            if (this.page_size === undefined)
-                this.page_size = 50;
-            // update if query is changed
-            this.__disposers.push(mobx.reaction(() => {
-                return {
-                    filter: this.filters,
-                    order_by: this.order_by,
-                    page: this.page,
-                    page_size: this.page_size,
-                };
-            }, () => { this.load(); }));
+            mobx.runInAction(() => {
+                if (this.page === undefined)
+                    this.page = 0;
+                if (this.page_size === undefined)
+                    this.page_size = 50;
+            });
         }
     }
 
@@ -540,12 +593,14 @@
             return obj;
         }
         static clearCache() {
-            // for clear cache we need just to set null into id fields
-            for (let obj of this.__cache.values()) {
-                for (let id_field_name of this.__ids.keys()) {
-                    obj[id_field_name] = null;
+            mobx.runInAction(() => {
+                // for clear cache we need just to set null into id fields
+                for (let obj of this.__cache.values()) {
+                    for (let id_field_name of this.__ids.keys()) {
+                        obj[id_field_name] = null;
+                    }
                 }
-            }
+            });
         }
         static __id(obj, ids) {
             let id = '';
