@@ -1,11 +1,12 @@
-import { autorun, runInAction } from 'mobx'
+import { runInAction } from 'mobx'
 import { Model, model } from './model'
 import id from './fields/id'
 import Query from './query'
 import field from './fields/field'
 import LocalAdapter, { local } from './adapters/local' 
-import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from './test.utils' 
-import { EQ } from './filters'
+import { data_set } from './test.utils' 
+import { EQ, IN } from './filters'
+import { ASC, DESC } from './query-base'
 
 
 describe('Query', () => {
@@ -37,240 +38,94 @@ describe('Query', () => {
     afterEach(async () => {
         query.destroy()
         A.clearCache()
-        jest.clearAllMocks();
+        jest.clearAllMocks()
     })
-
-    describe('filters', () => {
-
-        it('is observible', async () => {
-            // TODO
-        })
-
-        it('default', async () => {
-            expect(query.filters).toBeUndefined()
-        })
-
-        it('set', async () => {
-            // the load will be triggered when query is created 
-            expect(load).toHaveBeenCalledTimes(1) 
-            // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
-            // change filters
-            let filters = EQ('a', 1)
-            runInAction(() => { query.filters = filters  })
-            expect(query.filters).toMatchObject(filters)
-            // the load will be triggered only once for an action
-            // expect(load).toHaveBeenCalledTimes(2) 
-            // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
-            // await query.ready()
-
-        })
-
-        it('set from X', async () => {
-            // TODO
-        })
-
-        it('side effect X', async () => {
-            // TODO
-        })
-    })
-
-    describe('order_by', () => {
-        // TODO
-        it('is observible', async () => {
-            // TODO
-        })
-        // TODO
-        it('set value', async () => {
-            // default
-            expect(query.order_by).toBeUndefined()
-            expect(load).toHaveBeenCalledTimes(1)
-            // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
-            // expect(query.items.map((i) => i.id)).toEqual([0, 1, 2, 3, 4])
-            // number field
-            query.order_by = ['a']
-            await query.ready() // wait update
-            expect(query.order_by).toEqual(['a'])
-            // expect(load).toHaveBeenCalledTimes(2)
-            // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
-            // expect(query.items.map((i) => i.id)).toEqual([4, 2, 3, 0, 1])
-            // number field (revert)
-            query.order_by = ['-a']
-            // string field 
-            query.order_by = ['b']
-            // string field (revert)
-            query.order_by = ['-b']
-            // boolean field 
-            query.order_by = ['c']
-            // boolean field (revert)
-            query.order_by = ['-c']
-            // empty 
-            query.order_by = []
-            await query.ready() // wait update
-            expect(query.order_by).toEqual([])
-            // expect(load).toHaveBeenCalledTimes(2)
-            // expect(load).toHaveBeenCalledWith(query.filters, query.order_by)
-            // expect(query.items.map((i) => i.id)).toEqual([0, 1, 2, 3, 4])
-            // error: set not exist field
-            query.order_by = ['x']
-            // error: set number
-            query.order_by = <any>2
-            // error: set null 
-            query.order_by = <any>null 
-            // error: set undefined
-            query.order_by = <any>undefined
-        })
-    })
-
 
     describe('constructor', () => {
+        it('super', async () => {
+            let filters     = EQ('a', 2)
+            let order_by    = new Map([ ['id', ASC], ]) 
+            let query       = new Query<A>(adapter, cache, filters, order_by)
+            // await query.ready()
+            expect(query.order_by.size).toBe(1)
+            expect(query.order_by.get('id')).toBe(order_by.get('id'))
+            expect(query).toMatchObject({
+                filters     : filters,
+                page        : undefined,
+                page_size   : undefined,
+                is_loading  : false,
+                is_ready    : false,
+                error       : '',
+                __adapter   : adapter,
+                __base_cache: cache,
+         })
+            expect(query.__disposers.length).toBe(3)
+            expect(Object.keys(query.__disposer_objects).length).toBe(5)
+            // loading is not necessary, you can use objs from cache
+            expect(query.__items).toMatchObject([
+                {id: 2, a: 2,         c: false},
+                {id: 3, a: 2, b: 'f'          } 
+            ])
+            query.destroy()
+        })
 
-        // it('default', async () => {
-        //     let q = new Query<A>(adapter, base_cache);    
-        //     await q.ready()
-        //     expect(q).toMatchObject({
-        //         filters: undefined, order_by: undefined, __items: [],
-        //         is_loading: true, error: ''
-        //     })
-        //     expect(load).toHaveBeenCalledTimes(2)  // query is the second Query that run in this test case
-        //     // expect(load).toHaveBeenCalledWith(q.filters, q.order_by)
-        //     q.destroy()
-        // })
-
-        // it('filters + order', async () => {
-        //     let q = new Query<A>(adapter, base_cache,  {a: 1}, ['-a']);    
-        //     expect(q).toMatchObject({
-        //         filters: {a: 1}, order_by: ['-a'], items: [],
-        //         is_loading: false,
-        //         error: '', __adapter: adapter, __base_cache: base_cache 
-        //     })
-        //     expect(load).toHaveBeenCalledTimes(2)  // query is the second Query that run in this test case
-        //     // expect(load).toHaveBeenCalledWith(q.filters, q.order_by)
-        //     q.destroy()
-        // })
-    })
-
-    describe('destroy()', () => {
-        // TODO
-    })
-
-    describe('update()', () => {
-        // TODO
-    })
-
-    describe('ready', () => {
-        it('is promise', async () => {
-            // TODO
-            // let   q = new Query<A>(A);  expect(q.is_ready).toBe(false) 
-            // await q.ready();            expect(q.is_ready).toBe(true)  
-            // await q.ready();            expect(q.is_ready).toBe(true)  // double check
-
-            // runInAction(() => { q.is_ready = false }); 
-            // q.ready().then(() => {      expect(q.is_ready).toBe(true) });                  
-            //                             expect(q.is_ready).toBe(false)
-            // runInAction(() => { q.is_ready = true }); 
-            
-            // q.destroy()
+        it('watch the base cache for changes', async () => {
+            let length = query.__items.length
+            let x = new A({});  expect(query.__items.length).toBe(length)
+            await x.save();     expect(query.__items.length).toBe(length+1)
+            await x.delete();   expect(query.__items.length).toBe(length)
         })
     })
 
-    describe('watch_obj()', () => {
-        // TODO
+    it('items', async () => {
+                                        expect(query.items).toMatchObject(data_set)
+        query.order_by.set('a', ASC);   expect(query.items).toMatchObject([
+                                            {id: 4, a: 1}, 
+                                            {id: 2, a: 2}, 
+                                            {id: 3, a: 2}, 
+                                            {id: 0, a: 5},
+                                            {id: 1,     }, 
+                                        ])
+        query.order_by.set('a', DESC);  expect(query.items).toMatchObject([
+                                            {id: 1,      }, 
+                                            {id: 0, a: 5,},
+                                            {id: 2, a: 2,}, 
+                                            {id: 3, a: 2,}, 
+                                            {id: 4, a: 1,}, 
+                                        ])
+        query.order_by.delete('a');     expect(query.items).toMatchObject(data_set)
+
+        runInAction(() => query.filters = IN('a', [1, 2]))
+                                        expect(query.items).toMatchObject([
+                                            {id: 2, a: 2}, 
+                                            {id: 3, a: 2}, 
+                                            {id: 4, a: 1},
+                                        ])
+        query.order_by.set('a', ASC);   expect(query.items).toMatchObject([
+                                            {id: 4, a: 1},
+                                            {id: 2, a: 2}, 
+                                            {id: 3, a: 2}, 
+                                        ])
     })
 
-    describe('should_be_in_the_list()', () => {
-        // TODO
+    it('__load', () => {
+        let objs: any = [1,2,3];    expect(query.__items).not.toMatchObject(objs)
+        query.__load(objs);         expect(query.__items).toMatchObject(objs)
     })
-
-    // it('e2e', async () => {
-    //     let q = new Query<A>(adapter, base_cache);   
-    //     // ?
-    //     await q.ready();           
-    //     // ?
-    //     q.filters = {a: 1}
-    //     // ?
-    //     await q.ready();           
-    //     // ?
-    //     q.order_by = ['-a']
-    //     // ?
-    //     await q.ready();           
-    //     // ?
-    //     q.destroy()
-    //     // ?
-    // })
-
-    // --- legacy --------------------------------------------------------
-
-
-    it('query.items should be observable', async () => {
-        // TODO:
-        // @mock_adapter()
-        // @model class A extends Model {
-        //     @id id: number
-        // }
-
-        // let q = new Query<A>(A); await q.ready() 
-        // let count = 0
-
-        // autorun(() => {
-        //     q.items.length
-        //     count = count + 1
-        // })
-
-        // expect(count).toBe(1)
-        // runInAction(() => q.items.push(new A()))
-        // expect(count).toBe(2)
-
-        // q.destroy()
-    })
-
-    it('query.items should be updated if cache was changed', async () => {
+    
+    it('__watch_obj()', async () => {
         // TODO
-        // @mock_adapter()
-        // @model class A extends Model {
-        //     @id id: number
-        // }
-
-        // let a, q = new Query<A>(A); await q.ready() 
-
-        //                     expect(q.items.length).toBe(0)
-        // a = new A({id: 1}); expect(q.items.length).toBe(1)
-        // await a.delete();   expect(q.items.length).toBe(0)
-
-        // q.destroy()
-    })
-
-    it('query.items should be updated if cache was changed (filters edition)', async () => {
-        // TODO
-        // @mock_adapter()
-        // @model class A extends Model {
-        //     @id    id: number
-        //     @field  a: number
-        // }
-        // let q = new Query<A>(A, {a: 3}); await q.ready() 
-
-        //                                 expect(q.items.length).toBe(0)
-        // let a1 = new A({id: 1});        expect(q.items.length).toBe(0)
-        // let a2 = new A({id: 2, a: 1});  expect(q.items.length).toBe(0)
-        // let a3 = new A({id: 3, a: 3});  expect(q.items.length).toBe(1)
-        // await a1.delete();              expect(q.items.length).toBe(1)
-        // await a2.delete();              expect(q.items.length).toBe(1)
-        // await a3.delete();              expect(q.items.length).toBe(0)
-
-        // q.destroy()
-    })
-
-    it('query.items should contain exist objects and new objects', async () => {
-        // TODO
-        // let a1 = new A({id: 1})
-        // let a2 = new A({id: 2})
-        // let q = A.load(); await q.ready()
-        //                             expect(q.items.length).toBe(2)
-        // let a3 = new A({id: 3});    expect(q.items.length).toBe(3)
-        // let a4 = new A({id: 4});    expect(q.items.length).toBe(4)
-        // await a1.delete();          expect(q.items.length).toBe(3)
-        // await a2.delete();          expect(q.items.length).toBe(2)
-        // await a3.delete();          expect(q.items.length).toBe(1)
-        // await a4.delete();          expect(q.items.length).toBe(0)
-
+        // expect(query.items.length).toBe(5)
+        // expect(Object.keys(query.__disposer_objects).length).toBe(5)
+        // let obj = cache.get('1');   expect(obj).toMatchObject({id: 1})
+        //                             expect(query.__disposer_objects).toBeUndefined()
+        //                             expect(query.__disposer_objects[obj.__id]).toBeUndefined()
+        //                             expect(query.__disposer_objects[111]).toBeUndefined()
+                    // this.__watch_obj(obj)
+        // let length = query.__items.length
+        // // query.filters = EQ('a', 2)
+        // // let x = new A({});  expect(query.__items.length).toBe(length)
+        // // await x.save();     expect(query.__items.length).toBe(length+1)
+        // // await x.delete();   expect(query.__items.length).toBe(length)
     })
 })

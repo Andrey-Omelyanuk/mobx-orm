@@ -1,9 +1,8 @@
-import { action, autorun, makeObservable, observable, observe, reaction, runInAction } from "mobx"
-import { Model } from "./model"
-import Adapter from "./adapters/adapter"
-import QeuryBase from './query-base'
-import { Filter } from "./filters"
-
+import { autorun, computed, observe, reaction, runInAction } from 'mobx'
+import { Model } from './model'
+import Adapter from './adapters/adapter'
+import QeuryBase, { ASC, DESC, ORDER_BY } from './query-base'
+import { Filter } from './filters'
 
 /*
 Reactive items:
@@ -17,22 +16,8 @@ Reactive items:
 
 export default class Query<M extends Model> extends QeuryBase<M> {
 
-    __load(objs: M[]) {
-        runInAction(() => { 
-            this.__items.splice(0, this.__items.length)
-            this.__items.push(...objs)
-        })
-    }
-
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[]) {
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY) {
         super(adapter, base_cache, filters, order_by)
-
-        // update if filters was changed
-        // watch only filters, if order was changed then we don't need to update, just resort
-        this.__disposers.push(reaction(
-            () => this.filters?.getURLSearchParams(), 
-            () => this.load()
-        ))
 
         // watch the cache for changes, and update items if needed
         this.__disposers.push(observe(this.__base_cache, (change: any) => {
@@ -40,37 +25,80 @@ export default class Query<M extends Model> extends QeuryBase<M> {
             if (this.__is_loading) return 
 
             if (change.type == 'add') {
-                this.watch_obj(change.newValue)
+                this.__watch_obj(change.newValue)
             }
             if (change.type == "delete") {
                 let __id = change.name
                 let obj  = change.oldValue
                 this.__disposer_objects[__id]()
                 delete this.__disposer_objects[__id]
-                let i = this.items.indexOf(obj)
+                let i = this.__items.indexOf(obj)
                 if (i != -1)
                     runInAction(() => {
-                        this.items.splice(i, 1)
+                        this.__items.splice(i, 1)
                     })
             }
         }))
 
-        // watch all exist objects of model 
+        this.__disposers.push(reaction(
+            () => this.need_to_update,
+            () => {
+                for(let [id, obj] of this.__base_cache) {
+                    this.__watch_obj(obj)
+                }
+            }
+        ))
+
+        // ch all exist objects of model 
         for(let [id, obj] of this.__base_cache) {
-            this.watch_obj(obj)
+            this.__watch_obj(obj)
         }
     }
 
-    private watch_obj(obj) {
+    @computed
+    get items() { 
+        let __items = this.__items.map(x=>x) // copy __items (not deep)
+        if (this.order_by.size) {
+            let compare = (a, b) => {
+                for(const [key, value] of this.order_by) {
+                    if (value === ASC) {
+                        if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
+                        if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return -1
+                        if (a[key] < b[key]) return -1
+                        if (a[key] > b[key]) return  1
+                    }
+                    else {
+                        if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return -1
+                        if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return  1
+                        if (a[key] < b[key]) return  1
+                        if (a[key] > b[key]) return -1
+                    }
+                }
+                return 0
+            }
+            __items.sort(compare)
+        }
+        return __items 
+    }
+
+    __load(objs: M[]) {
+        runInAction(() => { 
+            this.__items.splice(0, this.__items.length)
+            this.__items.push(...objs)
+        })
+    }
+
+    __watch_obj(obj) {
+        if (this.__disposer_objects[obj.__id]) this.__disposer_objects[obj.__id]()
         this.__disposer_objects[obj.__id] = autorun(
             () => {
                 let should = !this.filters || this.filters.is_match(obj)
-                let i = this.items.indexOf(obj)
+                let i = this.__items.indexOf(obj)
                 // should be in the items and it is not in the items? add it to the items
-                if ( should && i == -1) runInAction(() => this.items.push(obj))
+                if ( should && i == -1) runInAction(() => this.__items.push(obj))
                 // should not be in the items and it is in the items? remove it from the items
-                if (!should && i != -1) runInAction(() => this.items.splice(i, 1))
-            })
+                if (!should && i != -1) runInAction(() => this.__items.splice(i, 1))
+            }
+        )
     }
-
 }

@@ -5,6 +5,7 @@ import id    from './fields/id'
 import field from './fields/field'
 import { runInAction } from 'mobx'
 import { EQ } from './filters'
+import { DESC, ORDER_BY } from './query-base'
 
 
 describe('Model Class', () => {
@@ -49,7 +50,7 @@ describe('Model Class', () => {
         })
 
         it('with args', async () => {
-            let query = A.getQuery(EQ('a', 1), ['-b'] )
+            let query = A.getQuery(EQ('a', 1), new Map([['b', DESC]]))
             await query.load()
             expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)
@@ -75,7 +76,7 @@ describe('Model Class', () => {
         })
 
         it('with args', async () => {
-            let query = A.getQueryPage(EQ('a', 1), ['-b'], 2, 30 )
+            let query = A.getQueryPage(EQ('a', 1), new Map([['b', DESC]]), 2, 30 )
             await query.load()
             // expect(query.is_ready).toBe(true)
             expect(load).toHaveBeenCalledTimes(1)

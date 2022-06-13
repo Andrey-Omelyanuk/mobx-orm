@@ -1,17 +1,24 @@
-import { action, autorun, makeObservable, observable, runInAction } from "mobx"
+import { action, autorun, makeObservable, observable, reaction, runInAction } from "mobx"
 import Adapter from "./adapters/adapter"
 import { Model } from "./model"
 import { Filter } from './filters'
+
+export const ASC = true 
+export const DESC = false 
+export type ORDER_BY = Map<string, boolean>
 
 
 export default abstract class Query<M extends Model> {
 
     @observable filters     : Filter
-    @observable order_by    : string[]
+    @observable order_by    : ORDER_BY 
     @observable page        : number
     @observable page_size   : number
 
-    get items      () { return this.__items }
+    @observable need_to_update: boolean
+
+    abstract get items()
+
     get is_loading () { return this.__is_loading  }
     get is_ready   () { return this.__is_ready    }
     get error      () { return this.__error       }
@@ -26,14 +33,24 @@ export default abstract class Query<M extends Model> {
     __disposers = []
     __disposer_objects = {}
 
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[], page?: number, page_size?: number) {
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number) {
 		this.__base_cache = base_cache
 		this.__adapter    = adapter
+        this.order_by = order_by ? order_by : new Map()
         if (filters  ) this.filters   = filters
-        if (order_by ) this.order_by  = order_by
         if (page	 ) this.page      = page
         if (page_size) this.page_size = page_size
         makeObservable(this)
+
+        this.__disposers.push(reaction(
+            () => { return { 
+                filter          : this.filters?.getURLSearchParams(), 
+                order_by        : this.order_by, 
+                page            : this.page, 
+                page_size       : this.page_size,
+             }},
+            () => { runInAction(() => this.need_to_update = true )}
+        ))
     }
 
     destroy() {

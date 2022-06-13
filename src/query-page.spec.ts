@@ -45,12 +45,12 @@ describe('QueryPage', () => {
                 __adapter: adapter,
                 __base_cache: A.__cache,
                 filters: undefined,
-                order_by: undefined ,
+                // order_by: new Map(),
                 page: 0,
                 page_size: 50 
             })
             expect(load).toHaveBeenCalledTimes(1) 
-            expect(load).toHaveBeenCalledWith(undefined, undefined, 50, 0)
+            expect(load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page)
         })
 
         it('call load when a query was created ', async () => {
@@ -59,7 +59,7 @@ describe('QueryPage', () => {
 
     it('e2e', async () => {
         expect(load).toHaveBeenCalledTimes(1) 
-        expect(load).toHaveBeenCalledWith(undefined, undefined, 50, 0)
+        expect(load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page)
         // expect(query.items.length).toBe(data_set.length)
         expect(query.items).toEqual([
             cache.get(A.__id(obj_a)),
@@ -80,13 +80,13 @@ describe('QueryPage', () => {
             cache.get(A.__id(obj_e)),
         ])
 
-        await query.loading()
+        await query.load()
         expect(query.items).toEqual([])
 
         runInAction(() => {
             query.page_size = 2
         })
-        await query.loading()
+        await query.load()
         expect(query.items).toEqual([
             cache.get(A.__id(obj_c)),
             cache.get(A.__id(obj_d)),

@@ -2,7 +2,7 @@ import { model, Model } from './model'
 import id           from './fields/id'
 import Adapter      from './adapters/adapter'
 import LocalAdapter from './adapters/local'
-import QueryBase    from './query-base'
+import QueryBase, { ORDER_BY, ASC }    from './query-base'
 import { Filter, EQ } from './filters'
 
 
@@ -13,8 +13,9 @@ describe('QueryBase', () => {
     // we cannot use QueryBase directly
     // QueryBase is an abstract class and we have to create a new class and inherit it from QueryBase
     class Query<M extends Model> extends QueryBase<M> {
+        get items() { return this.__items }
         __load(objs: M[]) { this.__items = objs }
-    	constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: string[], page?: number, page_size?: number) {
+    	constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number) {
 			super(adapter, base_cache, filters, order_by, page, page_size)
 		}
     }
@@ -40,33 +41,28 @@ describe('QueryBase', () => {
     describe('constructor', () => {
         it('...', async ()=> {
             let filters     = EQ('id', 1)
-            let order_by    = ['id']
+            let order_by    = new Map([ ['id', ASC], ]) 
             let page        = 1
             let page_size   = 33
             let query       = new Query<A>(adapter, cache, filters, order_by, page, page_size);
+            expect(query.order_by.size).toBe(1)
+            expect(query.order_by.get('id')).toBe(order_by.get('id'))
             expect(query).toMatchObject({
                 filters     : filters,
-                order_by    : order_by,
                 page        : page,
                 page_size   : page_size,
-                items       : [],
+                __items     : [],
                 is_loading  : false,
                 is_ready    : false,
                 error       : '',
                 __adapter   : adapter,
-                __base_cache: A.__cache,
-                __disposers : [],
+                __base_cache: cache,
+                // __disposers : [],
                 __disposer_objects: {}
             })
             query.destroy()
         })
     })
-
-    // it will be tested in the query.spec.ts
-    // describe('destroy', () => {
-    //     it('...', async ()=> {
-    //     })
-    // })
 
     describe('load', () => {
         it('...', async ()=> {

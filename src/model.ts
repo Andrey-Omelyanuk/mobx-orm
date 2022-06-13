@@ -3,6 +3,7 @@ import Adapter   from './adapters/adapter'
 import Query     from './query'
 import QueryPage from './query-page'
 import { Filter } from './filters'
+import { ORDER_BY } from './query-base'
 
 
 export type RawObject = any 
@@ -70,11 +71,11 @@ export abstract class Model {
         return this.__adapter.find(filters) 
     }
 
-    static getQuery(filters?: Filter, order_by?: string[]): Query<Model>  {
+    static getQuery(filters?: Filter, order_by?: ORDER_BY): Query<Model>  {
         return new Query<Model>(this.__adapter, this.__cache, filters, order_by)
     }
 
-    static getQueryPage(filter?: Filter, order_by?: string[], page?: number, page_size?: number): QueryPage<Model> {
+    static getQueryPage(filter?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number): QueryPage<Model> {
         return new QueryPage(this.__adapter, this.__cache, filter, order_by, page, page_size)
     }
 
@@ -106,12 +107,14 @@ export abstract class Model {
     }
 
     static clearCache() {
-        // for clear cache we need just to set null into id fields
-        for (let obj of this.__cache.values()) {
-            for (let id_field_name of this.__ids.keys()) {
-                obj[id_field_name] = null
+        runInAction(() => {
+            // for clear cache we need just to set null into id fields
+            for (let obj of this.__cache.values()) {
+                for (let id_field_name of this.__ids.keys()) {
+                    obj[id_field_name] = null
+                }
             }
-        }
+        })
     }
 
     static __id(obj, ids?) : string | null {
