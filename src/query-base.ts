@@ -77,7 +77,10 @@ export default abstract class Query<M extends Model> {
         try {
             let objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page*this.page_size)
             this.__load(objs)
-            runInAction(() => this.__is_ready = true)
+            runInAction(() => {
+                this.__is_ready = true
+                this.need_to_update = false 
+            })
         }
         catch(e) {
             runInAction(() => this.__error = e)

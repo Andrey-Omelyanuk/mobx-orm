@@ -38,6 +38,8 @@ declare function IN(field: string, value?: any[]): Filter;
 declare function AND(...filters: Filter[]): Filter;
 declare function OR(...filters: Filter[]): Filter;
 
+declare const ASC = true;
+declare const DESC = false;
 declare type ORDER_BY = Map<string, boolean>;
 declare abstract class Query$2<M extends Model> {
     filters: Filter;
@@ -155,4 +157,4 @@ declare function one(remote_model: any, ...remote_foreign_ids_names: string[]): 
 
 declare function many(remote_model: any, ...remote_foreign_ids_names: string[]): (cls: any, field_name: string) => void;
 
-export { AND, Adapter, EQ, Filter, FilterType, IN, LocalAdapter, Model, OR, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawObject, field, foreign, id, local, many, model, one };
+export { AND, ASC, Adapter, DESC, EQ, Filter, FilterType, IN, LocalAdapter, Model, OR, ORDER_BY, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawObject, field, foreign, id, local, many, model, one };

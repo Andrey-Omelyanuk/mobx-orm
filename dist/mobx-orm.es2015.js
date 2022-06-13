@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.23
+   * mobx-orm.js v1.0.24
    * Released under the MIT license.
    */
 
@@ -185,6 +185,7 @@ function OR(...filters) {
 }
 
 const ASC = true;
+const DESC = false;
 class Query$2 {
     constructor(adapter, base_cache, filters, order_by, page, page_size) {
         Object.defineProperty(this, "filters", {
@@ -310,7 +311,10 @@ class Query$2 {
         try {
             let objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page * this.page_size);
             this.__load(objs);
-            runInAction(() => this.__is_ready = true);
+            runInAction(() => {
+                this.__is_ready = true;
+                this.need_to_update = false;
+            });
         }
         catch (e) {
             runInAction(() => this.__error = e);
@@ -421,10 +425,11 @@ class Query$1 extends Query$2 {
                     });
             }
         }));
-        this.__disposers.push(reaction(() => this.need_to_update, () => {
-            for (let [id, obj] of this.__base_cache) {
-                this.__watch_obj(obj);
-            }
+        this.__disposers.push(reaction(() => this.need_to_update, (value) => {
+            if (value && !this.__is_loading)
+                for (let [id, obj] of this.__base_cache) {
+                    this.__watch_obj(obj);
+                }
         }));
         // ch all exist objects of model 
         for (let [id, obj] of this.__base_cache) {
@@ -1325,5 +1330,5 @@ function many(remote_model, ...remote_foreign_ids_names) {
     };
 }
 
-export { AND, Adapter, EQ, Filter, FilterType, IN, LocalAdapter, Model, OR, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, field, foreign, id, local, many, model, one };
+export { AND, ASC, Adapter, DESC, EQ, Filter, FilterType, IN, LocalAdapter, Model, OR, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, field, foreign, id, local, many, model, one };
 //# sourceMappingURL=mobx-orm.es2015.js.map

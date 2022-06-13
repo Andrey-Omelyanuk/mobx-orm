@@ -42,10 +42,11 @@ export default class Query<M extends Model> extends QeuryBase<M> {
 
         this.__disposers.push(reaction(
             () => this.need_to_update,
-            () => {
-                for(let [id, obj] of this.__base_cache) {
-                    this.__watch_obj(obj)
-                }
+            (value) => {
+                if (value && !this.__is_loading)
+                    for(let [id, obj] of this.__base_cache) {
+                        this.__watch_obj(obj)
+                    }
             }
         ))
 

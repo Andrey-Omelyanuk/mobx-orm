@@ -1,5 +1,5 @@
 import { model, Model, RawObject } from './model'
-import QueryBase from './query-base' 
+import QueryBase, { ASC, DESC, ORDER_BY } from './query-base' 
 import Query from './query' 
 import QueryPage from './query-page' 
 // adapters
@@ -16,7 +16,7 @@ import { Filter, FilterType, EQ, IN, AND, OR } from './filters'
 
 export {
     model, Model, RawObject,
-    QueryBase,
+    QueryBase, ASC, DESC, ORDER_BY,
     Query,
     QueryPage,
     // adapters
