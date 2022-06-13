@@ -26,6 +26,7 @@ declare class Filter {
     readonly field: string;
     type: FilterType;
     value: any;
+    options: Query$1<any>;
     constructor(type?: FilterType, field?: string, value?: any);
     setFromURI(uri: string): string;
     getURIField(): string;

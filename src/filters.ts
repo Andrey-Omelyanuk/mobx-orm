@@ -1,4 +1,5 @@
 import { action, makeObservable, observable } from "mobx"
+import Query from "./query" 
 
 
 export enum FilterType {
@@ -11,6 +12,7 @@ export class Filter {
     readonly    field: string
     @observable type : FilterType 
     @observable value: any
+                options: Query<any> // use it for UI when we need to show options for select
 
     constructor(type: FilterType = null, field: string = null, value: any = null) {
         this.type  = type 

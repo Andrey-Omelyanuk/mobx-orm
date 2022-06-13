@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.21
+   * mobx-orm.js v1.0.22
    * Released under the MIT license.
    */
 
@@ -63,6 +63,12 @@ class Filter {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "options", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        }); // use it for UI when we need to show options for select
         this.type = type;
         this.field = field;
         this.value = value;
