@@ -30,8 +30,12 @@ export default class Query<M extends Model> extends QeuryBase<M> {
             if (change.type == "delete") {
                 let __id = change.name
                 let obj  = change.oldValue
-                this.__disposer_objects[__id]()
-                delete this.__disposer_objects[__id]
+                // TODO: band-aid, the object can have no disposer, it is not good
+                // TODO: need more tests for disposers 
+                if (this.__disposer_objects[__id]) {
+                    this.__disposer_objects[__id]()
+                    delete this.__disposer_objects[__id]
+                }
                 let i = this.__items.indexOf(obj)
                 if (i != -1)
                     runInAction(() => {

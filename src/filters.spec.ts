@@ -5,12 +5,12 @@ import { EQ, IN, AND, OR, Filter, FilterType } from './filters'
 describe('Filters', () => {
     describe('declare', () => {
         it('EQ', () => {
-            expect(EQ('A'   )).toMatchObject({field: 'A'    , value: null   })
-            expect(EQ('A', 1)).toMatchObject({field: 'A'    , value: 1      })
+            expect(EQ('A'   )).toMatchObject({field: 'A'    , value: undefined })
+            expect(EQ('A', 1)).toMatchObject({field: 'A'    , value: 1         })
         })
         it('IN', () => {
-            expect(IN('A'    )).toMatchObject({field: 'A'    , value: null   })
-            expect(IN('A', [])).toMatchObject({field: 'A'    , value: []     })
+            expect(IN('A'    )).toMatchObject({field: 'A'    , value: []})
+            expect(IN('A', [])).toMatchObject({field: 'A'    , value: []})
             expect(IN('A', [1,2,3])).toMatchObject({field:'A', value: [1,2,3]})
         })
         it('AND', () => {
@@ -52,8 +52,12 @@ describe('Filters', () => {
             expect(EQ('A', 1).is_match({B: 2})).toBe(false)
             expect(EQ('B', 1).is_match({A: 1})).toBe(false)
             expect(EQ('A'   ).is_match({A: 1})).toBe(true)
-            expect(EQ(null, 1).is_match({A: 1})).toBe(false)
             expect(EQ(''  , 1).is_match({A: 1})).toBe(false)
+            expect(EQ('A__B__C', 1).is_match({A: {B: {C: 1}}})).toBe(true)
+            expect(EQ('A__B__C', 1).is_match({A: {B: {C: 2}}})).toBe(false)
+            expect(EQ('A__B__C', 1).is_match({A: {B: {}}})).toBe(false)
+            expect(EQ('A__B__C', 1).is_match({A: {}})).toBe(false)
+            expect(EQ('A__B__C', 1).is_match({})).toBe(false)
         })
         it('IN', () => {
             expect(IN('A', [1,2,3]).is_match({A: 1})).toBe(true)
@@ -66,6 +70,11 @@ describe('Filters', () => {
             expect(IN('A', []     ).is_match({A: 1})).toBe(true)
             expect(IN('A'         ).is_match({A: 1})).toBe(true)
             expect(IN('A', ['2']  ).is_match({A: 2})).toBe(true)
+            expect(IN('A__B__C', [1]).is_match({A: {B: {C: 1}}})).toBe(true)
+            expect(IN('A__B__C', [1]).is_match({A: {B: {C: 2}}})).toBe(false)
+            expect(IN('A__B__C', [1,2]).is_match({A: {B: {C: 2}}})).toBe(true)
+            expect(IN('A__B__C', [1]).is_match({A: {B: {}}})).toBe(false)
+            expect(IN('A__B__C', [1]).is_match({A: {}})).toBe(false)
         })
         it('AND', () => {
             expect(AND(EQ('A', 1), EQ('B', 1)).is_match({A: 1, B: 1})).toBe(true)

@@ -30,8 +30,8 @@ export default abstract class Query<M extends Model> {
     @observable __is_ready    : boolean = false 
     @observable __error       : string = '' 
 
-    __disposers = []
-    __disposer_objects = {}
+    __disposers         : (()=>void)[] = []
+    __disposer_objects  : {[field: string]: ()=>void} = {'test': ()=>{}}
 
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number) {
 		this.__base_cache = base_cache
@@ -54,8 +54,13 @@ export default abstract class Query<M extends Model> {
     }
 
     destroy() {
-        for(let disposer of this.__disposers) disposer()
-        for(let __id in this.__disposer_objects) this.__disposer_objects[__id]()
+        while(this.__disposers.length) {
+            this.__disposers.pop()()
+        }
+        for(let __id in this.__disposer_objects) {
+            this.__disposer_objects[__id]()
+            delete this.__disposer_objects[__id]
+        } 
     }
 
     abstract __load(objs: M[])

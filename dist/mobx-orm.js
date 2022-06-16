@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.24
+   * mobx-orm.js v1.0.25
    * Released under the MIT license.
    */
 
@@ -48,7 +48,7 @@
         FilterType[FilterType["OR"] = 5] = "OR";
     })(exports.FilterType || (exports.FilterType = {}));
     class Filter {
-        constructor(type = null, field = null, value = null) {
+        constructor(type = null, field = null, value) {
             Object.defineProperty(this, "field", {
                 enumerable: true,
                 configurable: true,
@@ -76,6 +76,8 @@
             this.type = type;
             this.field = field;
             this.value = value;
+            if (type === exports.FilterType.IN && this.value === undefined)
+                this.value = [];
             mobx.makeObservable(this);
         }
         setFromURI(uri) {
@@ -131,14 +133,31 @@
             return search_params;
         }
         is_match(obj) {
+            let path, value;
             switch (this.type) {
                 case exports.FilterType.EQ:
-                    return this.value !== null ? obj[this.field] == this.value : true;
-                case exports.FilterType.IN:
-                    if (this.value === null || !this.value.length)
+                    if (this.value === undefined)
                         return true;
+                    path = this.field.split('__');
+                    value = obj;
+                    for (let field of path) {
+                        value = value[field];
+                        if (value === undefined)
+                            break;
+                    }
+                    return value == this.value;
+                case exports.FilterType.IN:
+                    if (this.value.length === 0)
+                        return true;
+                    path = this.field.split('__');
+                    value = obj;
+                    for (let field of path) {
+                        value = value[field];
+                        if (value === undefined)
+                            break;
+                    }
                     for (let v of this.value) {
-                        if (v == obj[this.field])
+                        if (v == value)
                             return true;
                     }
                     return false;
@@ -175,10 +194,10 @@
         __metadata("design:paramtypes", [String]),
         __metadata("design:returntype", void 0)
     ], Filter.prototype, "setFromURI", null);
-    function EQ(field, value = null) {
+    function EQ(field, value = undefined) {
         return new Filter(exports.FilterType.EQ, field, value);
     }
-    function IN(field, value = null) {
+    function IN(field, value = []) {
         return new Filter(exports.FilterType.IN, field, value);
     }
     function AND(...filters) {
@@ -268,7 +287,7 @@
                 enumerable: true,
                 configurable: true,
                 writable: true,
-                value: {}
+                value: { 'test': () => { } }
             });
             this.__base_cache = base_cache;
             this.__adapter = adapter;
@@ -294,10 +313,13 @@
         get is_ready() { return this.__is_ready; }
         get error() { return this.__error; }
         destroy() {
-            for (let disposer of this.__disposers)
-                disposer();
-            for (let __id in this.__disposer_objects)
+            while (this.__disposers.length) {
+                this.__disposers.pop()();
+            }
+            for (let __id in this.__disposer_objects) {
                 this.__disposer_objects[__id]();
+                delete this.__disposer_objects[__id];
+            }
         }
         // use it if everybody should know that the query data is updating
         async load() {
@@ -420,8 +442,12 @@
                 if (change.type == "delete") {
                     let __id = change.name;
                     let obj = change.oldValue;
-                    this.__disposer_objects[__id]();
-                    delete this.__disposer_objects[__id];
+                    // TODO: band-aid, the object can have no disposer, it is not good
+                    // TODO: need more tests for disposers 
+                    if (this.__disposer_objects[__id]) {
+                        this.__disposer_objects[__id]();
+                        delete this.__disposer_objects[__id];
+                    }
                     let i = this.__items.indexOf(obj);
                     if (i != -1)
                         mobx.runInAction(() => {

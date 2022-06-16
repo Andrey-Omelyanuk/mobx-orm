@@ -14,10 +14,11 @@ export class Filter {
     @observable value: any
                 options: Query<any> // use it for UI when we need to show options for select
 
-    constructor(type: FilterType = null, field: string = null, value: any = null) {
+    constructor(type: FilterType = null, field: string = null, value: any) {
         this.type  = type 
         this.field = field
         this.value = value
+        if (type === FilterType.IN && this.value === undefined) this.value = []
         makeObservable(this)
     }
     @action setFromURI(uri: string) {
@@ -73,13 +74,27 @@ export class Filter {
         return search_params
     }
     is_match(obj: any) : boolean {
+        let path, value
         switch (this.type) {
             case FilterType.EQ:
-                return this.value !== null ? obj[this.field] == this.value : true
+                if (this.value === undefined) return true
+                path = this.field.split('__')
+                value = obj 
+                for(let field of path) {
+                    value = value[field] 
+                    if (value === undefined) break
+                }
+                return value == this.value
             case FilterType.IN:
-                if (this.value === null || !this.value.length) return true
+                if (this.value.length === 0) return true
+                path = this.field.split('__')
+                value = obj 
+                for(let field of path) {
+                    value = value[field] 
+                    if (value === undefined) break
+                }
                 for (let v of this.value) {
-                    if (v == obj[this.field]) return true
+                    if (v == value) return true
                 }
                 return false
                 // return this.value !== null && this.value.length ? this.value.includes(String(obj[this.field])) : true
@@ -101,11 +116,11 @@ export class Filter {
     }
 }
 
-export function EQ(field: string, value: any = null) : Filter {
+export function EQ(field: string, value: any = undefined) : Filter {
     return new Filter(FilterType.EQ, field, value) 
 }
 
-export function IN(field: string, value: any[] = null) : Filter {
+export function IN(field: string, value: any[] = []) : Filter {
     return new Filter(FilterType.IN, field, value) 
 }
 

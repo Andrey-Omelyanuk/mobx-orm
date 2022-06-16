@@ -57,10 +57,11 @@ describe('QueryBase', () => {
                 error       : '',
                 __adapter   : adapter,
                 __base_cache: cache,
-                // __disposers : [],
                 __disposer_objects: {}
             })
+            expect(query.__disposers.length).toBe(1)
             query.destroy()
+            expect(query.__disposers.length).toBe(0)
         })
     })
 

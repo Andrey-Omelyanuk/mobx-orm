@@ -27,7 +27,7 @@ declare class Filter {
     type: FilterType;
     value: any;
     options: Query$1<any>;
-    constructor(type?: FilterType, field?: string, value?: any);
+    constructor(type: FilterType, field: string, value: any);
     setFromURI(uri: string): string;
     getURIField(): string;
     getURLSearchParams(): URLSearchParams;
@@ -57,8 +57,10 @@ declare abstract class Query$2<M extends Model> {
     __is_loading: boolean;
     __is_ready: boolean;
     __error: string;
-    __disposers: any[];
-    __disposer_objects: {};
+    __disposers: (() => void)[];
+    __disposer_objects: {
+        [field: string]: () => void;
+    };
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number);
     destroy(): void;
     abstract __load(objs: M[]): any;

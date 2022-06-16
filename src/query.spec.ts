@@ -60,13 +60,15 @@ describe('Query', () => {
                 __base_cache: cache,
          })
             expect(query.__disposers.length).toBe(3)
-            expect(Object.keys(query.__disposer_objects).length).toBe(5)
+            expect(Object.keys(query.__disposer_objects).length).toBe(6)
             // loading is not necessary, you can use objs from cache
             expect(query.__items).toMatchObject([
                 {id: 2, a: 2,         c: false},
                 {id: 3, a: 2, b: 'f'          } 
             ])
             query.destroy()
+            expect(query.__disposers.length).toBe(0)
+            expect(Object.keys(query.__disposer_objects).length).toBe(0)
         })
 
         it('watch the base cache for changes', async () => {
