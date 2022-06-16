@@ -56,6 +56,8 @@ describe('Filters', () => {
             expect(EQ('A__B__C', 1).is_match({A: {B: {C: 1}}})).toBe(true)
             expect(EQ('A__B__C', 1).is_match({A: {B: {C: 2}}})).toBe(false)
             expect(EQ('A__B__C', 1).is_match({A: {B: {}}})).toBe(false)
+            expect(EQ('A__B__C', 1).is_match({A: {B: null}})).toBe(false)
+            expect(EQ('A__B__C', 1).is_match({A: {B: undefined}})).toBe(false)
             expect(EQ('A__B__C', 1).is_match({A: {}})).toBe(false)
             expect(EQ('A__B__C', 1).is_match({})).toBe(false)
         })
@@ -74,6 +76,8 @@ describe('Filters', () => {
             expect(IN('A__B__C', [1]).is_match({A: {B: {C: 2}}})).toBe(false)
             expect(IN('A__B__C', [1,2]).is_match({A: {B: {C: 2}}})).toBe(true)
             expect(IN('A__B__C', [1]).is_match({A: {B: {}}})).toBe(false)
+            expect(IN('A__B__C', [1,2]).is_match({A: {B: null}})).toBe(false)
+            expect(IN('A__B__C', [1,2]).is_match({A: {B: undefined}})).toBe(false)
             expect(IN('A__B__C', [1]).is_match({A: {}})).toBe(false)
         })
         it('AND', () => {

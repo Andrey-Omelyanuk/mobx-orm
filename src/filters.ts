@@ -81,6 +81,7 @@ export class Filter {
                 path = this.field.split('__')
                 value = obj 
                 for(let field of path) {
+                    if (value === null) return false
                     value = value[field] 
                     if (value === undefined) break
                 }
@@ -90,6 +91,7 @@ export class Filter {
                 path = this.field.split('__')
                 value = obj 
                 for(let field of path) {
+                    if (value === null) return false
                     value = value[field] 
                     if (value === undefined) break
                 }

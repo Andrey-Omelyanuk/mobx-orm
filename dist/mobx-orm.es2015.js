@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.25
+   * mobx-orm.js v1.0.26
    * Released under the MIT license.
    */
 
@@ -137,6 +137,8 @@ class Filter {
                 path = this.field.split('__');
                 value = obj;
                 for (let field of path) {
+                    if (value === null)
+                        return false;
                     value = value[field];
                     if (value === undefined)
                         break;
@@ -148,6 +150,8 @@ class Filter {
                 path = this.field.split('__');
                 value = obj;
                 for (let field of path) {
+                    if (value === null)
+                        return false;
                     value = value[field];
                     if (value === undefined)
                         break;
@@ -438,12 +442,8 @@ class Query$1 extends Query$2 {
             if (change.type == "delete") {
                 let __id = change.name;
                 let obj = change.oldValue;
-                // TODO: band-aid, the object can have no disposer, it is not good
-                // TODO: need more tests for disposers 
-                if (this.__disposer_objects[__id]) {
-                    this.__disposer_objects[__id]();
-                    delete this.__disposer_objects[__id];
-                }
+                this.__disposer_objects[__id]();
+                delete this.__disposer_objects[__id];
                 let i = this.__items.indexOf(obj);
                 if (i != -1)
                     runInAction(() => {
