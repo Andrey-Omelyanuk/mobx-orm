@@ -1,4 +1,4 @@
-import { Model, RawObject } from '../model'
+import { Model, RawData, RawObject } from '../model'
 import Adapter  from './adapter'
 
 /*
@@ -35,35 +35,36 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
         store[this.store_name] = {}
     }
 
-    async __create(obj: RawObject) : Promise<RawObject> {
+    async __create(raw_data: RawData) : Promise<RawObject> {
         if (this.delay) await timeout(this.delay) 
 
-        if (obj.__id === null) {
-            // calculate and set new ID
-            let ids = [0]
-            for(let id of Object.keys(store[this.store_name])) {
-                ids.push(parseInt(id))
-            }
-            let max = Math.max.apply(null, ids)
-            for(let field_name_id of this.model.__ids.keys()) {
-                obj[field_name_id] = max + 1
-            }
+        // calculate and set new ID
+        let ids = [0]
+        for(let id of Object.keys(store[this.store_name])) {
+            ids.push(parseInt(id))
         }
-        obj.__id = this.model.__id(obj)
-        store[this.store_name][this.model.__id(obj)] = obj
-        return obj
+        let max = Math.max.apply(null, ids)
+        for(let field_name_id of this.model.__ids.keys()) {
+            raw_data[field_name_id] = max + 1
+        }
+
+        raw_data.__id = this.model.__id(raw_data)
+        store[this.store_name][raw_data.__id] = raw_data
+        return raw_data as RawObject 
     }
 
-    async __update(obj: RawObject) : Promise<RawObject> {
+    async __update(obj_id: string, only_changed_raw_data: RawData) : Promise<RawObject> {
         if (this.delay) await timeout(this.delay) 
-        store[this.store_name][obj.__id] = obj
-        return obj
+        let raw_obj = store[this.store_name][obj_id] 
+        for(let field of Object.keys(only_changed_raw_data)) {
+            raw_obj[field] = only_changed_raw_data[field]
+        }
+        return raw_obj 
     }
 
-    async __delete(obj: RawObject) : Promise<RawObject> {
+    async __delete(obj_id: string) : Promise<void> {
         if (this.delay) await timeout(this.delay) 
-        delete store[this.store_name][obj.__id]
-        return obj
+        delete store[this.store_name][obj_id]
     }
 
     async __find(where) : Promise<RawObject> {

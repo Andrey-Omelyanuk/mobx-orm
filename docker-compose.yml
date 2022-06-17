@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  main:    
+    build: { context: . }
+    container_name: mobx-orm
+    user: "${UID:-1000}:0"
+    volumes:
+      - .:/app
+    stdin_open: true  # docker run -i
+    tty       : true  # docker run -t
+    command: sh -c "yarn install && sh"

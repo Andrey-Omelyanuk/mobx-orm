@@ -10,9 +10,12 @@ describe('Adapter', () => {
     @model class A extends Model { @id id : number; @field x: string }
 
     class TestAdapter extends Adapter<A> {
-        async __create(obj: RawObject) : Promise<RawObject> { obj.id = 1; return obj }
-        async __update(obj: RawObject) : Promise<RawObject> { return obj }
-        async __delete(obj: RawObject) : Promise<RawObject> { obj.id = null; return obj }
+
+    // abstract __delete(obj_id: string): Promise<object>
+
+        async __create(raw_data: RawObject) : Promise<RawObject> { raw_data.id = 1; return raw_data }
+        async __update(obj_id: string, only_changed_raw_data: RawObject) : Promise<RawObject> { return only_changed_raw_data }
+        async __delete(obj_id: string) : Promise<RawObject> { return }
         async __load (where?, order_by?, limit?, offset?) : Promise<RawObject[]> { return [obj_a, obj_b] }
         async __find(where): Promise<object> { return obj_a; }
         async getTotalCount(where?): Promise<number> { return 0; }
@@ -36,7 +39,7 @@ describe('Adapter', () => {
     })
 
     it('constructor', async ()=> {
-        let adapter = new TestAdapter(A); expect(adapter.model).toBe(A)
+        let adapter = new TestAdapter(A);   expect(adapter.model).toBe(A)
     })
 
     it('create', async ()=> {

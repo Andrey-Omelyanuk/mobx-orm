@@ -7,6 +7,7 @@ import { ORDER_BY } from './query-base'
 
 
 export type RawObject = any 
+export type RawData   = any 
 
 // NOTE:
 // the __  prefix of naming - I borrow it from python. 
@@ -93,7 +94,7 @@ export abstract class Model {
 
     @action static updateCache(raw_obj): Model {
         let __id = this.__id(raw_obj)
-        let obj
+        let obj: Model
         if (this.__cache.has(__id)) {
             runInAction(() => {
                 obj = this.__cache.get(__id)
@@ -165,6 +166,16 @@ export abstract class Model {
         }
         return raw_data
     }
+    
+    get only_changed_raw_data() : any {
+        let raw_data: any = {}
+        for(let field_name in this.model.__fields) {
+            if(this[field_name] !== undefined && this[field_name] != this.__init_data[field_name]) {
+                raw_data[field_name] = this[field_name]
+            }
+        }
+        return raw_data
+    }
 
     get is_changed() : boolean {
         let is_changed = false
@@ -189,15 +200,15 @@ export abstract class Model {
     }
 
     @action updateFromRaw(raw_obj) {
-        // keys
+        // update the keys only if they are not defined
         for (let id_field_name of this.model.__ids.keys()) {
-            if (raw_obj[id_field_name] !== undefined && this[id_field_name] != raw_obj[id_field_name] ) {
+            if (this[id_field_name] === null || this[id_field_name] === undefined) {
                 this[id_field_name] = raw_obj[id_field_name]
             }
         }
-        // fields
+        // update the fields if the raw data is exist and it is different 
         for(let field_name in this.model.__fields) {
-            if (raw_obj[field_name] !== undefined) {
+            if (raw_obj[field_name] !== undefined && raw_obj[field_name] !== this[field_name]) {
                 this[field_name] = raw_obj[field_name]
             }
         }

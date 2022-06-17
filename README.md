@@ -21,3 +21,8 @@ node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/sr
 chrome://inspect/#devices
 
 ```
+
+Hot to dev in container:
+```sh
+docker-compose run --rm main
+```
