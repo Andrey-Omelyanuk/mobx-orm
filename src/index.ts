@@ -1,4 +1,4 @@
-import { model, Model, RawObject } from './model'
+import { model, Model, RawObject, RawData } from './model'
 import QueryBase, { ASC, DESC, ORDER_BY } from './query-base' 
 import Query from './query' 
 import QueryPage from './query-page' 
@@ -15,7 +15,7 @@ import many             from './fields/many'
 import { Filter, FilterType, EQ, IN, AND, OR } from './filters' 
 
 export {
-    model, Model, RawObject,
+    model, Model, RawObject, RawData,
     QueryBase, ASC, DESC, ORDER_BY,
     Query,
     QueryPage,

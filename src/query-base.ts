@@ -31,7 +31,7 @@ export default abstract class Query<M extends Model> {
     @observable __error       : string = '' 
 
     __disposers         : (()=>void)[] = []
-    __disposer_objects  : {[field: string]: ()=>void} = {'test': ()=>{}}
+    __disposer_objects  : {[field: string]: ()=>void} = {}
 
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number) {
 		this.__base_cache = base_cache

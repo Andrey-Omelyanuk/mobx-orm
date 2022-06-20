@@ -30,8 +30,10 @@ export default class Query<M extends Model> extends QeuryBase<M> {
             if (change.type == "delete") {
                 let __id = change.name
                 let obj  = change.oldValue
+
                 this.__disposer_objects[__id]()
                 delete this.__disposer_objects[__id]
+
                 let i = this.__items.indexOf(obj)
                 if (i != -1)
                     runInAction(() => {
@@ -83,10 +85,8 @@ export default class Query<M extends Model> extends QeuryBase<M> {
     }
 
     __load(objs: M[]) {
-        runInAction(() => { 
-            this.__items.splice(0, this.__items.length)
-            this.__items.push(...objs)
-        })
+        // Query don't need to overide the items, query's items should be get only from the cache
+        // Query page have to use it only 
     }
 
     __watch_obj(obj) {

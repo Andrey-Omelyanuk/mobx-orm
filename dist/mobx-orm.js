@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.27
+   * mobx-orm.js v1.0.28
    * Released under the MIT license.
    */
 
@@ -291,7 +291,7 @@
                 enumerable: true,
                 configurable: true,
                 writable: true,
-                value: { 'test': () => { } }
+                value: {}
             });
             this.__base_cache = base_cache;
             this.__adapter = adapter;
@@ -499,10 +499,8 @@
             return __items;
         }
         __load(objs) {
-            mobx.runInAction(() => {
-                this.__items.splice(0, this.__items.length);
-                this.__items.push(...objs);
-            });
+            // Query don't need to overide the items, query's items should be get only from the cache
+            // Query page have to use it only 
         }
         __watch_obj(obj) {
             if (this.__disposer_objects[obj.__id])
