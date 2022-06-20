@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.26
+   * mobx-orm.js v1.0.27
    * Released under the MIT license.
    */
 
@@ -12,7 +12,7 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["mobx-orm"] = {}, global.mobx));
 })(this, (function (exports, mobx) { 'use strict';
 
-    /*! *****************************************************************************
+    /******************************************************************************
     Copyright (c) Microsoft Corporation.
 
     Permission to use, copy, modify, and/or distribute this software for any
@@ -673,6 +673,15 @@
             }
             return raw_data;
         }
+        get only_changed_raw_data() {
+            let raw_data = {};
+            for (let field_name in this.model.__fields) {
+                if (this[field_name] !== undefined && this[field_name] != this.__init_data[field_name]) {
+                    raw_data[field_name] = this[field_name];
+                }
+            }
+            return raw_data;
+        }
         get is_changed() {
             let is_changed = false;
             for (let field_name in this.model.__fields) {
@@ -694,15 +703,15 @@
             }
         }
         updateFromRaw(raw_obj) {
-            // keys
+            // update the keys only if they are not defined
             for (let id_field_name of this.model.__ids.keys()) {
-                if (raw_obj[id_field_name] !== undefined && this[id_field_name] != raw_obj[id_field_name]) {
+                if (this[id_field_name] === null || this[id_field_name] === undefined) {
                     this[id_field_name] = raw_obj[id_field_name];
                 }
             }
-            // fields
+            // update the fields if the raw data is exist and it is different 
             for (let field_name in this.model.__fields) {
-                if (raw_obj[field_name] !== undefined) {
+                if (raw_obj[field_name] !== undefined && raw_obj[field_name] !== this[field_name]) {
                     this[field_name] = raw_obj[field_name];
                 }
             }
@@ -813,19 +822,19 @@
             this.model = model;
         }
         async create(obj) {
-            let raw_obj = await this.__create(obj.raw_obj);
+            let raw_obj = await this.__create(obj.raw_data);
             obj.updateFromRaw(raw_obj);
             obj.refresh_init_data(); // backend can return default values and they should be in __init_data
             return obj;
         }
         async update(obj) {
-            let raw_obj = await this.__update(obj.raw_obj);
+            let raw_obj = await this.__update(obj.__id, obj.only_changed_raw_data);
             obj.updateFromRaw(raw_obj);
             obj.refresh_init_data();
             return obj;
         }
         async delete(obj) {
-            await this.__delete(obj.raw_obj);
+            await this.__delete(obj.__id);
             for (let id_field_name of this.model.__ids.keys())
                 obj[id_field_name] = null;
             return obj;
@@ -879,35 +888,35 @@
             }
             store[this.store_name] = objs;
         }
-        async __create(obj) {
+        async __create(raw_data) {
             if (this.delay)
                 await timeout(this.delay);
-            if (obj.__id === null) {
-                // calculate and set new ID
-                let ids = [0];
-                for (let id of Object.keys(store[this.store_name])) {
-                    ids.push(parseInt(id));
-                }
-                let max = Math.max.apply(null, ids);
-                for (let field_name_id of this.model.__ids.keys()) {
-                    obj[field_name_id] = max + 1;
-                }
+            // calculate and set new ID
+            let ids = [0];
+            for (let id of Object.keys(store[this.store_name])) {
+                ids.push(parseInt(id));
             }
-            obj.__id = this.model.__id(obj);
-            store[this.store_name][this.model.__id(obj)] = obj;
-            return obj;
+            let max = Math.max.apply(null, ids);
+            for (let field_name_id of this.model.__ids.keys()) {
+                raw_data[field_name_id] = max + 1;
+            }
+            raw_data.__id = this.model.__id(raw_data);
+            store[this.store_name][raw_data.__id] = raw_data;
+            return raw_data;
         }
-        async __update(obj) {
+        async __update(obj_id, only_changed_raw_data) {
             if (this.delay)
                 await timeout(this.delay);
-            store[this.store_name][obj.__id] = obj;
-            return obj;
+            let raw_obj = store[this.store_name][obj_id];
+            for (let field of Object.keys(only_changed_raw_data)) {
+                raw_obj[field] = only_changed_raw_data[field];
+            }
+            return raw_obj;
         }
-        async __delete(obj) {
+        async __delete(obj_id) {
             if (this.delay)
                 await timeout(this.delay);
-            delete store[this.store_name][obj.__id];
-            return obj;
+            delete store[this.store_name][obj_id];
         }
         async __find(where) {
             if (this.delay)

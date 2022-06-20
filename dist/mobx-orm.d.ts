@@ -1,7 +1,7 @@
 declare abstract class Adapter<M extends Model> {
-    abstract __create(obj: RawObject): Promise<object>;
-    abstract __update(obj: RawObject): Promise<object>;
-    abstract __delete(obj: RawObject): Promise<object>;
+    abstract __create(raw_data: RawData): Promise<RawObject>;
+    abstract __update(obj_id: string, only_changed_raw_data: RawData): Promise<RawObject>;
+    abstract __delete(obj_id: string): Promise<void>;
     abstract __find(where: any): Promise<object>;
     abstract __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject[]>;
     abstract getTotalCount(where?: any): Promise<number>;
@@ -84,6 +84,7 @@ declare class Query<M extends Model> extends Query$2<M> {
 }
 
 declare type RawObject = any;
+declare type RawData = any;
 declare abstract class Model {
     static __id_separator: string;
     static __adapter: Adapter<Model>;
@@ -125,6 +126,7 @@ declare abstract class Model {
     get model(): any;
     get raw_obj(): any;
     get raw_data(): any;
+    get only_changed_raw_data(): any;
     get is_changed(): boolean;
     create(): Promise<any>;
     update(): Promise<any>;
@@ -140,9 +142,9 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     delay: number;
     init_local_data(data: RawObject[]): void;
     constructor(model: any, store_name?: string);
-    __create(obj: RawObject): Promise<RawObject>;
-    __update(obj: RawObject): Promise<RawObject>;
-    __delete(obj: RawObject): Promise<RawObject>;
+    __create(raw_data: RawData): Promise<RawObject>;
+    __update(obj_id: string, only_changed_raw_data: RawData): Promise<RawObject>;
+    __delete(obj_id: string): Promise<void>;
     __find(where: any): Promise<RawObject>;
     __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject[]>;
     getTotalCount(where?: any): Promise<number>;
