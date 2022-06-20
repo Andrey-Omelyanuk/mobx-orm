@@ -1,3 +1,4 @@
+import { runInAction } from 'mobx'
 import { Model, RawObject, RawData } from '../model'
 
 
@@ -47,9 +48,12 @@ export default abstract class  Adapter<M extends Model> {
     async load(where?, order_by?, limit?, offset?):Promise<M[]> {
         let raw_objs = await this.__load(where, order_by, limit, offset)
         let objs: M[] = []
-        for (let raw_obj of raw_objs) {
-            objs.push(this.model.updateCache(raw_obj))
-        }
+        // it should be happend in one big action
+        runInAction(() => {
+            for (let raw_obj of raw_objs) {
+                objs.push(this.model.updateCache(raw_obj))
+            }
+        })
         return objs
     }
 }

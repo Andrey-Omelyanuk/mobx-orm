@@ -21,8 +21,6 @@ export default class Query<M extends Model> extends QeuryBase<M> {
 
         // watch the cache for changes, and update items if needed
         this.__disposers.push(observe(this.__base_cache, (change: any) => {
-            // if query is loading then ignore any changes from cache
-            if (this.__is_loading) return 
 
             if (change.type == 'add') {
                 this.__watch_obj(change.newValue)
@@ -42,15 +40,16 @@ export default class Query<M extends Model> extends QeuryBase<M> {
             }
         }))
 
-        this.__disposers.push(reaction(
-            () => this.need_to_update,
-            (value) => {
-                if (value && !this.__is_loading)
-                    for(let [id, obj] of this.__base_cache) {
-                        this.__watch_obj(obj)
-                    }
-            }
-        ))
+        // I think it does not make sense, but it make sense for QueryPage!
+        // this.__disposers.push(reaction(
+        //     () => this.need_to_update,
+        //     (value) => {
+        //         if (value && !this.__is_loading)
+        //             for(let [id, obj] of this.__base_cache) {
+        //                 this.__watch_obj(obj)
+        //             }
+        //     }
+        // ))
 
         // ch all exist objects of model 
         for(let [id, obj] of this.__base_cache) {

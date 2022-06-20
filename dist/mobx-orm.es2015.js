@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.28
+   * mobx-orm.js v1.0.29
    * Released under the MIT license.
    */
 
@@ -240,7 +240,7 @@ class Query$2 {
             configurable: true,
             writable: true,
             value: void 0
-        });
+        }); // set to true then filters/order_by/page/page_size was changed and back to false after load
         Object.defineProperty(this, "__base_cache", {
             enumerable: true,
             configurable: true,
@@ -433,9 +433,6 @@ class Query$1 extends Query$2 {
         super(adapter, base_cache, filters, order_by);
         // watch the cache for changes, and update items if needed
         this.__disposers.push(observe(this.__base_cache, (change) => {
-            // if query is loading then ignore any changes from cache
-            if (this.__is_loading)
-                return;
             if (change.type == 'add') {
                 this.__watch_obj(change.newValue);
             }
@@ -451,12 +448,16 @@ class Query$1 extends Query$2 {
                     });
             }
         }));
-        this.__disposers.push(reaction(() => this.need_to_update, (value) => {
-            if (value && !this.__is_loading)
-                for (let [id, obj] of this.__base_cache) {
-                    this.__watch_obj(obj);
-                }
-        }));
+        // I think it does not make sense, but it make sense for QueryPage!
+        // this.__disposers.push(reaction(
+        //     () => this.need_to_update,
+        //     (value) => {
+        //         if (value && !this.__is_loading)
+        //             for(let [id, obj] of this.__base_cache) {
+        //                 this.__watch_obj(obj)
+        //             }
+        //     }
+        // ))
         // ch all exist objects of model 
         for (let [id, obj] of this.__base_cache) {
             this.__watch_obj(obj);
@@ -842,9 +843,12 @@ class Adapter {
     async load(where, order_by, limit, offset) {
         let raw_objs = await this.__load(where, order_by, limit, offset);
         let objs = [];
-        for (let raw_obj of raw_objs) {
-            objs.push(this.model.updateCache(raw_obj));
-        }
+        // it should be happend in one big action
+        runInAction(() => {
+            for (let raw_obj of raw_objs) {
+                objs.push(this.model.updateCache(raw_obj));
+            }
+        });
         return objs;
     }
 }

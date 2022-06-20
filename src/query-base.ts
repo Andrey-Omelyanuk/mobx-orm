@@ -15,7 +15,7 @@ export default abstract class Query<M extends Model> {
     @observable page        : number
     @observable page_size   : number
 
-    @observable need_to_update: boolean
+    @observable need_to_update: boolean     // set to true then filters/order_by/page/page_size was changed and back to false after load
 
     abstract get items()
 

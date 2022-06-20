@@ -54,7 +54,7 @@ describe('Query', () => {
                                     __adapter   : adapter,
                                     __base_cache: cache,
                                 })
-                                expect(query.__disposers.length).toBe(3)
+                                expect(query.__disposers.length).toBe(2) // should be only 2, first is need_to_update observer, second is __base_cache observer
                                 expect(Object.keys(query.__disposer_objects).length).toBe(cache.size)
                                 // loading is not necessary, you can use objs from cache
                                 expect(query.__items).toMatchObject([
