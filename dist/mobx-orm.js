@@ -852,11 +852,11 @@
             let raw_objs = await this.__load(where, order_by, limit, offset);
             let objs = [];
             // it should be happend in one big action
-            mobx.runInAction(() => {
-                for (let raw_obj of raw_objs) {
-                    objs.push(this.model.updateCache(raw_obj));
-                }
-            });
+            // runInAction(() => {
+            for (let raw_obj of raw_objs) {
+                objs.push(this.model.updateCache(raw_obj));
+            }
+            // })
             return objs;
         }
     }
