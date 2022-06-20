@@ -38,79 +38,75 @@ describe('QueryBase', () => {
         query.destroy()
     })
 
-    describe('constructor', () => {
-        it('...', async ()=> {
-            let filters     = EQ('id', 1)
-            let order_by    = new Map([ ['id', ASC], ]) 
-            let page        = 1
-            let page_size   = 33
-            let query       = new Query<A>(adapter, cache, filters, order_by, page, page_size);
-            expect(query.order_by.size).toBe(1)
-            expect(query.order_by.get('id')).toBe(order_by.get('id'))
-            expect(query).toMatchObject({
-                filters     : filters,
-                page        : page,
-                page_size   : page_size,
-                __items     : [],
-                is_loading  : false,
-                is_ready    : false,
-                error       : '',
-                __adapter   : adapter,
-                __base_cache: cache,
-                __disposer_objects: {}
-            })
-            expect(query.__disposers.length).toBe(1)
-            query.destroy()
-            expect(query.__disposers.length).toBe(0)
+    it('constructor', async ()=> {
+        let filters     = EQ('id', 1)
+        let order_by    = new Map([ ['id', ASC], ]) 
+        let page        = 1
+        let page_size   = 33
+        let query       = new Query<A>(adapter, cache, filters, order_by, page, page_size);
+        expect(query.order_by.size).toBe(1)
+        expect(query.order_by.get('id')).toBe(order_by.get('id'))
+        expect(query).toMatchObject({
+            filters     : filters,
+            page        : page,
+            page_size   : page_size,
+            __items     : [],
+            is_loading  : false,
+            is_ready    : false,
+            error       : '',
+            __adapter   : adapter,
+            __base_cache: cache,
+            __disposer_objects: {}
         })
+        expect(query.__disposers.length).toBe(1)
+        query.destroy()
+        expect(query.__disposers.length).toBe(0)
     })
 
-    describe('load', () => {
-        it('...', async ()=> {
-                                expect(query_load).toHaveBeenCalledTimes(0)
-                                expect(adapter_load).toHaveBeenCalledTimes(0)
-                                expect(query.is_ready).toBe(false)
-                                expect(query.is_loading).toBe(false)
-            query.load().finally(()=> {
-                                expect(query_load).toHaveBeenCalledTimes(1)
-                                expect(adapter_load).toHaveBeenCalledTimes(1)
-                                expect(query.is_ready).toBe(true)
-                                expect(query.is_loading).toBe(false)
-            })
-                                expect(query.is_loading).toBe(true)
+    it('load', (done) => {
+                            expect(query_load).toHaveBeenCalledTimes(0)
+                            expect(adapter_load).toHaveBeenCalledTimes(0)
+                            expect(query.is_ready).toBe(false)
+                            expect(query.is_loading).toBe(false)
+        query.load().finally(()=> {
+                            expect(query_load).toHaveBeenCalledTimes(1)
+                            expect(adapter_load).toHaveBeenCalledTimes(1)
+                            expect(query.is_ready).toBe(true)
+                            expect(query.is_loading).toBe(false)
+                            expect(query.need_to_update).toBe(false)
+            done()
         })
+                            expect(query.is_loading).toBe(true)
     })
 
-    describe('shadowLoad', () => {
-        it('...', async ()=> {
-                                expect(query_load).toHaveBeenCalledTimes(0)
-                                expect(adapter_load).toHaveBeenCalledTimes(0)
-                                expect(query.is_ready).toBe(false)
-            await query.shadowLoad() 
-                                expect(query_load).toHaveBeenCalledTimes(1)
-                                expect(adapter_load).toHaveBeenCalledTimes(1)
-                                expect(query.is_ready).toBe(true)
-            await query.shadowLoad() 
-                                expect(query_load).toHaveBeenCalledTimes(2)
-                                expect(adapter_load).toHaveBeenCalledTimes(2)
-                                expect(query.is_ready).toBe(true)
-        })
+    it('shadowLoad', async ()=> {
+                            expect(query_load).toHaveBeenCalledTimes(0)
+                            expect(adapter_load).toHaveBeenCalledTimes(0)
+                            expect(query.is_ready).toBe(false)
+        await query.shadowLoad() 
+                            expect(query_load).toHaveBeenCalledTimes(1)
+                            expect(adapter_load).toHaveBeenCalledTimes(1)
+                            expect(query.is_ready).toBe(true)
+                            expect(query.need_to_update).toBe(false)
+        query.need_to_update = true
+                            expect(query.need_to_update).toBe(true)
+        await query.shadowLoad() 
+                            expect(query_load).toHaveBeenCalledTimes(2)
+                            expect(adapter_load).toHaveBeenCalledTimes(2)
+                            expect(query.is_ready).toBe(true)
+                            expect(query.need_to_update).toBe(false)
     })
 
-    describe('ready', () => {
-        it('...', (done) => {
-            query.ready().then((is_ready) => {
-                expect(is_ready).toBe(true)
-                done()
-            })
-            query.load()
+    it('ready', (done) => {
+        query.ready().then((is_ready) => {
+            expect(is_ready).toBe(true)
+            done()
         })
+        query.load()
     })
 
-    describe('loading', () => {
-        it('...', async () => {
-            query.load()
-            expect(await query.loading()).toBe(true)
-        })
+    it('loading', async () => {
+        query.load()
+        expect(await query.loading()).toBe(true)
     })
 })

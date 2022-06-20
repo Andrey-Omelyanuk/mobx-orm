@@ -72,6 +72,8 @@ export default abstract class Query<M extends Model> {
             await this.shadowLoad()
         }
         finally {
+            // we have to wait a next tick before set __is_loading to true, mobx recalculation should be done before
+            await new Promise(resolve => setTimeout(resolve))
             runInAction(() => this.__is_loading = false)
         }
     }
@@ -82,6 +84,8 @@ export default abstract class Query<M extends Model> {
         try {
             let objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page*this.page_size)
             this.__load(objs)
+            // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
+            await new Promise(resolve => setTimeout(resolve))
             runInAction(() => {
                 this.__is_ready = true
                 this.need_to_update = false 

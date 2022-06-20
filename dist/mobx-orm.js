@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.29
+   * mobx-orm.js v1.0.30
    * Released under the MIT license.
    */
 
@@ -332,6 +332,8 @@
                 await this.shadowLoad();
             }
             finally {
+                // we have to wait a next tick before set __is_loading to true, mobx recalculation should be done before
+                await new Promise(resolve => setTimeout(resolve));
                 mobx.runInAction(() => this.__is_loading = false);
             }
         }
@@ -341,6 +343,8 @@
             try {
                 let objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page * this.page_size);
                 this.__load(objs);
+                // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
+                await new Promise(resolve => setTimeout(resolve));
                 mobx.runInAction(() => {
                     this.__is_ready = true;
                     this.need_to_update = false;
