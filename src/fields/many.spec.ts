@@ -94,8 +94,8 @@ describe('Field: Many', () => {
         many(B)(A, 'bs')
 
         beforeEach(() => {
-            A.clearCache() 
-            B.clearCache() 
+            A.clearCache()
+            B.clearCache()
         })
 
         it('should be [] by default', async () => {
@@ -160,24 +160,39 @@ describe('Field: Many', () => {
             expect(b.a_id).toBeNull()
         })
 
+        it('move b from a1 to a2', async () => {
+            let a1 = new A({id: 1})
+            let a2 = new A({id: 2})
+            let b = new B({id: 3, a_id: 1})
+
+            expect(a1.bs).toEqual([b])
+            expect(a2.bs).toEqual([])
+            expect(b.a_id).toBe(a1.id)
+            runInAction(() => {
+                b.a_id = a2.id;
+            })
+            expect(a1.bs).toEqual([])
+            expect(a2.bs).toEqual([b])
+        })
+
     })
 
     it('e2e', async () => {
         @local()
-        @model class Program extends Model { 
-            @id    id 	: number 
+        @model class Program extends Model {
+            @id    id 	: number
             @field name	: string
 
             sets   : ProgramSet []
         }
         @local()
-        @model class ProgramSet extends Model { 
-            @id     id          : number 
+        @model class ProgramSet extends Model {
+            @id     id          : number
             @field  order       : number
-            @field  program_id  : number 
-            @foreign(Program) program : Program 
+            @field  program_id  : number
+            @foreign(Program) program : Program
         }
-        many(ProgramSet)(Program, 'sets') 
+        many(ProgramSet)(Program, 'sets')
         let p_1 = new Program({name: 'p_1'}); await p_1.save()
         let p_2 = new Program({name: 'p_2'}); await p_2.save()
         let p_3 = new Program({name: 'p_3'}); await p_3.save()
