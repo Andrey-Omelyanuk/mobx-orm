@@ -12,7 +12,7 @@ export enum ValueType {
 
 export abstract class SingleFilter extends Filter {
     readonly    field       : string
-    @observable value       : string|number|boolean|null|undefined 
+    @observable value       : any // string|number|boolean|null|undefined|Array<any>
     readonly    value_type  : ValueType 
                 options     : Query<Model> // use it for UI when we need to show options for select
 
@@ -41,7 +41,7 @@ export abstract class SingleFilter extends Filter {
 
     get URLSearchParams(): URLSearchParams{
         let search_params = new URLSearchParams()
-        let value = SingleFilter.deserialize(this.value, this.value_type) 
+        let value = this.deserialize() 
         value !== undefined && search_params.set(this.URIField, value)
         return search_params
     }
@@ -52,7 +52,7 @@ export abstract class SingleFilter extends Filter {
         const search_params = new URLSearchParams(uri)
         const field_name    = this.URIField
         const value         = search_params.has(field_name) ? search_params.get(field_name) : undefined
-        this.value          = SingleFilter.serialize(value, this.value_type)
+        this.serialize(value)
     }
 
     abstract _isMatch(value) : boolean
@@ -64,6 +64,9 @@ export abstract class SingleFilter extends Filter {
 
         let value = obj 
         for(let field of this.field.split('__')) {
+            if (value === null) {
+                return true 
+            }
             value = value[field] 
             // it's match if related object is still not in the cache 
             if (value === undefined) {
@@ -73,11 +76,17 @@ export abstract class SingleFilter extends Filter {
         return this._isMatch(value)
     }
 
-    static serialize(value: string|undefined, value_type: ValueType) : any {
+    serialize(value: string|undefined) : void {
         let result 
-        if (value === undefined) return undefined
-        if (value === 'null') return null
-        switch (value_type) {
+        if (value === undefined) { 
+            this.value = undefined
+            return
+        }
+        if (value === 'null') {
+            this.value = null
+            return
+        } 
+        switch (this.value_type) {
             case ValueType.STRING:
                 result = value
                 break
@@ -90,18 +99,21 @@ export abstract class SingleFilter extends Filter {
                 result = value === 'true' ? true : value === 'false' ? false : undefined
                 break
         }
-        return result
+        this.value = result 
     }
 
     // convert to string
-    static deserialize(value : any, value_type: ValueType) : string {
+    deserialize(value?) : string {
+        if (value === undefined) {
+            value = this.value
+        }
         if (value === undefined) return undefined
         if (value === null) return 'null'
-        switch (value_type) {
+        switch (this.value_type) {
             case ValueType.STRING:
                 return ''+value
             case ValueType.NUMBER:
-                if (isNaN(value) || value===true || value===false) {
+                if (isNaN(value as any) || value===true || value===false) {
                     return undefined
                 }
                 else {

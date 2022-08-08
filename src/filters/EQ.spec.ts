@@ -1,54 +1,28 @@
-import { reaction, runInAction } from 'mobx'
-import { Filter } from "./Filter"
-import { SingleFilter, ValueType } from "./SingleFilter"
-import { EQ, EQ_Filter } from './EQ'
+import { EQ } from './EQ'
 
 
 describe('EQ Filter', () => {
-
-    describe('Create', () => {
-        describe('Type: Default', () => {
-            it('A = undefined'  , ()=>{ expect(EQ('A'       )).toMatchObject({field: 'A', value: undefined, value_type: ValueType.STRING })})
-            it('A = null'       , ()=>{ expect(EQ('A',  null)).toMatchObject({field: 'A', value:      null, value_type: ValueType.STRING})})
-            it('A = "10"'       , ()=>{ expect(EQ('A',  '10')).toMatchObject({field: 'A', value:      '10', value_type: ValueType.STRING })})
-            it('A = 10'         , ()=>{ expect(EQ('A',   10 )).toMatchObject({field: 'A', value:       10 , value_type: ValueType.NUMBER})})
-            it('A = true'       , ()=>{ expect(EQ('A', true )).toMatchObject({field: 'A', value:      true, value_type: ValueType.BOOL})})
-            it('A = false'      , ()=>{ expect(EQ('A', false)).toMatchObject({field: 'A', value:     false, value_type: ValueType.BOOL})})
-        })
-
-        // describe('Type: String (Default)', () => {
-        //     it('field=A'            , ()=>{ expect(EQ('A'        )).toMatchObject({field: 'A', value: undefined })})
-        //     it('field=A value="10"' , ()=>{ expect(EQ('A', '10'  )).toMatchObject({field: 'A', value: '10'})})
-        //     it('field=A value="10"' , ()=>{ expect(EQ('A', '10', ValueType.STRING)).toMatchObject({field: 'A', value: '10'})})
-        //     it('field=A value="10"' , ()=>{ expect(EQ('A',  10 , ValueType.STRING)).toMatchObject({field: 'A', value: '10'})})
-        // })
-
-        // constructor(field: string, value?: any, value_type: ValueType = ValueType.STRING) {
-        // it('field=A value="10"     number'  , ()=>{ expect(new EQ_Filter('A',  10 , ValueType.NUMBER)).toMatchObject({field: 'A', value:  10 })})
-        // it('field=A value=true     bool  '  , ()=>{ expect(new EQ_Filter('A', true, ValueType.BOOL  )).toMatchObject({field: 'A', value:  true })})
-        // it('function', () => {
-        //     expect(EQ('A'   )).toMatchObject({field: 'A'    , value: undefined })
-        //     expect(EQ('A', 1)).toMatchObject({field: 'A'    , value: 1         })
-        // })
-        // it('EQ', () => {
-        //     expect(EQ('A'   )).toMatchObject({field: 'A'    , value: undefined })
-        //     expect(EQ('A', 1)).toMatchObject({field: 'A'    , value: 1         })
-        // })
-        // it('IN', () => {
-        //     expect(IN('A'    )).toMatchObject({field: 'A'    , value: []})
-        //     expect(IN('A', [])).toMatchObject({field: 'A'    , value: []})
-        //     expect(IN('A', [1,2,3])).toMatchObject({field:'A', value: [1,2,3]})
-        // })
-        // it('AND', () => {
-        //     expect(AND()).toMatchObject({field: null, value: []})
-        //     expect(AND(EQ('A', 1), EQ('B', 2)))
-        //         .toMatchObject({field: null, value: [{field: 'A', value: 1}, {field: 'B', value: 2}]})
-        // })
-        // it('OR', () => {
-        //     expect(OR()).toMatchObject({field: null, value: []})
-        //     expect(OR(EQ('A', 1), EQ('B', 2)))
-        //         .toMatchObject({field: null, value: [{field: 'A', value: 1}, {field: 'B', value: 2}]})
-        // })
+    describe('URLField', () => {
+        it('A'      , ()=>{ expect(EQ('A'    ).URIField).toBe('A__eq')})
+        it('B'      , ()=>{ expect(EQ('B'    ).URIField).toBe('B__eq')})
+        it('A_B'    , ()=>{ expect(EQ('A_B'  ).URIField).toBe('A_B__eq')})
+        it('A__B'   , ()=>{ expect(EQ('A__B' ).URIField).toBe('A__B__eq')})
     })
 
+    it('_isMatch', () => {
+        expect(EQ('A'   ).isMatch({A: 1})).toBe(true)
+        expect(EQ('A'   ).isMatch({    })).toBe(true)
+        expect(EQ('A', 1).isMatch({A: 1})).toBe(true)
+        expect(EQ('A', 1).isMatch({A: 2})).toBe(false)
+        expect(EQ('A', 1).isMatch({B: 1})).toBe(true)
+        expect(EQ('A', 1).isMatch({B: 2})).toBe(true)
+        expect(EQ('A__B__C', 1).isMatch({A: {B: {C: 1   }}})).toBe(true)
+        expect(EQ('A__B__C', 1).isMatch({A: {B: {C: 2   }}})).toBe(false)
+        expect(EQ('A__B__C', 1).isMatch({A: {B: {C: null}}})).toBe(false)
+        expect(EQ('A__B__C', 1).isMatch({A: {B: {       }}})).toBe(true)
+        expect(EQ('A__B__C', 1).isMatch({A: {B: null     }})).toBe(true)
+        expect(EQ('A__B__C', 1).isMatch({A: {B: undefined}})).toBe(true)
+        expect(EQ('A__B__C', 1).isMatch({A: {            }})).toBe(true)
+        expect(EQ('A__B__C', 1).isMatch({                 })).toBe(true)
+    })
 })
