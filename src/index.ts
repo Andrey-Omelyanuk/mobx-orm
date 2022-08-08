@@ -12,7 +12,7 @@ import foreign          from './fields/foreign'
 import one              from './fields/one'
 import many             from './fields/many'
 // filters 
-import { Filter, FilterType, EQ, IN, AND, OR } from './filters' 
+import { Filter, FilterType, EQ, NOT_EQ, IN, NOT_IN, AND, OR } from './filters' 
 
 export {
     model, Model, RawObject, RawData,
@@ -29,5 +29,5 @@ export {
     one,
     many,
     // filters
-    Filter, FilterType, EQ, IN, AND, OR,
+    Filter, FilterType, EQ, NOT_EQ, IN, NOT_IN, AND, OR,
 }

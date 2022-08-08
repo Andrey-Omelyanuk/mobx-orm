@@ -8,28 +8,87 @@ export enum FilterType {
     AND, OR,
 }
 
+export enum ValueType {
+    STRING,
+    NUMBER,
+    BOOL
+}
+
 export class Filter {
     readonly    field: string
-    @observable type : FilterType 
-    @observable value: any
-                options: Query<any> // use it for UI when we need to show options for select
+    @observable type        : FilterType 
+    @observable value       : any
+    readonly    value_type  : ValueType
+                options     : Query<any> // use it for UI when we need to show options for select
 
-    constructor(type: FilterType = null, field: string = null, value: any) {
+    constructor(type: FilterType = null, field: string = null, value: any, value_type: ValueType = ValueType.STRING) {
         this.type  = type 
         this.field = field
         this.value = value
-        if (type === FilterType.IN && this.value === undefined) this.value = []
+        this.value_type = value_type
+        if ((type === FilterType.IN || type === FilterType.NOT_IN) && this.value === undefined) this.value = []
         makeObservable(this)
     }
+
+    serializeList(value) {
+        let result = [] 
+        for (const i of value ? value.split(',') : []) {
+            result.push(this.serialize(i))
+        }
+        return result 
+    }
+
+    // convert from string
+    serialize(value) {
+        let result 
+        if (value === undefined) return undefined
+        if (value === 'null') return null
+        switch (this.value_type) {
+            case ValueType.STRING:
+                result = value
+                break
+            case ValueType.NUMBER:
+                result = parseInt(value)
+                if (isNaN(result)) result = undefined
+                break
+            case ValueType.BOOL:
+                // I'm not shure that it is string
+                result = value === 'true' ? true : value === 'false' ? false : undefined
+                break
+        }
+        return result
+    }
+
+    // convert to string
+    deserialize(value) {
+        if (value === null) return 'null'
+        switch (this.value_type) {
+            case ValueType.STRING:
+                return value
+            case ValueType.NUMBER:
+                return ''+value
+            case ValueType.BOOL:
+                // I'm not shure that it is string
+                return value ? 'True' : 'False' 
+        }
+    }
+
+    deserializeList(value) {
+        return value
+    }
+
     @action setFromURI(uri: string) {
-        let search_params = new URLSearchParams(uri)
-        let value = search_params.get(this.getURIField()) 
+        const search_params = new URLSearchParams(uri)
+        const field_name = this.getURIField()
+        const value = search_params.has(field_name) ? search_params.get(field_name) : undefined
         switch (this.type) {
             case FilterType.EQ:
-                this.value = value  
+            case FilterType.NOT_EQ:
+                this.value = this.serialize(value)
                 break
             case FilterType.IN:
-                this.value = value ? value.split(',') : [] 
+            case FilterType.NOT_IN:
+                this.value = this.serializeList(value)
                 break
             case FilterType.AND:
                 for(let child of this.value) {
@@ -37,30 +96,38 @@ export class Filter {
                 }
                 break
             case FilterType.OR:
-            default:
-                return '' 
+            // default:
+            //     return '' 
         }
     }
+
     getURIField(): string {
         switch (this.type) {
             case FilterType.EQ:
                 return `${this.field}__eq` 
+            case FilterType.NOT_EQ:
+                return `${this.field}__not_eq` 
             case FilterType.IN:
                 return `${this.field}__in`
+            case FilterType.NOT_IN:
+                return `${this.field}__not_in`
             case FilterType.AND:
             case FilterType.OR:
             default:
                 return '' 
         }
     }
+
     getURLSearchParams(): URLSearchParams{
         let search_params = new URLSearchParams()
         switch (this.type) {
             case FilterType.EQ:
-                this.value && search_params.set(this.getURIField(), this.value)
+            case FilterType.NOT_EQ:
+                this.value && search_params.set(this.getURIField(), this.deserialize(this.value))
                 break
             case FilterType.IN:
-                this.value?.length && search_params.set(this.getURIField(), this.value)
+            case FilterType.NOT_IN:
+                this.value?.length && search_params.set(this.getURIField(), this.deserializeList(this.value))
                 break
             case FilterType.AND:
                 for(let filter of this.value) {
@@ -73,6 +140,7 @@ export class Filter {
         }
         return search_params
     }
+
     is_match(obj: any) : boolean {
         let path, value
         switch (this.type) {
@@ -118,12 +186,20 @@ export class Filter {
     }
 }
 
-export function EQ(field: string, value: any = undefined) : Filter {
-    return new Filter(FilterType.EQ, field, value) 
+export function EQ(field: string, value?: any, value_type?: ValueType) : Filter {
+    return new Filter(FilterType.EQ, field, value, value_type) 
 }
 
-export function IN(field: string, value: any[] = []) : Filter {
-    return new Filter(FilterType.IN, field, value) 
+export function NOT_EQ(field: string, value?: any, value_type?: ValueType) : Filter {
+    return new Filter(FilterType.NOT_EQ, field, value, value_type) 
+}
+
+export function IN(field: string, value: any[] = [], value_type?: ValueType) : Filter {
+    return new Filter(FilterType.IN, field, value, value_type) 
+}
+
+export function NOT_IN(field: string, value: any[] = [], value_type?: ValueType) : Filter {
+    return new Filter(FilterType.NOT_IN, field, value, value_type) 
 }
 
 export function AND(...filters: Filter[]) : Filter {
