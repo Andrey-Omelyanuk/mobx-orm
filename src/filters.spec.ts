@@ -163,4 +163,12 @@ describe('Filters', () => {
         // expect(OR(EQ('A', 1), IN('C', [1,2,3])).to_str()).toBe('A__eq=1|C__in=1,2,3')
         // expect(OR(EQ(), IN()).to_str()).toBe('')
     })
+    it('match with many to many relations', () => {
+        expect(EQ('A__B', 1).is_match({A: [ {B: 1}, {B: 2} ]})).toBe(true)
+        expect(EQ('A__B', 1).is_match({A: [ {B: 3}, {B: 2} ]})).toBe(false)
+        expect(EQ('A__B', 1).is_match({A: [ {B: 3}, {B: 1} ]})).toBe(true)
+        expect(IN('A__B', [1, 4]).is_match({A: [ {B: 1}, {B: 2} ]})).toBe(true)
+        expect(IN('A__B', [1, 4]).is_match({A: [ {B: 4}, {B: 2} ]})).toBe(true)
+        expect(IN('A__B', [1, 4]).is_match({A: [ {B: 3}, {B: 2} ]})).toBe(false)
+    })
 })

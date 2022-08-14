@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.30
+   * mobx-orm.js v1.0.32
    * Released under the MIT license.
    */
 
@@ -133,39 +133,78 @@
             return search_params;
         }
         is_match(obj) {
-            let path, value;
+            function EQ_match(obj, field_name, filter_value) {
+                let field_names = field_name.split('__');
+                let current_field_name = field_names[0];
+                let current_value = obj[current_field_name];
+                if (current_value === null)
+                    return false;
+                if (current_value === undefined)
+                    return current_value === filter_value;
+                if (field_names.length === 0)
+                    return false;
+                else if (field_names.length === 1)
+                    return current_value == filter_value;
+                else if (field_names.length > 1) {
+                    let next_field_name = field_name.substring(field_names[0].length + 2);
+                    if (Array.isArray(current_value)) {
+                        let result = false;
+                        for (const item of current_value) {
+                            result = EQ_match(item, next_field_name, filter_value);
+                            if (result)
+                                return result;
+                        }
+                    }
+                    else {
+                        return EQ_match(current_value, next_field_name, filter_value);
+                    }
+                }
+                return false;
+            }
+            function IN_match(obj, field_name, filter_value) {
+                debugger;
+                let field_names = field_name.split('__');
+                let current_field_name = field_names[0];
+                let current_value = obj[current_field_name];
+                if (current_value === null)
+                    return false;
+                if (current_value === undefined)
+                    return current_value === filter_value;
+                if (field_names.length === 0)
+                    return false;
+                else if (field_names.length === 1) {
+                    let result;
+                    for (let item of filter_value) {
+                        result = item == current_value;
+                        if (result)
+                            return result;
+                    }
+                }
+                else if (field_names.length > 1) {
+                    let next_field_name = field_name.substring(field_names[0].length + 2);
+                    if (Array.isArray(current_value)) {
+                        let result = false;
+                        for (const item of current_value) {
+                            result = IN_match(item, next_field_name, filter_value);
+                            if (result)
+                                return result;
+                        }
+                    }
+                    else {
+                        return IN_match(current_value, next_field_name, filter_value);
+                    }
+                }
+                return false;
+            }
             switch (this.type) {
                 case exports.FilterType.EQ:
                     if (this.value === undefined)
                         return true;
-                    path = this.field.split('__');
-                    value = obj;
-                    for (let field of path) {
-                        if (value === null)
-                            return false;
-                        value = value[field];
-                        if (value === undefined)
-                            break;
-                    }
-                    return value == this.value;
+                    return EQ_match(obj, this.field, this.value);
                 case exports.FilterType.IN:
                     if (this.value.length === 0)
                         return true;
-                    path = this.field.split('__');
-                    value = obj;
-                    for (let field of path) {
-                        if (value === null)
-                            return false;
-                        value = value[field];
-                        if (value === undefined)
-                            break;
-                    }
-                    for (let v of this.value) {
-                        if (v == value)
-                            return true;
-                    }
-                    return false;
-                // return this.value !== null && this.value.length ? this.value.includes(String(obj[this.field])) : true
+                    return IN_match(obj, this.field, this.value);
                 case exports.FilterType.AND:
                     for (let filter of this.value)
                         if (!filter.is_match(obj))
