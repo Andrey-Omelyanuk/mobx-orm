@@ -47,6 +47,9 @@ describe('Filters', () => {
     })
     describe('is_match', () => {
         it('EQ', () => {
+            expect(EQ('A', null).is_match({A: null})).toBe(true)
+            expect(EQ('A', null).is_match({A: undefined})).toBe(false)
+            expect(EQ('A', null).is_match({A: 1})).toBe(false)
             expect(EQ('A', 1).is_match({A: 1})).toBe(true)
             expect(EQ('A', 1).is_match({A: 2})).toBe(false)
             expect(EQ('A', 1).is_match({B: 2})).toBe(false)

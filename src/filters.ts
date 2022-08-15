@@ -80,8 +80,7 @@ export class Filter {
             let current_field_name = field_names[0]
             let current_value = obj[current_field_name]
 
-            if (current_value === null     ) return false
-            if (current_value === undefined) return current_value === filter_value 
+            if (current_value === undefined || current_value === null) return current_value === filter_value 
 
                  if (field_names.length === 0) return false
             else if (field_names.length === 1) return current_value == filter_value
@@ -102,7 +101,6 @@ export class Filter {
             return false
         }
         function IN_match(obj, field_name, filter_value): boolean {
-            debugger
             let field_names = field_name.split('__')
             let current_field_name = field_names[0]
             let current_value = obj[current_field_name]

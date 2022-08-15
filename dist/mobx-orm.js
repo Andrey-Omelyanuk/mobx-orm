@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.32
+   * mobx-orm.js v1.0.33
    * Released under the MIT license.
    */
 
@@ -137,9 +137,7 @@
                 let field_names = field_name.split('__');
                 let current_field_name = field_names[0];
                 let current_value = obj[current_field_name];
-                if (current_value === null)
-                    return false;
-                if (current_value === undefined)
+                if (current_value === undefined || current_value === null)
                     return current_value === filter_value;
                 if (field_names.length === 0)
                     return false;
@@ -162,7 +160,6 @@
                 return false;
             }
             function IN_match(obj, field_name, filter_value) {
-                debugger;
                 let field_names = field_name.split('__');
                 let current_field_name = field_names[0];
                 let current_value = obj[current_field_name];
