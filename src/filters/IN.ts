@@ -40,15 +40,12 @@ export class IN_Filter extends SingleFilter {
         return `${this.field}__in`
     }
 
-    _isMatch(value: any): boolean {
+    operator(value_a, value_b): boolean {
         // it's always match if value of filter is empty []
-        if (this.value.length === 0) {
-            return true
-        }
-        for (let v of this.value) {
-            if (v === value) {
-                return true
-            }
+        if (value_b.length === 0) return true
+
+        for (let v of value_b) {
+            if (v === value_a) return true
         }
         return false
     }

@@ -1,12 +1,14 @@
 import { reaction, runInAction } from "mobx"
-import { SingleFilter, ValueType } from "./SingleFilter"
+import { match, SingleFilter, ValueType } from "./SingleFilter"
 
 
 describe('SingleFilter', () => {
 
     class FilterClass extends SingleFilter {
         get URIField(): string { return `field` }
-        _isMatch(value: any): boolean { return value === this.value }
+        operator(value_a: any, value_b: any): boolean {
+            return true 
+        }
     }
 
     function F(field: string, value?: any, value_type?: ValueType) : SingleFilter {
@@ -177,22 +179,52 @@ describe('SingleFilter', () => {
     })
 
     describe('isMatch', () => {
-        describe('Undefined field in object is should match the filter', () => {
-            it('A = undefined'  , ()=>{ expect(F('A'       ).isMatch({})).toBe(true)})
-            it('A = null'       , ()=>{ expect(F('A',  null).isMatch({})).toBe(true)})
-            it('A = "10"'       , ()=>{ expect(F('A',  '10').isMatch({})).toBe(true)})
-            it('A = 10'         , ()=>{ expect(F('A',   10 ).isMatch({})).toBe(true)})
-            it('A = true'       , ()=>{ expect(F('A', true ).isMatch({})).toBe(true)})
-            it('A = false'      , ()=>{ expect(F('A', false).isMatch({})).toBe(true)})
-        })
-        describe('A === value', () => {
-            it('A = undefined'  , ()=>{ expect(F('A'       ).isMatch({A: 10})).toBe(true)})
-            it('A = null'       , ()=>{ expect(F('A',  null).isMatch({A: 10})).toBe(false)})
-            it('A = "10"'       , ()=>{ expect(F('A',  '10').isMatch({A: 10})).toBe(false)})
-            it('A = 10'         , ()=>{ expect(F('A',   10 ).isMatch({A: 10})).toBe(true)})
-            it('A = true'       , ()=>{ expect(F('A', true ).isMatch({A: 10})).toBe(false)})
-            it('A = false'      , ()=>{ expect(F('A', false).isMatch({A: 10})).toBe(false)})
+        describe('it is always match if the value of filter is undefined', () => {
+            it('undefined === undefined', ()=>{ expect(F('a').isMatch({        })).toBe(true)})
+            it('undefined === null '    , ()=>{ expect(F('a').isMatch({a:  null})).toBe(true)})
+            it('undefined === "10"'     , ()=>{ expect(F('a').isMatch({a:  '10'})).toBe(true)})
+            it('undefined === 10'       , ()=>{ expect(F('a').isMatch({a:    10})).toBe(true)})
+            it('undefined === true'     , ()=>{ expect(F('a').isMatch({a:  true})).toBe(true)})
+            it('undefined === false'    , ()=>{ expect(F('a').isMatch({a: false})).toBe(true)})
         })
     })
 
+    describe('match', () => {
+        let o, v1 = []
+        let tests = [
+            [{       }, 'A', 1,     ],
+            [{A: null}, 'A', 1, null],
+            [{A:    1}, 'A', 1,    1],
+            [{A:   v1}, 'A', 1,   v1],
+
+            [{          }, 'A__B', 0,     ],
+            [{A:    null}, 'A__B', 0,     ],
+            [{A:      1 }, 'A__B', 0,     ],
+            [{A: {     }}, 'A__B', 1,     ],
+            [{A: {B:  1}}, 'A__B', 1,    1],
+            [{A: {B: v1}}, 'A__B', 1,   v1],
+
+            [{        }         , 'A__B__C', 0,   ],
+            [{A: null }         , 'A__B__C', 0,   ],
+            [{A:    1 }         , 'A__B__C', 0,   ],
+            [{A: {      }}      , 'A__B__C', 0,   ],
+            [{A: {B:  1 }}      , 'A__B__C', 0,   ],
+            [{A: {B: v1 }}      , 'A__B__C', 0,   ],
+            [{A: {B: {C:  1 }}} , 'A__B__C', 1,  1],
+            [{A: {B: {C: v1 }}} , 'A__B__C', 1, v1],
+        ]
+        beforeEach(() => { o = jest.fn((a, b) => true) })
+
+        for (const test of tests) {
+            let [obj, field, count_call, r] = test
+            it(`${field}, ${JSON.stringify(obj)} === ${JSON.stringify(r)}`, () => {
+                match(obj, field as string, 0, o)
+                expect(o.mock.calls.length).toBe(count_call)
+                for (let i = 0; i < count_call; i++) {
+                    expect(o.mock.calls[0][0]).toBe(r)
+                    expect(o.mock.calls[0][1]).toBe(0)
+                }
+            })
+        }
+    })
 })

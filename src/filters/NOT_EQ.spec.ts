@@ -9,20 +9,63 @@ describe('NOT_EQ Filter', () => {
         it('A__B'   , ()=>{ expect(NOT_EQ('A__B' ).URIField).toBe('A__B__not_eq')})
     })
 
-    it('_isMatch', () => {
-        expect(NOT_EQ('A'   ).isMatch({A: 1})).toBe(true)
-        expect(NOT_EQ('A'   ).isMatch({    })).toBe(true)
-        expect(NOT_EQ('A', 1).isMatch({A: 1})).toBe(false)
-        expect(NOT_EQ('A', 1).isMatch({A: 2})).toBe(true)
-        expect(NOT_EQ('A', 1).isMatch({B: 1})).toBe(true)
-        expect(NOT_EQ('A', 1).isMatch({B: 2})).toBe(true)
-        expect(NOT_EQ('A__B__C', 1).isMatch({A: {B: {C: 1   }}})).toBe(false)
-        expect(NOT_EQ('A__B__C', 1).isMatch({A: {B: {C: 2   }}})).toBe(true)
-        expect(NOT_EQ('A__B__C', 1).isMatch({A: {B: {C: null}}})).toBe(true)
-        expect(NOT_EQ('A__B__C', 1).isMatch({A: {B: {       }}})).toBe(true)
-        expect(NOT_EQ('A__B__C', 1).isMatch({A: {B: null     }})).toBe(true)
-        expect(NOT_EQ('A__B__C', 1).isMatch({A: {B: undefined}})).toBe(true)
-        expect(NOT_EQ('A__B__C', 1).isMatch({A: {            }})).toBe(true)
-        expect(NOT_EQ('A__B__C', 1).isMatch({                 })).toBe(true)
+    describe('operator', () => {
+        it('null !== null'      , ()=>{ expect(NOT_EQ('A', null).operator(null, null)).toBe(false) })
+        it('null !== undefined' , ()=>{ expect(NOT_EQ('A', null).operator(null, undefined)).toBe(true) })
+        it('null !== "text"'    , ()=>{ expect(NOT_EQ('A', null).operator(null, 'text')).toBe(true) })
+        it('"text" !== "text"'  , ()=>{ expect(NOT_EQ('A', 'text').operator('text', 'text')).toBe(false) })
+        it('"text" !== "textX"' , ()=>{ expect(NOT_EQ('A', 'text').operator('text', 'textA')).toBe(true) })
+    })
+
+    describe('isMatch', () => {
+        let tests = [
+            ['A', null, {A: null}, false],
+            ['A', null, {A: undefined}, true],
+            ['A', null, {A: 1}, true],
+            ['A', undefined, {}, true],
+            ['A', undefined, {A: 1}, true],
+            ['A', 1, {A: 1}, false],
+            ['A', 2, {A: 1}, true],
+            ['A', 1, {B: 1}, true],
+
+            ['A__B', 1, {A: [{B: 1}, {B: 1}]}, false],
+            ['A__B', 1, {A: [{B: 1}, {B: 4}]}, true],
+            ['A__B', 4, {A: [{B: 1}, {B: 4}]}, true],
+            ['A__B', 1, {A: [{B: 2}, {B: 4}]}, true],
+            ['A__B', 1, {A: [{C: 1}, {C: 4}]}, true],
+            ['A__B', 1, {A: []}, false],
+
+            ['A__B__C', 1, {}, false],
+            ['A__B__C', 1, {A: {}}, false],
+            ['A__B__C', 1, {A: {B: {}}}, true],
+            ['A__B__C', 1, {A: {B: {C: 1}}}, false],
+            ['A__B__C', 1, {A: {B: {C: 2}}}, true],
+            ['A__B__C', null, {A: {B: {C: 1   }}}, true],
+            ['A__B__C', null, {A: {B: {C: null}}}, false],
+            ['A__B__C', true, {A: {B: {C: true}}}, false],
+            ['A__B__C', true, {A: {B: {C: false}}}, true],
+            ['A__B__C', true, {A: {B: {C: 1}}}, true],
+
+            ['A__B__C', 1, {A: [ {B: {C: 0}}, {C: 1} ]}, true],
+            ['A__B__C', 1, {A: [ {B: {C: 1}}, {C: 1} ]}, false],
+
+            ['A__B__C',     1, {A: [{B: [{C: 1}, {C: true}, {}]}, {B: [{C: 2}, {C: null} ]}]}, true],
+            ['A__B__C',     2, {A: [{B: [{C: 1}, {C: true}, {}]}, {B: [{C: 2}, {C: null} ]}]}, true],
+            ['A__B__C',     3, {A: [{B: [{C: 1}, {C: true}, {}]}, {B: [{C: 2}, {C: null} ]}]}, true],
+            ['A__B__C',   '3', {A: [{B: [{C: 1}, {C: true}, {}]}, {B: [{C: 2}, {C: null} ]}]}, true],
+            ['A__B__C',  true, {A: [{B: [{C: 1}, {C: true}, {}]}, {B: [{C: 2}, {C: null} ]}]}, true],
+            ['A__B__C', false, {A: [{B: [{C: 1}, {C: true}, {}]}, {B: [{C: 2}, {C: null} ]}]}, true],
+
+            // Note: filter with undefined value should return true always, it's like filter is disabled
+            ['A__B__C', undefined, {A: [{B: [{C: 1}, {C: true}, {}]}, {B: [{C: 2}, {C: null} ]}]}, true],
+            ['A__B__C', undefined, {A: [{B: [{C: 1}, {C: true},   ]}, {B: [{C: 2}, {C: null} ]}]}, true],
+        ]
+
+        for (const test of tests) {
+            let [field, value, obj, isMatch] = test
+            it(`${field}, ${JSON.stringify(value)} ${isMatch? '===' : '!=='} ${JSON.stringify(obj)}`, () => {
+                expect(NOT_EQ(field as any, value).isMatch(obj)).toBe(isMatch)
+            })
+        }
     })
 })

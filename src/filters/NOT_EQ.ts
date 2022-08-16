@@ -6,10 +6,10 @@ export class NOT_EQ_Filter extends SingleFilter {
         return `${this.field}__not_eq` 
     }
 
-    _isMatch(value: any): boolean {
-        return value !== this.value
+    operator(value_a: any, value_b: any): boolean {
+        return value_a !== value_b
+        
     }
-
 }
 
 export function NOT_EQ(field: string, value?: any, value_type?: ValueType) : SingleFilter {
