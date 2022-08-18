@@ -15,7 +15,7 @@ describe('Filters', () => {
 
     describe('edit', () => {
         it('IN', () => {
-            let f = IN('A', [1]) 
+            let f = IN('A', [1])
             runInAction(() => f.value.push(2)   ); expect(f).toMatchObject({field: 'A', value: [1, 2]})
             runInAction(() => f.value = [3]     ); expect(f).toMatchObject({field: 'A', value: [3]})
         })
@@ -113,7 +113,7 @@ describe('Filters', () => {
 
     describe('AND.setFromURI', () => {
         it('...', () => {
-            let f 
+            let f
             f = AND(); f.setFromURI("A__in=bar&foo=baz"); expect(f).toMatchObject({filters: []})
             f = AND(IN('A')         ); f.setFromURI("A__in=bar&foo=baz"); expect(f).toMatchObject({filters: [{field: 'A', value: ['bar']}]})
             f = AND(IN('A'), EQ('B')); f.setFromURI("A__in=1&B__eq=2"  ); expect(f).toMatchObject({filters: [{field: 'A', value: ['1']}, {field: 'B', value: '2'}]})
@@ -121,7 +121,7 @@ describe('Filters', () => {
     })
 
     it('ValueType.NUMBER', () => {
-        let f 
+        let f
         f = EQ('A', undefined, ValueType.NUMBER); f.setFromURI("A__eq=2&foo=baz");   expect(f).toMatchObject({field: 'A', value: 2})
         f = EQ('A', undefined, ValueType.NUMBER); f.setFromURI("A=bar&foo=baz");     expect(f).toMatchObject({field: 'A', value: undefined})
         f = EQ('A', undefined, ValueType.NUMBER); f.setFromURI("");                  expect(f).toMatchObject({field: 'A', value: undefined})
@@ -141,7 +141,7 @@ describe('Filters', () => {
     })
 
     it('ValueType.BOOL', () => {
-        let f 
+        let f
         f = EQ('A', undefined, ValueType.BOOL); f.setFromURI("A__eq=true&foo=baz");   expect(f).toMatchObject({field: 'A', value: true})
         f = EQ('A', undefined, ValueType.BOOL); f.setFromURI("A=true&foo=baz");       expect(f).toMatchObject({field: 'A', value: undefined})
         f = EQ('A', undefined, ValueType.BOOL); f.setFromURI("");                     expect(f).toMatchObject({field: 'A', value: undefined})
