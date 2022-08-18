@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.33a
+   * mobx-orm.js v1.0.35
    * Released under the MIT license.
    */
 
