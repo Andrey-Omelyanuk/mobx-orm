@@ -1,5 +1,5 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { Model, model, local, id, field, foreign, one, many } from '../dist/mobx-orm'
+import { Model, model, local, field, foreign, one, many } from '../dist/mobx-orm'
 
 // TODO: update the tests
 
@@ -7,7 +7,6 @@ describe('Other tests: Passports.', () => {
 
     @local()
     @model class User extends Model {
-        @id     id          : number
         @field  user_name   : string
                 passport    : Passport
                 keys        : Key[]
@@ -32,7 +31,6 @@ describe('Other tests: Passports.', () => {
 
     @local()
     @model class Passport extends Model {
-        @id     id            : number
         @field  created       : Date
         @field  user_id       : number
         @field  first_name    : string
@@ -50,7 +48,6 @@ describe('Other tests: Passports.', () => {
 
     @local()
     @model class Key extends Model {
-        @id     id      : number
         @field  created : Date
         @field  private : string
         @field  public  : string
@@ -85,7 +82,6 @@ describe('Other tests: Passports.', () => {
 
     @local()
     @model class Action extends Model {
-        @id         id          : number
         @field  timestamp   : Date
         @field  passport_id : number
         @field  key_id      : number
@@ -110,7 +106,7 @@ describe('Other tests: Passports.', () => {
         let userC = new User({user_name: 'C'}); await userC.save()
 
         expect(userA.user_name).toBe('A')
-        expect(userA.passport).toBeNull()
+        expect(userA.passport).toBe(undefined)
         expect(userA.keys.length).toBe(0)
 
         let passportA = await userA.createPassport(); expect(userA.passport).toBe(passportA)

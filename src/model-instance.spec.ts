@@ -1,272 +1,188 @@
-import { local } from './adapters/local'
 import { Model, model } from './model'
-import id    from './fields/id'
 import field from './fields/field'
-import { runInAction } from 'mobx'
 
 
 describe('Model Instance', () => {
 
-    @local()
-    @model class A extends Model { 
-        @id    id : number 
-        @field  a : number
-        @field  b : string 
-        @field  c : boolean
-    }
+    describe('constructor()', () => {
+        it('empty', async () => {
+            @model class A extends Model { @field a }     
+                                                ; expect(A.__cache.size).toBe(0)
+            let a = new A()                     ; expect(A.__cache.size).toBe(0)
+                                                ; expect(a).toMatchObject({__init_data: {a: undefined}, id: undefined, a :undefined })
+        })
+        it('only id', async () => {
+            @model class A extends Model { @field a }     
+                                                ; expect(A.__cache.size).toBe(0)
+            let a = new A({id: 1})              ; expect(A.__cache.size).toBe(1)
+                                                  expect(A.__cache.get(a.id)).toBe(a)
+                                                ; expect(a).toMatchObject({__init_data: {a: undefined}, id: 1, a: undefined})
+        })
+        it('id + value', async () => {
+            @model class A extends Model { @field a }     
+                                                ; expect(A.__cache.size).toBe(0)
+            let a = new A({id: 1, a: 2})        ; expect(A.__cache.size).toBe(1)
+                                                  expect(A.__cache.get(a.id)).toBe(a)
+                                                ; expect(a).toMatchObject({__init_data: {a: 2}, id: 1, a: 2})
+        })
 
-    @local()
-    @model class B extends Model { 
-        @id    id1 : number 
-        @id    id2 : number
-        @field   a : number
-    }
-
-    let load: any, create: any, update: any, del: any
-
-    beforeAll(async () => {
-        load   = jest.spyOn(A.__adapter, 'load')
-        create = jest.spyOn(A.__adapter, 'create')
-        update = jest.spyOn(A.__adapter, 'update')
-        del    = jest.spyOn(A.__adapter, 'delete')
-    })
-
-    afterEach(async () => {
-        A.clearCache()
-        B.clearCache()
-        jest.clearAllMocks();
-    })
-
-    // TODO: do not test private, it should be size effect of another action
-    describe('obj.__init_data()', () => {
-        // TODO
-        it('obj.__init_data', async () => {
-            let a
+        it('default property', async () => {
             @model class A extends Model {
-                @id id_a: number
-                @id id_b: number = 2
-            }
-
-            a = new A()
-            expect(a.__init_data).toEqual({}) // init_data does not contain ids
-
-            a = new A({id_a: 1})
-            expect(a.__init_data).toEqual({}) // init_data does not contain ids
-
-            a = new A({id_a: 1, id_b: 1})
-            expect(a.__init_data).toEqual({}) // init_data does not contain ids
-        })
-    })
-
-    describe('obj.constructor()', () => {
-        // TODO
-        it('constructor: obj with id should be pushed to cache by default', async () => {
-            @model class A extends Model { 
-                @id id : number 
-            }
-            expect(A.__cache.size).toBe(0)
-            let a = new A({id: 1}) 
-            expect(A.__cache.size).toBe(1)
-        })
-    })
-
-    describe('obj.__id', () => {
-        // TODO
-        it('obj.__id', async () => {
-            @model class A extends Model {
-                @id id_a: number
-                @id id_b: number
-            }
-
-            let a1 = new A({id_a: 1, id_b: 1})
-            expect(a1.id_a).toBe(1)
-            expect(a1.id_b).toBe(1)
-            expect(a1.__id).toBe('1-1')
-        })
-    })
-
-    describe('obj.model', () => {
-
-        it('value', async () => {
-            let a = new A()
-            expect(a.model).toBe((<any>a.constructor).__proto__)
-        })
-
-        it('readonly', async() => {
-            // TODO
-        })
-    })
-
-    describe('obj.raw_obj', () => {
-        // TODO
-    })
-
-    describe('obj.is_changed', () => {
-        // TODO
-    })
-
-    describe('obj.create', () => {
-
-        it('create a new obj without id', async () => {
-            let a = new A() 
-            await a.create()	
-            expect(create).toHaveBeenCalledTimes(1)
-            expect(create).toHaveBeenCalledWith(a)
-        })
-
-        it('create a new obj with id', async () => {
-            let a = new A({id: 1}) 
-            await a.create()	
-            expect(create).toHaveBeenCalledTimes(1)
-            expect(create).toHaveBeenCalledWith(a)
-        })
-    })
-
-    describe('obj.update', () => {
-
-        it('update exist object', async () => {
-            let a = new A() 
-            await a.create()	
-
-            runInAction(() => { a.a = 1 })
-            await a.update()
-            expect(update).toHaveBeenCalledTimes(1)
-            expect(update).toHaveBeenCalledWith(a)
-        })
-
-        // TODO
-        // it('update not exist object', async () => {
-        // })
-    })
-
-    describe('obj.save', () => {
-
-        it('save', async () => {
-            let a = new A() 
-            await a.save()	
-            expect(create).toHaveBeenCalledTimes(1)
-            expect(create).toHaveBeenCalledWith(a)
-        })
-    })
-
-    describe('obj.delete', () => {
-        // TODO
-        it('obj.delete()', async () => {
-            let a = new A() 
-
-            await a.delete()	
-            expect(del).toHaveBeenCalledTimes(1)
-            expect(del).toHaveBeenCalledWith(a)
-        })
-    })
-
-    describe('obj.inject()', () => {
-
-        it('inject automaticaly when id initialized', async () => {
-            let a = new A({}) 
-            let inject = jest.spyOn(a.model, 'inject')
-
-            expect(A.__cache.size).toBe(0)
-            expect(inject).toHaveBeenCalledTimes(0)
-            a.id = 1
-            expect(A.__cache.size).toBe(1)
-            expect(A.__cache.get(a.__id)).toBe(a)
-            expect(inject).toHaveBeenCalledTimes(1)
-        })
-
-        it('inject after eject', async () => {
-            let a = new A({id: 1}) 
-            a.model.eject(a)
-            expect(A.__cache.size).toBe(0)
-            a.model.inject(a)   
-            expect(A.__cache.size).toBe(1)
-            expect(A.__cache.get(a.__id)).toBe(a)
-        })
-
-        it('error: inject second time', async () => {
-            let a = new A({id: 1}) // eject automaticaly when id initialazed
-            expect(() => { a.model.inject(a) }).toThrow(new Error(`Object with id \"1\" already exist in the cache of model: \"A\")`))
-        })
-
-        it('error: try to inject another object with the same id', async () => {
-            let a = new A({id: 1}) // eject automaticaly when id initialaze
-            expect(() => { new A({id: 1}) }).toThrow(new Error(`Object with id \"1\" already exist in the cache of model: \"A\")`))
-        })
-
-        it('error: try to inject object without id', async () => {
-            let a = new A()
-            expect(() => { a.model.inject(a) }).toThrow(new Error(`Object should have id!`))
-        })
-
-    })
-
-    describe('obj.eject()', () => {
-
-        it('eject injected object', async () => {
-            let a = new A({id: 1}) 
-            expect(A.__cache.size).toBe(1)
-            expect(A.__cache.get(a.__id)).toBe(a)
-            a.model.eject(a)
-            expect(A.__cache.size).toBe(0)
-        })
-
-        it('eject object without id', async () => {
-            let a = new A({}) 
-            expect(A.__cache.size).toBe(0)
-            a.model.eject(a) // nothing happend
-            expect(A.__cache.size).toBe(0)
-        })
-
-        it('error: eject second time', async () => {
-            let a = new A({id: 1})
-            a.model.eject(a) 
-            expect(() => { a.model.eject(a) })
-                .toThrow(new Error(`Object with id "${a.__id}" not exist in the cache of model: ${a.model.name}")`))
-        })
-    })
-
-
-
-
-    // TODO
-    describe('init', () => {
-        it('init empty', async () => {
-            @model class A extends Model {}
-            expect(A.__cache.size).toBe(0)
-            expect(() => { new A() })
-                .toThrow(new Error(`No one id field was declared on model A`))
-        })
-
-        it('init default property', async () => {
-            @model class A extends Model {
-                @id    id: number
                 @field a : number = 1 
                 @field b : number 
             }
-            let a = new A(); expect(a.a).toBe(1); expect(a.b).toBeUndefined()
-        })
-
-        it('init property from constructor', async () => {
-            @model class A extends Model {
-                @id    id: number
-                @field a : number = 1 
-                @field b : number 
-            }
-
-            let a
-            a = new A({a: 2});      expect(a).toMatchObject({a: 2, b: undefined })
-            a = new A({b: 2});      expect(a).toMatchObject({a: 1, b: 2})
-            a = new A({a: 2, b: 2});expect(a).toMatchObject({a: 2, b: 2})
-        })
-
-        it('static methods and properties should be stay on the model', async () => {
-            @model class A extends Model {
-                static test_property = 'test'
-                static test_method() {}
-            }
-            expect(A.test_property).toBe('test')
-            expect(A.test_method instanceof Function).toBeTruthy()
+            let a = new A()                     ; expect(a).toMatchObject({__init_data: {}, id: undefined, a: 1, b: undefined})
         })
     })
 
+    it('model', () => {
+        @model class A extends Model { }     
+        let a = new A()                         ; expect(a.model).toBe((<any>a.constructor).__proto__)
+    })
+
+    it('raw_data', () => {
+        @model class A extends Model {
+            @field a : number
+            @field b : number 
+        }
+        let a = new A({a: 1})                   ; expect(a.raw_data).toStrictEqual({a: 1})
+    })
+
+    it('raw_obj', () => {
+        @model class A extends Model {
+            @field a : number
+            @field b : number 
+                   c : number   // should not to be in raw_obj
+        }
+        let a = new A({a: 1})                   ; expect(a.raw_obj).toStrictEqual({id: undefined, a: 1})
+        a.id = 1                                ; expect(a.raw_obj).toStrictEqual({id: 1, a: 1})
+        a.c  = 1                                ; expect(a.raw_obj).toStrictEqual({id: 1, a: 1})
+    })
+
+    it('only_changed_raw_data', () => {
+        @model class A extends Model {
+            @field a : number
+            @field b : number 
+                   c : number   // should be ignored because it isn't a field
+        }
+        let a = new A({id: 1, a: 2, c: 3})  ; expect(a).toMatchObject({__init_data: {}, id: 1, a: 2, b: undefined, c: undefined})
+                                              expect(a.only_changed_raw_data).toStrictEqual({})
+        a.a = 5                             ; expect(a.only_changed_raw_data).toStrictEqual({a: 5})
+        a.b = 5                             ; expect(a.only_changed_raw_data).toStrictEqual({a: 5, b: 5})
+        a.c = 5                             ; expect(a.only_changed_raw_data).toStrictEqual({a: 5, b: 5})
+    })
+
+    it('is_changed', () => {
+        @model class A extends Model {
+            @field a : number
+            @field b : number 
+                   c : number   // should be ignored because it isn't a field
+        }
+        let a
+        a = new A({id: 1, a: 2, c: 3})  ; expect(a.is_changed).toBe(false)
+        a.a = 5                         ; expect(a.is_changed).toBe(true)
+
+        a = new A({id: 2, a: 2, c: 3})  ; expect(a.is_changed).toBe(false)
+        a.b = 5                         ; expect(a.is_changed).toBe(true)
+
+        a = new A({id: 3, a: 2, c: 3})  ; expect(a.is_changed).toBe(false)
+        a.c = 5                         ; expect(a.is_changed).toBe(false)
+    })
+
+    it('refresh_init_data', () => {
+        @model class A extends Model {
+            @field a : number
+            @field b : number 
+        }
+        let a = new A({a: 1, b: 1})     ; expect(a.__init_data).toStrictEqual({a: 1, b: 1})
+        a.a = 2                         ; expect(a.__init_data).toStrictEqual({a: 1, b: 1})
+        a.b = 2                         ; expect(a.__init_data).toStrictEqual({a: 1, b: 1})
+        a.refreshInitData()             ; expect(a.__init_data).toStrictEqual({a: 2, b: 2})
+    })
+
+    describe('updateFromRaw', () => {
+        it('empty raw_obj', () => {
+            @model class A extends Model {
+                @field a : number
+                @field b : number 
+            }
+            let a = new A({a: 1, b: 1})   
+            let raw_obj = {}
+            a.updateFromRaw(raw_obj)    ; expect(a).toMatchObject({a: 1, b: 1})
+        })
+
+        it('raw_obj with data only (no id)', () => {
+            @model class A extends Model {
+                @field a : number
+                @field b : number 
+            }
+            let a = new A({a: 1, b: 1})   
+            let raw_obj = {a: 2, b: 2}
+            a.updateFromRaw(raw_obj)    ; expect(a).toMatchObject({a: 2, b: 2})
+        })
+        it('raw_obj with id+data ', () => {
+            @model class A extends Model {
+                @field a : number
+                @field b : number 
+            }
+            let a = new A({id: 1, a: 1, b: 1})   
+            let raw_obj = {id: 1, a: 2, b: 2}
+            a.updateFromRaw(raw_obj)    ; expect(a).toMatchObject({id: 1, a: 2, b: 2})
+        })
+
+        it('raw_obj with id+data  (obj has no id)', () => {
+            @model class A extends Model {
+                @field a : number
+                @field b : number 
+            }
+            let a = new A({a: 1, b: 1})   
+            let raw_obj = {id: 1, a: 2, b: 2}
+            a.updateFromRaw(raw_obj)    ; expect(a).toMatchObject({id: 1, a: 2, b: 2})
+        })
+
+        it('raw_obj with id+data  (raw_obj has wrong id)', () => {
+            @model class A extends Model {
+                @field a : number
+                @field b : number 
+            }
+            let a = new A({id: 1, a: 1, b: 1})   
+            let raw_obj = {id: 2, a: 2, b: 2}
+            a.updateFromRaw(raw_obj)    ; expect(a).toMatchObject({id: 1, a: 2, b: 2})
+        })
+    })
+
+    describe('id', () => {
+        it('set in constructor', () => {
+            @model class A extends Model {}     ; expect(A.__cache.size).toBe(0)
+            let a = new A({id: 1})              ; expect(A.__cache.size).toBe(1)
+                                                  expect(A.__cache.get(a.id)).toBe(a)
+                                                  expect(a.__disposers.size).toBe(2) // before and after changes observers
+                                                ; expect(a).toMatchObject({id: 1})
+        })
+        it('set later', () => {
+            @model class A extends Model {}     
+            let a = new A()                     ; expect(A.__cache.size).toBe(0)
+                                                  expect(a.__disposers.size).toBe(2) // before and after changes observers
+                                                ; expect(a).toMatchObject({id: undefined})
+            a.id = 1                            ; expect(A.__cache.size).toBe(1)
+                                                  expect(A.__cache.get(a.id)).toBe(a)
+        })
+        it('edit', () => {
+            @model class A extends Model {}     ; expect(A.__cache.size).toBe(0)
+            let a = new A({id: 1})              ; expect(A.__cache.size).toBe(1)
+                                                  expect(A.__cache.get(a.id)).toBe(a)
+                                                  expect(a.__disposers.size).toBe(2) // before and after changes observers
+                                                ; expect(a).toMatchObject({id: 1})
+            expect(() => a.id = 2)
+                .toThrow(new Error(`You cannot change id field: 1 to 2`))
+        })
+        it('edit to undefined', () => {
+            @model class A extends Model {}     ; expect(A.__cache.size).toBe(0)
+            let a = new A({id: 1})              ; expect(A.__cache.size).toBe(1)
+                                                  expect(A.__cache.get(a.id)).toBe(a)
+                                                  expect(a.__disposers.size).toBe(2) // before and after changes observers
+                                                ; expect(a).toMatchObject({id: 1})
+            a.id = undefined                    ; expect(A.__cache.size).toBe(0)
+        })
+    }) 
 })

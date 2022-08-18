@@ -1,115 +1,54 @@
-import { intercept, observe, extendObservable, autorun, runInAction } from 'mobx'
+import { observe, extendObservable, runInAction, reaction, action } from 'mobx'
 import { Model } from '../model'
 
 
 function field_one(obj: Model, field_name) {
-
-    let edit_mode = false
-    let remote_model            = obj.model.__relations[field_name].settings.remote_model
-    let remote_foreign_ids_name = obj.model.__relations[field_name].settings.remote_foreign_ids_names
-
     // make observable and set default value
-    extendObservable(obj, {
-        [field_name]: null 
-    })
-
-    // 1. checks before set new changes
-    intercept(obj, field_name, (change) => {
-        if (change.newValue !== null && !(change.newValue.model === remote_model))
-                throw new Error(`You can set only instance of "${remote_model.name}" or null`)
-        return change
-    })
-
-    // 2. after changes run trigger for "change foreign_id"
-    observe(obj, field_name, (change:any) => {
-        let old_remote_obj = change.oldValue
-        let new_remote_obj = change.newValue
-
-        if (new_remote_obj === old_remote_obj || edit_mode)
-            return  // it will help stop endless loop A.b -> B.a_id -> A.b -> B.a_id ...
-
-        edit_mode = true
-        try {
-            // remove foreign ids on the old remote obj
-            if (old_remote_obj) {
-                for (let id_name of remote_foreign_ids_name) {
-                    old_remote_obj[id_name] = null 
-                }
-            }
-            // set foreign ids on the remote obj 
-            if (new_remote_obj) {
-                let obj_ids: any = Array.from(obj.model.__ids.keys())
-                for (var i = 0; i < remote_foreign_ids_name.length; i++) {
-                    // do not touch if it the same
-                    if (new_remote_obj[remote_foreign_ids_name[i]] != obj[obj_ids[i]])
-                        new_remote_obj[remote_foreign_ids_name[i]] = obj[obj_ids[i]]
-                }
-            }
-            edit_mode = false
-        }
-        catch(e) {
-            // TODO: we need to test rallback
-            // // rollback changes!
-            // if (change.oldValue === null) {
-            //     for (var i = 0; i < foreign_ids_names.length; i++) {
-            //         obj[foreign_ids_names[i]] = null 
-            //     }
-            // }
-            // else {
-            //     let obj_ids = change.oldValue.model.ids
-            //     for (var i = 0; i < foreign_ids_names.length; i++) {
-            //         obj[foreign_ids_names[i]] = change.oldValue[obj_ids[i]]
-            //     }
-            // }
-            // edit_mode = false
-            // throw e
-        }
-    })
+    extendObservable(obj, { [field_name]: undefined })
 }
 
-
-export default function one(remote_model: any, ...remote_foreign_ids_names: string[]) {
+export default function one(remote_model: any, remote_foreign_id_name?: string) {
     remote_model = remote_model.__proto__ // band-aid
     return function (cls: any, field_name: string) {
         let model = cls.prototype.constructor
         if (model.__relations === undefined) model.__relations = {}
         // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_ids_names = remote_foreign_ids_names.length ? remote_foreign_ids_names: [`${model.name.toLowerCase()}_id`]
+        remote_foreign_id_name = remote_foreign_id_name !== undefined ? remote_foreign_id_name: `${model.name.toLowerCase()}_id`
         model.__relations[field_name] = { 
             decorator: field_one,
             settings: {
                 remote_model: remote_model,
-                remote_foreign_ids_names: remote_foreign_ids_names
+                remote_foreign_id_name: remote_foreign_id_name
             } 
         } 
-        
-        // watch for remote object in the cache 
-        observe(remote_model.__cache, (remote_change: any) => {
+        const disposer_name = `one ${model.name}.${field_name}` 
+
+        observe(remote_model.__cache, (change: any) => {
             let remote_obj
-            switch (remote_change.type) {
+            switch (change.type) {
                 case 'add':
-                    remote_obj = remote_change.newValue
-                    remote_obj.__disposers.set(`one ${field_name}` ,autorun(() => {
-                        let obj =  model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names))
-                        if (obj) {
-                            // TODO: is it not bad?
-                            // if (obj[field_name])
-                            //     // TODO better name of error
-                            //     // TODO add test for this case
-                            //     throw ('One: bad')
-                            runInAction(() => { obj[field_name] = remote_obj })
-                        }
-                    }))
+                    remote_obj = change.newValue
+                    remote_obj.__disposers.set(disposer_name, reaction(
+                        () => { return { 
+                            id: remote_obj[remote_foreign_id_name],
+                            obj: model.__cache.get(remote_obj[remote_foreign_id_name])}
+                        },
+                        action((_new, _old) => {
+                            if (_old?.obj) _old.obj[field_name] = _new.id ? undefined : null
+                            if (_new?.obj) _new.obj[field_name] = remote_obj
+                        }),
+                        {fireImmediately: true}
+                    ))
                     break
                 case 'delete':
-                    remote_obj = remote_change.oldValue
-                    if (remote_obj.__disposers.get(`one ${field_name}`)) {
-                        remote_obj.__disposers.get(`one ${field_name}`)()
-                        remote_obj.__disposers.delete(`one ${field_name}`)
+                    remote_obj = change.oldValue
+                    if (remote_obj.__disposers.get(disposer_name)) {
+                        remote_obj.__disposers.get(disposer_name)()
+                        remote_obj.__disposers.delete(disposer_name)
                     }
-                    let obj =  model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names))
+                    let obj =  model.__cache.get(remote_obj[remote_foreign_id_name])
                     if (obj) 
-                        runInAction(() => { obj[field_name] = null })
+                        runInAction(() => { obj[field_name] = undefined })
                     break
             }
         })

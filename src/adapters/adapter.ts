@@ -1,12 +1,11 @@
-import { runInAction } from 'mobx'
 import { Model, RawObject, RawData } from '../model'
 
 
 export default abstract class  Adapter<M extends Model> {
 
     abstract __create(raw_data: RawData): Promise<RawObject>
-    abstract __update(obj_id: string, only_changed_raw_data: RawData): Promise<RawObject>
-    abstract __delete(obj_id: string): Promise<void>
+    abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>
+    abstract __delete(obj_id: number): Promise<void>
     abstract __find(where): Promise<object>
     abstract __load(where?, order_by?, limit?, offset?): Promise<RawObject[]>
     abstract getTotalCount(where?): Promise<number>
@@ -20,21 +19,20 @@ export default abstract class  Adapter<M extends Model> {
     async create(obj: M) : Promise<M> {
         let raw_obj = await this.__create(obj.raw_data)
         obj.updateFromRaw(raw_obj)
-        obj.refresh_init_data() // backend can return default values and they should be in __init_data
+        obj.refreshInitData() // backend can return default values and they should be in __init_data
         return obj
     }
 
     async update(obj: M) : Promise<M> {
-        let raw_obj = await this.__update(obj.__id, obj.only_changed_raw_data)
+        let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data)
         obj.updateFromRaw(raw_obj)
-        obj.refresh_init_data()
+        obj.refreshInitData()
         return obj
     }
 
     async delete(obj: M) : Promise<M> {
-        await this.__delete(obj.__id)
-        for(let id_field_name of this.model.__ids.keys())
-            obj[id_field_name] = null
+        await this.__delete(obj.id)
+        obj.id = undefined
         return obj
     }
 

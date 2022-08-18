@@ -1,5 +1,4 @@
 import { model, Model, RawObject } from '../model'
-import id from '../fields/id'
 import field from '../fields/field'
 import Adapter  from './adapter'
 import { obj_a, obj_b } from '../test.utils' 
@@ -7,21 +6,21 @@ import { obj_a, obj_b } from '../test.utils'
 
 describe('Adapter', () => {
 
-    @model class A extends Model { @id id : number; @field x: string }
+    @model class A extends Model { @field x: string }
 
     class TestAdapter extends Adapter<A> {
 
     // abstract __delete(obj_id: string): Promise<object>
 
         async __create(raw_data: RawObject) : Promise<RawObject> { raw_data.id = 1; return raw_data }
-        async __update(obj_id: string, only_changed_raw_data: RawObject) : Promise<RawObject> { return only_changed_raw_data }
-        async __delete(obj_id: string) : Promise<RawObject> { return }
+        async __update(obj_id: number, only_changed_raw_data: RawObject) : Promise<RawObject> { return only_changed_raw_data }
+        async __delete(obj_id: number) : Promise<RawObject> { return }
         async __load (where?, order_by?, limit?, offset?) : Promise<RawObject[]> { return [obj_a, obj_b] }
         async __find(where): Promise<object> { return obj_a; }
         async getTotalCount(where?): Promise<number> { return 0; }
     }
 
-    let adapter: TestAdapter, cache: Map<string, A>, __load: any, __create: any, __update: any, __delete: any, __find: any
+    let adapter: TestAdapter, cache: Map<number, A>, __load: any, __create: any, __update: any, __delete: any, __find: any
 
     beforeAll(() => {
         cache = (<any>A).__proto__.__cache
@@ -44,7 +43,7 @@ describe('Adapter', () => {
 
     it('create', async ()=> {
         let a = new A({});                  expect(__create).toHaveBeenCalledTimes(0)
-                                            expect(a.id).toBe(null)
+                                            expect(a.id).toBe(undefined)
         let b = await adapter.create(a);    expect(b).toBe(a)
                                             expect(a.id).toBe(1)
                                             expect(__create).toHaveBeenCalledTimes(1)
@@ -63,7 +62,7 @@ describe('Adapter', () => {
         let a = new A({id: 1});             expect(__delete).toHaveBeenCalledTimes(0)
                                             expect(a.id).toBe(1)
         let b = await adapter.delete(a);    expect(b).toBe(a)
-                                            expect(a.id).toBe(null)
+                                            expect(a.id).toBe(undefined)
                                             expect(__delete).toHaveBeenCalledTimes(1)
     })
 
@@ -71,7 +70,7 @@ describe('Adapter', () => {
                                             expect(__find).toHaveBeenCalledTimes(0)
         let obj = await adapter.find({});   expect(__find).toHaveBeenCalledTimes(1)
                                             expect(__find).toHaveBeenCalledWith({})
-                                            expect(obj).toBe(cache.get(A.__id(obj_a)))
+                                            expect(obj).toBe(cache.get(obj_a.id))
     })
 
     it('load', async ()=> {
@@ -79,8 +78,8 @@ describe('Adapter', () => {
         let items = await adapter.load();   expect(__load).toHaveBeenCalledTimes(1)
                                             expect(__load).toHaveBeenCalledWith(undefined, undefined, undefined, undefined)
                                             expect(items).toEqual([
-                                                cache.get(A.__id(obj_a)),
-                                                cache.get(A.__id(obj_b)),
+                                                cache.get(obj_a.id),
+                                                cache.get(obj_b.id),
                                             ])
     })
 })

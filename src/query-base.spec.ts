@@ -1,5 +1,4 @@
 import { model, Model } from './model'
-import id           from './fields/id'
 import Adapter      from './adapters/adapter'
 import LocalAdapter from './adapters/local'
 import QueryBase, { ORDER_BY, ASC }    from './query-base'
@@ -8,7 +7,7 @@ import { Filter, EQ } from './filters'
 
 describe('QueryBase', () => {
 
-    @model class A extends Model { @id id : number }
+    @model class A extends Model {}
 
     // we cannot use QueryBase directly
     // QueryBase is an abstract class and we have to create a new class and inherit it from QueryBase
@@ -21,7 +20,7 @@ describe('QueryBase', () => {
     }
 
     const adapter     : LocalAdapter<A> = new LocalAdapter(A)
-    const cache       : Map<string, A>  = (<any> A).__cache
+    const cache       : Map<number, A>  = (<any> A).__cache
     let query       : Query<A>
     let query_load  : any
     let adapter_load: any

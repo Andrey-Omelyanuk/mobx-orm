@@ -4,23 +4,22 @@ import {intercept, observe, extendObservable, reaction} from 'mobx'
 function field_foreign(obj, field_name) {
     let edit_mode = false
     let settings = obj.model.__relations[field_name].settings
-    let foreign_model     = settings.foreign_model
-    let foreign_ids_names = settings.foreign_ids_names
+    let foreign_model   = settings.foreign_model
+    let foreign_id_name = settings.foreign_id_name
 
     // make observable and set default value
-    extendObservable(obj, {
-        [field_name]: null 
-    })
+    extendObservable(obj, { [field_name]: undefined })
 
     reaction(
         // watch on foreign cache for foreign object
         () => {
-            let __id = foreign_model.__id(obj, foreign_ids_names)
-            return __id ? foreign_model.__cache.get(__id) : null
+            if (obj.id === undefined) return undefined
+            if (obj.id === null) return null 
+            return foreign_model.__cache.get(obj.id)
         },
         // update foreign field
         (foreign_obj, prev, reaction) => {
-            obj[field_name] = foreign_obj ? foreign_obj : null 
+            obj[field_name] = foreign_obj
         }
     )
 
@@ -42,35 +41,22 @@ function field_foreign(obj, field_name) {
 
         edit_mode = true
         try {
-            if (change.newValue === null) {
-                // if foreign set to null then reset ids on the obj
-                for (let id_name of foreign_ids_names) {
-                    obj[id_name] = null 
-                }
+            // if foreign set to value then update foreign_id on the obj
+            if (change.newValue === undefined || change.newValue === null) {
+                obj[foreign_id_name] = change.newValue 
             }
             else {
-                // if foreign set to obj then update ids from the obj's ids
-                let obj_ids: any = Array.from(change.newValue.model.__ids.keys())
-                for (var i = 0; i < foreign_ids_names.length; i++) {
-                    // do not touch if it the same
-                    if (obj[foreign_ids_names[i]] != change.newValue[obj_ids[i]])
-                        obj[foreign_ids_names[i]]  = change.newValue[obj_ids[i]]
-                }
+                obj[foreign_id_name]  = change.newValue.id
             }
             edit_mode = false
         }
         catch(e) {
             // rollback changes!
-            if (change.oldValue === null) {
-                for (var i = 0; i < foreign_ids_names.length; i++) {
-                    obj[foreign_ids_names[i]] = null 
-                }
+            if (change.oldValue === undefined || change.oldValue === null) {
+                obj[foreign_id_name] = change.oldValue 
             }
             else {
-                let obj_ids = change.oldValue.model.__ids
-                for (var i = 0; i < foreign_ids_names.length; i++) {
-                    obj[foreign_ids_names[i]] = change.oldValue[obj_ids[i]]
-                }
+                obj[foreign_id_name]  = change.oldValue.id
             }
             edit_mode = false
             throw e
@@ -88,7 +74,7 @@ function field_foreign(obj, field_name) {
     })
 }
 
-export default function foreign(foreign_model: any, ...foreign_ids_names: string[]) {
+export default function foreign(foreign_model: any, foreign_id_name?: string) {
     foreign_model = foreign_model.__proto__ // TODO: band-aid
     return function (cls: any, field_name: string) {
         let model = cls.constructor
@@ -99,7 +85,7 @@ export default function foreign(foreign_model: any, ...foreign_ids_names: string
             settings: {
                 foreign_model: foreign_model,
                 // if it is empty then try auto detect it (it works only with single id) 
-                foreign_ids_names: foreign_ids_names.length ? foreign_ids_names : [`${field_name}_id`]
+                foreign_id_name: foreign_id_name !== undefined ? foreign_id_name : `${field_name}_id`
             } 
         } 
     }

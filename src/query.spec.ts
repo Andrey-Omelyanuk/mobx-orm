@@ -1,6 +1,5 @@
 import { runInAction } from 'mobx'
 import { Model, model } from './model'
-import id from './fields/id'
 import Query from './query'
 import field from './fields/field'
 import LocalAdapter from './adapters/local' 
@@ -12,7 +11,6 @@ import { ASC, DESC } from './query-base'
 describe('Query', () => {
 
     @model class A extends Model {
-        @id     id !: number
         @field   a !: number
         @field   b !: string
         @field   c !: boolean
@@ -68,15 +66,14 @@ describe('Query', () => {
 
         it('watch the base cache for changes', async () => {
             let length = query.__items.length
-            debugger
-            let x = new A({});  expect(query.__items.length).toBe(length)
-                                expect(Object.keys(query.__disposer_objects)).toEqual(["0","1","2","3","4",])
-            runInAction(() => x.id = 999)
-                                expect(query.__items.length).toBe(length+1)
-                                expect(Object.keys(query.__disposer_objects)).toEqual(["0","1","2","3","4", "999",])
-            runInAction(() => x.id = null)
-                                expect(query.__items.length).toBe(length)
-                                expect(Object.keys(query.__disposer_objects)).toEqual(["0","1","2","3","4",])
+            let x = new A({})                   ; expect(query.__items.length).toBe(length)
+                                                  expect(Object.keys(query.__disposer_objects)).toEqual(["0","1","2","3","4",])
+
+            runInAction(() => x.id = 999)       ; expect(query.__items.length).toBe(length+1)
+                                                  expect(Object.keys(query.__disposer_objects)).toEqual(["0","1","2","3","4", "999",])
+
+            runInAction(() => x.id = undefined) ; expect(query.__items.length).toBe(length)
+                                                  expect(Object.keys(query.__disposer_objects)).toEqual(["0","1","2","3","4",])
         })
     })
 

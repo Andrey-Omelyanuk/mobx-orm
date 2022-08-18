@@ -1,149 +1,100 @@
-
-import { local } from './adapters/local'
 import { Model, model } from './model'
-import id    from './fields/id'
 import field from './fields/field'
-import { runInAction } from 'mobx'
-import { EQ } from './filters'
-import { DESC, ORDER_BY } from './query-base'
 
 
 describe('Model Class', () => {
 
-    @local()
-    @model class A extends Model { 
-        @id    id : number 
-        @field  a : number
-        @field  b : string 
-        @field  c : boolean
-    }
-
-    @local()
-    @model class B extends Model { 
-        @id    id1 : number 
-        @id    id2 : number
-        @field   a : number
-    }
-
-    let load: any, create: any, update: any, del: any
-
-    beforeAll(async () => {
-        load   = jest.spyOn(A.__adapter, 'load')
-        create = jest.spyOn(A.__adapter, 'create')
-        update = jest.spyOn(A.__adapter, 'update')
-        del    = jest.spyOn(A.__adapter, 'delete')
+    describe('inject()', () => {
+        it('...', async () => {
+            @model class A extends Model {}     ; expect(A.__cache.size).toBe(0)
+            A.inject({id: 1} as Model)          ; expect(A.__cache.size).toBe(1)
+            A.inject({id: 2} as Model)          ; expect(A.__cache.size).toBe(2)
+        })
+        it('error: Object should have id!', async () => {
+            @model class A extends Model {}
+            expect(() => { A.inject({} as Model) })
+                .toThrow(new Error(`Object should have id!`))
+        })
+        it('error: Object should have id!', async () => {
+            @model class A extends Model {}
+            A.inject({id: 1} as Model)
+            expect(() => { A.inject({id: 1} as Model) })
+                .toThrow(new Error(`Object with id 1 already exist in the cache of model: "A")`))
+        })
     })
 
-    afterEach(async () => {
-        A.clearCache()
-        B.clearCache()
-        jest.clearAllMocks();
+    describe('eject()', () => {
+        it('...', async () => {
+            @model class A extends Model {}
+            A.inject({id: 1} as Model)      
+            A.inject({id: 2} as Model)          ; expect(A.__cache.size).toBe(2)
+            A.eject ({id: 1} as Model)          ; expect(A.__cache.size).toBe(1)
+            A.eject ({id: 2} as Model)          ; expect(A.__cache.size).toBe(0)
+        })
+        it('double eject', async () => {
+            @model class A extends Model {}
+            A.inject({id: 1} as Model)      
+            A.inject({id: 2} as Model)          ; expect(A.__cache.size).toBe(2)
+            A.eject ({id: 2} as Model)          ; expect(A.__cache.size).toBe(1)
+            A.eject ({id: 2} as Model)          ; expect(A.__cache.size).toBe(1)
+        })
+        it('eject empty (no id) ', async () => {
+            @model class A extends Model {}
+            A.eject({} as Model)                // should nothing happend
+        })
     })
 
-    describe('Model.load()', () => {
-        it('empty args', async () => {
-            let query = A.getQuery()
-            await query.load()
-            expect(query.is_ready).toBe(true)
-            expect(load).toHaveBeenCalledTimes(1)
-            // expect(load).toHaveBeenCalledWith({}, [])
+    describe('updateCache()', () => {
+        it('empty = empty', async () => {
+            @model class A extends Model { @field a: number }
+            let raw_obj = {}
+            let obj = A.updateCache(raw_obj)        ; expect(obj).toMatchObject({})
+        })
+        it('empty = obj ', async () => {
+            @model class A extends Model { @field a: number }
+            let raw_obj = {id: 1, a: 3}
+            let obj = A.updateCache(raw_obj)        ; expect(obj).toMatchObject({id: 1, a: 3 })
         })
 
-        it('with args', async () => {
-            let query = A.getQuery(EQ('a', 1), new Map([['b', DESC]]))
-            await query.load()
-            expect(query.is_ready).toBe(true)
-            expect(load).toHaveBeenCalledTimes(1)
-            // expect(load).toHaveBeenCalledWith({a: 1}, ['-b'])
+        it('obj = empty ', async () => {
+            @model class A extends Model { @field a: number }
+            let a = new A({id: 1, a: 2})            
+            let raw_obj = {}                        
+            let obj = A.updateCache(raw_obj)        ; expect(obj).toMatchObject({})
+                                                      expect(a).toMatchObject({id: 1, a: 2 })
         })
 
-        // it('error: with wrong args', async () => {
-        //     let query = A.load({y: 1}, ['xxx'] )
-        //     await query.ready()
-        //     expect(query.is_ready).toBe(true)
-        //     expect(load).toHaveBeenCalledTimes(1)
-        //     expect(load).toHaveBeenCalledWith({y: 1}, ['xxx'])
+        it('obj = obj', async () => {
+            @model class A extends Model { @field a: number }
+            let a = new A({id: 1, a: 2})
+            let raw_obj = {id: 1, a: 3}             ; expect(a).toMatchObject({id: 1, a: 2 })
+            let obj = A.updateCache(raw_obj)        ; expect(a).toBe(obj)
+                                                      expect(a).toMatchObject({id: 1, a: 3 })
+        })
+
+        // it('update exist object', async () => {
+        //     let a = new A({id: 1, a: 2, b: 'test', c: true})
+        //     let obj = A.updateCache({id: 1, b: 'hello'})
+        //     expect(obj).toMatchObject({id: 1, a: 2, b: 'hello', c: true})
+        //     expect(obj.model.__cache.get(obj.id)).toBe(obj)
+        //     expect(obj).toBe(a)
         // })
     })
 
-    describe('Model.loadPage()', () => {
-        it('empty args', async () => {
-            let query = A.getQueryPage()
-            await query.load()
-            // expect(query.is_ready).toBe(true)
-            expect(load).toHaveBeenCalledTimes(1)
-            // expect(load).toHaveBeenCalledWith({}, [], 50, 0)
-        })
-
-        it('with args', async () => {
-            let query = A.getQueryPage(EQ('a', 1), new Map([['b', DESC]]), 2, 30 )
-            await query.load()
-            // expect(query.is_ready).toBe(true)
-            expect(load).toHaveBeenCalledTimes(1)
-            // expect(load).toHaveBeenCalledWith({a: 1}, ['-b'], 30, 60)
-        })
-    })
-
-    describe('Model.updateCache()', () => {
-        it('new object', async () => {
-            let obj = A.updateCache({id: 1, a: 2, b: 'test', c: true})
-            expect(obj).toMatchObject({id: 1, a: 2, b: 'test', c: true})
-            expect(obj.model.__cache.get(obj.__id)).toBe(obj)
-        })
-
-        it('update exist object', async () => {
-            let a = new A({id: 1, a: 2, b: 'test', c: true})
-            let obj = A.updateCache({id: 1, b: 'hello'})
-            expect(obj).toMatchObject({id: 1, a: 2, b: 'hello', c: true})
-            expect(obj.model.__cache.get(obj.__id)).toBe(obj)
-            expect(obj).toBe(a)
-        })
-    })
-
-    describe('Model.clearCache()', () => {
-
+    describe('clearCache()', () => {
         it('clear not empty cache', async () => {
-            // id will add objects to the cache
+            @model class A extends Model {}
+            // // id will add objects to the cache
             let a = new A({id: 1})
-            let b = new A({id: 2})
-            expect(A.__cache.size).toBe(2)
-            A.clearCache()
-            expect(A.__cache.size).toBe(0)
-            expect(a.id).toBeNull()
-            expect(b.id).toBeNull()
+            let b = new A({id: 2})              ; expect(A.__cache.size).toBe(2)
+            A.clearCache()                      ; expect(A.__cache.size).toBe(0)
+                                                ; expect(a.id).toBe(undefined)
+                                                ; expect(b.id).toBe(undefined)
         })
 
         it('clear empty cache', async () => {
-            expect(A.__cache.size).toBe(0)
-            A.clearCache()
-            expect(A.__cache.size).toBe(0)
-        })
-    })
-
-    describe('Model.__id()', () => {
-
-        it('get id from raw object', async () => {
-            expect(A.__id({id: 1})).toBe('1')
-        })
-
-        it('get composite id from raw object', async () => {
-            expect(B.__id({id1: 1, id2: 1})).toBe('1-1')
-        })
-
-        it('get id from model instance', async () => {
-            let a = new A({id: 1})
-            expect(A.__id(a)).toBe('1')
-        })
-
-        it('get composite id from model instance', async () => {
-            let b = new B({id1: 1, id2: 1 })
-            expect(B.__id(b)).toBe('1-1')
-        })
-
-        it('return null if id is not complite', async () => {
-            expect(A.__id({})).toBeNull()
-            expect(B.__id({})).toBeNull()
-            expect(B.__id({id1: 1})).toBeNull() // composite id is not compite
+            @model class A extends Model {}     ; expect(A.__cache.size).toBe(0)
+            A.clearCache()                      ; expect(A.__cache.size).toBe(0)
         })
     })
 })

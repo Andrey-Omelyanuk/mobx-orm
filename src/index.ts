@@ -6,7 +6,6 @@ import QueryPage from './query-page'
 import Adapter from './adapters/adapter'
 import LocalAdapter, { local } from './adapters/local'
 // fields
-import id               from './fields/id'
 import field            from './fields/field'
 import foreign          from './fields/foreign'
 import one              from './fields/one'
@@ -23,7 +22,6 @@ export {
     Adapter,
     local, LocalAdapter,
     // fields
-    id,
     field,
     foreign,
     one,

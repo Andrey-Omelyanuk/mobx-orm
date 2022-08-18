@@ -6,7 +6,7 @@ You can use this adapter for mock data or for unit test
 */
 
 
-export let store: any = {}
+export let store: {string?: {number: Model}} = {}
 
 
 function timeout(ms: number) {
@@ -24,7 +24,7 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
     init_local_data(data: RawObject[]) {
         let objs = {} 
         for(let obj of data) {
-            objs[this.model.__id(obj)] = obj
+            objs[obj.id] = obj
         }
         store[this.store_name] = objs
     }
@@ -44,16 +44,12 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
             ids.push(parseInt(id))
         }
         let max = Math.max.apply(null, ids)
-        for(let field_name_id of this.model.__ids.keys()) {
-            raw_data[field_name_id] = max + 1
-        }
-
-        raw_data.__id = this.model.__id(raw_data)
-        store[this.store_name][raw_data.__id] = raw_data
+        raw_data.id = max + 1
+        store[this.store_name][raw_data.id] = raw_data
         return raw_data as RawObject 
     }
 
-    async __update(obj_id: string, only_changed_raw_data: RawData) : Promise<RawObject> {
+    async __update(obj_id: number, only_changed_raw_data: RawData) : Promise<RawObject> {
         if (this.delay) await timeout(this.delay) 
         let raw_obj = store[this.store_name][obj_id] 
         for(let field of Object.keys(only_changed_raw_data)) {
@@ -62,7 +58,7 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
         return raw_obj 
     }
 
-    async __delete(obj_id: string) : Promise<void> {
+    async __delete(obj_id: number) : Promise<void> {
         if (this.delay) await timeout(this.delay) 
         delete store[this.store_name][obj_id]
     }

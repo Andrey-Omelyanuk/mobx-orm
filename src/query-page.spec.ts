@@ -1,25 +1,22 @@
-import { autorun, runInAction } from 'mobx'
+import { runInAction } from 'mobx'
 import { Model, model } from './model'
-import id from './fields/id'
 import QueryPage from './query-page'
 import field from './fields/field'
 import LocalAdapter, { local } from './adapters/local' 
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from './test.utils' 
 
 
-
 describe('QueryPage', () => {
 
     @local()
     @model class A extends Model {
-        @id     id !: number
         @field   a !: number
         @field   b !: string
         @field   c !: boolean
     }
 
     const adapter   : LocalAdapter<A> = (<any>A).__adapter
-    const cache     : Map<string, A>  = (<any>A).__cache
+    const cache     : Map<number, A>  = (<any>A).__cache
     let query: QueryPage<A>
     let load : any
 
@@ -62,22 +59,22 @@ describe('QueryPage', () => {
         expect(load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page)
         // expect(query.items.length).toBe(data_set.length)
         expect(query.items).toEqual([
-            cache.get(A.__id(obj_a)),
-            cache.get(A.__id(obj_b)),
-            cache.get(A.__id(obj_c)),
-            cache.get(A.__id(obj_d)),
-            cache.get(A.__id(obj_e)),
+            cache.get(obj_a.id),
+            cache.get(obj_b.id),
+            cache.get(obj_c.id),
+            cache.get(obj_d.id),
+            cache.get(obj_e.id),
         ])
 
         runInAction(() => {
             query.page = 1
         })
         expect(query.items).toEqual([
-            cache.get(A.__id(obj_a)),
-            cache.get(A.__id(obj_b)),
-            cache.get(A.__id(obj_c)),
-            cache.get(A.__id(obj_d)),
-            cache.get(A.__id(obj_e)),
+            cache.get(obj_a.id),
+            cache.get(obj_b.id),
+            cache.get(obj_c.id),
+            cache.get(obj_d.id),
+            cache.get(obj_e.id),
         ])
 
         await query.load()
@@ -88,8 +85,8 @@ describe('QueryPage', () => {
         })
         await query.load()
         expect(query.items).toEqual([
-            cache.get(A.__id(obj_c)),
-            cache.get(A.__id(obj_d)),
+            cache.get(obj_c.id),
+            cache.get(obj_d.id),
         ])
     })
 })

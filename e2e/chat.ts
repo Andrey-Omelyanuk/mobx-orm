@@ -1,5 +1,5 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { Model, model, local, id, field, foreign, many } from '../dist/mobx-orm'
+import { Model, model, local, field, foreign, many } from '../dist/mobx-orm'
 
 
 describe('e2e: Chat.', () => {
@@ -8,7 +8,6 @@ describe('e2e: Chat.', () => {
 
         @local()
         @model class User extends Model {
-            @id     id          : number
             @field  first_name  : string
             @field  last_name   : string
                     messages    : Message[]
@@ -18,7 +17,6 @@ describe('e2e: Chat.', () => {
 
         @local()
         @model class Channel extends Model {
-            @id id      : number
                 messages: Message[]
 
             async sendMessage(user: User, text: string) {
@@ -29,7 +27,6 @@ describe('e2e: Chat.', () => {
 
         @local()
         @model class Message extends Model {
-            @id    id          : number
             @field created     : Date
             @field text        : string
             @field channel_id  : number

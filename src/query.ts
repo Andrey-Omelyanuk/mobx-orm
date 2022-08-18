@@ -26,11 +26,11 @@ export default class Query<M extends Model> extends QeuryBase<M> {
                 this.__watch_obj(change.newValue)
             }
             if (change.type == "delete") {
-                let __id = change.name
+                let id = change.name
                 let obj  = change.oldValue
 
-                this.__disposer_objects[__id]()
-                delete this.__disposer_objects[__id]
+                this.__disposer_objects[id]()
+                delete this.__disposer_objects[id]
 
                 let i = this.__items.indexOf(obj)
                 if (i != -1)
@@ -89,8 +89,8 @@ export default class Query<M extends Model> extends QeuryBase<M> {
     }
 
     __watch_obj(obj) {
-        if (this.__disposer_objects[obj.__id]) this.__disposer_objects[obj.__id]()
-        this.__disposer_objects[obj.__id] = autorun(
+        if (this.__disposer_objects[obj.id]) this.__disposer_objects[obj.id]()
+        this.__disposer_objects[obj.id] = autorun(
             () => {
                 let should = !this.filters || this.filters.isMatch(obj)
                 let i = this.__items.indexOf(obj)

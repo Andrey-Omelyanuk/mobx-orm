@@ -1,7 +1,7 @@
 declare abstract class Adapter<M extends Model> {
     abstract __create(raw_data: RawData): Promise<RawObject>;
-    abstract __update(obj_id: string, only_changed_raw_data: RawData): Promise<RawObject>;
-    abstract __delete(obj_id: string): Promise<void>;
+    abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
+    abstract __delete(obj_id: number): Promise<void>;
     abstract __find(where: any): Promise<object>;
     abstract __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject[]>;
     abstract getTotalCount(where?: any): Promise<number>;
@@ -103,15 +103,8 @@ declare class Query<M extends Model> extends Query$2<M> {
 declare type RawObject = any;
 declare type RawData = any;
 declare abstract class Model {
-    static __id_separator: string;
     static __adapter: Adapter<Model>;
-    static __cache: Map<string, Model>;
-    static __ids: Map<string, {
-        decorator: (obj: Model, field_name: string) => void;
-        settings: any;
-        serialize: any;
-        deserialize: any;
-    }>;
+    static __cache: Map<number, Model>;
     static __fields: {
         [field_name: string]: {
             decorator: (obj: Model, field_name: string) => void;
@@ -128,28 +121,26 @@ declare abstract class Model {
     };
     static inject(obj: Model): void;
     static eject(obj: Model): void;
-    static find(filters: Filter): Promise<Model>;
     static getQuery(filters?: Filter, order_by?: ORDER_BY): Query$1<Model>;
     static getQueryPage(filter?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number): Query<Model>;
-    static get(__id: string): Model;
-    static filter(): Array<Model>;
+    static get(id: number): Model;
+    static find(filters: Filter): Promise<Model>;
     static updateCache(raw_obj: any): Model;
     static clearCache(): void;
-    static __id(obj: any, ids?: any): string | null;
+    id: number | undefined;
     __init_data: any;
     __disposers: Map<any, any>;
     constructor(...args: any[]);
-    get __id(): string | null;
     get model(): any;
-    get raw_obj(): any;
     get raw_data(): any;
+    get raw_obj(): any;
     get only_changed_raw_data(): any;
     get is_changed(): boolean;
     create(): Promise<any>;
     update(): Promise<any>;
     delete(): Promise<any>;
     save(): Promise<any>;
-    refresh_init_data(): void;
+    refreshInitData(): void;
     updateFromRaw(raw_obj: any): void;
 }
 declare function model(constructor: any): any;
@@ -160,22 +151,20 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     init_local_data(data: RawObject[]): void;
     constructor(model: any, store_name?: string);
     __create(raw_data: RawData): Promise<RawObject>;
-    __update(obj_id: string, only_changed_raw_data: RawData): Promise<RawObject>;
-    __delete(obj_id: string): Promise<void>;
+    __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
+    __delete(obj_id: number): Promise<void>;
     __find(where: any): Promise<RawObject>;
     __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject[]>;
     getTotalCount(where?: any): Promise<number>;
 }
 declare function local(): (cls: any) => void;
 
-declare function id(cls: any, field_name: string): void;
-
 declare function field(cls: any, field_name: string): void;
 
-declare function foreign(foreign_model: any, ...foreign_ids_names: string[]): (cls: any, field_name: string) => void;
+declare function foreign(foreign_model: any, foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-declare function one(remote_model: any, ...remote_foreign_ids_names: string[]): (cls: any, field_name: string) => void;
+declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-declare function many(remote_model: any, ...remote_foreign_ids_names: string[]): (cls: any, field_name: string) => void;
+declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-export { AND, ASC, Adapter, ComboFilter, DESC, EQ, Filter, IN, LocalAdapter, Model, NOT_EQ, ORDER_BY, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawData, RawObject, SingleFilter, ValueType, field, foreign, id, local, many, model, one };
+export { AND, ASC, Adapter, ComboFilter, DESC, EQ, Filter, IN, LocalAdapter, Model, NOT_EQ, ORDER_BY, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawData, RawObject, SingleFilter, ValueType, field, foreign, local, many, model, one };

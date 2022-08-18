@@ -545,10 +545,10 @@
                     this.__watch_obj(change.newValue);
                 }
                 if (change.type == "delete") {
-                    let __id = change.name;
+                    let id = change.name;
                     let obj = change.oldValue;
-                    this.__disposer_objects[__id]();
-                    delete this.__disposer_objects[__id];
+                    this.__disposer_objects[id]();
+                    delete this.__disposer_objects[id];
                     let i = this.__items.indexOf(obj);
                     if (i != -1)
                         mobx.runInAction(() => {
@@ -608,9 +608,9 @@
             // Query page have to use it only 
         }
         __watch_obj(obj) {
-            if (this.__disposer_objects[obj.__id])
-                this.__disposer_objects[obj.__id]();
-            this.__disposer_objects[obj.__id] = mobx.autorun(() => {
+            if (this.__disposer_objects[obj.id])
+                this.__disposer_objects[obj.id]();
+            this.__disposer_objects[obj.id] = mobx.autorun(() => {
                 let should = !this.filters || this.filters.isMatch(obj);
                 let i = this.__items.indexOf(obj);
                 // should be in the items and it is not in the items? add it to the items
@@ -657,11 +657,14 @@
         }
     }
 
-    // NOTE:
-    // the __  prefix of naming - I borrow it from python. 
-    // It means don't use it but if you have no choice then you can use it.
     class Model {
         constructor(...args) {
+            Object.defineProperty(this, "id", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: undefined
+            });
             Object.defineProperty(this, "__init_data", {
                 enumerable: true,
                 configurable: true,
@@ -677,25 +680,18 @@
         }
         // add obj to the cache
         static inject(obj) {
-            if (obj.__id === null)
+            if (obj.id === undefined)
                 throw new Error(`Object should have id!`);
-            if (this.__cache.has(obj.__id)) {
-                throw new Error(`Object with id "${obj.__id}" already exist in the cache of model: "${this.name}")`);
+            if (this.__cache.has(obj.id)) {
+                debugger;
+                throw new Error(`Object with id ${obj.id} already exist in the cache of model: "${this.prototype.constructor.name}")`);
             }
-            this.__cache.set(obj.__id, obj);
+            this.__cache.set(obj.id, obj);
         }
         // remove obj from the cache
         static eject(obj) {
-            if (obj.__id === null)
-                return;
-            if (!this.__cache.has(obj.__id))
-                throw new Error(`Object with id "${obj.__id}" not exist in the cache of model: ${this.name}")`);
-            this.__cache.delete(obj.__id);
-        }
-        // TODO: implement find method, it should load single object from Adapter
-        // and add find method to Adapter too
-        static async find(filters) {
-            return this.__adapter.find(filters);
+            if (this.__cache.has(obj.id))
+                this.__cache.delete(obj.id);
         }
         static getQuery(filters, order_by) {
             return new Query$1(this.__adapter, this.__cache, filters, order_by);
@@ -703,23 +699,17 @@
         static getQueryPage(filter, order_by, page, page_size) {
             return new Query(this.__adapter, this.__cache, filter, order_by, page, page_size);
         }
-        // return obj from the cache
-        static get(__id) {
-            return this.__cache.get(__id);
+        static get(id) {
+            return this.__cache.get(id);
         }
-        // TODO: what is it?
-        static filter() {
-            let objs = [];
-            return objs;
+        static async find(filters) {
+            return this.__adapter.find(filters);
         }
         static updateCache(raw_obj) {
-            let __id = this.__id(raw_obj);
             let obj;
-            if (this.__cache.has(__id)) {
-                mobx.runInAction(() => {
-                    obj = this.__cache.get(__id);
-                    obj.updateFromRaw(raw_obj);
-                });
+            if (this.__cache.has(raw_obj.id)) {
+                obj = this.__cache.get(raw_obj.id);
+                obj.updateFromRaw(raw_obj);
             }
             else {
                 obj = new this(raw_obj);
@@ -727,44 +717,13 @@
             return obj;
         }
         static clearCache() {
-            mobx.runInAction(() => {
-                // for clear cache we need just to set null into id fields
-                for (let obj of this.__cache.values()) {
-                    for (let id_field_name of this.__ids.keys()) {
-                        obj[id_field_name] = null;
-                    }
-                }
-            });
-        }
-        static __id(obj, ids) {
-            let id = '';
-            if (ids === undefined)
-                ids = Array.from(this.__ids.keys());
-            for (let id_field_name of ids) {
-                // if any id field is null then we should return null because id is not complite
-                if (obj[id_field_name] === null || obj[id_field_name] === undefined)
-                    return null;
-                id += `${obj[id_field_name]}${this.__id_separator}`;
+            // id = undefined is equal to remove obj from cache 
+            for (let obj of this.__cache.values()) {
+                obj.id = undefined;
             }
-            id = id.slice(0, -(this.__id_separator.length));
-            return id;
-        }
-        get __id() {
-            return this.model.__id(this);
         }
         get model() {
             return this.constructor.__proto__;
-        }
-        // it is raw_data + ids
-        get raw_obj() {
-            let raw_obj = this.raw_data;
-            for (let id_field_name of this.model.__ids.keys()) {
-                if (this[id_field_name] !== undefined) {
-                    raw_obj[id_field_name] = this[id_field_name];
-                }
-            }
-            raw_obj.__id = this.__id;
-            return raw_obj;
         }
         // data only from fields (no ids)
         get raw_data() {
@@ -775,6 +734,12 @@
                 }
             }
             return raw_data;
+        }
+        // it is raw_data + id
+        get raw_obj() {
+            let raw_obj = this.raw_data;
+            raw_obj.id = this.id;
+            return raw_obj;
         }
         get only_changed_raw_data() {
             let raw_data = {};
@@ -797,8 +762,8 @@
         async create() { return await this.model.__adapter.create(this); }
         async update() { return await this.model.__adapter.update(this); }
         async delete() { return await this.model.__adapter.delete(this); }
-        async save() { return this.__id === null ? this.create() : this.update(); }
-        refresh_init_data() {
+        async save() { return this.id === undefined ? this.create() : this.update(); }
+        refreshInitData() {
             if (this.__init_data === undefined)
                 this.__init_data = {};
             for (let field_name in this.model.__fields) {
@@ -806,11 +771,8 @@
             }
         }
         updateFromRaw(raw_obj) {
-            // update the keys only if they are not defined
-            for (let id_field_name of this.model.__ids.keys()) {
-                if (this[id_field_name] === null || this[id_field_name] === undefined) {
-                    this[id_field_name] = raw_obj[id_field_name];
-                }
+            if (this.id === undefined && raw_obj.id !== undefined) {
+                this.id = raw_obj.id;
             }
             // update the fields if the raw data is exist and it is different 
             for (let field_name in this.model.__fields) {
@@ -820,23 +782,16 @@
             }
         }
     }
-    Object.defineProperty(Model, "__id_separator", {
-        enumerable: true,
-        configurable: true,
-        writable: true,
-        value: '-'
-    });
     __decorate([
-        mobx.computed,
-        __metadata("design:type", String),
-        __metadata("design:paramtypes", [])
-    ], Model.prototype, "__id", null);
+        mobx.observable,
+        __metadata("design:type", Number)
+    ], Model.prototype, "id", void 0);
     __decorate([
         mobx.action,
         __metadata("design:type", Function),
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", void 0)
-    ], Model.prototype, "refresh_init_data", null);
+    ], Model.prototype, "refreshInitData", null);
     __decorate([
         mobx.action,
         __metadata("design:type", Function),
@@ -861,6 +816,12 @@
         __metadata("design:paramtypes", [Object]),
         __metadata("design:returntype", Model)
     ], Model, "updateCache", null);
+    __decorate([
+        mobx.action,
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], Model, "clearCache", null);
     // Decorator
     function model(constructor) {
         var original = constructor;
@@ -874,12 +835,18 @@
             let obj = new c();
             let model = obj.model;
             mobx.makeObservable(obj);
-            if (model.__ids === undefined)
-                throw (`No one id field was declared on model ${model.name}`);
-            // apply id-fields decorators
-            for (let id_field_name of model.__ids.keys()) {
-                model.__ids.get(id_field_name).decorator(obj, id_field_name);
-            }
+            // id field reactions
+            obj.__disposers.set('before changes', mobx.intercept(obj, 'id', (change) => {
+                if (change.newValue !== undefined && obj.id !== undefined)
+                    throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`);
+                if (obj.id !== undefined && change.newValue === undefined)
+                    obj.model.eject(obj);
+                return change;
+            }));
+            obj.__disposers.set('after changes', mobx.observe(obj, 'id', (change) => {
+                if (obj.id !== undefined)
+                    obj.model.inject(obj);
+            }));
             // apply fields decorators
             for (let field_name in model.__fields) {
                 model.__fields[field_name].decorator(obj, field_name);
@@ -888,25 +855,9 @@
             for (let field_name in model.__relations) {
                 model.__relations[field_name].decorator(obj, field_name);
             }
-            mobx.runInAction(() => {
-                // update the object from args
-                if (args[0]) {
-                    let raw_obj = args[0];
-                    // id-fields
-                    for (let id_field_name of model.__ids.keys()) {
-                        if (raw_obj[id_field_name] !== undefined) {
-                            obj[id_field_name] = raw_obj[id_field_name];
-                        }
-                    }
-                    // fields 
-                    for (let field_name in model.__fields) {
-                        if (raw_obj[field_name] !== undefined) {
-                            obj[field_name] = raw_obj[field_name];
-                        }
-                    }
-                }
-            });
-            obj.refresh_init_data();
+            if (args[0])
+                obj.updateFromRaw(args[0]);
+            obj.refreshInitData();
             return obj;
         };
         f.__proto__ = original;
@@ -927,19 +878,18 @@
         async create(obj) {
             let raw_obj = await this.__create(obj.raw_data);
             obj.updateFromRaw(raw_obj);
-            obj.refresh_init_data(); // backend can return default values and they should be in __init_data
+            obj.refreshInitData(); // backend can return default values and they should be in __init_data
             return obj;
         }
         async update(obj) {
-            let raw_obj = await this.__update(obj.__id, obj.only_changed_raw_data);
+            let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data);
             obj.updateFromRaw(raw_obj);
-            obj.refresh_init_data();
+            obj.refreshInitData();
             return obj;
         }
         async delete(obj) {
-            await this.__delete(obj.__id);
-            for (let id_field_name of this.model.__ids.keys())
-                obj[id_field_name] = null;
+            await this.__delete(obj.id);
+            obj.id = undefined;
             return obj;
         }
         /* Returns ONE object */
@@ -990,7 +940,7 @@
         init_local_data(data) {
             let objs = {};
             for (let obj of data) {
-                objs[this.model.__id(obj)] = obj;
+                objs[obj.id] = obj;
             }
             store[this.store_name] = objs;
         }
@@ -1003,11 +953,8 @@
                 ids.push(parseInt(id));
             }
             let max = Math.max.apply(null, ids);
-            for (let field_name_id of this.model.__ids.keys()) {
-                raw_data[field_name_id] = max + 1;
-            }
-            raw_data.__id = this.model.__id(raw_data);
-            store[this.store_name][raw_data.__id] = raw_data;
+            raw_data.id = max + 1;
+            store[this.store_name][raw_data.id] = raw_data;
             return raw_data;
         }
         async __update(obj_id, only_changed_raw_data) {
@@ -1076,79 +1023,6 @@
     //     "or",   ["field_a", "<=",  5, "and", "field_b", "contain", "test"]
     // ]
 
-    /*
-    1. you can setup id only once!
-    using obj.id = x, new Obj({id: x}) or obj.save()
-
-    2. save() has two behavior depend on id
-     - id === undefined or null -> create object on remote storage and get it
-     - id === some number       -> save object in remote storage
-
-    3. if you want just load data to cache then you can use this
-    new Obj({id: x, ...})
-    */
-    function field_ID(obj, field_name) {
-        // make observable and set default value
-        mobx.extendObservable(obj, {
-            [field_name]: null
-        });
-        // before changes
-        mobx.intercept(obj, field_name, (change) => {
-            if (change.newValue !== null && obj[field_name] !== null)
-                throw new Error(`You cannot change id field: ${field_name}. ${obj[field_name]} to ${change.newValue}`);
-            if (obj[field_name] !== null && change.newValue === null) {
-                try {
-                    obj.model.eject(obj);
-                }
-                catch (err) {
-                    let ignore_error = `Object with id "${obj.__id}" not exist in the model cache: ${obj.model.name}")`;
-                    if (err.name !== ignore_error)
-                        throw err;
-                }
-            }
-            return change;
-        });
-        // after changes
-        mobx.observe(obj, field_name, (change) => {
-            // if id is complete
-            if (obj.__id !== null)
-                obj.model.inject(obj);
-        });
-    }
-    function id(cls, field_name) {
-        let model = cls.constructor;
-        if (model.__ids === undefined)
-            model.__ids = new Map();
-        model.__ids.set(field_name, { decorator: field_ID });
-    }
-    class ModelX {
-        get raw_obj() {
-            return {};
-        }
-    }
-    function ModelExt() {
-        class Model extends ModelX {
-            static async fetch() {
-                return null;
-            }
-            /*  instance methods */
-            save() {
-                return null;
-            }
-        }
-        /* static methods */
-        Object.defineProperty(Model, "list", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
-        return Model;
-    }
-    class User extends ModelExt() {
-    }
-    User.fetch();
-
     function field_field(obj, field_name) {
         // make observable and set default value
         mobx.extendObservable(obj, { [field_name]: obj[field_name] });
@@ -1164,20 +1038,21 @@
         let edit_mode = false;
         let settings = obj.model.__relations[field_name].settings;
         let foreign_model = settings.foreign_model;
-        let foreign_ids_names = settings.foreign_ids_names;
+        let foreign_id_name = settings.foreign_id_name;
         // make observable and set default value
-        mobx.extendObservable(obj, {
-            [field_name]: null
-        });
+        mobx.extendObservable(obj, { [field_name]: undefined });
         mobx.reaction(
         // watch on foreign cache for foreign object
         () => {
-            let __id = foreign_model.__id(obj, foreign_ids_names);
-            return __id ? foreign_model.__cache.get(__id) : null;
+            if (obj.id === undefined)
+                return undefined;
+            if (obj.id === null)
+                return null;
+            return foreign_model.__cache.get(obj.id);
         }, 
         // update foreign field
         (foreign_obj, prev, reaction) => {
-            obj[field_name] = foreign_obj ? foreign_obj : null;
+            obj[field_name] = foreign_obj;
         });
         // Setter
         // 1. checks before set new changes
@@ -1195,35 +1070,22 @@
                 return; // it will help stop endless loop A.b -> A.b_id -> A.b -> A.b_id ...
             edit_mode = true;
             try {
-                if (change.newValue === null) {
-                    // if foreign set to null then reset ids on the obj
-                    for (let id_name of foreign_ids_names) {
-                        obj[id_name] = null;
-                    }
+                // if foreign set to value then update foreign_id on the obj
+                if (change.newValue === undefined || change.newValue === null) {
+                    obj[foreign_id_name] = change.newValue;
                 }
                 else {
-                    // if foreign set to obj then update ids from the obj's ids
-                    let obj_ids = Array.from(change.newValue.model.__ids.keys());
-                    for (var i = 0; i < foreign_ids_names.length; i++) {
-                        // do not touch if it the same
-                        if (obj[foreign_ids_names[i]] != change.newValue[obj_ids[i]])
-                            obj[foreign_ids_names[i]] = change.newValue[obj_ids[i]];
-                    }
+                    obj[foreign_id_name] = change.newValue.id;
                 }
                 edit_mode = false;
             }
             catch (e) {
                 // rollback changes!
-                if (change.oldValue === null) {
-                    for (var i = 0; i < foreign_ids_names.length; i++) {
-                        obj[foreign_ids_names[i]] = null;
-                    }
+                if (change.oldValue === undefined || change.oldValue === null) {
+                    obj[foreign_id_name] = change.oldValue;
                 }
                 else {
-                    let obj_ids = change.oldValue.model.__ids;
-                    for (var i = 0; i < foreign_ids_names.length; i++) {
-                        obj[foreign_ids_names[i]] = change.oldValue[obj_ids[i]];
-                    }
+                    obj[foreign_id_name] = change.oldValue.id;
                 }
                 edit_mode = false;
                 throw e;
@@ -1239,7 +1101,7 @@
             }
         });
     }
-    function foreign(foreign_model, ...foreign_ids_names) {
+    function foreign(foreign_model, foreign_id_name) {
         foreign_model = foreign_model.__proto__; // TODO: band-aid
         return function (cls, field_name) {
             let model = cls.constructor;
@@ -1251,112 +1113,58 @@
                 settings: {
                     foreign_model: foreign_model,
                     // if it is empty then try auto detect it (it works only with single id) 
-                    foreign_ids_names: foreign_ids_names.length ? foreign_ids_names : [`${field_name}_id`]
+                    foreign_id_name: foreign_id_name !== undefined ? foreign_id_name : `${field_name}_id`
                 }
             };
         };
     }
 
     function field_one(obj, field_name) {
-        let edit_mode = false;
-        let remote_model = obj.model.__relations[field_name].settings.remote_model;
-        let remote_foreign_ids_name = obj.model.__relations[field_name].settings.remote_foreign_ids_names;
         // make observable and set default value
-        mobx.extendObservable(obj, {
-            [field_name]: null
-        });
-        // 1. checks before set new changes
-        mobx.intercept(obj, field_name, (change) => {
-            if (change.newValue !== null && !(change.newValue.model === remote_model))
-                throw new Error(`You can set only instance of "${remote_model.name}" or null`);
-            return change;
-        });
-        // 2. after changes run trigger for "change foreign_id"
-        mobx.observe(obj, field_name, (change) => {
-            let old_remote_obj = change.oldValue;
-            let new_remote_obj = change.newValue;
-            if (new_remote_obj === old_remote_obj || edit_mode)
-                return; // it will help stop endless loop A.b -> B.a_id -> A.b -> B.a_id ...
-            edit_mode = true;
-            try {
-                // remove foreign ids on the old remote obj
-                if (old_remote_obj) {
-                    for (let id_name of remote_foreign_ids_name) {
-                        old_remote_obj[id_name] = null;
-                    }
-                }
-                // set foreign ids on the remote obj 
-                if (new_remote_obj) {
-                    let obj_ids = Array.from(obj.model.__ids.keys());
-                    for (var i = 0; i < remote_foreign_ids_name.length; i++) {
-                        // do not touch if it the same
-                        if (new_remote_obj[remote_foreign_ids_name[i]] != obj[obj_ids[i]])
-                            new_remote_obj[remote_foreign_ids_name[i]] = obj[obj_ids[i]];
-                    }
-                }
-                edit_mode = false;
-            }
-            catch (e) {
-                // TODO: we need to test rallback
-                // // rollback changes!
-                // if (change.oldValue === null) {
-                //     for (var i = 0; i < foreign_ids_names.length; i++) {
-                //         obj[foreign_ids_names[i]] = null 
-                //     }
-                // }
-                // else {
-                //     let obj_ids = change.oldValue.model.ids
-                //     for (var i = 0; i < foreign_ids_names.length; i++) {
-                //         obj[foreign_ids_names[i]] = change.oldValue[obj_ids[i]]
-                //     }
-                // }
-                // edit_mode = false
-                // throw e
-            }
-        });
+        mobx.extendObservable(obj, { [field_name]: undefined });
     }
-    function one(remote_model, ...remote_foreign_ids_names) {
+    function one(remote_model, remote_foreign_id_name) {
         remote_model = remote_model.__proto__; // band-aid
         return function (cls, field_name) {
             let model = cls.prototype.constructor;
             if (model.__relations === undefined)
                 model.__relations = {};
             // if it is empty then try auto detect it (it works only with single id) 
-            remote_foreign_ids_names = remote_foreign_ids_names.length ? remote_foreign_ids_names : [`${model.name.toLowerCase()}_id`];
+            remote_foreign_id_name = remote_foreign_id_name !== undefined ? remote_foreign_id_name : `${model.name.toLowerCase()}_id`;
             model.__relations[field_name] = {
                 decorator: field_one,
                 settings: {
                     remote_model: remote_model,
-                    remote_foreign_ids_names: remote_foreign_ids_names
+                    remote_foreign_id_name: remote_foreign_id_name
                 }
             };
-            // watch for remote object in the cache 
-            mobx.observe(remote_model.__cache, (remote_change) => {
+            const disposer_name = `one ${model.name}.${field_name}`;
+            mobx.observe(remote_model.__cache, (change) => {
                 let remote_obj;
-                switch (remote_change.type) {
+                switch (change.type) {
                     case 'add':
-                        remote_obj = remote_change.newValue;
-                        remote_obj.__disposers.set(`one ${field_name}`, mobx.autorun(() => {
-                            let obj = model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names));
-                            if (obj) {
-                                // TODO: is it not bad?
-                                // if (obj[field_name])
-                                //     // TODO better name of error
-                                //     // TODO add test for this case
-                                //     throw ('One: bad')
-                                mobx.runInAction(() => { obj[field_name] = remote_obj; });
-                            }
-                        }));
+                        remote_obj = change.newValue;
+                        remote_obj.__disposers.set(disposer_name, mobx.reaction(() => {
+                            return {
+                                id: remote_obj[remote_foreign_id_name],
+                                obj: model.__cache.get(remote_obj[remote_foreign_id_name])
+                            };
+                        }, mobx.action((_new, _old) => {
+                            if (_old === null || _old === void 0 ? void 0 : _old.obj)
+                                _old.obj[field_name] = _new.id ? undefined : null;
+                            if (_new === null || _new === void 0 ? void 0 : _new.obj)
+                                _new.obj[field_name] = remote_obj;
+                        }), { fireImmediately: true }));
                         break;
                     case 'delete':
-                        remote_obj = remote_change.oldValue;
-                        if (remote_obj.__disposers.get(`one ${field_name}`)) {
-                            remote_obj.__disposers.get(`one ${field_name}`)();
-                            remote_obj.__disposers.delete(`one ${field_name}`);
+                        remote_obj = change.oldValue;
+                        if (remote_obj.__disposers.get(disposer_name)) {
+                            remote_obj.__disposers.get(disposer_name)();
+                            remote_obj.__disposers.delete(disposer_name);
                         }
-                        let obj = model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names));
+                        let obj = model.__cache.get(remote_obj[remote_foreign_id_name]);
                         if (obj)
-                            mobx.runInAction(() => { obj[field_name] = null; });
+                            mobx.runInAction(() => { obj[field_name] = undefined; });
                         break;
                 }
             });
@@ -1364,106 +1172,49 @@
     }
 
     function field_many(obj, field_name) {
-        let edit_mode = false;
-        obj.model.__relations[field_name].settings.remote_model;
-        let remote_foreign_ids_name = obj.model.__relations[field_name].settings.remote_foreign_ids_names;
-        // make observable and set default value
-        mobx.extendObservable(obj, {
-            [field_name]: []
-        });
-        // 1. checks before set new changes
-        mobx.intercept(obj[field_name], (change) => {
-            // TODO
-            // if (change.newValue !== null && !(change.newValue.constructor && change.newValue.constructor === remote_model.__proto__))
-            //         throw new Error(`You can set only instance of "${remote_model.__proto__.name}" or null`)
-            // TODO: if we push exist obj then ignore it? and not duplicate
-            // TODO: create a test for this case 
-            // remote obj can be in the many 
-            // for (let new_remote_obj of change.added) {
-            //     const i = obj[field_name].indexOf(new_remote_obj)
-            //     if (i == -1)
-            //         throw new Error(`"${new_remote_obj.model.name}" id:"${new_remote_obj.__id}" alredy in many "${obj.model.name}" id:"${field_name}"`)
-            // }
-            return change;
-        });
-        // 2. after changes run trigger for "change foreign_id"
-        mobx.observe(obj[field_name], (change) => {
-            if (change.type !== 'splice')
-                return;
-            let old_remote_objs = change.removed;
-            let new_remote_objs = change.added;
-            edit_mode = true;
-            try {
-                // remove foreign ids on the old remote objs
-                for (let old_remote_obj of old_remote_objs)
-                    for (let id_name of remote_foreign_ids_name)
-                        old_remote_obj[id_name] = null;
-                // set foreign ids on the remote objs 
-                let obj_ids = Array.from(obj.model.__ids.keys());
-                for (let new_remote_obj of new_remote_objs) {
-                    for (var i = 0; i < remote_foreign_ids_name.length; i++) {
-                        // do not touch if it the same
-                        if (new_remote_obj[remote_foreign_ids_name[i]] != obj[obj_ids[i]])
-                            new_remote_obj[remote_foreign_ids_name[i]] = obj[obj_ids[i]];
-                    }
-                }
-                edit_mode = false;
-            }
-            catch (e) {
-                // TODO: we need to test rallback
-                // // rollback changes!
-                // if (change.oldValue === null) {
-                //     for (var i = 0; i < foreign_ids_names.length; i++) {
-                //         obj[foreign_ids_names[i]] = null 
-                //     }
-                // }
-                // else {
-                //     let obj_ids = change.oldValue.model.ids
-                //     for (var i = 0; i < foreign_ids_names.length; i++) {
-                //         obj[foreign_ids_names[i]] = change.oldValue[obj_ids[i]]
-                //     }
-                // }
-                // edit_mode = false
-                // throw e
-            }
-        });
+        mobx.extendObservable(obj, { [field_name]: [] });
     }
-    function many(remote_model, ...remote_foreign_ids_names) {
+    function many(remote_model, remote_foreign_id_name) {
         return function (cls, field_name) {
             let model = cls.prototype.constructor;
             if (model.__relations === undefined)
                 model.__relations = {};
             // if it is empty then try auto detect it (it works only with single id) 
-            remote_foreign_ids_names = remote_foreign_ids_names.length ? remote_foreign_ids_names : [`${model.name.toLowerCase()}_id`];
+            remote_foreign_id_name = remote_foreign_id_name !== undefined ? remote_foreign_id_name : `${model.name.toLowerCase()}_id`;
             model.__relations[field_name] = {
                 decorator: field_many,
                 settings: {
                     remote_model: remote_model,
-                    remote_foreign_ids_names: remote_foreign_ids_names
+                    remote_foreign_id_name: remote_foreign_id_name
                 }
             };
+            const disposer_name = `many ${model.name}.${field_name}`;
             // watch for remote object in the cache 
             mobx.observe(remote_model.__cache, (remote_change) => {
                 let remote_obj;
                 switch (remote_change.type) {
                     case 'add':
                         remote_obj = remote_change.newValue;
-                        remote_obj.__disposers.set(`many ${field_name}`, mobx.autorun(() => {
-                            let obj = model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names));
-                            if (obj) {
-                                const i = obj[field_name].indexOf(remote_obj);
-                                if (i == -1)
-                                    mobx.runInAction(() => { obj[field_name].push(remote_obj); });
+                        remote_obj.__disposers.set(disposer_name, mobx.reaction(() => model.__cache.get(remote_obj[remote_foreign_id_name]), mobx.action((_new, _old) => {
+                            if (_old) {
+                                const i = _old[field_name].indexOf(remote_obj);
+                                if (i > -1)
+                                    _old[field_name].splice(i, 1);
                             }
-                        }));
+                            if (_new) {
+                                const i = _new[field_name].indexOf(remote_obj);
+                                if (i === -1)
+                                    _new[field_name].push(remote_obj);
+                            }
+                        }), { fireImmediately: true }));
                         break;
                     case 'delete':
                         remote_obj = remote_change.oldValue;
-                        if (remote_obj.__disposers.get(`many ${field_name}`)) {
-                            remote_obj.__disposers.get(`many ${field_name}`)();
-                            remote_obj.__disposers.delete(`many ${field_name}`);
+                        if (remote_obj.__disposers.get(disposer_name)) {
+                            remote_obj.__disposers.get(disposer_name)();
+                            remote_obj.__disposers.delete(disposer_name);
                         }
-                        let obj = model.__cache.get(model.__id(remote_obj, remote_foreign_ids_names));
+                        let obj = model.__cache.get(remote_obj[remote_foreign_id_name]);
                         if (obj) {
                             const i = obj[field_name].indexOf(remote_obj);
                             if (i > -1)
@@ -1492,7 +1243,6 @@
     exports.SingleFilter = SingleFilter;
     exports.field = field;
     exports.foreign = foreign;
-    exports.id = id;
     exports.local = local;
     exports.many = many;
     exports.model = model;

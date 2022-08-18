@@ -1,5 +1,4 @@
 import { Model, model } from '../model'
-import id from './id'
 import field from './field'
 
 
@@ -23,7 +22,6 @@ describe('Field: field', () => {
 
     it('create object', async () => {
         @model class A extends Model { 
-            @id    id
             @field a: number 
         }
 
@@ -33,7 +31,6 @@ describe('Field: field', () => {
 
     it('create object with default id in class property', async () => {
         @model class A extends Model {
-            @id    id
             @field a: number = 1
         }
 
@@ -43,7 +40,6 @@ describe('Field: field', () => {
 
     it('create object with value ', async () => {
         @model class A extends Model { 
-            @id    id
             @field a: number 
         }
 
@@ -53,7 +49,6 @@ describe('Field: field', () => {
 
     it('create object and set value ', async () => {
         @model class A extends Model { 
-            @id    id
             @field a: number 
         }
         let a = new A()

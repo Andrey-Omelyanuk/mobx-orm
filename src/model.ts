@@ -1,4 +1,4 @@
-import { action, computed, makeObservable, observable, runInAction } from 'mobx'
+import { action, intercept, makeObservable, observable, observe } from 'mobx'
 import Adapter   from './adapters/adapter'
 import Query     from './query'
 import QueryPage from './query-page'
@@ -9,26 +9,13 @@ import { ORDER_BY } from './query-base'
 export type RawObject = any 
 export type RawData   = any 
 
-// NOTE:
-// the __  prefix of naming - I borrow it from python. 
-// It means don't use it but if you have no choice then you can use it.
 
 export abstract class Model {
-    static __id_separator : string = '-'
     // this static properties will be copied to real model in the model decorator
     static __adapter  : Adapter<Model> 
-    static __cache    : Map<string, Model>
-    // we have 3 types of fields
-    // - ids (cannot be changed, order of keys is important)
+    static __cache    : Map<number, Model>
     // - fields
     // - relations (not exist on outside)
-    static __ids: Map<string, {
-            // can decorator be different?
-            decorator   : (obj: Model, field_name: string) => void,
-            settings    : any,
-            serialize   : any,
-            deserialize : any
-        }>
     static __fields       : {
         [field_name: string]: {
             decorator   : (obj: Model, field_name: string) => void,
@@ -49,27 +36,19 @@ export abstract class Model {
 
     // add obj to the cache
     @action static inject(obj: Model) {
-        if (obj.__id === null)                    
+        if (obj.id === undefined)                    
             throw new Error(`Object should have id!`)
-        if (this.__cache.has(obj.__id)) {
-            throw new Error(`Object with id "${obj.__id}" already exist in the cache of model: "${this.name}")`)
+        if (this.__cache.has(obj.id)) {
+            debugger
+            throw new Error(`Object with id ${obj.id} already exist in the cache of model: "${this.prototype.constructor.name}")`)
         }
-        this.__cache.set(obj.__id, obj)
+        this.__cache.set(obj.id, obj)
     }
 
     // remove obj from the cache
     @action static eject(obj: Model) {
-        if (obj.__id === null)
-            return                   
-        if (!this.__cache.has(obj.__id)) 
-            throw new Error(`Object with id "${obj.__id}" not exist in the cache of model: ${this.name}")`)
-        this.__cache.delete(obj.__id)
-    }
-
-    // TODO: implement find method, it should load single object from Adapter
-    // and add find method to Adapter too
-    static async find(filters: Filter) : Promise<Model> {
-        return this.__adapter.find(filters) 
+        if (this.__cache.has(obj.id)) 
+            this.__cache.delete(obj.id)
     }
 
     static getQuery(filters?: Filter, order_by?: ORDER_BY): Query<Model>  {
@@ -80,26 +59,19 @@ export abstract class Model {
         return new QueryPage(this.__adapter, this.__cache, filter, order_by, page, page_size)
     }
 
-    // return obj from the cache
-    static get(__id: string) {
-        return this.__cache.get(__id)
+    static get(id: number) {
+        return this.__cache.get(id)
     }
 
-    // TODO: what is it?
-    static filter(): Array<Model> {
-        let objs: Array<Model> = [] 
-
-        return objs
+    static async find(filters: Filter) : Promise<Model> {
+        return this.__adapter.find(filters) 
     }
 
     @action static updateCache(raw_obj): Model {
-        let __id = this.__id(raw_obj)
         let obj: Model
-        if (this.__cache.has(__id)) {
-            runInAction(() => {
-                obj = this.__cache.get(__id)
-                obj.updateFromRaw(raw_obj)
-            })
+        if (this.__cache.has(raw_obj.id)) {
+            obj = this.__cache.get(raw_obj.id)
+            obj.updateFromRaw(raw_obj)
         }
         else {
             obj = new (<any>this)(raw_obj)
@@ -107,53 +79,23 @@ export abstract class Model {
         return obj
     }
 
-    static clearCache() {
-        runInAction(() => {
-            // for clear cache we need just to set null into id fields
-            for (let obj of this.__cache.values()) {
-                for (let id_field_name of this.__ids.keys()) {
-                    obj[id_field_name] = null
-                }
-            }
-        })
+    @action static clearCache() {
+        // id = undefined is equal to remove obj from cache 
+        for (let obj of this.__cache.values()) {
+            obj.id = undefined 
+        }
     }
 
-    static __id(obj, ids?) : string | null {
-        let id = '' 
-        if (ids === undefined) ids = Array.from(this.__ids.keys()) 
-        for (let id_field_name of ids) {
-            // if any id field is null then we should return null because id is not complite
-            if (obj[id_field_name] === null || obj[id_field_name] === undefined) 
-                return null
-            id += `${obj[id_field_name]}${this.__id_separator}`
-        }
-        id = id.slice(0, -(this.__id_separator.length))
-        return id
-    }
+
+    @observable id: number|undefined = undefined
 
     __init_data: any   
     __disposers = new Map()
 
     constructor (...args) { }
 
-    @computed get __id() : string | null {
-        return this.model.__id(this)
-    }
-
     get model() : any {
         return (<any>this.constructor).__proto__
-    }
-
-    // it is raw_data + ids
-    get raw_obj() : any {
-        let raw_obj: any = this.raw_data
-        for(let id_field_name of this.model.__ids.keys()) {
-            if(this[id_field_name] !== undefined) {
-                raw_obj[id_field_name] = this[id_field_name]
-            }
-        }
-        raw_obj.__id = this.__id
-        return raw_obj
     }
 
     // data only from fields (no ids)
@@ -165,6 +107,13 @@ export abstract class Model {
             }
         }
         return raw_data
+    }
+
+    // it is raw_data + id
+    get raw_obj() : any {
+        let raw_obj: any = this.raw_data
+        raw_obj.id = this.id
+        return raw_obj
     }
     
     get only_changed_raw_data() : any {
@@ -190,9 +139,9 @@ export abstract class Model {
     async create() { return await this.model.__adapter.create(this) }
     async update() { return await this.model.__adapter.update(this) }
     async delete() { return await this.model.__adapter.delete(this) }
-    async save  () { return this.__id === null ? this.create() : this.update() }
+    async save  () { return this.id === undefined ? this.create() : this.update() }
 
-    @action refresh_init_data() {
+    @action refreshInitData() {
         if(this.__init_data === undefined) this.__init_data = {}
         for (let field_name in this.model.__fields) {
             this.__init_data[field_name] = this[field_name]
@@ -200,11 +149,8 @@ export abstract class Model {
     }
 
     @action updateFromRaw(raw_obj) {
-        // update the keys only if they are not defined
-        for (let id_field_name of this.model.__ids.keys()) {
-            if (this[id_field_name] === null || this[id_field_name] === undefined) {
-                this[id_field_name] = raw_obj[id_field_name]
-            }
+        if (this.id === undefined && raw_obj.id !== undefined) {
+            this.id = raw_obj.id
         }
         // update the fields if the raw data is exist and it is different 
         for(let field_name in this.model.__fields) {
@@ -213,7 +159,6 @@ export abstract class Model {
             }
         }
     }
-
 }
 
 
@@ -232,13 +177,21 @@ export function model(constructor) {
         let model = obj.model
         makeObservable(obj)
 
-        if (model.__ids === undefined) 
-            throw(`No one id field was declared on model ${model.name}`)
+        // id field reactions
+        obj.__disposers.set('before changes',
+            intercept(obj, 'id', (change) => {
+                if (change.newValue !== undefined && obj.id !== undefined)
+                    throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`)
+                if (obj.id !== undefined && change.newValue === undefined)
+                    obj.model.eject(obj)
+                return change
+            }))
+        obj.__disposers.set('after changes',
+            observe(obj, 'id', (change) => {
+                if (obj.id !== undefined) 
+                    obj.model.inject(obj)
+            }))
 
-        // apply id-fields decorators
-        for (let id_field_name of model.__ids.keys()) {
-            model.__ids.get(id_field_name).decorator(obj, id_field_name)
-        }
         // apply fields decorators
         for (let field_name in model.__fields) {
             model.__fields[field_name].decorator(obj, field_name)
@@ -248,25 +201,8 @@ export function model(constructor) {
             model.__relations[field_name].decorator(obj, field_name)
         }
 
-        runInAction(() => {
-            // update the object from args
-            if (args[0]) {
-                let raw_obj = args[0]
-                // id-fields
-                for (let id_field_name of model.__ids.keys()) {
-                    if (raw_obj[id_field_name] !== undefined) {
-                        obj[id_field_name] = raw_obj[id_field_name]
-                    }
-                }
-                // fields 
-                for (let field_name in model.__fields) {
-                    if (raw_obj[field_name] !== undefined) {
-                        obj[field_name] = raw_obj[field_name]
-                    }
-                }
-            }
-        })
-        obj.refresh_init_data()
+        if (args[0]) obj.updateFromRaw(args[0])
+        obj.refreshInitData()
         return obj
     }
 
