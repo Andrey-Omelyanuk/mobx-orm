@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.35
+   * mobx-orm.js v1.0.36
    * Released under the MIT license.
    */
 
@@ -41,12 +41,13 @@
     class Filter {
     }
 
-    var ValueType;
+    // Note: any type can be === null
+    exports.ValueType = void 0;
     (function (ValueType) {
         ValueType[ValueType["STRING"] = 0] = "STRING";
         ValueType[ValueType["NUMBER"] = 1] = "NUMBER";
         ValueType[ValueType["BOOL"] = 2] = "BOOL";
-    })(ValueType || (ValueType = {}));
+    })(exports.ValueType || (exports.ValueType = {}));
     class SingleFilter extends Filter {
         constructor(field, value, value_type) {
             super();
@@ -79,13 +80,13 @@
             if (value_type === undefined) {
                 switch (typeof value) {
                     case 'number':
-                        this.value_type = ValueType.NUMBER;
+                        this.value_type = exports.ValueType.NUMBER;
                         break;
                     case 'boolean':
-                        this.value_type = ValueType.BOOL;
+                        this.value_type = exports.ValueType.BOOL;
                         break;
                     default:
-                        this.value_type = ValueType.STRING;
+                        this.value_type = exports.ValueType.STRING;
                 }
             }
             else {
@@ -112,6 +113,7 @@
                 return true;
             return match(obj, this.field, this.value, this.operator);
         }
+        // convert from string
         serialize(value) {
             let result;
             if (value === undefined) {
@@ -123,15 +125,15 @@
                 return;
             }
             switch (this.value_type) {
-                case ValueType.STRING:
+                case exports.ValueType.STRING:
                     result = value;
                     break;
-                case ValueType.NUMBER:
+                case exports.ValueType.NUMBER:
                     result = parseInt(value);
                     if (isNaN(result))
                         result = undefined;
                     break;
-                case ValueType.BOOL:
+                case exports.ValueType.BOOL:
                     // I'm not shure that it is string
                     result = value === 'true' ? true : value === 'false' ? false : undefined;
                     break;
@@ -148,16 +150,16 @@
             if (value === null)
                 return 'null';
             switch (this.value_type) {
-                case ValueType.STRING:
+                case exports.ValueType.STRING:
                     return '' + value;
-                case ValueType.NUMBER:
+                case exports.ValueType.NUMBER:
                     if (isNaN(value) || value === true || value === false) {
                         return undefined;
                     }
                     else {
                         return '' + value;
                     }
-                case ValueType.BOOL:
+                case exports.ValueType.BOOL:
                     // I'm not shure that it is string
                     return !!value ? 'true' : 'false';
             }

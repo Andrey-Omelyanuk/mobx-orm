@@ -178,4 +178,4 @@ declare function one(remote_model: any, ...remote_foreign_ids_names: string[]): 
 
 declare function many(remote_model: any, ...remote_foreign_ids_names: string[]): (cls: any, field_name: string) => void;
 
-export { AND, ASC, Adapter, ComboFilter, DESC, EQ, Filter, IN, LocalAdapter, Model, NOT_EQ, ORDER_BY, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawData, RawObject, SingleFilter, field, foreign, id, local, many, model, one };
+export { AND, ASC, Adapter, ComboFilter, DESC, EQ, Filter, IN, LocalAdapter, Model, NOT_EQ, ORDER_BY, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawData, RawObject, SingleFilter, ValueType, field, foreign, id, local, many, model, one };

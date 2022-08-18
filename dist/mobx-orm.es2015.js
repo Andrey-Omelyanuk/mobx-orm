@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.35
+   * mobx-orm.js v1.0.36
    * Released under the MIT license.
    */
 
@@ -37,6 +37,7 @@ function __metadata(metadataKey, metadataValue) {
 class Filter {
 }
 
+// Note: any type can be === null
 var ValueType;
 (function (ValueType) {
     ValueType[ValueType["STRING"] = 0] = "STRING";
@@ -108,6 +109,7 @@ class SingleFilter extends Filter {
             return true;
         return match(obj, this.field, this.value, this.operator);
     }
+    // convert from string
     serialize(value) {
         let result;
         if (value === undefined) {
@@ -1469,5 +1471,5 @@ function many(remote_model, ...remote_foreign_ids_names) {
     };
 }
 
-export { AND, ASC, Adapter, ComboFilter, DESC, EQ, Filter, IN, LocalAdapter, Model, NOT_EQ, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, SingleFilter, field, foreign, id, local, many, model, one };
+export { AND, ASC, Adapter, ComboFilter, DESC, EQ, Filter, IN, LocalAdapter, Model, NOT_EQ, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, SingleFilter, ValueType, field, foreign, id, local, many, model, one };
 //# sourceMappingURL=mobx-orm.es2015.js.map

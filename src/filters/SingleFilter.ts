@@ -4,6 +4,7 @@ import Query from "../query"
 import { Filter } from "./Filter"
 
 
+// Note: any type can be === null
 export enum ValueType {
     STRING,
     NUMBER,
@@ -65,6 +66,7 @@ export abstract class SingleFilter extends Filter {
         return match(obj, this.field, this.value, this.operator)
     }
 
+    // convert from string
     serialize(value: string|undefined) : void {
         let result 
         if (value === undefined) { 
