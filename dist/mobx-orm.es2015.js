@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.33
+   * mobx-orm.js v1.0.33a
    * Released under the MIT license.
    */
 
@@ -34,30 +34,31 @@ function __metadata(metadataKey, metadataValue) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
 }
 
-var FilterType;
-(function (FilterType) {
-    FilterType[FilterType["EQ"] = 0] = "EQ";
-    FilterType[FilterType["NOT_EQ"] = 1] = "NOT_EQ";
-    FilterType[FilterType["IN"] = 2] = "IN";
-    FilterType[FilterType["NOT_IN"] = 3] = "NOT_IN";
-    FilterType[FilterType["AND"] = 4] = "AND";
-    FilterType[FilterType["OR"] = 5] = "OR";
-})(FilterType || (FilterType = {}));
 class Filter {
-    constructor(type = null, field = null, value) {
+}
+
+var ValueType;
+(function (ValueType) {
+    ValueType[ValueType["STRING"] = 0] = "STRING";
+    ValueType[ValueType["NUMBER"] = 1] = "NUMBER";
+    ValueType[ValueType["BOOL"] = 2] = "BOOL";
+})(ValueType || (ValueType = {}));
+class SingleFilter extends Filter {
+    constructor(field, value, value_type) {
+        super();
         Object.defineProperty(this, "field", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "type", {
+        Object.defineProperty(this, "value", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
-        });
-        Object.defineProperty(this, "value", {
+        }); // string|number|boolean|null|undefined|Array<any>
+        Object.defineProperty(this, "value_type", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -69,179 +70,240 @@ class Filter {
             writable: true,
             value: void 0
         }); // use it for UI when we need to show options for select
-        this.type = type;
         this.field = field;
+        // auto detect type if type was not provided
+        if (value_type === undefined) {
+            switch (typeof value) {
+                case 'number':
+                    this.value_type = ValueType.NUMBER;
+                    break;
+                case 'boolean':
+                    this.value_type = ValueType.BOOL;
+                    break;
+                default:
+                    this.value_type = ValueType.STRING;
+            }
+        }
+        else {
+            this.value_type = value_type;
+        }
         this.value = value;
-        if (type === FilterType.IN && this.value === undefined)
-            this.value = [];
         makeObservable(this);
     }
-    setFromURI(uri) {
-        let search_params = new URLSearchParams(uri);
-        let value = search_params.get(this.getURIField());
-        switch (this.type) {
-            case FilterType.EQ:
-                this.value = value;
-                break;
-            case FilterType.IN:
-                this.value = value ? value.split(',') : [];
-                break;
-            case FilterType.AND:
-                for (let child of this.value) {
-                    child.setFromURI(uri);
-                }
-                break;
-            case FilterType.OR:
-            default:
-                return '';
-        }
-    }
-    getURIField() {
-        switch (this.type) {
-            case FilterType.EQ:
-                return `${this.field}__eq`;
-            case FilterType.IN:
-                return `${this.field}__in`;
-            case FilterType.AND:
-            case FilterType.OR:
-            default:
-                return '';
-        }
-    }
-    getURLSearchParams() {
-        var _a;
+    get URLSearchParams() {
         let search_params = new URLSearchParams();
-        switch (this.type) {
-            case FilterType.EQ:
-                this.value && search_params.set(this.getURIField(), this.value);
-                break;
-            case FilterType.IN:
-                ((_a = this.value) === null || _a === void 0 ? void 0 : _a.length) && search_params.set(this.getURIField(), this.value);
-                break;
-            case FilterType.AND:
-                for (let filter of this.value) {
-                    let child = filter.getURLSearchParams();
-                    child.forEach((value, key) => search_params.set(key, value));
-                }
-                break;
-            case FilterType.OR:
-        }
+        let value = this.deserialize();
+        value !== undefined && search_params.set(this.URIField, value);
         return search_params;
     }
-    is_match(obj) {
-        function EQ_match(obj, field_name, filter_value) {
-            let field_names = field_name.split('__');
-            let current_field_name = field_names[0];
-            let current_value = obj[current_field_name];
-            if (current_value === undefined || current_value === null)
-                return current_value === filter_value;
-            if (field_names.length === 0)
-                return false;
-            else if (field_names.length === 1)
-                return current_value == filter_value;
-            else if (field_names.length > 1) {
-                let next_field_name = field_name.substring(field_names[0].length + 2);
-                if (Array.isArray(current_value)) {
-                    let result = false;
-                    for (const item of current_value) {
-                        result = EQ_match(item, next_field_name, filter_value);
-                        if (result)
-                            return result;
-                    }
+    setFromURI(uri) {
+        const search_params = new URLSearchParams(uri);
+        const field_name = this.URIField;
+        const value = search_params.has(field_name) ? search_params.get(field_name) : undefined;
+        this.serialize(value);
+    }
+    isMatch(obj) {
+        // it's always match if value of filter is undefined
+        if (this.value === undefined)
+            return true;
+        return match(obj, this.field, this.value, this.operator);
+    }
+    serialize(value) {
+        let result;
+        if (value === undefined) {
+            this.value = undefined;
+            return;
+        }
+        if (value === 'null') {
+            this.value = null;
+            return;
+        }
+        switch (this.value_type) {
+            case ValueType.STRING:
+                result = value;
+                break;
+            case ValueType.NUMBER:
+                result = parseInt(value);
+                if (isNaN(result))
+                    result = undefined;
+                break;
+            case ValueType.BOOL:
+                // I'm not shure that it is string
+                result = value === 'true' ? true : value === 'false' ? false : undefined;
+                break;
+        }
+        this.value = result;
+    }
+    // convert to string
+    deserialize(value) {
+        if (value === undefined) {
+            value = this.value;
+        }
+        if (value === undefined)
+            return undefined;
+        if (value === null)
+            return 'null';
+        switch (this.value_type) {
+            case ValueType.STRING:
+                return '' + value;
+            case ValueType.NUMBER:
+                if (isNaN(value) || value === true || value === false) {
+                    return undefined;
                 }
                 else {
-                    return EQ_match(current_value, next_field_name, filter_value);
+                    return '' + value;
                 }
-            }
-            return false;
-        }
-        function IN_match(obj, field_name, filter_value) {
-            let field_names = field_name.split('__');
-            let current_field_name = field_names[0];
-            let current_value = obj[current_field_name];
-            if (current_value === null)
-                return false;
-            if (current_value === undefined)
-                return current_value === filter_value;
-            if (field_names.length === 0)
-                return false;
-            else if (field_names.length === 1) {
-                let result;
-                for (let item of filter_value) {
-                    result = item == current_value;
-                    if (result)
-                        return result;
-                }
-            }
-            else if (field_names.length > 1) {
-                let next_field_name = field_name.substring(field_names[0].length + 2);
-                if (Array.isArray(current_value)) {
-                    let result = false;
-                    for (const item of current_value) {
-                        result = IN_match(item, next_field_name, filter_value);
-                        if (result)
-                            return result;
-                    }
-                }
-                else {
-                    return IN_match(current_value, next_field_name, filter_value);
-                }
-            }
-            return false;
-        }
-        switch (this.type) {
-            case FilterType.EQ:
-                if (this.value === undefined)
-                    return true;
-                return EQ_match(obj, this.field, this.value);
-            case FilterType.IN:
-                if (this.value.length === 0)
-                    return true;
-                return IN_match(obj, this.field, this.value);
-            case FilterType.AND:
-                for (let filter of this.value)
-                    if (!filter.is_match(obj))
-                        return false;
-                return true;
-            case FilterType.OR:
-                if (!this.value.length)
-                    return true;
-                for (let filter of this.value)
-                    if (filter.is_match(obj))
-                        return true;
-                return false;
-            default:
-                // unknown type of filter == any obj is match
-                return true;
+            case ValueType.BOOL:
+                // I'm not shure that it is string
+                return !!value ? 'true' : 'false';
         }
     }
 }
 __decorate([
     observable,
-    __metadata("design:type", Number)
-], Filter.prototype, "type", void 0);
-__decorate([
-    observable,
     __metadata("design:type", Object)
-], Filter.prototype, "value", void 0);
+], SingleFilter.prototype, "value", void 0);
 __decorate([
     action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], Filter.prototype, "setFromURI", null);
-function EQ(field, value = undefined) {
-    return new Filter(FilterType.EQ, field, value);
+], SingleFilter.prototype, "setFromURI", null);
+function match(obj, field_name, filter_value, operator) {
+    let field_names = field_name.split('__');
+    let current_field_name = field_names[0];
+    let current_value = obj[current_field_name];
+    if (field_names.length === 1)
+        return operator(current_value, filter_value);
+    else if (field_names.length > 1) {
+        let next_field_name = field_name.substring(field_names[0].length + 2);
+        // we have object relation
+        if (typeof current_value === 'object' && current_value !== null) {
+            if (Array.isArray(current_value)) {
+                let result = false;
+                for (const item of current_value) {
+                    result = match(item, next_field_name, filter_value, operator);
+                    if (result)
+                        return result;
+                }
+            }
+            else {
+                return match(current_value, next_field_name, filter_value, operator);
+            }
+        }
+    }
+    return false;
 }
-function IN(field, value = []) {
-    return new Filter(FilterType.IN, field, value);
+
+class ComboFilter extends Filter {
+    constructor(filters) {
+        super();
+        Object.defineProperty(this, "filters", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.filters = filters;
+    }
+    get URLSearchParams() {
+        let search_params = new URLSearchParams();
+        for (let filter of this.filters) {
+            filter.URLSearchParams.forEach((value, key) => search_params.set(key, value));
+        }
+        return search_params;
+    }
+    setFromURI(uri) {
+        for (let filter of this.filters) {
+            filter.setFromURI(uri);
+        }
+    }
 }
-function AND(...filters) {
-    return new Filter(FilterType.AND, null, filters);
+
+class EQ_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__eq`;
+    }
+    operator(value_a, value_b) {
+        return value_a === value_b;
+    }
 }
-function OR(...filters) {
-    return new Filter(FilterType.OR, null, filters);
+function EQ(field, value, value_type) {
+    return new EQ_Filter(field, value, value_type);
 }
+
+class NOT_EQ_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__not_eq`;
+    }
+    operator(value_a, value_b) {
+        return value_a !== value_b;
+    }
+}
+function NOT_EQ(field, value, value_type) {
+    return new NOT_EQ_Filter(field, value, value_type);
+}
+
+class IN_Filter extends SingleFilter {
+    constructor(field, value, value_type) {
+        if (value === undefined) {
+            value = [];
+        }
+        super(field, value, value_type);
+    }
+    serialize(value) {
+        if (value === undefined) {
+            this.value = [];
+            return;
+        }
+        let result = [];
+        for (const i of value.split(',')) {
+            super.serialize(i);
+            if (this.value !== undefined) {
+                result.push(this.value);
+            }
+        }
+        this.value = result;
+    }
+    deserialize() {
+        let result = [];
+        for (const i of this.value) {
+            let v = super.deserialize(i);
+            if (v !== undefined) {
+                result.push(v);
+            }
+        }
+        return result.length ? result.join(',') : undefined;
+    }
+    get URIField() {
+        return `${this.field}__in`;
+    }
+    operator(value_a, value_b) {
+        // it's always match if value of filter is empty []
+        if (value_b.length === 0)
+            return true;
+        for (let v of value_b) {
+            if (v === value_a)
+                return true;
+        }
+        return false;
+    }
+}
+function IN(field, value, value_type) {
+    return new IN_Filter(field, value, value_type);
+}
+
+class AND_Filter extends ComboFilter {
+    isMatch(obj) {
+        for (let filter of this.filters) {
+            if (!filter.isMatch(obj)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+function AND(...filters) { return new AND_Filter(filters); }
 
 const ASC = true;
 const DESC = false;
@@ -338,7 +400,7 @@ class Query$2 {
         this.__disposers.push(reaction(() => {
             var _a;
             return {
-                filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.getURLSearchParams(),
+                filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams,
                 order_by: this.order_by,
                 page: this.page,
                 page_size: this.page_size,
@@ -543,7 +605,7 @@ class Query$1 extends Query$2 {
         if (this.__disposer_objects[obj.__id])
             this.__disposer_objects[obj.__id]();
         this.__disposer_objects[obj.__id] = autorun(() => {
-            let should = !this.filters || this.filters.is_match(obj);
+            let should = !this.filters || this.filters.isMatch(obj);
             let i = this.__items.indexOf(obj);
             // should be in the items and it is not in the items? add it to the items
             if (should && i == -1)
@@ -1407,5 +1469,5 @@ function many(remote_model, ...remote_foreign_ids_names) {
     };
 }
 
-export { AND, ASC, Adapter, DESC, EQ, Filter, FilterType, IN, LocalAdapter, Model, OR, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, field, foreign, id, local, many, model, one };
+export { AND, ASC, Adapter, ComboFilter, DESC, EQ, Filter, IN, LocalAdapter, Model, NOT_EQ, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, SingleFilter, field, foreign, id, local, many, model, one };
 //# sourceMappingURL=mobx-orm.es2015.js.map

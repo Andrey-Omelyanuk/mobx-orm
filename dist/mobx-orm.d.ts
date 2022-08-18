@@ -14,29 +14,46 @@ declare abstract class Adapter<M extends Model> {
     load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<M[]>;
 }
 
-declare enum FilterType {
-    EQ = 0,
-    NOT_EQ = 1,
-    IN = 2,
-    NOT_IN = 3,
-    AND = 4,
-    OR = 5
+declare abstract class Filter {
+    abstract get URLSearchParams(): URLSearchParams;
+    abstract setFromURI(uri: string): void;
+    abstract isMatch(obj: any): boolean;
 }
-declare class Filter {
+
+declare enum ValueType {
+    STRING = 0,
+    NUMBER = 1,
+    BOOL = 2
+}
+declare abstract class SingleFilter extends Filter {
     readonly field: string;
-    type: FilterType;
     value: any;
-    options: Query$1<any>;
-    constructor(type: FilterType, field: string, value: any);
-    setFromURI(uri: string): string;
-    getURIField(): string;
-    getURLSearchParams(): URLSearchParams;
-    is_match(obj: any): boolean;
+    readonly value_type: ValueType;
+    options: Query$1<Model>;
+    constructor(field: string, value?: any, value_type?: ValueType);
+    get URLSearchParams(): URLSearchParams;
+    abstract get URIField(): string;
+    setFromURI(uri: string): void;
+    abstract operator(value_a: any, value_b: any): boolean;
+    isMatch(obj: any): boolean;
+    serialize(value: string | undefined): void;
+    deserialize(value?: any): string;
 }
-declare function EQ(field: string, value?: any): Filter;
-declare function IN(field: string, value?: any[]): Filter;
+
+declare abstract class ComboFilter extends Filter {
+    readonly filters: Filter[];
+    constructor(filters?: Filter[]);
+    get URLSearchParams(): URLSearchParams;
+    setFromURI(uri: string): void;
+}
+
+declare function EQ(field: string, value?: any, value_type?: ValueType): SingleFilter;
+
+declare function NOT_EQ(field: string, value?: any, value_type?: ValueType): SingleFilter;
+
+declare function IN(field: string, value?: any[], value_type?: ValueType): SingleFilter;
+
 declare function AND(...filters: Filter[]): Filter;
-declare function OR(...filters: Filter[]): Filter;
 
 declare const ASC = true;
 declare const DESC = false;
@@ -161,4 +178,4 @@ declare function one(remote_model: any, ...remote_foreign_ids_names: string[]): 
 
 declare function many(remote_model: any, ...remote_foreign_ids_names: string[]): (cls: any, field_name: string) => void;
 
-export { AND, ASC, Adapter, DESC, EQ, Filter, FilterType, IN, LocalAdapter, Model, OR, ORDER_BY, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawData, RawObject, field, foreign, id, local, many, model, one };
+export { AND, ASC, Adapter, ComboFilter, DESC, EQ, Filter, IN, LocalAdapter, Model, NOT_EQ, ORDER_BY, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawData, RawObject, SingleFilter, field, foreign, id, local, many, model, one };
