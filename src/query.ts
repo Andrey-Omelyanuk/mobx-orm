@@ -92,7 +92,7 @@ export default class Query<M extends Model> extends QeuryBase<M> {
         if (this.__disposer_objects[obj.__id]) this.__disposer_objects[obj.__id]()
         this.__disposer_objects[obj.__id] = autorun(
             () => {
-                let should = !this.filters || this.filters.is_match(obj)
+                let should = !this.filters || this.filters.isMatch(obj)
                 let i = this.__items.indexOf(obj)
                 // should be in the items and it is not in the items? add it to the items
                 if ( should && i == -1) runInAction(() => this.__items.push(obj))

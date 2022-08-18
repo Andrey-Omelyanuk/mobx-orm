@@ -44,7 +44,7 @@ export default abstract class Query<M extends Model> {
 
         this.__disposers.push(reaction(
             () => { return { 
-                filter          : this.filters?.getURLSearchParams(), 
+                filter          : this.filters?.URLSearchParams, 
                 order_by        : this.order_by, 
                 page            : this.page, 
                 page_size       : this.page_size,
