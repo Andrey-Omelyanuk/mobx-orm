@@ -1,4 +1,4 @@
-import { reaction, runInAction } from "mobx"
+import { action, reaction, runInAction } from "mobx"
 import { Model } from "./model"
 import Adapter from "./adapters/adapter"
 import QueryBase, { ORDER_BY } from './query-base'
@@ -9,11 +9,10 @@ import { Filter } from "./filters"
 
 export default class Query<M extends Model> extends QueryBase<M> {
 
+    @action('MO: Query Page - load')
     __load(objs: M[]) {
-        runInAction(() => { 
-            this.__items.splice(0, this.__items.length)
-            this.__items.push(...objs)
-        })
+        this.__items.splice(0, this.__items.length)
+        this.__items.push(...objs)
     }
 
     get items() { return this.__items }

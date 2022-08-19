@@ -21,7 +21,7 @@ export default function one(remote_model: any, remote_foreign_id_name?: string) 
                 remote_foreign_id_name: remote_foreign_id_name
             } 
         } 
-        const disposer_name = `one ${model.name}.${field_name}` 
+        const disposer_name = `MO: One - update - ${model.name}.${field_name}` 
 
         observe(remote_model.__cache, (change: any) => {
             let remote_obj

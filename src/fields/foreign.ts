@@ -1,8 +1,7 @@
-import {intercept, observe, extendObservable, reaction} from 'mobx'
+import {extendObservable, reaction, action} from 'mobx'
 
 
 function field_foreign(obj, field_name) {
-    let edit_mode = false
     let settings = obj.model.__relations[field_name].settings
     let foreign_model   = settings.foreign_model
     let foreign_id_name = settings.foreign_id_name
@@ -18,9 +17,9 @@ function field_foreign(obj, field_name) {
             return foreign_model.__cache.get(obj[foreign_id_name])
         },
         // update foreign field
-        (_new, _old) => {
-            obj[field_name] = _new 
-        },
+        action('MO: Foreign - update',
+            (_new, _old) => obj[field_name] = _new 
+        ),
         {fireImmediately: true}
     )
 }

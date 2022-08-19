@@ -1,4 +1,4 @@
-import { autorun, computed, observe, reaction, runInAction } from 'mobx'
+import { action, autorun, computed, observe, reaction } from 'mobx'
 import { Model } from './model'
 import Adapter from './adapters/adapter'
 import QeuryBase, { ASC, DESC, ORDER_BY } from './query-base'
@@ -20,25 +20,25 @@ export default class Query<M extends Model> extends QeuryBase<M> {
         super(adapter, base_cache, filters, order_by)
 
         // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(this.__base_cache, (change: any) => {
+        this.__disposers.push(observe(this.__base_cache, 
+            action('MO: Query - update from cache changes',
+            (change: any) => {
+                if (change.type == 'add') {
+                    this.__watch_obj(change.newValue)
+                }
+                if (change.type == "delete") {
+                    let id = change.name
+                    let obj  = change.oldValue
 
-            if (change.type == 'add') {
-                this.__watch_obj(change.newValue)
-            }
-            if (change.type == "delete") {
-                let id = change.name
-                let obj  = change.oldValue
+                    this.__disposer_objects[id]()
+                    delete this.__disposer_objects[id]
 
-                this.__disposer_objects[id]()
-                delete this.__disposer_objects[id]
-
-                let i = this.__items.indexOf(obj)
-                if (i != -1)
-                    runInAction(() => {
+                    let i = this.__items.indexOf(obj)
+                    if (i != -1)
                         this.__items.splice(i, 1)
-                    })
-            }
-        }))
+                }
+            })
+        ))
 
         // I think it does not make sense, but it make sense for QueryPage!
         // this.__disposers.push(reaction(
@@ -90,15 +90,17 @@ export default class Query<M extends Model> extends QeuryBase<M> {
 
     __watch_obj(obj) {
         if (this.__disposer_objects[obj.id]) this.__disposer_objects[obj.id]()
-        this.__disposer_objects[obj.id] = autorun(
-            () => {
-                let should = !this.filters || this.filters.isMatch(obj)
+        this.__disposer_objects[obj.id] = reaction(
+            () =>  !this.filters || this.filters.isMatch(obj),
+            action('MO: Query - obj was changed',
+            (should: boolean) => {
                 let i = this.__items.indexOf(obj)
                 // should be in the items and it is not in the items? add it to the items
-                if ( should && i == -1) runInAction(() => this.__items.push(obj))
+                if ( should && i == -1) this.__items.push(obj)
                 // should not be in the items and it is in the items? remove it from the items
-                if (!should && i != -1) runInAction(() => this.__items.splice(i, 1))
-            }
+                if (!should && i != -1) this.__items.splice(i, 1)
+            }),
+            { fireImmediately: true }
         )
     }
 }

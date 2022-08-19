@@ -49,7 +49,8 @@ export abstract class SingleFilter extends Filter {
 
     abstract get URIField() : string
 
-    @action setFromURI(uri: string) {
+    @action('MO: Filter - set from URI')
+    setFromURI(uri: string) {
         const search_params = new URLSearchParams(uri)
         const field_name    = this.URIField
         const value         = search_params.has(field_name) ? search_params.get(field_name) : undefined

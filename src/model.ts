@@ -35,7 +35,8 @@ export abstract class Model {
     }
 
     // add obj to the cache
-    @action static inject(obj: Model) {
+    @action('MO: model - inject')
+    static inject(obj: Model) {
         if (obj.id === undefined)                    
             throw new Error(`Object should have id!`)
         if (this.__cache.has(obj.id)) {
@@ -46,7 +47,8 @@ export abstract class Model {
     }
 
     // remove obj from the cache
-    @action static eject(obj: Model) {
+    @action('MO: model - eject')
+    static eject(obj: Model) {
         if (this.__cache.has(obj.id)) 
             this.__cache.delete(obj.id)
     }
@@ -67,7 +69,8 @@ export abstract class Model {
         return this.__adapter.find(filters) 
     }
 
-    @action static updateCache(raw_obj): Model {
+    @action('MO: model - update the cache from raw')
+    static updateCache(raw_obj): Model {
         let obj: Model
         if (this.__cache.has(raw_obj.id)) {
             obj = this.__cache.get(raw_obj.id)
@@ -79,7 +82,8 @@ export abstract class Model {
         return obj
     }
 
-    @action static clearCache() {
+    @action('MO: model - clear the cache')
+    static clearCache() {
         // id = undefined is equal to remove obj from cache 
         for (let obj of this.__cache.values()) {
             obj.id = undefined 
@@ -141,14 +145,16 @@ export abstract class Model {
     async delete() { return await this.model.__adapter.delete(this) }
     async save  () { return this.id === undefined ? this.create() : this.update() }
 
-    @action refreshInitData() {
+    @action('MO: obj - refresh init data')
+    refreshInitData() {
         if(this.__init_data === undefined) this.__init_data = {}
         for (let field_name in this.model.__fields) {
             this.__init_data[field_name] = this[field_name]
         }
     }
 
-    @action updateFromRaw(raw_obj) {
+    @action('MO: obj - update from raw')
+    updateFromRaw(raw_obj) {
         if (this.id === undefined && raw_obj.id !== undefined) {
             this.id = raw_obj.id
         }

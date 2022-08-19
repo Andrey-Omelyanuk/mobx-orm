@@ -19,7 +19,7 @@ export default function many(remote_model: any, remote_foreign_id_name?: string)
                 remote_foreign_id_name: remote_foreign_id_name
             } 
         } 
-        const disposer_name = `many ${model.name}.${field_name}`
+        const disposer_name = `MO: Many - update - ${model.name}.${field_name}`
         
         // watch for remote object in the cache 
         observe(remote_model.__cache, (remote_change: any) => {

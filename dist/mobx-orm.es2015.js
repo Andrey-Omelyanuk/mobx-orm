@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.36
+   * mobx-orm.js v1.0.38
    * Released under the MIT license.
    */
 
@@ -166,7 +166,7 @@ __decorate([
     __metadata("design:type", Object)
 ], SingleFilter.prototype, "value", void 0);
 __decorate([
-    action,
+    action('MO: Filter - set from URI'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
@@ -407,7 +407,7 @@ class Query$2 {
                 page: this.page,
                 page_size: this.page_size,
             };
-        }, () => { runInAction(() => this.need_to_update = true); }));
+        }, action('MO: Query Base - need to update', () => this.need_to_update = true)));
     }
     get is_loading() { return this.__is_loading; }
     get is_ready() { return this.__is_ready; }
@@ -447,6 +447,7 @@ class Query$2 {
             });
         }
         catch (e) {
+            // 'MO: Query Base - shadow load - error',
             runInAction(() => this.__error = e);
             throw e;
         }
@@ -511,13 +512,13 @@ __decorate([
     __metadata("design:type", String)
 ], Query$2.prototype, "__error", void 0);
 __decorate([
-    action,
+    action('MO: Query Base - load'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], Query$2.prototype, "load", null);
 __decorate([
-    action,
+    action('MO: Query Base - shadow load'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
@@ -536,7 +537,7 @@ class Query$1 extends Query$2 {
     constructor(adapter, base_cache, filters, order_by) {
         super(adapter, base_cache, filters, order_by);
         // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(this.__base_cache, (change) => {
+        this.__disposers.push(observe(this.__base_cache, action('MO: Query - update from cache changes', (change) => {
             if (change.type == 'add') {
                 this.__watch_obj(change.newValue);
             }
@@ -547,11 +548,9 @@ class Query$1 extends Query$2 {
                 delete this.__disposer_objects[id];
                 let i = this.__items.indexOf(obj);
                 if (i != -1)
-                    runInAction(() => {
-                        this.__items.splice(i, 1);
-                    });
+                    this.__items.splice(i, 1);
             }
-        }));
+        })));
         // I think it does not make sense, but it make sense for QueryPage!
         // this.__disposers.push(reaction(
         //     () => this.need_to_update,
@@ -606,16 +605,15 @@ class Query$1 extends Query$2 {
     __watch_obj(obj) {
         if (this.__disposer_objects[obj.id])
             this.__disposer_objects[obj.id]();
-        this.__disposer_objects[obj.id] = autorun(() => {
-            let should = !this.filters || this.filters.isMatch(obj);
+        this.__disposer_objects[obj.id] = reaction(() => !this.filters || this.filters.isMatch(obj), action('MO: Query - obj was changed', (should) => {
             let i = this.__items.indexOf(obj);
             // should be in the items and it is not in the items? add it to the items
             if (should && i == -1)
-                runInAction(() => this.__items.push(obj));
+                this.__items.push(obj);
             // should not be in the items and it is in the items? remove it from the items
             if (!should && i != -1)
-                runInAction(() => this.__items.splice(i, 1));
-        });
+                this.__items.splice(i, 1);
+        }), { fireImmediately: true });
     }
 }
 __decorate([
@@ -627,10 +625,8 @@ __decorate([
 // TODO: implement need_to_update
 class Query extends Query$2 {
     __load(objs) {
-        runInAction(() => {
-            this.__items.splice(0, this.__items.length);
-            this.__items.push(...objs);
-        });
+        this.__items.splice(0, this.__items.length);
+        this.__items.push(...objs);
     }
     get items() { return this.__items; }
     // TODO: add actions for QueryBase and QueryPage
@@ -652,6 +648,12 @@ class Query extends Query$2 {
         });
     }
 }
+__decorate([
+    action('MO: Query Page - load'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Array]),
+    __metadata("design:returntype", void 0)
+], Query.prototype, "__load", null);
 
 class Model {
     constructor(...args) {
@@ -783,37 +785,37 @@ __decorate([
     __metadata("design:type", Number)
 ], Model.prototype, "id", void 0);
 __decorate([
-    action,
+    action('MO: obj - refresh init data'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], Model.prototype, "refreshInitData", null);
 __decorate([
-    action,
+    action('MO: obj - update from raw'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Model.prototype, "updateFromRaw", null);
 __decorate([
-    action,
+    action('MO: model - inject'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Model]),
     __metadata("design:returntype", void 0)
 ], Model, "inject", null);
 __decorate([
-    action,
+    action('MO: model - eject'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Model]),
     __metadata("design:returntype", void 0)
 ], Model, "eject", null);
 __decorate([
-    action,
+    action('MO: model - update the cache from raw'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Model)
 ], Model, "updateCache", null);
 __decorate([
-    action,
+    action('MO: model - clear the cache'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
@@ -1046,9 +1048,7 @@ function field_foreign(obj, field_name) {
         return foreign_model.__cache.get(obj[foreign_id_name]);
     }, 
     // update foreign field
-    (_new, _old) => {
-        obj[field_name] = _new;
-    }, { fireImmediately: true });
+    action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true });
 }
 function foreign(foreign_model, foreign_id_name) {
     foreign_model = foreign_model.__proto__; // TODO: band-aid
@@ -1087,7 +1087,7 @@ function one(remote_model, remote_foreign_id_name) {
                 remote_foreign_id_name: remote_foreign_id_name
             }
         };
-        const disposer_name = `one ${model.name}.${field_name}`;
+        const disposer_name = `MO: One - update - ${model.name}.${field_name}`;
         observe(remote_model.__cache, (change) => {
             let remote_obj;
             switch (change.type) {
@@ -1137,7 +1137,7 @@ function many(remote_model, remote_foreign_id_name) {
                 remote_foreign_id_name: remote_foreign_id_name
             }
         };
-        const disposer_name = `many ${model.name}.${field_name}`;
+        const disposer_name = `MO: Many - update - ${model.name}.${field_name}`;
         // watch for remote object in the cache 
         observe(remote_model.__cache, (remote_change) => {
             let remote_obj;

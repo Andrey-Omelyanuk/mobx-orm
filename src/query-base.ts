@@ -49,7 +49,9 @@ export default abstract class Query<M extends Model> {
                 page            : this.page, 
                 page_size       : this.page_size,
              }},
-            () => { runInAction(() => this.need_to_update = true )}
+            action('MO: Query Base - need to update',
+                () => this.need_to_update = true 
+            )
         ))
     }
 
@@ -66,7 +68,8 @@ export default abstract class Query<M extends Model> {
     abstract __load(objs: M[])
 
     // use it if everybody should know that the query data is updating
-    @action async load() {
+    @action('MO: Query Base - load')
+    async load() {
         this.__is_loading = true
         try {
             await this.shadowLoad()
@@ -80,7 +83,8 @@ export default abstract class Query<M extends Model> {
 
     // use it if nobody should know that you load data for the query
     // for example you need to update the current data on the page and you don't want to show a spinner
-    @action async shadowLoad() {
+    @action('MO: Query Base - shadow load')
+    async shadowLoad() {
         try {
             let objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page*this.page_size)
             this.__load(objs)
@@ -92,7 +96,8 @@ export default abstract class Query<M extends Model> {
             })
         }
         catch(e) {
-            runInAction(() => this.__error = e)
+            // 'MO: Query Base - shadow load - error',
+            runInAction( () => this.__error = e)
             throw e
         }
     }
