@@ -71,14 +71,6 @@ describe('Model Class', () => {
             let obj = A.updateCache(raw_obj)        ; expect(a).toBe(obj)
                                                       expect(a).toMatchObject({id: 1, a: 3 })
         })
-
-        // it('update exist object', async () => {
-        //     let a = new A({id: 1, a: 2, b: 'test', c: true})
-        //     let obj = A.updateCache({id: 1, b: 'hello'})
-        //     expect(obj).toMatchObject({id: 1, a: 2, b: 'hello', c: true})
-        //     expect(obj.model.__cache.get(obj.id)).toBe(obj)
-        //     expect(obj).toBe(a)
-        // })
     })
 
     describe('clearCache()', () => {

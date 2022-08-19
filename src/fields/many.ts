@@ -29,7 +29,7 @@ export default function many(remote_model: any, remote_foreign_id_name?: string)
                     remote_obj = remote_change.newValue
                     remote_obj.__disposers.set(disposer_name , reaction(
                         () => model.__cache.get(remote_obj[remote_foreign_id_name]),
-                        action((_new, _old) => {
+                        action(disposer_name, (_new, _old) => {
                             if (_old) {
                                 const i = _old[field_name].indexOf(remote_obj)
                                 if (i > -1)

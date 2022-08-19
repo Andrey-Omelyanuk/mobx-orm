@@ -1035,7 +1035,6 @@
     }
 
     function field_foreign(obj, field_name) {
-        let edit_mode = false;
         let settings = obj.model.__relations[field_name].settings;
         let foreign_model = settings.foreign_model;
         let foreign_id_name = settings.foreign_id_name;
@@ -1044,62 +1043,16 @@
         mobx.reaction(
         // watch on foreign cache for foreign object
         () => {
-            if (obj.id === undefined)
+            if (obj[foreign_id_name] === undefined)
                 return undefined;
-            if (obj.id === null)
+            if (obj[foreign_id_name] === null)
                 return null;
-            return foreign_model.__cache.get(obj.id);
+            return foreign_model.__cache.get(obj[foreign_id_name]);
         }, 
         // update foreign field
-        (foreign_obj, prev, reaction) => {
-            obj[field_name] = foreign_obj;
-        });
-        // Setter
-        // 1. checks before set new changes
-        mobx.intercept(obj, field_name, (change) => {
-            if (change.newValue !== null && !(change.newValue.model == foreign_model)) {
-                throw new Error(`You can set only instance of "${foreign_model.name}" or null`);
-            }
-            return change;
-        });
-        // 2. after changes run trigger for "change foreign_id"
-        mobx.observe(obj, field_name, (change) => {
-            let new_foreign_obj = change.newValue;
-            let old_foreign_obj = change.oldValue;
-            if (new_foreign_obj === old_foreign_obj || edit_mode)
-                return; // it will help stop endless loop A.b -> A.b_id -> A.b -> A.b_id ...
-            edit_mode = true;
-            try {
-                // if foreign set to value then update foreign_id on the obj
-                if (change.newValue === undefined || change.newValue === null) {
-                    obj[foreign_id_name] = change.newValue;
-                }
-                else {
-                    obj[foreign_id_name] = change.newValue.id;
-                }
-                edit_mode = false;
-            }
-            catch (e) {
-                // rollback changes!
-                if (change.oldValue === undefined || change.oldValue === null) {
-                    obj[foreign_id_name] = change.oldValue;
-                }
-                else {
-                    obj[foreign_id_name] = change.oldValue.id;
-                }
-                edit_mode = false;
-                throw e;
-            }
-            // if foreign have the one then update the one
-            if (settings.one) {
-                if (old_foreign_obj) {
-                    old_foreign_obj[settings.one] = null;
-                }
-                if (new_foreign_obj) {
-                    new_foreign_obj[settings.one] = obj;
-                }
-            }
-        });
+        (_new, _old) => {
+            obj[field_name] = _new;
+        }, { fireImmediately: true });
     }
     function foreign(foreign_model, foreign_id_name) {
         foreign_model = foreign_model.__proto__; // TODO: band-aid
@@ -1149,7 +1102,7 @@
                                 id: remote_obj[remote_foreign_id_name],
                                 obj: model.__cache.get(remote_obj[remote_foreign_id_name])
                             };
-                        }, mobx.action((_new, _old) => {
+                        }, mobx.action(disposer_name, (_new, _old) => {
                             if (_old === null || _old === void 0 ? void 0 : _old.obj)
                                 _old.obj[field_name] = _new.id ? undefined : null;
                             if (_new === null || _new === void 0 ? void 0 : _new.obj)
@@ -1195,7 +1148,7 @@
                 switch (remote_change.type) {
                     case 'add':
                         remote_obj = remote_change.newValue;
-                        remote_obj.__disposers.set(disposer_name, mobx.reaction(() => model.__cache.get(remote_obj[remote_foreign_id_name]), mobx.action((_new, _old) => {
+                        remote_obj.__disposers.set(disposer_name, mobx.reaction(() => model.__cache.get(remote_obj[remote_foreign_id_name]), mobx.action(disposer_name, (_new, _old) => {
                             if (_old) {
                                 const i = _old[field_name].indexOf(remote_obj);
                                 if (i > -1)

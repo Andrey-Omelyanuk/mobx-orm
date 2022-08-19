@@ -1,6 +1,7 @@
 import { Model, model } from '../model'
 import foreign from './foreign'
 import field from './field'
+import { runInAction } from 'mobx'
 
 
 describe('Field: foreign', () => {
@@ -59,43 +60,30 @@ describe('Field: foreign', () => {
         })
 
         it('foreign obj create before', async () => {
-            // let a = new A({id: 1         }) 
-            // let b = new B({id: 2, a_id: 1})     ; expect(b.a).toBe(a)
+            let a = new A({id: 1         }) 
+            let b = new B({id: 2, a_id: 1})     ; expect(b.a).toBe(a)
         })
 
-        // it('foreign obj create after', async () => {
-        //     let b = new B({id: 2, a_id: 1})     ; expect(b.a).toBe(undefined)
-        //     let a = new A({id: 1         })     ; expect(b.a).toBe(a)
-        // })
+        it('foreign obj create after', async () => {
+            let b = new B({id: 2, a_id: 1})     ; expect(b.a).toBe(undefined)
+            let a = new A({id: 1         })     ; expect(b.a).toBe(a)
+        })
 
-        // it('foreign_id edit', async () => {
-        //     let a1 = new A({id: 1}) 
-        //     let a2 = new A({id: 2}) 
-        //     let b  = new B({id: 2})             ; expect(b.a).toBe(undefined)
-        //     runInAction(() => b.a_id = 0)       ; expect(b.a).toBe(undefined)
-        //     runInAction(() => b.a_id = 1)       ; expect(b.a).toBe(a1)
-        //     runInAction(() => b.a_id = 2)       ; expect(b.a).toBe(a2)
-        //     runInAction(() => b.a_id = 0)       ; expect(b.a).toBe(null)
-        // })
+        it('foreign_id edit', async () => {
+            let a1 = new A({id: 1}) 
+            let a2 = new A({id: 2}) 
+            let b  = new B({id: 2})             ; expect(b.a).toBe(undefined)
+            runInAction(() => b.a_id = 0)       ; expect(b.a).toBe(undefined)
+            runInAction(() => b.a_id = 1)       ; expect(b.a).toBe(a1)
+            runInAction(() => b.a_id = 2)       ; expect(b.a).toBe(a2)
+            runInAction(() => b.a_id = 0)       ; expect(b.a).toBe(undefined)
+            runInAction(() => b.a_id = null)    ; expect(b.a).toBe(null)
+        })
 
-        // it('foreing object delete', async () => {
-        //     let a = new A({id: 1})
-        //     let b = new B({id: 2, a_id: 1}) ; expect(b.a).toBe(a)
-        //     runInAction(() => a.id = null)  ; expect(b.a).toBeNull()
-        // })
-
-        // it('set foreing null to object', async () => {
-        //     let a = new A({id: 1})
-        //     let b = new B({id: 2})
-        //     runInAction(() => b.a = a );    expect(b.a   ).toBe(a)
-        //                                     expect(b.a_id).toBe(a.id)
-        // })
-
-        // it('set foreing object to null', async () => {
-        //     let a = new A({id: 1})
-        //     let b = new B({id: 2, a_id: 1})
-        //     runInAction(() => b.a = null ); expect(b.a   ).toBeNull()
-        //                                     expect(b.a_id).toBeNull()
-        // })
+        it('foreing object delete', async () => {
+            let a = new A({id: 1})
+            let b = new B({id: 2, a_id: 1})     ; expect(b.a).toBe(a)
+            runInAction(() => a.id = undefined) ; expect(b.a).toBe(undefined)
+        })
     })
 })
