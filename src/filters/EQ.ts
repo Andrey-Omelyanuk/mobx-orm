@@ -1,5 +1,6 @@
 import { SingleFilter, ValueType } from "./SingleFilter"
 
+
 export class EQ_Filter extends SingleFilter {
 
     get URIField(): string {

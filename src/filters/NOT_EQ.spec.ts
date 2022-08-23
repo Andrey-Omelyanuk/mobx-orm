@@ -1,4 +1,4 @@
-import { NOT_EQ } from './NOT_EQ'
+import { NOT_EQ } from '../'
 
 
 describe('NOT_EQ Filter', () => {

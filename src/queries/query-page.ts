@@ -1,13 +1,13 @@
 import { action, reaction, runInAction } from "mobx"
-import { Model } from "./model"
-import Adapter from "./adapters/adapter"
-import QueryBase, { ORDER_BY } from './query-base'
-import { Filter } from "./filters"
+import { Model } from "../model"
+import { Adapter } from "../adapters"
+import { QueryBase, ORDER_BY } from './query-base'
+import { Filter } from "../filters"
 
 
 // TODO: implement need_to_update
 
-export default class Query<M extends Model> extends QueryBase<M> {
+export class QueryPage<M extends Model> extends QueryBase<M> {
 
     @action('MO: Query Page - load')
     __load(objs: M[]) {

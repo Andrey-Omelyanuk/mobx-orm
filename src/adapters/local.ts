@@ -1,12 +1,12 @@
 import { Model, RawData, RawObject } from '../model'
-import Adapter  from './adapter'
+import { Adapter }  from './adapter'
 
 /*
 You can use this adapter for mock data or for unit test
 */
 
 
-export let store: {string?: {number: Model}} = {}
+export let local_store: {string?: {number: Model}} = {}
 
 
 function timeout(ms: number) {
@@ -14,7 +14,7 @@ function timeout(ms: number) {
 }
 
 
-export default class LocalAdapter<M extends Model> extends Adapter<M> {
+export class LocalAdapter<M extends Model> extends Adapter<M> {
 
     readonly store_name: string
 
@@ -26,13 +26,13 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
         for(let obj of data) {
             objs[obj.id] = obj
         }
-        store[this.store_name] = objs
+        local_store[this.store_name] = objs
     }
 
     constructor(model: any, store_name?: string) {
         super(model)
         this.store_name = store_name ? store_name : model.__proto__.name
-        store[this.store_name] = {}
+        local_store[this.store_name] = {}
     }
 
     async __create(raw_data: RawData) : Promise<RawObject> {
@@ -40,18 +40,18 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
 
         // calculate and set new ID
         let ids = [0]
-        for(let id of Object.keys(store[this.store_name])) {
+        for(let id of Object.keys(local_store[this.store_name])) {
             ids.push(parseInt(id))
         }
         let max = Math.max.apply(null, ids)
         raw_data.id = max + 1
-        store[this.store_name][raw_data.id] = raw_data
+        local_store[this.store_name][raw_data.id] = raw_data
         return raw_data as RawObject 
     }
 
     async __update(obj_id: number, only_changed_raw_data: RawData) : Promise<RawObject> {
         if (this.delay) await timeout(this.delay) 
-        let raw_obj = store[this.store_name][obj_id] 
+        let raw_obj = local_store[this.store_name][obj_id] 
         for(let field of Object.keys(only_changed_raw_data)) {
             raw_obj[field] = only_changed_raw_data[field]
         }
@@ -60,13 +60,13 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
 
     async __delete(obj_id: number) : Promise<void> {
         if (this.delay) await timeout(this.delay) 
-        delete store[this.store_name][obj_id]
+        delete local_store[this.store_name][obj_id]
     }
 
     async __find(where) : Promise<RawObject> {
         if (this.delay) await timeout(this.delay) 
         // TODO: apply where, and throw error if no obj or multi objs
-        let raw_obj = Object.values(store[this.store_name])[0]
+        let raw_obj = Object.values(local_store[this.store_name])[0]
         return raw_obj
     }
 
@@ -75,12 +75,12 @@ export default class LocalAdapter<M extends Model> extends Adapter<M> {
         let raw_objs = []
         // filter
         if (where) {
-            for(let raw_obj of Object.values(store[this.store_name])) {
+            for(let raw_obj of Object.values(local_store[this.store_name])) {
 
             }
         }
         else {
-            raw_objs = Object.values(store[this.store_name])
+            raw_objs = Object.values(local_store[this.store_name])
         }
 
         // order_by (sort)

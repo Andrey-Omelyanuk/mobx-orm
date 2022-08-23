@@ -1,5 +1,4 @@
-import { Model, model } from './model'
-import field from './fields/field'
+import { Model, model, field } from './'
 
 
 describe('Model Instance', () => {

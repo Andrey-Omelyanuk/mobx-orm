@@ -1,5 +1,4 @@
-import { IN } from './IN'
-import { ValueType } from './SingleFilter'
+import { IN, ValueType } from '../'
 
 
 describe('IN Filter', () => {

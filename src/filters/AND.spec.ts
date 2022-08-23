@@ -1,5 +1,5 @@
 import { reaction, runInAction } from 'mobx'
-import { EQ, EQ_Filter } from './EQ'
+import { EQ, EQ_Filter } from '../'
 
 
 describe('AND Filter', () => {

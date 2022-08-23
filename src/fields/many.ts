@@ -1,4 +1,4 @@
-import { observe, extendObservable, autorun, runInAction, reaction, action } from 'mobx'
+import { observe, extendObservable, runInAction, reaction, action } from 'mobx'
 import { Model } from '../model'
 
 
@@ -6,7 +6,7 @@ function field_many(obj: Model, field_name) {
     extendObservable(obj, { [field_name]: [] })
 }
 
-export default function many(remote_model: any, remote_foreign_id_name?: string) {
+export function many(remote_model: any, remote_foreign_id_name?: string) {
     return function (cls: any, field_name: string) {
         let model = cls.prototype.constructor
         if (model.__relations === undefined) model.__relations = {}

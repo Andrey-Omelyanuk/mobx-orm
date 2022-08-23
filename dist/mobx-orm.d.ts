@@ -14,6 +14,25 @@ declare abstract class Adapter<M extends Model> {
     load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<M[]>;
 }
 
+declare let local_store: {
+    string?: {
+        number: Model;
+    };
+};
+declare class LocalAdapter<M extends Model> extends Adapter<M> {
+    readonly store_name: string;
+    delay: number;
+    init_local_data(data: RawObject[]): void;
+    constructor(model: any, store_name?: string);
+    __create(raw_data: RawData): Promise<RawObject>;
+    __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
+    __delete(obj_id: number): Promise<void>;
+    __find(where: any): Promise<RawObject>;
+    __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject[]>;
+    getTotalCount(where?: any): Promise<number>;
+}
+declare function local(): (cls: any) => void;
+
 declare abstract class Filter {
     abstract get URLSearchParams(): URLSearchParams;
     abstract setFromURI(uri: string): void;
@@ -29,7 +48,7 @@ declare abstract class SingleFilter extends Filter {
     readonly field: string;
     value: any;
     readonly value_type: ValueType;
-    options: Query$1<Model>;
+    options: Query<Model>;
     constructor(field: string, value?: any, value_type?: ValueType);
     get URLSearchParams(): URLSearchParams;
     abstract get URIField(): string;
@@ -39,6 +58,7 @@ declare abstract class SingleFilter extends Filter {
     serialize(value: string | undefined): void;
     deserialize(value?: any): string;
 }
+declare function match(obj: any, field_name: string, filter_value: any, operator: (value_a: any, value_b: any) => boolean): boolean;
 
 declare abstract class ComboFilter extends Filter {
     readonly filters: Filter[];
@@ -47,18 +67,36 @@ declare abstract class ComboFilter extends Filter {
     setFromURI(uri: string): void;
 }
 
+declare class EQ_Filter extends SingleFilter {
+    get URIField(): string;
+    operator(value_a: any, value_b: any): boolean;
+}
 declare function EQ(field: string, value?: any, value_type?: ValueType): SingleFilter;
 
+declare class NOT_EQ_Filter extends SingleFilter {
+    get URIField(): string;
+    operator(value_a: any, value_b: any): boolean;
+}
 declare function NOT_EQ(field: string, value?: any, value_type?: ValueType): SingleFilter;
 
+declare class IN_Filter extends SingleFilter {
+    constructor(field: string, value?: any, value_type?: ValueType);
+    serialize(value: string | undefined): void;
+    deserialize(): string;
+    get URIField(): string;
+    operator(value_a: any, value_b: any): boolean;
+}
 declare function IN(field: string, value?: any[], value_type?: ValueType): SingleFilter;
 
+declare class AND_Filter extends ComboFilter {
+    isMatch(obj: any): boolean;
+}
 declare function AND(...filters: Filter[]): Filter;
 
 declare const ASC = true;
 declare const DESC = false;
 declare type ORDER_BY = Map<string, boolean>;
-declare abstract class Query$2<M extends Model> {
+declare abstract class QueryBase<M extends Model> {
     filters: Filter;
     order_by: ORDER_BY;
     page: number;
@@ -87,14 +125,14 @@ declare abstract class Query$2<M extends Model> {
     loading(): Promise<Boolean>;
 }
 
-declare class Query$1<M extends Model> extends Query$2<M> {
+declare class Query<M extends Model> extends QueryBase<M> {
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY);
     get items(): M[];
     __load(objs: M[]): void;
     __watch_obj(obj: any): void;
 }
 
-declare class Query<M extends Model> extends Query$2<M> {
+declare class QueryPage<M extends Model> extends QueryBase<M> {
     __load(objs: M[]): void;
     get items(): M[];
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number);
@@ -121,8 +159,8 @@ declare abstract class Model {
     };
     static inject(obj: Model): void;
     static eject(obj: Model): void;
-    static getQuery(filters?: Filter, order_by?: ORDER_BY): Query$1<Model>;
-    static getQueryPage(filter?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number): Query<Model>;
+    static getQuery(filters?: Filter, order_by?: ORDER_BY): Query<Model>;
+    static getQueryPage(filter?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number): QueryPage<Model>;
     static get(id: number): Model;
     static find(filters: Filter): Promise<Model>;
     static updateCache(raw_obj: any): Model;
@@ -145,20 +183,7 @@ declare abstract class Model {
 }
 declare function model(constructor: any): any;
 
-declare class LocalAdapter<M extends Model> extends Adapter<M> {
-    readonly store_name: string;
-    delay: number;
-    init_local_data(data: RawObject[]): void;
-    constructor(model: any, store_name?: string);
-    __create(raw_data: RawData): Promise<RawObject>;
-    __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
-    __delete(obj_id: number): Promise<void>;
-    __find(where: any): Promise<RawObject>;
-    __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject[]>;
-    getTotalCount(where?: any): Promise<number>;
-}
-declare function local(): (cls: any) => void;
-
+declare function field_field(obj: any, field_name: any): void;
 declare function field(cls: any, field_name: string): void;
 
 declare function foreign(foreign_model: any, foreign_id_name?: string): (cls: any, field_name: string) => void;
@@ -167,4 +192,4 @@ declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: 
 
 declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-export { AND, ASC, Adapter, ComboFilter, DESC, EQ, Filter, IN, LocalAdapter, Model, NOT_EQ, ORDER_BY, Query$1 as Query, Query$2 as QueryBase, Query as QueryPage, RawData, RawObject, SingleFilter, ValueType, field, foreign, local, many, model, one };
+export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, IN, IN_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };

@@ -1,9 +1,6 @@
 import { runInAction } from 'mobx'
-import { Model, model } from './model'
-import QueryPage from './query-page'
-import field from './fields/field'
-import LocalAdapter, { local } from './adapters/local' 
-import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from './test.utils' 
+import { Model, model, field, QueryPage, LocalAdapter, local } from '../'
+import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
 
 
 describe('QueryPage', () => {

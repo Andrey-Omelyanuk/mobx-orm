@@ -1,6 +1,4 @@
-import { model, Model } from '../model'
-import field from '../fields/field'
-import LocalAdapter, { local, store } from './local'
+import { model, Model, field, LocalAdapter, local, local_store } from '../'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
 
 
@@ -27,7 +25,7 @@ describe('LocalAdapter', () => {
 
     afterEach(async () => {
         A.clearCache() 
-        store['A'] = {} // clean the store
+        local_store['A'] = {} // clean the store
         jest.clearAllMocks()
     })
 
@@ -50,12 +48,12 @@ describe('LocalAdapter', () => {
     it('__create', async ()=> {
         @model class C extends Model {}
         let adapter = new LocalAdapter(C)
-        expect(await adapter.__create({a: 1})).toStrictEqual({id: 1, a: 1}); expect(store['C']).toEqual({1: {id: 1, a: 1}})
+        expect(await adapter.__create({a: 1})).toStrictEqual({id: 1, a: 1}); expect(local_store['C']).toEqual({1: {id: 1, a: 1}})
         expect(await adapter.__create({a: 2})).toStrictEqual({id: 2, a: 2})
         expect(await adapter.__create({a: 3})).toStrictEqual({id: 3, a: 3})
         expect(await adapter.__create({a: 4})).toStrictEqual({id: 4, a: 4})
 
-        expect(store['C']).toEqual({
+        expect(local_store['C']).toEqual({
             1: {id: 1, a: 1},
             2: {id: 2, a: 2},
             3: {id: 3, a: 3},
@@ -67,10 +65,10 @@ describe('LocalAdapter', () => {
 
         it('create', async ()=> {
             let a = new A({a: 1});      expect(a.id).toBe(undefined)
-                                        expect(store['A']).toEqual({})
+                                        expect(local_store['A']).toEqual({})
             let b = await a.create();   expect(a).toBe(b)
                                         expect(a.id).toBe(1)
-                                        expect(store['A']).toEqual({
+                                        expect(local_store['A']).toEqual({
                                             [a.id]: a.raw_obj, 
                                         })
         })
@@ -79,7 +77,7 @@ describe('LocalAdapter', () => {
             let a = new A(); await a.create(); expect(a.id).toBe(1)
             let b = new A(); await b.create(); expect(b.id).toBe(2)
             let c = new A(); await c.create(); expect(c.id).toBe(3)
-            expect(store['A']).toEqual({
+            expect(local_store['A']).toEqual({
                 [a.id]: a.raw_obj, 
                 [b.id]: b.raw_obj, 
                 [c.id]: c.raw_obj})
@@ -93,13 +91,13 @@ describe('LocalAdapter', () => {
             await a.create()
 
             expect(a).toMatchObject({id: 1, a: 1, b: undefined})
-            expect(store['A']).toEqual({
+            expect(local_store['A']).toEqual({
                 [a.id]: a.raw_obj, 
             })
             a.b = 'x'
             await a.update()
             expect(a).toMatchObject({id: 1, a: 1, b: 'x'})
-            expect(store['A']).toEqual({
+            expect(local_store['A']).toEqual({
                 [a.id]: a.raw_obj, 
             })
         })
@@ -115,12 +113,12 @@ describe('LocalAdapter', () => {
             a.create()
 
             expect(a).toMatchObject({id: 1, a: 'test'})
-            expect(store['A']).toEqual({
+            expect(local_store['A']).toEqual({
                 [a.id]: a.raw_obj, 
             })
             await a.delete()
             expect(a).toMatchObject({id: undefined, a: 'test'})
-            expect(store['A']).toEqual({})
+            expect(local_store['A']).toEqual({})
         })
     })
 
@@ -143,7 +141,7 @@ describe('LocalAdapter', () => {
 
         it('empty', async ()=> {
             adapter.init_local_data([])
-            expect(store['A']).toEqual({})
+            expect(local_store['A']).toEqual({})
         })
 
         it('with some data', async ()=> {
@@ -152,8 +150,8 @@ describe('LocalAdapter', () => {
                 {id: 2, a: 2, b: 'b', c: false},
             ]
             adapter.init_local_data(data_set)
-            expect(store['A'][data_set[0].id]).toMatchObject(data_set[0])
-            expect(store['A'][data_set[1].id]).toMatchObject(data_set[1])
+            expect(local_store['A'][data_set[0].id]).toMatchObject(data_set[0])
+            expect(local_store['A'][data_set[1].id]).toMatchObject(data_set[1])
         })
 
         it('override data', async ()=> {
@@ -168,7 +166,7 @@ describe('LocalAdapter', () => {
 
             adapter.init_local_data(data_set_a)
             adapter.init_local_data(data_set_b)
-            expect(store['A'][data_set_b[0].id]).toMatchObject(data_set_b[0])
+            expect(local_store['A'][data_set_b[0].id]).toMatchObject(data_set_b[0])
         })
 
         // TODO

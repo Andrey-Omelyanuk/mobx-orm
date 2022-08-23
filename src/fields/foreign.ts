@@ -24,8 +24,8 @@ function field_foreign(obj, field_name) {
     )
 }
 
-export default function foreign(foreign_model: any, foreign_id_name?: string) {
-    foreign_model = foreign_model.__proto__ // TODO: band-aid
+export function foreign(foreign_model: any, foreign_id_name?: string) {
+    foreign_model = foreign_model.__proto__ 
     return function (cls: any, field_name: string) {
         let model = cls.constructor
         if (model.__relations === undefined) model.__relations = {}

@@ -1,7 +1,5 @@
 import { runInAction } from 'mobx'
-import { Model, model } from '../model'
-import field from './field'
-import one from './one'
+import { Model, model, field, one } from '../'
 
 
 describe('Field: One', () => {

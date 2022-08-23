@@ -1,7 +1,7 @@
 import { Model, RawObject, RawData } from '../model'
 
 
-export default abstract class  Adapter<M extends Model> {
+export abstract class  Adapter<M extends Model> {
 
     abstract __create(raw_data: RawData): Promise<RawObject>
     abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>

@@ -1,5 +1,5 @@
-import { reaction, runInAction } from 'mobx'
-import { EQ, NOT_EQ, IN, AND, Filter, ValueType } from './filters'
+import { runInAction } from 'mobx'
+import { EQ, IN, AND, ValueType } from '../'
 
 // TODO: move these tests
 

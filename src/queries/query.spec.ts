@@ -1,11 +1,6 @@
 import { runInAction } from 'mobx'
-import { Model, model } from './model'
-import Query from './query'
-import field from './fields/field'
-import LocalAdapter from './adapters/local' 
-import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from './test.utils' 
-import { EQ, IN } from './filters'
-import { ASC, DESC } from './query-base'
+import { Model, model, field, Query, LocalAdapter, EQ, IN, ASC, DESC } from '../'
+import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
 
 
 describe('Query', () => {

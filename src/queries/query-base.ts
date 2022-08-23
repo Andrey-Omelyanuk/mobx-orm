@@ -1,14 +1,14 @@
 import { action, autorun, makeObservable, observable, reaction, runInAction } from "mobx"
-import Adapter from "./adapters/adapter"
-import { Model } from "./model"
-import { Filter } from './filters'
+import { Adapter } from "../adapters"
+import { Model } from "../model"
+import { Filter } from '../filters'
 
 export const ASC = true 
 export const DESC = false 
 export type ORDER_BY = Map<string, boolean>
 
 
-export default abstract class Query<M extends Model> {
+export abstract class QueryBase<M extends Model> {
 
     @observable filters     : Filter
     @observable order_by    : ORDER_BY 

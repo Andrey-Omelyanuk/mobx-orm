@@ -1,9 +1,7 @@
 import { action, intercept, makeObservable, observable, observe } from 'mobx'
-import Adapter   from './adapters/adapter'
-import Query     from './query'
-import QueryPage from './query-page'
+import { Adapter } from './adapters'
+import { Query, QueryPage, ORDER_BY } from './queries'
 import { Filter } from './filters'
-import { ORDER_BY } from './query-base'
 
 
 export type RawObject = any 

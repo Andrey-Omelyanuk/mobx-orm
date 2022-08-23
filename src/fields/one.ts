@@ -7,7 +7,7 @@ function field_one(obj: Model, field_name) {
     extendObservable(obj, { [field_name]: undefined })
 }
 
-export default function one(remote_model: any, remote_foreign_id_name?: string) {
+export function one(remote_model: any, remote_foreign_id_name?: string) {
     remote_model = remote_model.__proto__ // band-aid
     return function (cls: any, field_name: string) {
         let model = cls.prototype.constructor

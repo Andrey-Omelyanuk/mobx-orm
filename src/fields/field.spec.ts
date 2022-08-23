@@ -1,5 +1,4 @@
-import { Model, model } from '../model'
-import field from './field'
+import { Model, model, field } from '../'
 
 
 describe('Field: field', () => {

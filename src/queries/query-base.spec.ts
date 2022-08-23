@@ -1,8 +1,4 @@
-import { model, Model } from './model'
-import Adapter      from './adapters/adapter'
-import LocalAdapter from './adapters/local'
-import QueryBase, { ORDER_BY, ASC }    from './query-base'
-import { Filter, EQ } from './filters'
+import { model, Model, Adapter, LocalAdapter, QueryBase, ORDER_BY, ASC, Filter, EQ } from '../'
 
 
 describe('QueryBase', () => {

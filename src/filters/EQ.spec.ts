@@ -1,4 +1,4 @@
-import { EQ } from './EQ'
+import { EQ } from '../'
 
 
 describe('EQ Filter', () => {

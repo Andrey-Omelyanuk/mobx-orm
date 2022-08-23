@@ -1,6 +1,4 @@
-import { model, Model, RawObject } from '../model'
-import field from '../fields/field'
-import Adapter  from './adapter'
+import { model, Model, RawObject, field, Adapter } from '../'
 import { obj_a, obj_b } from '../test.utils' 
 
 

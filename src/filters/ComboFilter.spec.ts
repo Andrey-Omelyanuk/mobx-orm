@@ -1,6 +1,4 @@
-import { ComboFilter } from './ComboFilter'
-import { Filter } from './Filter'
-import { EQ } from './EQ'
+import { Filter, EQ, ComboFilter } from '../'
 
 
 describe('Combo Filter', () => {

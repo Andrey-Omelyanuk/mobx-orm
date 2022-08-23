@@ -1,7 +1,6 @@
 import { Filter } from "./Filter"
 
 
-
 export abstract class ComboFilter extends Filter {
     readonly filters: Filter[]
 

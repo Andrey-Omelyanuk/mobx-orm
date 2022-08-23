@@ -1,6 +1,6 @@
 import { action, makeObservable, observable } from "mobx"
 import { Model } from "../model"
-import Query from "../query" 
+import { Query } from "../queries" 
 import { Filter } from "./Filter"
 
 

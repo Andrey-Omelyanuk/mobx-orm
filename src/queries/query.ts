@@ -1,8 +1,8 @@
 import { action, autorun, computed, observe, reaction } from 'mobx'
-import { Model } from './model'
-import Adapter from './adapters/adapter'
-import QeuryBase, { ASC, DESC, ORDER_BY } from './query-base'
-import { Filter } from './filters'
+import { Model } from '../model'
+import { Adapter } from '../adapters'
+import { QueryBase, ASC, DESC, ORDER_BY } from './query-base'
+import { Filter } from '../filters'
 
 /*
 Reactive items:
@@ -14,7 +14,7 @@ Reactive items:
     -    было но уже не попадание по фильтрам -> remove the obj from items
 */
 
-export default class Query<M extends Model> extends QeuryBase<M> {
+export class Query<M extends Model> extends QueryBase<M> {
 
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY) {
         super(adapter, base_cache, filters, order_by)

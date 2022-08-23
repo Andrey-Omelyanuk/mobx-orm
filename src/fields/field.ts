@@ -8,7 +8,7 @@ export function field_field(obj, field_name) {
 }
 
 
-export default function field(cls, field_name: string) {
+export function field(cls, field_name: string) {
     let model = cls.constructor
     if (model.__fields === undefined) model.__fields = {}
 

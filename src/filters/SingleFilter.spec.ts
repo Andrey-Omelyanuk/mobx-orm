@@ -1,5 +1,5 @@
 import { reaction, runInAction } from "mobx"
-import { match, SingleFilter, ValueType } from "./SingleFilter"
+import { match, SingleFilter, ValueType } from "../"
 
 
 describe('SingleFilter', () => {

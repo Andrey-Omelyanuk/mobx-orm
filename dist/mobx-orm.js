@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.38
+   * mobx-orm.js v1.0.39
    * Released under the MIT license.
    */
 
@@ -313,7 +313,7 @@
 
     const ASC = true;
     const DESC = false;
-    class Query$2 {
+    class QueryBase {
         constructor(adapter, base_cache, filters, order_by, page, page_size) {
             Object.defineProperty(this, "filters", {
                 enumerable: true,
@@ -482,51 +482,51 @@
     __decorate([
         mobx.observable,
         __metadata("design:type", Filter)
-    ], Query$2.prototype, "filters", void 0);
+    ], QueryBase.prototype, "filters", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Object)
-    ], Query$2.prototype, "order_by", void 0);
+    ], QueryBase.prototype, "order_by", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Number)
-    ], Query$2.prototype, "page", void 0);
+    ], QueryBase.prototype, "page", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Number)
-    ], Query$2.prototype, "page_size", void 0);
+    ], QueryBase.prototype, "page_size", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Boolean)
-    ], Query$2.prototype, "need_to_update", void 0);
+    ], QueryBase.prototype, "need_to_update", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Array)
-    ], Query$2.prototype, "__items", void 0);
+    ], QueryBase.prototype, "__items", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Boolean)
-    ], Query$2.prototype, "__is_loading", void 0);
+    ], QueryBase.prototype, "__is_loading", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Boolean)
-    ], Query$2.prototype, "__is_ready", void 0);
+    ], QueryBase.prototype, "__is_ready", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", String)
-    ], Query$2.prototype, "__error", void 0);
+    ], QueryBase.prototype, "__error", void 0);
     __decorate([
         mobx.action('MO: Query Base - load'),
         __metadata("design:type", Function),
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", Promise)
-    ], Query$2.prototype, "load", null);
+    ], QueryBase.prototype, "load", null);
     __decorate([
         mobx.action('MO: Query Base - shadow load'),
         __metadata("design:type", Function),
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", Promise)
-    ], Query$2.prototype, "shadowLoad", null);
+    ], QueryBase.prototype, "shadowLoad", null);
 
     /*
     Reactive items:
@@ -537,7 +537,7 @@
         - не было но уже    попадание по фильтрам -> add the obj to items
         -    было но уже не попадание по фильтрам -> remove the obj from items
     */
-    class Query$1 extends Query$2 {
+    class Query extends QueryBase {
         constructor(adapter, base_cache, filters, order_by) {
             super(adapter, base_cache, filters, order_by);
             // watch the cache for changes, and update items if needed
@@ -624,10 +624,10 @@
         mobx.computed,
         __metadata("design:type", Object),
         __metadata("design:paramtypes", [])
-    ], Query$1.prototype, "items", null);
+    ], Query.prototype, "items", null);
 
     // TODO: implement need_to_update
-    class Query extends Query$2 {
+    class QueryPage extends QueryBase {
         __load(objs) {
             this.__items.splice(0, this.__items.length);
             this.__items.push(...objs);
@@ -657,7 +657,7 @@
         __metadata("design:type", Function),
         __metadata("design:paramtypes", [Array]),
         __metadata("design:returntype", void 0)
-    ], Query.prototype, "__load", null);
+    ], QueryPage.prototype, "__load", null);
 
     class Model {
         constructor(...args) {
@@ -696,10 +696,10 @@
                 this.__cache.delete(obj.id);
         }
         static getQuery(filters, order_by) {
-            return new Query$1(this.__adapter, this.__cache, filters, order_by);
+            return new Query(this.__adapter, this.__cache, filters, order_by);
         }
         static getQueryPage(filter, order_by, page, page_size) {
-            return new Query(this.__adapter, this.__cache, filter, order_by, page, page_size);
+            return new QueryPage(this.__adapter, this.__cache, filter, order_by, page, page_size);
         }
         static get(id) {
             return this.__cache.get(id);
@@ -867,164 +867,6 @@
         return f; // return new constructor (will override original)
     }
 
-    class Adapter {
-        constructor(model) {
-            Object.defineProperty(this, "model", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            this.model = model;
-        }
-        async create(obj) {
-            let raw_obj = await this.__create(obj.raw_data);
-            obj.updateFromRaw(raw_obj);
-            obj.refreshInitData(); // backend can return default values and they should be in __init_data
-            return obj;
-        }
-        async update(obj) {
-            let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data);
-            obj.updateFromRaw(raw_obj);
-            obj.refreshInitData();
-            return obj;
-        }
-        async delete(obj) {
-            await this.__delete(obj.id);
-            obj.id = undefined;
-            return obj;
-        }
-        /* Returns ONE object */
-        async find(where) {
-            let raw_obj = await this.__find(where);
-            return this.model.updateCache(raw_obj);
-        }
-        /* Returns MANY objects */
-        async load(where, order_by, limit, offset) {
-            let raw_objs = await this.__load(where, order_by, limit, offset);
-            let objs = [];
-            // it should be happend in one big action
-            // runInAction(() => {
-            for (let raw_obj of raw_objs) {
-                objs.push(this.model.updateCache(raw_obj));
-            }
-            // })
-            return objs;
-        }
-    }
-
-    /*
-    You can use this adapter for mock data or for unit test
-    */
-    let store = {};
-    function timeout(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    class LocalAdapter extends Adapter {
-        constructor(model, store_name) {
-            super(model);
-            Object.defineProperty(this, "store_name", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            // delays for simulate real usage, use it only for tests
-            Object.defineProperty(this, "delay", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            this.store_name = store_name ? store_name : model.__proto__.name;
-            store[this.store_name] = {};
-        }
-        init_local_data(data) {
-            let objs = {};
-            for (let obj of data) {
-                objs[obj.id] = obj;
-            }
-            store[this.store_name] = objs;
-        }
-        async __create(raw_data) {
-            if (this.delay)
-                await timeout(this.delay);
-            // calculate and set new ID
-            let ids = [0];
-            for (let id of Object.keys(store[this.store_name])) {
-                ids.push(parseInt(id));
-            }
-            let max = Math.max.apply(null, ids);
-            raw_data.id = max + 1;
-            store[this.store_name][raw_data.id] = raw_data;
-            return raw_data;
-        }
-        async __update(obj_id, only_changed_raw_data) {
-            if (this.delay)
-                await timeout(this.delay);
-            let raw_obj = store[this.store_name][obj_id];
-            for (let field of Object.keys(only_changed_raw_data)) {
-                raw_obj[field] = only_changed_raw_data[field];
-            }
-            return raw_obj;
-        }
-        async __delete(obj_id) {
-            if (this.delay)
-                await timeout(this.delay);
-            delete store[this.store_name][obj_id];
-        }
-        async __find(where) {
-            if (this.delay)
-                await timeout(this.delay);
-            // TODO: apply where, and throw error if no obj or multi objs
-            let raw_obj = Object.values(store[this.store_name])[0];
-            return raw_obj;
-        }
-        async __load(where, order_by, limit, offset) {
-            if (this.delay)
-                await timeout(this.delay);
-            let raw_objs = [];
-            // filter
-            if (where) {
-                for (let raw_obj of Object.values(store[this.store_name])) {
-                }
-            }
-            else {
-                raw_objs = Object.values(store[this.store_name]);
-            }
-            // order_by (sort)
-            if (order_by) {
-                raw_objs = raw_objs.sort((obj_a, obj_b) => {
-                    for (let sort_by_field of order_by) {
-                    }
-                    return 0;
-                });
-            }
-            // page
-            if (limit !== undefined && offset !== undefined) {
-                raw_objs = raw_objs.slice(offset, offset + limit);
-            }
-            return raw_objs;
-        }
-        async getTotalCount(where) {
-            let objs = [];
-            // Object.values(store[this.store_name])
-            return objs.length;
-        }
-    }
-    // model decorator
-    function local() {
-        return (cls) => {
-            let adapter = new LocalAdapter(cls);
-            cls.__proto__.__adapter = adapter;
-        };
-    }
-    // TODO: where example
-    // let where = [
-    //             ["field_a", "==", 10, "and", "field_b == 20"],
-    //     "or",   ["field_a", "<=",  5, "and", "field_b", "contain", "test"]
-    // ]
-
     function field_field(obj, field_name) {
         // make observable and set default value
         mobx.extendObservable(obj, { [field_name]: obj[field_name] });
@@ -1055,7 +897,7 @@
         mobx.action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true });
     }
     function foreign(foreign_model, foreign_id_name) {
-        foreign_model = foreign_model.__proto__; // TODO: band-aid
+        foreign_model = foreign_model.__proto__;
         return function (cls, field_name) {
             let model = cls.constructor;
             if (model.__relations === undefined)
@@ -1179,25 +1021,190 @@
         };
     }
 
+    class Adapter {
+        constructor(model) {
+            Object.defineProperty(this, "model", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.model = model;
+        }
+        async create(obj) {
+            let raw_obj = await this.__create(obj.raw_data);
+            obj.updateFromRaw(raw_obj);
+            obj.refreshInitData(); // backend can return default values and they should be in __init_data
+            return obj;
+        }
+        async update(obj) {
+            let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data);
+            obj.updateFromRaw(raw_obj);
+            obj.refreshInitData();
+            return obj;
+        }
+        async delete(obj) {
+            await this.__delete(obj.id);
+            obj.id = undefined;
+            return obj;
+        }
+        /* Returns ONE object */
+        async find(where) {
+            let raw_obj = await this.__find(where);
+            return this.model.updateCache(raw_obj);
+        }
+        /* Returns MANY objects */
+        async load(where, order_by, limit, offset) {
+            let raw_objs = await this.__load(where, order_by, limit, offset);
+            let objs = [];
+            // it should be happend in one big action
+            // runInAction(() => {
+            for (let raw_obj of raw_objs) {
+                objs.push(this.model.updateCache(raw_obj));
+            }
+            // })
+            return objs;
+        }
+    }
+
+    /*
+    You can use this adapter for mock data or for unit test
+    */
+    let local_store = {};
+    function timeout(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    class LocalAdapter extends Adapter {
+        constructor(model, store_name) {
+            super(model);
+            Object.defineProperty(this, "store_name", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            // delays for simulate real usage, use it only for tests
+            Object.defineProperty(this, "delay", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.store_name = store_name ? store_name : model.__proto__.name;
+            local_store[this.store_name] = {};
+        }
+        init_local_data(data) {
+            let objs = {};
+            for (let obj of data) {
+                objs[obj.id] = obj;
+            }
+            local_store[this.store_name] = objs;
+        }
+        async __create(raw_data) {
+            if (this.delay)
+                await timeout(this.delay);
+            // calculate and set new ID
+            let ids = [0];
+            for (let id of Object.keys(local_store[this.store_name])) {
+                ids.push(parseInt(id));
+            }
+            let max = Math.max.apply(null, ids);
+            raw_data.id = max + 1;
+            local_store[this.store_name][raw_data.id] = raw_data;
+            return raw_data;
+        }
+        async __update(obj_id, only_changed_raw_data) {
+            if (this.delay)
+                await timeout(this.delay);
+            let raw_obj = local_store[this.store_name][obj_id];
+            for (let field of Object.keys(only_changed_raw_data)) {
+                raw_obj[field] = only_changed_raw_data[field];
+            }
+            return raw_obj;
+        }
+        async __delete(obj_id) {
+            if (this.delay)
+                await timeout(this.delay);
+            delete local_store[this.store_name][obj_id];
+        }
+        async __find(where) {
+            if (this.delay)
+                await timeout(this.delay);
+            // TODO: apply where, and throw error if no obj or multi objs
+            let raw_obj = Object.values(local_store[this.store_name])[0];
+            return raw_obj;
+        }
+        async __load(where, order_by, limit, offset) {
+            if (this.delay)
+                await timeout(this.delay);
+            let raw_objs = [];
+            // filter
+            if (where) {
+                for (let raw_obj of Object.values(local_store[this.store_name])) {
+                }
+            }
+            else {
+                raw_objs = Object.values(local_store[this.store_name]);
+            }
+            // order_by (sort)
+            if (order_by) {
+                raw_objs = raw_objs.sort((obj_a, obj_b) => {
+                    for (let sort_by_field of order_by) {
+                    }
+                    return 0;
+                });
+            }
+            // page
+            if (limit !== undefined && offset !== undefined) {
+                raw_objs = raw_objs.slice(offset, offset + limit);
+            }
+            return raw_objs;
+        }
+        async getTotalCount(where) {
+            let objs = [];
+            // Object.values(store[this.store_name])
+            return objs.length;
+        }
+    }
+    // model decorator
+    function local() {
+        return (cls) => {
+            let adapter = new LocalAdapter(cls);
+            cls.__proto__.__adapter = adapter;
+        };
+    }
+    // TODO: where example
+    // let where = [
+    //             ["field_a", "==", 10, "and", "field_b == 20"],
+    //     "or",   ["field_a", "<=",  5, "and", "field_b", "contain", "test"]
+    // ]
+
     exports.AND = AND;
+    exports.AND_Filter = AND_Filter;
     exports.ASC = ASC;
     exports.Adapter = Adapter;
     exports.ComboFilter = ComboFilter;
     exports.DESC = DESC;
     exports.EQ = EQ;
+    exports.EQ_Filter = EQ_Filter;
     exports.Filter = Filter;
     exports.IN = IN;
+    exports.IN_Filter = IN_Filter;
     exports.LocalAdapter = LocalAdapter;
     exports.Model = Model;
     exports.NOT_EQ = NOT_EQ;
-    exports.Query = Query$1;
-    exports.QueryBase = Query$2;
-    exports.QueryPage = Query;
+    exports.NOT_EQ_Filter = NOT_EQ_Filter;
+    exports.Query = Query;
+    exports.QueryBase = QueryBase;
+    exports.QueryPage = QueryPage;
     exports.SingleFilter = SingleFilter;
     exports.field = field;
+    exports.field_field = field_field;
     exports.foreign = foreign;
     exports.local = local;
+    exports.local_store = local_store;
     exports.many = many;
+    exports.match = match;
     exports.model = model;
     exports.one = one;
 
