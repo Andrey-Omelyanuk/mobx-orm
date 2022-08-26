@@ -1,3 +1,4 @@
+import { runInAction } from 'mobx'
 import { Model, RawObject, RawData } from '../model'
 
 
@@ -32,7 +33,7 @@ export abstract class  Adapter<M extends Model> {
 
     async delete(obj: M) : Promise<M> {
         await this.__delete(obj.id)
-        obj.id = undefined
+        runInAction(() => obj.id = undefined )
         return obj
     }
 
@@ -47,11 +48,11 @@ export abstract class  Adapter<M extends Model> {
         let raw_objs = await this.__load(where, order_by, limit, offset)
         let objs: M[] = []
         // it should be happend in one big action
-        // runInAction(() => {
+        runInAction(() => {
             for (let raw_obj of raw_objs) {
                 objs.push(this.model.updateCache(raw_obj))
             }
-        // })
+        })
         return objs
     }
 }

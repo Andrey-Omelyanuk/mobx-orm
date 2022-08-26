@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.40
+   * mobx-orm.js v1.0.41
    * Released under the MIT license.
    */
 
@@ -771,6 +771,7 @@
                 this.__init_data[field_name] = this[field_name];
             }
         }
+        // TODO: add test
         cancelLocalChanges() {
             for (let field_name in this.model.__fields) {
                 if (this[field_name] !== this.__init_data[field_name]) {
@@ -1057,7 +1058,7 @@
         }
         async delete(obj) {
             await this.__delete(obj.id);
-            obj.id = undefined;
+            mobx.runInAction(() => obj.id = undefined);
             return obj;
         }
         /* Returns ONE object */
@@ -1070,11 +1071,11 @@
             let raw_objs = await this.__load(where, order_by, limit, offset);
             let objs = [];
             // it should be happend in one big action
-            // runInAction(() => {
-            for (let raw_obj of raw_objs) {
-                objs.push(this.model.updateCache(raw_obj));
-            }
-            // })
+            mobx.runInAction(() => {
+                for (let raw_obj of raw_objs) {
+                    objs.push(this.model.updateCache(raw_obj));
+                }
+            });
             return objs;
         }
     }
