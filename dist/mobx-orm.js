@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.41
+   * mobx-orm.js v1.0.42
    * Released under the MIT license.
    */
 
@@ -795,6 +795,10 @@
         mobx.observable,
         __metadata("design:type", Number)
     ], Model.prototype, "id", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Object)
+    ], Model.prototype, "__init_data", void 0);
     __decorate([
         mobx.action('MO: obj - refresh init data'),
         __metadata("design:type", Function),

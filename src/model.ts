@@ -90,7 +90,7 @@ export abstract class Model {
 
     @observable id: number|undefined = undefined
 
-    __init_data: any   
+    @observable __init_data: any   
     __disposers = new Map()
 
     constructor (...args) { }
