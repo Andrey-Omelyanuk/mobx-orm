@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.39
+   * mobx-orm.js v1.0.40
    * Released under the MIT license.
    */
 
@@ -685,7 +685,6 @@
             if (obj.id === undefined)
                 throw new Error(`Object should have id!`);
             if (this.__cache.has(obj.id)) {
-                debugger;
                 throw new Error(`Object with id ${obj.id} already exist in the cache of model: "${this.prototype.constructor.name}")`);
             }
             this.__cache.set(obj.id, obj);
@@ -772,6 +771,13 @@
                 this.__init_data[field_name] = this[field_name];
             }
         }
+        cancelLocalChanges() {
+            for (let field_name in this.model.__fields) {
+                if (this[field_name] !== this.__init_data[field_name]) {
+                    this[field_name] = this.__init_data[field_name];
+                }
+            }
+        }
         updateFromRaw(raw_obj) {
             if (this.id === undefined && raw_obj.id !== undefined) {
                 this.id = raw_obj.id;
@@ -794,6 +800,12 @@
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", void 0)
     ], Model.prototype, "refreshInitData", null);
+    __decorate([
+        mobx.action('MO: obj - cancel local changes'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], Model.prototype, "cancelLocalChanges", null);
     __decorate([
         mobx.action('MO: obj - update from raw'),
         __metadata("design:type", Function),

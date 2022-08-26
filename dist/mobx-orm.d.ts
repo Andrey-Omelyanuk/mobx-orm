@@ -179,6 +179,7 @@ declare abstract class Model {
     delete(): Promise<any>;
     save(): Promise<any>;
     refreshInitData(): void;
+    cancelLocalChanges(): void;
     updateFromRaw(raw_obj: any): void;
 }
 declare function model(constructor: any): any;

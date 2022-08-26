@@ -38,7 +38,6 @@ export abstract class Model {
         if (obj.id === undefined)                    
             throw new Error(`Object should have id!`)
         if (this.__cache.has(obj.id)) {
-            debugger
             throw new Error(`Object with id ${obj.id} already exist in the cache of model: "${this.prototype.constructor.name}")`)
         }
         this.__cache.set(obj.id, obj)
@@ -148,6 +147,16 @@ export abstract class Model {
         if(this.__init_data === undefined) this.__init_data = {}
         for (let field_name in this.model.__fields) {
             this.__init_data[field_name] = this[field_name]
+        }
+    }
+
+    // TODO: add test
+    @action('MO: obj - cancel local changes')
+    cancelLocalChanges() {
+        for (let field_name in this.model.__fields) {
+            if (this[field_name] !== this.__init_data[field_name]) {
+                this[field_name] = this.__init_data[field_name]
+            }
         }
     }
 
