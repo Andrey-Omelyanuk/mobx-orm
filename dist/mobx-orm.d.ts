@@ -99,10 +99,7 @@ declare type ORDER_BY = Map<string, boolean>;
 declare abstract class QueryBase<M extends Model> {
     filters: Filter;
     order_by: ORDER_BY;
-    page: number;
-    page_size: number;
     need_to_update: boolean;
-    abstract get items(): any;
     get is_loading(): boolean;
     get is_ready(): boolean;
     get error(): string;
@@ -116,26 +113,38 @@ declare abstract class QueryBase<M extends Model> {
     __disposer_objects: {
         [field: string]: () => void;
     };
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number);
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY);
     destroy(): void;
+    abstract get items(): any;
     abstract __load(objs: M[]): any;
+    abstract shadowLoad(): any;
     load(): Promise<void>;
-    shadowLoad(): Promise<void>;
     ready(): Promise<Boolean>;
     loading(): Promise<Boolean>;
 }
 
 declare class Query<M extends Model> extends QueryBase<M> {
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY);
+    shadowLoad(): Promise<void>;
     get items(): M[];
     __load(objs: M[]): void;
     __watch_obj(obj: any): void;
 }
 
 declare class QueryPage<M extends Model> extends QueryBase<M> {
+    page: number;
+    page_size: number;
+    total: number;
     __load(objs: M[]): void;
+    goToFirstPage(): void;
+    goToPrevPage(): void;
+    goToNextPage(): void;
+    goToLastPage(): void;
+    get is_first_page(): boolean;
+    get is_last_page(): boolean;
     get items(): M[];
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number);
+    shadowLoad(): Promise<void>;
 }
 
 declare type RawObject = any;

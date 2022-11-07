@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.42
+   * mobx-orm.js v1.0.43
    * Released under the MIT license.
    */
 
@@ -314,7 +314,7 @@
     const ASC = true;
     const DESC = false;
     class QueryBase {
-        constructor(adapter, base_cache, filters, order_by, page, page_size) {
+        constructor(adapter, base_cache, filters, order_by) {
             Object.defineProperty(this, "filters", {
                 enumerable: true,
                 configurable: true,
@@ -327,23 +327,11 @@
                 writable: true,
                 value: void 0
             });
-            Object.defineProperty(this, "page", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "page_size", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             Object.defineProperty(this, "need_to_update", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
-                value: void 0
+                value: false
             }); // set to true then filters/order_by/page/page_size was changed and back to false after load
             Object.defineProperty(this, "__base_cache", {
                 enumerable: true,
@@ -398,20 +386,7 @@
             this.order_by = order_by ? order_by : new Map();
             if (filters)
                 this.filters = filters;
-            if (page)
-                this.page = page;
-            if (page_size)
-                this.page_size = page_size;
             mobx.makeObservable(this);
-            this.__disposers.push(mobx.reaction(() => {
-                var _a;
-                return {
-                    filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams,
-                    order_by: this.order_by,
-                    page: this.page,
-                    page_size: this.page_size,
-                };
-            }, mobx.action('MO: Query Base - need to update', () => this.need_to_update = true)));
         }
         get is_loading() { return this.__is_loading; }
         get is_ready() { return this.__is_ready; }
@@ -435,25 +410,6 @@
                 // we have to wait a next tick before set __is_loading to true, mobx recalculation should be done before
                 await new Promise(resolve => setTimeout(resolve));
                 mobx.runInAction(() => this.__is_loading = false);
-            }
-        }
-        // use it if nobody should know that you load data for the query
-        // for example you need to update the current data on the page and you don't want to show a spinner
-        async shadowLoad() {
-            try {
-                let objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page * this.page_size);
-                this.__load(objs);
-                // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
-                await new Promise(resolve => setTimeout(resolve));
-                mobx.runInAction(() => {
-                    this.__is_ready = true;
-                    this.need_to_update = false;
-                });
-            }
-            catch (e) {
-                // 'MO: Query Base - shadow load - error',
-                mobx.runInAction(() => this.__error = e);
-                throw e;
             }
         }
         // use it if you need use promise instead of observe is_ready
@@ -489,14 +445,6 @@
     ], QueryBase.prototype, "order_by", void 0);
     __decorate([
         mobx.observable,
-        __metadata("design:type", Number)
-    ], QueryBase.prototype, "page", void 0);
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Number)
-    ], QueryBase.prototype, "page_size", void 0);
-    __decorate([
-        mobx.observable,
         __metadata("design:type", Boolean)
     ], QueryBase.prototype, "need_to_update", void 0);
     __decorate([
@@ -521,12 +469,6 @@
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", Promise)
     ], QueryBase.prototype, "load", null);
-    __decorate([
-        mobx.action('MO: Query Base - shadow load'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", []),
-        __metadata("design:returntype", Promise)
-    ], QueryBase.prototype, "shadowLoad", null);
 
     /*
     Reactive items:
@@ -540,6 +482,13 @@
     class Query extends QueryBase {
         constructor(adapter, base_cache, filters, order_by) {
             super(adapter, base_cache, filters, order_by);
+            this.__disposers.push(mobx.reaction(() => {
+                var _a;
+                return {
+                    filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams,
+                    order_by: this.order_by,
+                };
+            }, mobx.action('MO: Query Base - need to update', () => this.need_to_update = true)));
             // watch the cache for changes, and update items if needed
             this.__disposers.push(mobx.observe(this.__base_cache, mobx.action('MO: Query - update from cache changes', (change) => {
                 if (change.type == 'add') {
@@ -555,19 +504,26 @@
                         this.__items.splice(i, 1);
                 }
             })));
-            // I think it does not make sense, but it make sense for QueryPage!
-            // this.__disposers.push(reaction(
-            //     () => this.need_to_update,
-            //     (value) => {
-            //         if (value && !this.__is_loading)
-            //             for(let [id, obj] of this.__base_cache) {
-            //                 this.__watch_obj(obj)
-            //             }
-            //     }
-            // ))
             // ch all exist objects of model 
             for (let [id, obj] of this.__base_cache) {
                 this.__watch_obj(obj);
+            }
+        }
+        async shadowLoad() {
+            try {
+                let objs = await this.__adapter.load(this.filters, this.order_by);
+                this.__load(objs);
+                // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
+                await new Promise(resolve => setTimeout(resolve));
+                mobx.runInAction(() => {
+                    this.__is_ready = true;
+                    this.need_to_update = false;
+                });
+            }
+            catch (e) {
+                // 'MO: Query Base - shadow load - error',
+                mobx.runInAction(() => this.__error = e);
+                throw e;
             }
         }
         get items() {
@@ -621,43 +577,127 @@
         }
     }
     __decorate([
+        mobx.action('MO: Query Base - shadow load'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", Promise)
+    ], Query.prototype, "shadowLoad", null);
+    __decorate([
         mobx.computed,
         __metadata("design:type", Object),
         __metadata("design:paramtypes", [])
     ], Query.prototype, "items", null);
 
-    // TODO: implement need_to_update
     class QueryPage extends QueryBase {
+        constructor(adapter, base_cache, filters, order_by, page = 0, page_size = 50) {
+            super(adapter, base_cache, filters, order_by);
+            Object.defineProperty(this, "page", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "page_size", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "total", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.page = page;
+            this.page_size = page_size;
+            this.__disposers.push(mobx.reaction(() => {
+                var _a;
+                return {
+                    filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams,
+                    order_by: this.order_by,
+                    page: this.page,
+                    page_size: this.page_size,
+                };
+            }, mobx.action('MO: Query Base - need to update', () => this.need_to_update = true)));
+        }
         __load(objs) {
             this.__items.splice(0, this.__items.length);
             this.__items.push(...objs);
         }
+        goToFirstPage() { this.page = 0; }
+        goToPrevPage() { this.page = this.page < 0 ? this.page - 1 : 0; }
+        goToNextPage() { this.page = this.page + 1; }
+        goToLastPage() { this.page = Math.floor(this.total / this.page_size); } // TODO: need to know total row count
+        get is_first_page() { return this.page === 0; }
+        get is_last_page() { return Math.floor(this.total / this.page_size) === this.page; }
         get items() { return this.__items; }
-        // TODO: add actions for QueryBase and QueryPage
-        // TODO: Query should know nothing about pages!
-        // @action setFilters(filters : any     ) { this.filters  = filters  }
-        // @action setOrderBy(order_by: string[]) { this.order_by = order_by }
-        // @action firstPage() { this.page = 0 }
-        // @action prevPage () { this.page = this.page < 0 ? this.page - 1 : 0 }
-        // @action nextPage () { this.page = this.page + 1 }
-        // @action lastPage () { this.page = 9999 } // TODO: need to know total row count
-        // @action setPageSize(page_size: number) { this.page_size = page_size }
-        constructor(adapter, base_cache, filters, order_by, page, page_size) {
-            super(adapter, base_cache, filters, order_by);
-            mobx.runInAction(() => {
-                if (this.page === undefined)
-                    this.page = 0;
-                if (this.page_size === undefined)
-                    this.page_size = 50;
-            });
+        async shadowLoad() {
+            try {
+                const objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page * this.page_size);
+                this.__load(objs);
+                const total = await this.__adapter.getTotalCount(this.filters);
+                mobx.runInAction(() => {
+                    this.total = total;
+                    this.__is_ready = true;
+                    this.need_to_update = false;
+                });
+            }
+            catch (e) {
+                // 'MO: Query Base - shadow load - error',
+                mobx.runInAction(() => this.__error = e);
+                throw e;
+            }
         }
     }
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Number)
+    ], QueryPage.prototype, "page", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Number)
+    ], QueryPage.prototype, "page_size", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Number)
+    ], QueryPage.prototype, "total", void 0);
     __decorate([
         mobx.action('MO: Query Page - load'),
         __metadata("design:type", Function),
         __metadata("design:paramtypes", [Array]),
         __metadata("design:returntype", void 0)
     ], QueryPage.prototype, "__load", null);
+    __decorate([
+        mobx.action('MO: fisrt page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryPage.prototype, "goToFirstPage", null);
+    __decorate([
+        mobx.action('MO: prev page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryPage.prototype, "goToPrevPage", null);
+    __decorate([
+        mobx.action('MO: next page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryPage.prototype, "goToNextPage", null);
+    __decorate([
+        mobx.action('MO: last page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryPage.prototype, "goToLastPage", null);
+    __decorate([
+        mobx.action('MO: Query Base - shadow load'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", Promise)
+    ], QueryPage.prototype, "shadowLoad", null);
 
     class Model {
         constructor(...args) {
@@ -789,6 +829,25 @@
                     this[field_name] = raw_obj[field_name];
                 }
             }
+            for (let relation in this.model.__relations) {
+                const settings = this.model.__relations[relation].settings;
+                if (settings.foreign_model && raw_obj[relation]) {
+                    settings.foreign_model.updateCache(raw_obj[relation]);
+                    this[settings.foreign_id_name] = raw_obj[relation].id;
+                }
+                else if (settings.remote_model && raw_obj[relation]) {
+                    // many
+                    if (Array.isArray(raw_obj[relation])) {
+                        for (const i of raw_obj[relation]) {
+                            settings.remote_model.updateCache(i);
+                        }
+                    }
+                    // one 
+                    else {
+                        settings.remote_model.updateCache(raw_obj[relation]);
+                    }
+                }
+            }
         }
     }
     __decorate([
@@ -881,6 +940,7 @@
         };
         f.__proto__ = original;
         f.prototype = original.prototype; // copy prototype so intanceof operator still works
+        Object.defineProperty(f, "name", { value: original.name });
         return f; // return new constructor (will override original)
     }
 
@@ -914,7 +974,6 @@
         mobx.action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true });
     }
     function foreign(foreign_model, foreign_id_name) {
-        foreign_model = foreign_model.__proto__;
         return function (cls, field_name) {
             let model = cls.constructor;
             if (model.__relations === undefined)
@@ -936,7 +995,6 @@
         mobx.extendObservable(obj, { [field_name]: undefined });
     }
     function one(remote_model, remote_foreign_id_name) {
-        remote_model = remote_model.__proto__; // band-aid
         return function (cls, field_name) {
             let model = cls.prototype.constructor;
             if (model.__relations === undefined)
