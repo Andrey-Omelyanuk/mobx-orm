@@ -1,4 +1,4 @@
-import { action, autorun, makeObservable, observable, reaction, runInAction } from "mobx"
+import { action, autorun, makeObservable, observable, runInAction } from "mobx"
 import { Adapter } from "../adapters"
 import { Model } from "../model"
 import { Filter } from '../filters'
@@ -12,12 +12,8 @@ export abstract class QueryBase<M extends Model> {
 
     @observable filters     : Filter
     @observable order_by    : ORDER_BY 
-    @observable page        : number
-    @observable page_size   : number
 
-    @observable need_to_update: boolean     // set to true then filters/order_by/page/page_size was changed and back to false after load
-
-    abstract get items()
+    @observable need_to_update: boolean = false // set to true then filters/order_by/page/page_size was changed and back to false after load
 
     get is_loading () { return this.__is_loading  }
     get is_ready   () { return this.__is_ready    }
@@ -33,26 +29,12 @@ export abstract class QueryBase<M extends Model> {
     __disposers         : (()=>void)[] = []
     __disposer_objects  : {[field: string]: ()=>void} = {}
 
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number) {
+    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY) {
 		this.__base_cache = base_cache
 		this.__adapter    = adapter
-        this.order_by = order_by ? order_by : new Map()
-        if (filters  ) this.filters   = filters
-        if (page	 ) this.page      = page
-        if (page_size) this.page_size = page_size
+        this.order_by     = order_by ? order_by : new Map()
+        if (filters  ) this.filters = filters
         makeObservable(this)
-
-        this.__disposers.push(reaction(
-            () => { return { 
-                filter          : this.filters?.URLSearchParams, 
-                order_by        : this.order_by, 
-                page            : this.page, 
-                page_size       : this.page_size,
-             }},
-            action('MO: Query Base - need to update',
-                () => this.need_to_update = true 
-            )
-        ))
     }
 
     destroy() {
@@ -65,7 +47,11 @@ export abstract class QueryBase<M extends Model> {
         } 
     }
 
+    abstract get items()
     abstract __load(objs: M[])
+    // use it if nobody should know that you load data for the query
+    // for example you need to update the current data on the page and you don't want to show a spinner
+    abstract shadowLoad()
 
     // use it if everybody should know that the query data is updating
     @action('MO: Query Base - load')
@@ -78,27 +64,6 @@ export abstract class QueryBase<M extends Model> {
             // we have to wait a next tick before set __is_loading to true, mobx recalculation should be done before
             await new Promise(resolve => setTimeout(resolve))
             runInAction(() => this.__is_loading = false)
-        }
-    }
-
-    // use it if nobody should know that you load data for the query
-    // for example you need to update the current data on the page and you don't want to show a spinner
-    @action('MO: Query Base - shadow load')
-    async shadowLoad() {
-        try {
-            let objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page*this.page_size)
-            this.__load(objs)
-            // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
-            await new Promise(resolve => setTimeout(resolve))
-            runInAction(() => {
-                this.__is_ready = true
-                this.need_to_update = false 
-            })
-        }
-        catch(e) {
-            // 'MO: Query Base - shadow load - error',
-            runInAction( () => this.__error = e)
-            throw e
         }
     }
 

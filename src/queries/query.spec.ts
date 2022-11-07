@@ -39,8 +39,6 @@ describe('Query', () => {
                                 expect(query.order_by.get('id')).toBe(order_by.get('id'))
                                 expect(query).toMatchObject({
                                     filters     : filters,
-                                    page        : undefined,
-                                    page_size   : undefined,
                                     is_loading  : false,
                                     is_ready    : false,
                                     error       : '',
@@ -69,6 +67,16 @@ describe('Query', () => {
 
             runInAction(() => x.id = undefined) ; expect(query.__items.length).toBe(length)
                                                   expect(Object.keys(query.__disposer_objects)).toEqual(["0","1","2","3","4",])
+        })
+
+        it('need_to_update', async () => {
+                                                            expect(query.need_to_update).toBe(false)
+            runInAction(() => query.order_by = new Map());  expect(query.need_to_update).toBe(true)
+            runInAction(() => query.need_to_update = false)
+            const filter = EQ('a', 2)
+            runInAction(() => query.filters = filter);      expect(query.need_to_update).toBe(true)
+            runInAction(() => query.need_to_update = false);expect(query.need_to_update).toBe(false)
+            runInAction(() => filter.value = 3);            expect(query.need_to_update).toBe(true)
         })
     })
 

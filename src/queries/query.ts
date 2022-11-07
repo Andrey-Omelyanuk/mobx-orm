@@ -1,4 +1,4 @@
-import { action, autorun, computed, observe, reaction } from 'mobx'
+import { action, runInAction, autorun, computed, observe, reaction } from 'mobx'
 import { Model } from '../model'
 import { Adapter } from '../adapters'
 import { QueryBase, ASC, DESC, ORDER_BY } from './query-base'
@@ -18,6 +18,14 @@ export class Query<M extends Model> extends QueryBase<M> {
 
     constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY) {
         super(adapter, base_cache, filters, order_by)
+
+        this.__disposers.push(reaction(
+            () => { return { 
+                filter          : this.filters?.URLSearchParams, 
+                order_by        : this.order_by, 
+             }},
+            action('MO: Query Base - need to update', () => this.need_to_update = true)
+        ))
 
         // watch the cache for changes, and update items if needed
         this.__disposers.push(observe(this.__base_cache, 
@@ -40,20 +48,28 @@ export class Query<M extends Model> extends QueryBase<M> {
             })
         ))
 
-        // I think it does not make sense, but it make sense for QueryPage!
-        // this.__disposers.push(reaction(
-        //     () => this.need_to_update,
-        //     (value) => {
-        //         if (value && !this.__is_loading)
-        //             for(let [id, obj] of this.__base_cache) {
-        //                 this.__watch_obj(obj)
-        //             }
-        //     }
-        // ))
-
         // ch all exist objects of model 
         for(let [id, obj] of this.__base_cache) {
             this.__watch_obj(obj)
+        }
+    }
+
+    @action('MO: Query Base - shadow load')
+    async shadowLoad() {
+        try {
+            let objs = await this.__adapter.load(this.filters, this.order_by)
+            this.__load(objs)
+            // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
+            await new Promise(resolve => setTimeout(resolve))
+            runInAction(() => {
+                this.__is_ready = true
+                this.need_to_update = false 
+            })
+        }
+        catch(e) {
+            // 'MO: Query Base - shadow load - error',
+            runInAction( () => this.__error = e)
+            throw e
         }
     }
 
