@@ -1,4 +1,4 @@
-import { Model, model, field } from './'
+import { Model, model, field, foreign, one, many } from './'
 
 
 describe('Model Instance', () => {
@@ -147,6 +147,54 @@ describe('Model Instance', () => {
             let a = new A({id: 1, a: 1, b: 1})   
             let raw_obj = {id: 2, a: 2, b: 2}
             a.updateFromRaw(raw_obj)    ; expect(a).toMatchObject({id: 1, a: 2, b: 2})
+        })
+
+        it('raw_obj with foreign relations', () => {
+            @model class C extends Model { @field x : string }
+            @model class B extends Model { @field x : string }
+            @model class A extends Model {
+                @field a    : number
+                @field b_id : number 
+                @field c_id : number 
+                @foreign(B) b: B
+                @foreign(C) c: C
+            }
+            let a = new A({})   
+            a.updateFromRaw({ id: 1, b: {id: 1, x: 'B'}, c: {id: 1, x: 'C'} })
+
+            expect(a).toMatchObject({ id: 1, b_id: 1, c_id: 1, b: {id: 1, x: 'B'}, c: {id: 1, x: 'C'}, })
+            expect(B.get(1)).toMatchObject({x: 'B'})
+            expect(C.get(1)).toMatchObject({x: 'C'})
+        })
+
+        it('raw_obj with many relations', () => {
+            @model class A extends Model { bs: B[] }
+            @model class B extends Model { @field a_id: number; @field x: string }
+            many(B)(A, 'bs')
+            let a = new A({})   
+            a.updateFromRaw({ id: 1, bs: [
+                {id: 1, a_id: 1, x: 'B1'},
+                {id: 2, a_id: 1, x: 'B2'},
+                {id: 3, a_id: 1, x: 'B3'},
+            ]});
+            expect(a).toMatchObject({ id: 1, bs: [
+                {id: 1, a_id: 1, x: 'B1'},
+                {id: 2, a_id: 1, x: 'B2'},
+                {id: 3, a_id: 1, x: 'B3'},
+            ]})
+            expect(B.get(1)).toMatchObject({a_id: 1, x: 'B1'})
+            expect(B.get(2)).toMatchObject({a_id: 1, x: 'B2'})
+            expect(B.get(3)).toMatchObject({a_id: 1, x: 'B3'})
+        })
+
+        it('raw_obj with one relations', () => {
+            @model class A extends Model { b: B }
+            @model class B extends Model { @field a_id: number; @field x: string }
+            one(B)(A, 'b')
+            let a = new A({})   
+
+            a.updateFromRaw({ id: 1, b: {id: 2, a_id: 1, x: 'B'}}); expect(a).toMatchObject({ id: 1, b: {id: 2, a_id: 1, x: 'B'}})
+                                                                    expect(B.get(2)).toMatchObject({a_id: 1, x: 'B'})
         })
     })
 

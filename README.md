@@ -18,7 +18,7 @@ Notes:
 # dev on local
 node_modules/.bin/jest --testMatch='**/src/**/*.spec.ts' --watchAll
 node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/model-class.spec.ts'
-node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand -t 'watch the base cache for changes'
+node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand -t 'raw_obj with one relations'
 chrome://inspect/#devices
 
 ```

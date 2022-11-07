@@ -11,7 +11,7 @@ describe('Field: foreign', () => {
                 @foreign(A, 'a_id') a   : A 
             }
             expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
-            expect(B.__relations['a'].settings.foreign_model).toBe((A as any).__proto__)
+            expect(B.__relations['a'].settings.foreign_model).toBe(A)
             expect(B.__relations['a'].settings.foreign_id_name).toBe('a_id')
         })
 
@@ -22,7 +22,7 @@ describe('Field: foreign', () => {
                 @foreign(A) a   : A 
             }
             expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
-            expect(B.__relations['a'].settings.foreign_model).toBe((A as any).__proto__)
+            expect(B.__relations['a'].settings.foreign_model).toBe(A)
             expect(B.__relations['a'].settings.foreign_id_name).toBe('a_id')
         })
 
@@ -36,10 +36,10 @@ describe('Field: foreign', () => {
                 @foreign(A) a   : A 
             }
             foreign(B)(A.prototype, 'b') // TODO: band-aid
-            expect(A.__relations['b'].settings.foreign_model).toBe((B as any).__proto__)
+            expect(A.__relations['b'].settings.foreign_model).toBe(B)
             expect(A.__relations['b'].settings.foreign_id_name).toBe('b_id')
             expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()
-            expect(B.__relations['a'].settings.foreign_model).toBe((A as any).__proto__)
+            expect(B.__relations['a'].settings.foreign_model).toBe(A)
             expect(B.__relations['a'].settings.foreign_id_name).toEqual('a_id')
             expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
         })

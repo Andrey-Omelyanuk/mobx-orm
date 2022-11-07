@@ -11,7 +11,7 @@ describe('Field: One', () => {
             @model class B extends Model { @field  a_id : number }
             one(B, 'a_id')(A, 'b')
             expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()
-            expect(A.__relations['b'].settings.remote_model).toBe((B as any).__proto__)
+            expect(A.__relations['b'].settings.remote_model).toBe(B)
             expect(A.__relations['b'].settings.remote_foreign_id_name).toEqual('a_id')
         })
 
@@ -20,7 +20,7 @@ describe('Field: One', () => {
             @model class B extends Model { @field  a_id    : number }
             one(B)(A, 'b')
             expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()
-            expect(A.__relations['b'].settings.remote_model).toBe((B as any).__proto__)
+            expect(A.__relations['b'].settings.remote_model).toBe(B)
             expect(A.__relations['b'].settings.remote_foreign_id_name).toEqual('a_id')
         })
 
@@ -36,10 +36,10 @@ describe('Field: One', () => {
             one(B)(A, 'b_one')
             one(A)(B, 'a_one')
             expect(A.__relations['b_one'].decorator instanceof Function).toBeTruthy()
-            expect(A.__relations['b_one'].settings.remote_model).toBe((B as any).__proto__)
+            expect(A.__relations['b_one'].settings.remote_model).toBe(B)
             expect(A.__relations['b_one'].settings.remote_foreign_id_name).toEqual('a_id')
             expect(B.__relations['a_one'].decorator instanceof Function).toBeTruthy()
-            expect(B.__relations['a_one'].settings.remote_model).toBe((A as any).__proto__)
+            expect(B.__relations['a_one'].settings.remote_model).toBe(A)
             expect(B.__relations['a_one'].settings.remote_foreign_id_name).toEqual('b_id')
         })
     })

@@ -171,6 +171,26 @@ export abstract class Model {
                 this[field_name] = raw_obj[field_name]
             }
         }
+
+        for(let relation in this.model.__relations) {
+            const settings = this.model.__relations[relation].settings
+            if (settings.foreign_model && raw_obj[relation]) {
+                settings.foreign_model.updateCache(raw_obj[relation])
+                this[settings.foreign_id_name] = raw_obj[relation].id
+            }
+            else if (settings.remote_model && raw_obj[relation]) {
+                // many
+                if (Array.isArray(raw_obj[relation])) {
+                    for(const i of raw_obj[relation]) {
+                        settings.remote_model.updateCache(i)
+                    }
+                }
+                // one 
+                else {
+                    settings.remote_model.updateCache(raw_obj[relation])
+                }
+            }
+        }
     }
 }
 
@@ -221,5 +241,6 @@ export function model(constructor) {
 
     f.__proto__ = original
     f.prototype = original.prototype   // copy prototype so intanceof operator still works
+    Object.defineProperty(f, "name", { value: original.name });
     return f                      // return new constructor (will override original)
 }

@@ -8,7 +8,6 @@ function field_one(obj: Model, field_name) {
 }
 
 export function one(remote_model: any, remote_foreign_id_name?: string) {
-    remote_model = remote_model.__proto__ // band-aid
     return function (cls: any, field_name: string) {
         let model = cls.prototype.constructor
         if (model.__relations === undefined) model.__relations = {}
