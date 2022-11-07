@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.43
+   * mobx-orm.js v1.0.44
    * Released under the MIT license.
    */
 
@@ -323,6 +323,25 @@ class QueryBase {
             writable: true,
             value: void 0
         });
+        // I cannot declare these observables directly into QueryPage
+        Object.defineProperty(this, "page", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "page_size", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "total", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "need_to_update", {
             enumerable: true,
             configurable: true,
@@ -439,6 +458,18 @@ __decorate([
     observable,
     __metadata("design:type", Object)
 ], QueryBase.prototype, "order_by", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Number)
+], QueryBase.prototype, "page", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Number)
+], QueryBase.prototype, "page_size", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Number)
+], QueryBase.prototype, "total", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
@@ -585,26 +616,19 @@ __decorate([
 ], Query.prototype, "items", null);
 
 class QueryPage extends QueryBase {
+    __load(objs) {
+        this.__items.splice(0, this.__items.length);
+        this.__items.push(...objs);
+    }
+    goToFirstPage() { this.page = 0; }
+    goToPrevPage() { this.page = this.page < 0 ? this.page - 1 : 0; }
+    goToNextPage() { this.page = this.page + 1; }
+    goToLastPage() { this.page = Math.floor(this.total / this.page_size); } // TODO: need to know total row count
+    get is_first_page() { return this.page === 0; }
+    get is_last_page() { return Math.floor(this.total / this.page_size) === this.page; }
+    get items() { return this.__items; }
     constructor(adapter, base_cache, filters, order_by, page = 0, page_size = 50) {
         super(adapter, base_cache, filters, order_by);
-        Object.defineProperty(this, "page", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "page_size", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "total", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
         this.page = page;
         this.page_size = page_size;
         this.__disposers.push(reaction(() => {
@@ -617,17 +641,6 @@ class QueryPage extends QueryBase {
             };
         }, action('MO: Query Base - need to update', () => this.need_to_update = true)));
     }
-    __load(objs) {
-        this.__items.splice(0, this.__items.length);
-        this.__items.push(...objs);
-    }
-    goToFirstPage() { this.page = 0; }
-    goToPrevPage() { this.page = this.page < 0 ? this.page - 1 : 0; }
-    goToNextPage() { this.page = this.page + 1; }
-    goToLastPage() { this.page = Math.floor(this.total / this.page_size); } // TODO: need to know total row count
-    get is_first_page() { return this.page === 0; }
-    get is_last_page() { return Math.floor(this.total / this.page_size) === this.page; }
-    get items() { return this.__items; }
     async shadowLoad() {
         try {
             const objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page * this.page_size);
@@ -646,18 +659,6 @@ class QueryPage extends QueryBase {
         }
     }
 }
-__decorate([
-    observable,
-    __metadata("design:type", Number)
-], QueryPage.prototype, "page", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Number)
-], QueryPage.prototype, "page_size", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Number)
-], QueryPage.prototype, "total", void 0);
 __decorate([
     action('MO: Query Page - load'),
     __metadata("design:type", Function),
@@ -1232,9 +1233,7 @@ class LocalAdapter extends Adapter {
         return raw_objs;
     }
     async getTotalCount(where) {
-        let objs = [];
-        // Object.values(store[this.store_name])
-        return objs.length;
+        return Object.values(local_store[this.store_name]).length;
     }
 }
 // model decorator

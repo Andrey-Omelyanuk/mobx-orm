@@ -7,10 +7,6 @@ import { Filter } from "../filters"
 
 export class QueryPage<M extends Model> extends QueryBase<M> {
 
-    @observable page        : number
-    @observable page_size   : number
-    @observable total       : number
-
     @action('MO: Query Page - load')
     __load(objs: M[]) {
         this.__items.splice(0, this.__items.length)

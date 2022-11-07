@@ -1,5 +1,5 @@
 import { runInAction } from 'mobx'
-import { Model, model, field, QueryPage, LocalAdapter, local } from '../'
+import { Model, model, field, QueryPage, LocalAdapter, local, EQ } from '../'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
 
 
@@ -15,16 +15,19 @@ describe('QueryPage', () => {
     const adapter   : LocalAdapter<A> = (<any>A).__adapter
     const cache     : Map<number, A>  = (<any>A).__cache
     let query: QueryPage<A>
-    let load : any
+    let query_load              : any
+    let adapter_load            : any
+    let adapter_getTotalCount   : any
 
     beforeAll(() => {
         adapter.init_local_data(data_set)
-        load  = jest.spyOn(A.__adapter, 'load')
     })
 
     beforeEach(async () => {
         query = new QueryPage<A>(adapter, cache)
-        await query.load()
+        query_load              = jest.spyOn(query, '__load')
+        adapter_load            = jest.spyOn(adapter, 'load')
+        adapter_getTotalCount   = jest.spyOn(adapter, 'getTotalCount')
     })
 
     afterEach(async () => {
@@ -43,18 +46,53 @@ describe('QueryPage', () => {
                 page: 0,
                 page_size: 50 
             })
-            expect(load).toHaveBeenCalledTimes(1) 
-            expect(load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page)
+            expect(adapter_load).toHaveBeenCalledTimes(0) 
+            // expect(adapter_load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page)
         })
 
-        it('call load when a query was created ', async () => {
+        it('need_to_update', async () => {
+                                                            expect(query.need_to_update).toBe(false)
+            runInAction(() => query.order_by = new Map());  expect(query.need_to_update).toBe(true)
+            runInAction(() => query.need_to_update = false)
+            const filter = EQ('a', 2)
+            runInAction(() => query.filters = filter);      expect(query.need_to_update).toBe(true)
+            runInAction(() => query.need_to_update = false);expect(query.need_to_update).toBe(false)
+            runInAction(() => filter.value = 3);            expect(query.need_to_update).toBe(true)
+            runInAction(() => query.need_to_update = false)
+            runInAction(() => query.page_size = 3);         expect(query.need_to_update).toBe(true)
+            runInAction(() => query.need_to_update = false)
+            runInAction(() => query.page = 3);              expect(query.need_to_update).toBe(true)
         })
     })
 
+    it('shadowLoad', async ()=> {
+                            expect(query.total).toBe(undefined)
+                            expect(query_load).toHaveBeenCalledTimes(0)
+                            expect(adapter_load).toHaveBeenCalledTimes(0)
+                            expect(adapter_getTotalCount).toHaveBeenCalledTimes(0)
+                            expect(query.is_ready).toBe(false)
+        await query.shadowLoad() 
+                            expect(query.total).toBe(5)
+                            expect(query_load).toHaveBeenCalledTimes(1)
+                            expect(adapter_load).toHaveBeenCalledTimes(1)
+                            expect(adapter_getTotalCount).toHaveBeenCalledTimes(1)
+                            expect(query.is_ready).toBe(true)
+                            expect(query.need_to_update).toBe(false)
+        query.need_to_update = true
+                            expect(query.need_to_update).toBe(true)
+        await query.shadowLoad() 
+                            expect(query_load).toHaveBeenCalledTimes(2)
+                            expect(adapter_load).toHaveBeenCalledTimes(2)
+                            expect(adapter_getTotalCount).toHaveBeenCalledTimes(2)
+                            expect(query.is_ready).toBe(true)
+                            expect(query.need_to_update).toBe(false)
+    })
+
     it('e2e', async () => {
-        expect(load).toHaveBeenCalledTimes(1) 
-        expect(load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page)
-        // expect(query.items.length).toBe(data_set.length)
+        expect(adapter_load).toHaveBeenCalledTimes(0) 
+        await query.load()
+        expect(adapter_load).toHaveBeenCalledTimes(1) 
+        expect(adapter_load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page*query.page_size)
         expect(query.items).toEqual([
             cache.get(obj_a.id),
             cache.get(obj_b.id),
@@ -75,6 +113,8 @@ describe('QueryPage', () => {
         ])
 
         await query.load()
+        expect(adapter_load).toHaveBeenCalledTimes(2) 
+        expect(adapter_load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page*query.page_size)
         expect(query.items).toEqual([])
 
         runInAction(() => {

@@ -102,9 +102,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     }
 
     async getTotalCount(where?): Promise<number> {
-        let objs = []
-        // Object.values(store[this.store_name])
-        return objs.length
+        return Object.values(local_store[this.store_name]).length
     }
 }
 

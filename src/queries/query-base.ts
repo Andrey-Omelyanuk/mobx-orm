@@ -12,6 +12,10 @@ export abstract class QueryBase<M extends Model> {
 
     @observable filters     : Filter
     @observable order_by    : ORDER_BY 
+    // I cannot declare these observables directly into QueryPage
+    @observable page        : number
+    @observable page_size   : number
+    @observable total       : number
 
     @observable need_to_update: boolean = false // set to true then filters/order_by/page/page_size was changed and back to false after load
 

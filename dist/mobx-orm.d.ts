@@ -99,6 +99,9 @@ declare type ORDER_BY = Map<string, boolean>;
 declare abstract class QueryBase<M extends Model> {
     filters: Filter;
     order_by: ORDER_BY;
+    page: number;
+    page_size: number;
+    total: number;
     need_to_update: boolean;
     get is_loading(): boolean;
     get is_ready(): boolean;
@@ -132,9 +135,6 @@ declare class Query<M extends Model> extends QueryBase<M> {
 }
 
 declare class QueryPage<M extends Model> extends QueryBase<M> {
-    page: number;
-    page_size: number;
-    total: number;
     __load(objs: M[]): void;
     goToFirstPage(): void;
     goToPrevPage(): void;
