@@ -1,4 +1,6 @@
+import { SelectMany, SelectOne } from '@/types';
 import { model, Model, RawObject, field, Adapter } from '../'
+import { EQ } from '../filters' 
 import { obj_a, obj_b } from '../test.utils' 
 
 
@@ -13,8 +15,8 @@ describe('Adapter', () => {
         async __create(raw_data: RawObject) : Promise<RawObject> { raw_data.id = 1; return raw_data }
         async __update(obj_id: number, only_changed_raw_data: RawObject) : Promise<RawObject> { return only_changed_raw_data }
         async __delete(obj_id: number) : Promise<RawObject> { return }
-        async __load (where?, order_by?, limit?, offset?) : Promise<RawObject[]> { return [obj_a, obj_b] }
-        async __find(where): Promise<object> { return obj_a; }
+        async __load (selector: SelectMany) : Promise<RawObject[]> { return [obj_a, obj_b] }
+        async __find(selector: SelectOne): Promise<object> { return obj_a; }
         async getTotalCount(where?): Promise<number> { return 0; }
     }
 
@@ -65,16 +67,17 @@ describe('Adapter', () => {
     })
 
     it('find', async ()=> {
-                                            expect(__find).toHaveBeenCalledTimes(0)
-        let obj = await adapter.find({});   expect(__find).toHaveBeenCalledTimes(1)
-                                            expect(__find).toHaveBeenCalledWith({})
-                                            expect(obj).toBe(cache.get(obj_a.id))
+        const selector: SelectOne = { filter: EQ ('')  }
+                                                expect(__find).toHaveBeenCalledTimes(0)
+        let obj = await adapter.find(selector); expect(__find).toHaveBeenCalledTimes(1)
+                                                expect(__find).toHaveBeenCalledWith(selector)
+                                                expect(obj).toBe(cache.get(obj_a.id))
     })
 
     it('load', async ()=> {
                                             expect(__load).toHaveBeenCalledTimes(0)
         let items = await adapter.load();   expect(__load).toHaveBeenCalledTimes(1)
-                                            expect(__load).toHaveBeenCalledWith(undefined, undefined, undefined, undefined)
+                                            expect(__load).toHaveBeenCalledWith(undefined)
                                             expect(items).toEqual([
                                                 cache.get(obj_a.id),
                                                 cache.get(obj_b.id),

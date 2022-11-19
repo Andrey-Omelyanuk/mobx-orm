@@ -3,6 +3,7 @@ import { Model } from '../model'
 import { Adapter } from '../adapters'
 import { QueryBase, ASC, DESC, ORDER_BY } from './query-base'
 import { Filter } from '../filters'
+import { SelectMany } from '@/types'
 
 /*
 Reactive items:
@@ -16,8 +17,8 @@ Reactive items:
 
 export class Query<M extends Model> extends QueryBase<M> {
 
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY) {
-        super(adapter, base_cache, filters, order_by)
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany) {
+        super(adapter, base_cache, selector)
 
         this.__disposers.push(reaction(
             () => { return { 
@@ -57,7 +58,7 @@ export class Query<M extends Model> extends QueryBase<M> {
     @action('MO: Query Base - shadow load')
     async shadowLoad() {
         try {
-            let objs = await this.__adapter.load(this.filters, this.order_by)
+            let objs = await this.__adapter.load(this.select_many)
             this.__load(objs)
             // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
             await new Promise(resolve => setTimeout(resolve))

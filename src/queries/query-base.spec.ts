@@ -1,3 +1,4 @@
+import { SelectMany } from '@/types'
 import { reaction, runInAction } from 'mobx'
 import { model, Model, Adapter, LocalAdapter, QueryBase, ORDER_BY, ASC, Filter, EQ } from '../'
 
@@ -12,8 +13,8 @@ describe('QueryBase', () => {
         get items() { return this.__items }
         __load(objs: M[]) { this.__items = objs }
         async shadowLoad() {}
-    	constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY) {
-			super(adapter, base_cache, filters, order_by)
+    	constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany) {
+			super(adapter, base_cache, selector)
 		}
     }
 
@@ -32,13 +33,15 @@ describe('QueryBase', () => {
     })
 
     it('constructor', async ()=> {
-        let filters     = EQ('id', 1)
-        let order_by    = new Map([ ['id', ASC], ]) 
-        let query       = new Query<A>(adapter, cache, filters, order_by);
+        let selector: SelectMany = {
+            filter: EQ('id', 1),
+            order_by: new Map([ ['id', ASC], ]) 
+        }
+        let query = new Query<A>(adapter, cache, selector);
         expect(query.order_by.size).toBe(1)
-        expect(query.order_by.get('id')).toBe(order_by.get('id'))
+        expect(query.order_by.get('id')).toBe(selector.order_by.get('id'))
         expect(query).toMatchObject({
-            filters     : filters,
+            filters     : selector.filter,
             __items     : [],
             is_loading  : false,
             is_ready    : false,

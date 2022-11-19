@@ -2,6 +2,7 @@ import { action, autorun, makeObservable, observable, runInAction } from "mobx"
 import { Adapter } from "../adapters"
 import { Model } from "../model"
 import { Filter } from '../filters'
+import { SelectMany } from "@/types"
 
 export const ASC = true 
 export const DESC = false 
@@ -12,9 +13,13 @@ export abstract class QueryBase<M extends Model> {
 
     @observable filters     : Filter
     @observable order_by    : ORDER_BY 
+    @observable fields     ?: Array<string> 
+    @observable omit       ?: Array<string> 
+    @observable relations  ?: Array<string> 
+
     // I cannot declare these observables directly into QueryPage
-    @observable page        : number
-    @observable page_size   : number
+    @observable offset      : number
+    @observable limit       : number
     @observable total       : number
 
     @observable need_to_update: boolean = false // set to true then filters/order_by/page/page_size was changed and back to false after load
@@ -33,11 +38,11 @@ export abstract class QueryBase<M extends Model> {
     __disposers         : (()=>void)[] = []
     __disposer_objects  : {[field: string]: ()=>void} = {}
 
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY) {
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany) {
 		this.__base_cache = base_cache
 		this.__adapter    = adapter
-        this.order_by     = order_by ? order_by : new Map()
-        if (filters  ) this.filters = filters
+        this.filters      = selector?.filter
+        this.order_by     = selector?.order_by || new Map()
         makeObservable(this)
     }
 
@@ -68,6 +73,18 @@ export abstract class QueryBase<M extends Model> {
             // we have to wait a next tick before set __is_loading to true, mobx recalculation should be done before
             await new Promise(resolve => setTimeout(resolve))
             runInAction(() => this.__is_loading = false)
+        }
+    }
+
+    get select_many(): SelectMany {
+        return {
+            filter      : this.filters,
+            order_by    : this.order_by,
+            fields      : this.fields,
+            omit        : this.omit,
+            relations   : this.relations,
+            offset      : this.offset,
+            limit       : this.limit
         }
     }
 

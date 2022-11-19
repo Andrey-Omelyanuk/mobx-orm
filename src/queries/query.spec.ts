@@ -1,3 +1,4 @@
+import { SelectMany } from '@/types'
 import { runInAction } from 'mobx'
 import { Model, model, field, Query, LocalAdapter, EQ, IN, ASC, DESC } from '../'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
@@ -32,13 +33,15 @@ describe('Query', () => {
 
     describe('constructor', () => {
         it('super', async () => {
-            let filters     = EQ('a', 2)
-            let order_by    = new Map([ ['id', ASC], ]) 
-            let query       = new Query<A>(adapter, cache, filters, order_by)
+            let select_many: SelectMany = {
+                filter: EQ('a', 2),
+                order_by: new Map([ ['id', ASC], ]) 
+            }
+            let query       = new Query<A>(adapter, cache, select_many)
                                 expect(query.order_by.size).toBe(1)
-                                expect(query.order_by.get('id')).toBe(order_by.get('id'))
+                                expect(query.order_by.get('id')).toBe(select_many.order_by.get('id'))
                                 expect(query).toMatchObject({
-                                    filters     : filters,
+                                    filters     : select_many.filter,
                                     is_loading  : false,
                                     is_ready    : false,
                                     error       : '',

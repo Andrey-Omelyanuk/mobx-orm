@@ -2,6 +2,7 @@ import { action, intercept, makeObservable, observable, observe } from 'mobx'
 import { Adapter } from './adapters'
 import { Query, QueryPage, ORDER_BY } from './queries'
 import { Filter } from './filters'
+import { SelectMany, SelectOne } from './types'
 
 
 export type RawObject = any 
@@ -50,20 +51,20 @@ export abstract class Model {
             this.__cache.delete(obj.id)
     }
 
-    static getQuery(filters?: Filter, order_by?: ORDER_BY): Query<Model>  {
-        return new Query<Model>(this.__adapter, this.__cache, filters, order_by)
+    static getQuery(props?: SelectMany): Query<Model>  {
+        return new Query<Model>(this.__adapter, this.__cache, props)
     }
 
-    static getQueryPage(filter?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number): QueryPage<Model> {
-        return new QueryPage(this.__adapter, this.__cache, filter, order_by, page, page_size)
+    static getQueryPage(props?: SelectMany): QueryPage<Model> {
+        return new QueryPage(this.__adapter, this.__cache, props)
     }
 
     static get(id: number) {
         return this.__cache.get(id)
     }
 
-    static async find(filters: Filter) : Promise<Model> {
-        return this.__adapter.find(filters) 
+    static async find(props: SelectOne) : Promise<Model> {
+        return this.__adapter.find(props) 
     }
 
     @action('MO: model - update the cache from raw')

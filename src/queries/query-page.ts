@@ -1,8 +1,8 @@
-import { observable, action, reaction, runInAction } from "mobx"
+import { action, reaction, runInAction } from "mobx"
 import { Model } from "../model"
 import { Adapter } from "../adapters"
-import { QueryBase, ORDER_BY } from './query-base'
-import { Filter } from "../filters"
+import { QueryBase } from './query-base'
+import { SelectMany } from "@/types"
 
 
 export class QueryPage<M extends Model> extends QueryBase<M> {
@@ -13,27 +13,31 @@ export class QueryPage<M extends Model> extends QueryBase<M> {
         this.__items.push(...objs)
     }
 
-    @action('MO: fisrt page') goToFirstPage() { this.page = 0 }
-    @action('MO: prev page')  goToPrevPage () { this.page = this.page < 0 ? this.page - 1 : 0 }
-    @action('MO: next page')  goToNextPage () { this.page = this.page + 1 }
-    @action('MO: last page')  goToLastPage () { this.page = Math.floor(this.total / this.page_size) } // TODO: need to know total row count
+    @action('MO: set page size') setPageSize(size: number) { this.limit = size }
+    @action('MO: set page')   setPage(n: number) { this.offset = this.limit * n }
+    @action('MO: fisrt page') goToFirstPage() { this.offset = 0 }
+    @action('MO: prev page')  goToPrevPage () { this.offset = this.offset < this.limit ? 0 : this.offset - this.limit }
+    @action('MO: next page')  goToNextPage () { this.offset = this.offset + this.limit }
+    @action('MO: last page')  goToLastPage () { this.offset = Math.floor(this.total / this.limit) * this.limit }
 
-    get is_first_page() { return this.page === 0 }
-    get is_last_page () { return Math.floor(this.total / this.page_size) === this.page }
+    get is_first_page() : boolean { return this.offset === 0 }
+    get is_last_page () : boolean { return this.offset + this.limit >= this.total }
+    get current_page()  : number  { return this.offset / this.limit }
+    get total_pages()   : number  { return Math.floor(this.total / this.limit) }
 
     get items() { return this.__items }
 
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page: number = 0, page_size: number = 50) {
-        super(adapter, base_cache, filters, order_by)
-		this.page = page 
-		this.page_size = page_size 
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany) {
+        super(adapter, base_cache, selector)
+		this.offset = selector?.offset || 0   
+		this.limit = selector?.limit || 50 
 
         this.__disposers.push(reaction(
             () => { return { 
-                filter          : this.filters?.URLSearchParams, 
-                order_by        : this.order_by, 
-                page            : this.page, 
-                page_size       : this.page_size,
+                filter  : this.filters?.URLSearchParams, 
+                order_by: this.order_by, 
+                offset  : this.offset, 
+                limit   : this.limit,
              }},
             action('MO: Query Base - need to update', () => this.need_to_update = true )
         ))
@@ -42,7 +46,7 @@ export class QueryPage<M extends Model> extends QueryBase<M> {
     @action('MO: Query Base - shadow load')
     async shadowLoad() {
         try {
-            const objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page*this.page_size)
+            const objs = await this.__adapter.load(this.select_many)
             this.__load(objs)
             const total = await this.__adapter.getTotalCount(this.filters)
             runInAction(() => {
