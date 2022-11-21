@@ -310,7 +310,7 @@ function AND(...filters) { return new AND_Filter(filters); }
 const ASC = true;
 const DESC = false;
 class QueryBase {
-    constructor(adapter, base_cache, filters, order_by) {
+    constructor(adapter, base_cache, selector) {
         Object.defineProperty(this, "filters", {
             enumerable: true,
             configurable: true,
@@ -323,14 +323,32 @@ class QueryBase {
             writable: true,
             value: void 0
         });
-        // I cannot declare these observables directly into QueryPage
-        Object.defineProperty(this, "page", {
+        Object.defineProperty(this, "fields", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "page_size", {
+        Object.defineProperty(this, "omit", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "relations", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        // I cannot declare these observables directly into QueryPage
+        Object.defineProperty(this, "offset", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "limit", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -398,9 +416,8 @@ class QueryBase {
         });
         this.__base_cache = base_cache;
         this.__adapter = adapter;
-        this.order_by = order_by ? order_by : new Map();
-        if (filters)
-            this.filters = filters;
+        this.filters = selector === null || selector === void 0 ? void 0 : selector.filter;
+        this.order_by = (selector === null || selector === void 0 ? void 0 : selector.order_by) || new Map();
         makeObservable(this);
     }
     get is_loading() { return this.__is_loading; }
@@ -426,6 +443,17 @@ class QueryBase {
             await new Promise(resolve => setTimeout(resolve));
             runInAction(() => this.__is_loading = false);
         }
+    }
+    get select_many() {
+        return {
+            filter: this.filters,
+            order_by: this.order_by,
+            fields: this.fields,
+            omit: this.omit,
+            relations: this.relations,
+            offset: this.offset,
+            limit: this.limit
+        };
     }
     // use it if you need use promise instead of observe is_ready
     ready() {
@@ -460,12 +488,24 @@ __decorate([
 ], QueryBase.prototype, "order_by", void 0);
 __decorate([
     observable,
-    __metadata("design:type", Number)
-], QueryBase.prototype, "page", void 0);
+    __metadata("design:type", Array)
+], QueryBase.prototype, "fields", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Array)
+], QueryBase.prototype, "omit", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Array)
+], QueryBase.prototype, "relations", void 0);
 __decorate([
     observable,
     __metadata("design:type", Number)
-], QueryBase.prototype, "page_size", void 0);
+], QueryBase.prototype, "offset", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Number)
+], QueryBase.prototype, "limit", void 0);
 __decorate([
     observable,
     __metadata("design:type", Number)
@@ -507,8 +547,8 @@ Reactive items:
     -    было но уже не попадание по фильтрам -> remove the obj from items
 */
 class Query extends QueryBase {
-    constructor(adapter, base_cache, filters, order_by) {
-        super(adapter, base_cache, filters, order_by);
+    constructor(adapter, base_cache, selector) {
+        super(adapter, base_cache, selector);
         this.__disposers.push(reaction(() => {
             var _a;
             return {
@@ -538,7 +578,7 @@ class Query extends QueryBase {
     }
     async shadowLoad() {
         try {
-            let objs = await this.__adapter.load(this.filters, this.order_by);
+            let objs = await this.__adapter.load(this.select_many);
             this.__load(objs);
             // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
             await new Promise(resolve => setTimeout(resolve));
@@ -620,30 +660,34 @@ class QueryPage extends QueryBase {
         this.__items.splice(0, this.__items.length);
         this.__items.push(...objs);
     }
-    goToFirstPage() { this.page = 0; }
-    goToPrevPage() { this.page = this.page < 0 ? this.page - 1 : 0; }
-    goToNextPage() { this.page = this.page + 1; }
-    goToLastPage() { this.page = Math.floor(this.total / this.page_size); } // TODO: need to know total row count
-    get is_first_page() { return this.page === 0; }
-    get is_last_page() { return Math.floor(this.total / this.page_size) === this.page; }
+    setPageSize(size) { this.limit = size; }
+    setPage(n) { this.offset = this.limit * n; }
+    goToFirstPage() { this.offset = 0; }
+    goToPrevPage() { this.offset = this.offset < this.limit ? 0 : this.offset - this.limit; }
+    goToNextPage() { this.offset = this.offset + this.limit; }
+    goToLastPage() { this.offset = Math.floor(this.total / this.limit) * this.limit; }
+    get is_first_page() { return this.offset === 0; }
+    get is_last_page() { return this.offset + this.limit >= this.total; }
+    get current_page() { return this.offset / this.limit; }
+    get total_pages() { return Math.floor(this.total / this.limit); }
     get items() { return this.__items; }
-    constructor(adapter, base_cache, filters, order_by, page = 0, page_size = 50) {
-        super(adapter, base_cache, filters, order_by);
-        this.page = page;
-        this.page_size = page_size;
+    constructor(adapter, base_cache, selector) {
+        super(adapter, base_cache, selector);
+        this.offset = (selector === null || selector === void 0 ? void 0 : selector.offset) || 0;
+        this.limit = (selector === null || selector === void 0 ? void 0 : selector.limit) || 50;
         this.__disposers.push(reaction(() => {
             var _a;
             return {
                 filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams,
                 order_by: this.order_by,
-                page: this.page,
-                page_size: this.page_size,
+                offset: this.offset,
+                limit: this.limit,
             };
         }, action('MO: Query Base - need to update', () => this.need_to_update = true)));
     }
     async shadowLoad() {
         try {
-            const objs = await this.__adapter.load(this.filters, this.order_by, this.page_size, this.page * this.page_size);
+            const objs = await this.__adapter.load(this.select_many);
             this.__load(objs);
             const total = await this.__adapter.getTotalCount(this.filters);
             runInAction(() => {
@@ -665,6 +709,18 @@ __decorate([
     __metadata("design:paramtypes", [Array]),
     __metadata("design:returntype", void 0)
 ], QueryPage.prototype, "__load", null);
+__decorate([
+    action('MO: set page size'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], QueryPage.prototype, "setPageSize", null);
+__decorate([
+    action('MO: set page'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], QueryPage.prototype, "setPage", null);
 __decorate([
     action('MO: fisrt page'),
     __metadata("design:type", Function),
@@ -731,17 +787,17 @@ class Model {
         if (this.__cache.has(obj.id))
             this.__cache.delete(obj.id);
     }
-    static getQuery(filters, order_by) {
-        return new Query(this.__adapter, this.__cache, filters, order_by);
+    static getQuery(props) {
+        return new Query(this.__adapter, this.__cache, props);
     }
-    static getQueryPage(filter, order_by, page, page_size) {
-        return new QueryPage(this.__adapter, this.__cache, filter, order_by, page, page_size);
+    static getQueryPage(props) {
+        return new QueryPage(this.__adapter, this.__cache, props);
     }
     static get(id) {
         return this.__cache.get(id);
     }
-    static async find(filters) {
-        return this.__adapter.find(filters);
+    static async find(props) {
+        return this.__adapter.find(props);
     }
     static updateCache(raw_obj) {
         let obj;
@@ -1121,13 +1177,13 @@ class Adapter {
         return obj;
     }
     /* Returns ONE object */
-    async find(where) {
-        let raw_obj = await this.__find(where);
+    async find(selector) {
+        let raw_obj = await this.__find(selector);
         return this.model.updateCache(raw_obj);
     }
     /* Returns MANY objects */
-    async load(where, order_by, limit, offset) {
-        let raw_objs = await this.__load(where, order_by, limit, offset);
+    async load(selector) {
+        let raw_objs = await this.__load(selector);
         let objs = [];
         // it should be happend in one big action
         runInAction(() => {
@@ -1199,19 +1255,19 @@ class LocalAdapter extends Adapter {
             await timeout(this.delay);
         delete local_store[this.store_name][obj_id];
     }
-    async __find(where) {
+    async __find(selector) {
         if (this.delay)
             await timeout(this.delay);
         // TODO: apply where, and throw error if no obj or multi objs
         let raw_obj = Object.values(local_store[this.store_name])[0];
         return raw_obj;
     }
-    async __load(where, order_by, limit, offset) {
+    async __load(selector) {
+        const { filter, order_by, limit, offset } = selector || {};
         if (this.delay)
             await timeout(this.delay);
         let raw_objs = [];
-        // filter
-        if (where) {
+        if (filter) {
             for (let raw_obj of Object.values(local_store[this.store_name])) {
             }
         }

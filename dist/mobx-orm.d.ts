@@ -1,42 +1,71 @@
-declare abstract class Adapter<M extends Model> {
-    abstract __create(raw_data: RawData): Promise<RawObject>;
-    abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
-    abstract __delete(obj_id: number): Promise<void>;
-    abstract __find(where: any): Promise<object>;
-    abstract __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject[]>;
-    abstract getTotalCount(where?: any): Promise<number>;
-    readonly model: any;
-    constructor(model: any);
-    create(obj: M): Promise<M>;
-    update(obj: M): Promise<M>;
-    delete(obj: M): Promise<M>;
-    find(where: any): Promise<M>;
-    load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<M[]>;
-}
-
-declare let local_store: {
-    string?: {
-        number: Model;
-    };
-};
-declare class LocalAdapter<M extends Model> extends Adapter<M> {
-    readonly store_name: string;
-    delay: number;
-    init_local_data(data: RawObject[]): void;
-    constructor(model: any, store_name?: string);
-    __create(raw_data: RawData): Promise<RawObject>;
-    __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
-    __delete(obj_id: number): Promise<void>;
-    __find(where: any): Promise<RawObject>;
-    __load(where?: any, order_by?: any, limit?: any, offset?: any): Promise<RawObject[]>;
-    getTotalCount(where?: any): Promise<number>;
-}
-declare function local(): (cls: any) => void;
+import { SelectMany as SelectMany$1, SelectOne as SelectOne$1 } from '@/types';
 
 declare abstract class Filter {
     abstract get URLSearchParams(): URLSearchParams;
     abstract setFromURI(uri: string): void;
     abstract isMatch(obj: any): boolean;
+}
+
+declare const ASC = true;
+declare const DESC = false;
+declare type ORDER_BY = Map<string, boolean>;
+declare abstract class QueryBase<M extends Model> {
+    filters: Filter;
+    order_by: ORDER_BY;
+    fields?: Array<string>;
+    omit?: Array<string>;
+    relations?: Array<string>;
+    offset: number;
+    limit: number;
+    total: number;
+    need_to_update: boolean;
+    get is_loading(): boolean;
+    get is_ready(): boolean;
+    get error(): string;
+    readonly __base_cache: any;
+    readonly __adapter: Adapter<M>;
+    __items: M[];
+    __is_loading: boolean;
+    __is_ready: boolean;
+    __error: string;
+    __disposers: (() => void)[];
+    __disposer_objects: {
+        [field: string]: () => void;
+    };
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany$1);
+    destroy(): void;
+    abstract get items(): any;
+    abstract __load(objs: M[]): any;
+    abstract shadowLoad(): any;
+    load(): Promise<void>;
+    get select_many(): SelectMany$1;
+    ready(): Promise<Boolean>;
+    loading(): Promise<Boolean>;
+}
+
+declare class Query<M extends Model> extends QueryBase<M> {
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany$1);
+    shadowLoad(): Promise<void>;
+    get items(): M[];
+    __load(objs: M[]): void;
+    __watch_obj(obj: any): void;
+}
+
+declare class QueryPage<M extends Model> extends QueryBase<M> {
+    __load(objs: M[]): void;
+    setPageSize(size: number): void;
+    setPage(n: number): void;
+    goToFirstPage(): void;
+    goToPrevPage(): void;
+    goToNextPage(): void;
+    goToLastPage(): void;
+    get is_first_page(): boolean;
+    get is_last_page(): boolean;
+    get current_page(): number;
+    get total_pages(): number;
+    get items(): M[];
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany$1);
+    shadowLoad(): Promise<void>;
 }
 
 declare enum ValueType {
@@ -93,59 +122,55 @@ declare class AND_Filter extends ComboFilter {
 }
 declare function AND(...filters: Filter[]): Filter;
 
-declare const ASC = true;
-declare const DESC = false;
-declare type ORDER_BY = Map<string, boolean>;
-declare abstract class QueryBase<M extends Model> {
-    filters: Filter;
-    order_by: ORDER_BY;
-    page: number;
-    page_size: number;
-    total: number;
-    need_to_update: boolean;
-    get is_loading(): boolean;
-    get is_ready(): boolean;
-    get error(): string;
-    readonly __base_cache: any;
-    readonly __adapter: Adapter<M>;
-    __items: M[];
-    __is_loading: boolean;
-    __is_ready: boolean;
-    __error: string;
-    __disposers: (() => void)[];
-    __disposer_objects: {
-        [field: string]: () => void;
+interface SelectBase {
+    relations?: Array<string>;
+    fields?: Array<string>;
+    omit?: Array<string>;
+}
+interface SelectOne extends SelectBase {
+    filter: Filter;
+}
+interface SelectMany extends SelectBase {
+    filter?: Filter;
+    order_by?: ORDER_BY;
+    offset?: number;
+    limit?: number;
+}
+
+declare abstract class Adapter<M extends Model> {
+    abstract __create(raw_data: RawData): Promise<RawObject>;
+    abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
+    abstract __delete(obj_id: number): Promise<void>;
+    abstract __find(props: SelectOne): Promise<object>;
+    abstract __load(props: SelectMany): Promise<RawObject[]>;
+    abstract getTotalCount(where?: any): Promise<number>;
+    readonly model: any;
+    constructor(model: any);
+    create(obj: M): Promise<M>;
+    update(obj: M): Promise<M>;
+    delete(obj: M): Promise<M>;
+    find(selector: SelectOne): Promise<M>;
+    load(selector?: SelectMany): Promise<M[]>;
+}
+
+declare let local_store: {
+    string?: {
+        number: Model;
     };
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY);
-    destroy(): void;
-    abstract get items(): any;
-    abstract __load(objs: M[]): any;
-    abstract shadowLoad(): any;
-    load(): Promise<void>;
-    ready(): Promise<Boolean>;
-    loading(): Promise<Boolean>;
+};
+declare class LocalAdapter<M extends Model> extends Adapter<M> {
+    readonly store_name: string;
+    delay: number;
+    init_local_data(data: RawObject[]): void;
+    constructor(model: any, store_name?: string);
+    __create(raw_data: RawData): Promise<RawObject>;
+    __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
+    __delete(obj_id: number): Promise<void>;
+    __find(selector: SelectOne$1): Promise<RawObject>;
+    __load(selector?: SelectMany$1): Promise<RawObject[]>;
+    getTotalCount(where?: any): Promise<number>;
 }
-
-declare class Query<M extends Model> extends QueryBase<M> {
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY);
-    shadowLoad(): Promise<void>;
-    get items(): M[];
-    __load(objs: M[]): void;
-    __watch_obj(obj: any): void;
-}
-
-declare class QueryPage<M extends Model> extends QueryBase<M> {
-    __load(objs: M[]): void;
-    goToFirstPage(): void;
-    goToPrevPage(): void;
-    goToNextPage(): void;
-    goToLastPage(): void;
-    get is_first_page(): boolean;
-    get is_last_page(): boolean;
-    get items(): M[];
-    constructor(adapter: Adapter<M>, base_cache: any, filters?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number);
-    shadowLoad(): Promise<void>;
-}
+declare function local(): (cls: any) => void;
 
 declare type RawObject = any;
 declare type RawData = any;
@@ -168,10 +193,10 @@ declare abstract class Model {
     };
     static inject(obj: Model): void;
     static eject(obj: Model): void;
-    static getQuery(filters?: Filter, order_by?: ORDER_BY): Query<Model>;
-    static getQueryPage(filter?: Filter, order_by?: ORDER_BY, page?: number, page_size?: number): QueryPage<Model>;
+    static getQuery(props?: SelectMany): Query<Model>;
+    static getQueryPage(props?: SelectMany): QueryPage<Model>;
     static get(id: number): Model;
-    static find(filters: Filter): Promise<Model>;
+    static find(props: SelectOne): Promise<Model>;
     static updateCache(raw_obj: any): Model;
     static clearCache(): void;
     id: number | undefined;

@@ -57,7 +57,7 @@ export class QueryPage<M extends Model> extends QueryBase<M> {
         }
         catch(e) {
             // 'MO: Query Base - shadow load - error',
-            runInAction( () => this.__error = e)
+            runInAction(() => this.__error = e)
             throw e
         }
     }
