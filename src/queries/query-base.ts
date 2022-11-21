@@ -43,6 +43,9 @@ export abstract class QueryBase<M extends Model> {
 		this.__adapter    = adapter
         this.filters      = selector?.filter
         this.order_by     = selector?.order_by || new Map()
+        this.fields       = selector?.fields || []
+        this.omit         = selector?.omit || []
+        this.relations    = selector?.relations || []
         makeObservable(this)
     }
 

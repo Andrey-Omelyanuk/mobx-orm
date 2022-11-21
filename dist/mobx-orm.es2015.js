@@ -418,6 +418,9 @@ class QueryBase {
         this.__adapter = adapter;
         this.filters = selector === null || selector === void 0 ? void 0 : selector.filter;
         this.order_by = (selector === null || selector === void 0 ? void 0 : selector.order_by) || new Map();
+        this.fields = (selector === null || selector === void 0 ? void 0 : selector.fields) || [];
+        this.omit = (selector === null || selector === void 0 ? void 0 : selector.omit) || [];
+        this.relations = (selector === null || selector === void 0 ? void 0 : selector.relations) || [];
         makeObservable(this);
     }
     get is_loading() { return this.__is_loading; }
