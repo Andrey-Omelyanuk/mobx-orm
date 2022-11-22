@@ -2,7 +2,7 @@ import { action, reaction, runInAction } from "mobx"
 import { Model } from "../model"
 import { Adapter } from "../adapters"
 import { QueryBase } from './query-base'
-import { SelectMany } from "@/types"
+import { Selector } from "@/types"
 
 
 export class QueryPage<M extends Model> extends QueryBase<M> {
@@ -25,28 +25,20 @@ export class QueryPage<M extends Model> extends QueryBase<M> {
     get current_page()  : number  { return this.offset / this.limit }
     get total_pages()   : number  { return Math.floor(this.total / this.limit) }
 
-    get items() { return this.__items }
-
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany) {
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
         super(adapter, base_cache, selector)
-		this.offset = selector?.offset || 0   
-		this.limit = selector?.limit || 50 
-
-        this.__disposers.push(reaction(
-            () => { return { 
-                filter  : this.filters?.URLSearchParams, 
-                order_by: this.order_by, 
-                offset  : this.offset, 
-                limit   : this.limit,
-             }},
-            action('MO: Query Base - need to update', () => this.need_to_update = true )
-        ))
+        runInAction(() => {
+            this.offset = selector?.offset || 0   
+            this.limit  = selector?.limit  || 50 
+        })
     }
+
+    get items() { return this.__items }
 
     @action('MO: Query Base - shadow load')
     async shadowLoad() {
         try {
-            const objs = await this.__adapter.load(this.select_many)
+            const objs = await this.__adapter.load(this.selector)
             this.__load(objs)
             const total = await this.__adapter.getTotalCount(this.filters)
             runInAction(() => {

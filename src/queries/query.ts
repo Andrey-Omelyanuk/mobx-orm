@@ -1,32 +1,14 @@
-import { action, runInAction, autorun, computed, observe, reaction } from 'mobx'
+import { action, runInAction, computed, observe, reaction } from 'mobx'
 import { Model } from '../model'
 import { Adapter } from '../adapters'
-import { QueryBase, ASC, DESC, ORDER_BY } from './query-base'
-import { Filter } from '../filters'
-import { SelectMany } from '@/types'
+import { QueryBase, ASC } from './query-base'
+import { Selector } from '@/types'
 
-/*
-Reactive items:
-- delete from the cache -> delete from items
-- add to the cache 
-    - the new obj is match the filters  -> add the obj to items
-- obj was changed 
-    - не было но уже    попадание по фильтрам -> add the obj to items
-    -    было но уже не попадание по фильтрам -> remove the obj from items
-*/
 
 export class Query<M extends Model> extends QueryBase<M> {
 
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany) {
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
         super(adapter, base_cache, selector)
-
-        this.__disposers.push(reaction(
-            () => { return { 
-                filter          : this.filters?.URLSearchParams, 
-                order_by        : this.order_by, 
-             }},
-            action('MO: Query Base - need to update', () => this.need_to_update = true)
-        ))
 
         // watch the cache for changes, and update items if needed
         this.__disposers.push(observe(this.__base_cache, 
@@ -58,7 +40,7 @@ export class Query<M extends Model> extends QueryBase<M> {
     @action('MO: Query Base - shadow load')
     async shadowLoad() {
         try {
-            let objs = await this.__adapter.load(this.select_many)
+            let objs = await this.__adapter.load(this.selector)
             this.__load(objs)
             // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
             await new Promise(resolve => setTimeout(resolve))

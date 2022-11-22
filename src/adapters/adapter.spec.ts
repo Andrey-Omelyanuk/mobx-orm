@@ -1,4 +1,4 @@
-import { SelectMany, SelectOne } from '@/types';
+import { Selector } from '@/types';
 import { model, Model, RawObject, field, Adapter } from '../'
 import { EQ } from '../filters' 
 import { obj_a, obj_b } from '../test.utils' 
@@ -15,8 +15,8 @@ describe('Adapter', () => {
         async __create(raw_data: RawObject) : Promise<RawObject> { raw_data.id = 1; return raw_data }
         async __update(obj_id: number, only_changed_raw_data: RawObject) : Promise<RawObject> { return only_changed_raw_data }
         async __delete(obj_id: number) : Promise<RawObject> { return }
-        async __load (selector: SelectMany) : Promise<RawObject[]> { return [obj_a, obj_b] }
-        async __find(selector: SelectOne): Promise<object> { return obj_a; }
+        async __load(selector: Selector) : Promise<RawObject[]> { return [obj_a, obj_b] }
+        async __find(selector: Selector): Promise<object> { return obj_a; }
         async getTotalCount(where?): Promise<number> { return 0; }
     }
 
@@ -67,7 +67,7 @@ describe('Adapter', () => {
     })
 
     it('find', async ()=> {
-        const selector: SelectOne = { filter: EQ ('')  }
+        const selector: Selector = { filter: EQ ('')  }
                                                 expect(__find).toHaveBeenCalledTimes(0)
         let obj = await adapter.find(selector); expect(__find).toHaveBeenCalledTimes(1)
                                                 expect(__find).toHaveBeenCalledWith(selector)

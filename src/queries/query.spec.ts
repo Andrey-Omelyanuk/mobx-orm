@@ -1,4 +1,4 @@
-import { SelectMany } from '@/types'
+import { Selector } from '@/types'
 import { runInAction } from 'mobx'
 import { Model, model, field, Query, LocalAdapter, EQ, IN, ASC, DESC } from '../'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
@@ -33,15 +33,15 @@ describe('Query', () => {
 
     describe('constructor', () => {
         it('super', async () => {
-            let select_many: SelectMany = {
+            let selector: Selector = {
                 filter: EQ('a', 2),
                 order_by: new Map([ ['id', ASC], ]) 
             }
-            let query       = new Query<A>(adapter, cache, select_many)
+            let query       = new Query<A>(adapter, cache, selector)
                                 expect(query.order_by.size).toBe(1)
-                                expect(query.order_by.get('id')).toBe(select_many.order_by.get('id'))
+                                expect(query.order_by.get('id')).toBe(selector.order_by.get('id'))
                                 expect(query).toMatchObject({
-                                    filters     : select_many.filter,
+                                    filters     : selector.filter,
                                     is_loading  : false,
                                     is_ready    : false,
                                     error       : '',
@@ -73,7 +73,7 @@ describe('Query', () => {
         })
 
         it('need_to_update', async () => {
-                                                            expect(query.need_to_update).toBe(false)
+                                                            expect(query.need_to_update).toBe(true)
             runInAction(() => query.order_by = new Map());  expect(query.need_to_update).toBe(true)
             runInAction(() => query.need_to_update = false)
             const filter = EQ('a', 2)

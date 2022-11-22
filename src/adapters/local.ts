@@ -1,4 +1,4 @@
-import { SelectMany, SelectOne } from '@/types'
+import { Selector } from '@/types'
 import { Model, RawData, RawObject } from '../model'
 import { Adapter }  from './adapter'
 
@@ -64,14 +64,14 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         delete local_store[this.store_name][obj_id]
     }
 
-    async __find(selector: SelectOne) : Promise<RawObject> {
+    async __find(selector: Selector) : Promise<RawObject> {
         if (this.delay) await timeout(this.delay) 
         // TODO: apply where, and throw error if no obj or multi objs
         let raw_obj = Object.values(local_store[this.store_name])[0]
         return raw_obj
     }
 
-    async __load (selector?: SelectMany) : Promise<RawObject[]> {
+    async __load (selector?: Selector) : Promise<RawObject[]> {
         const {filter, order_by, limit, offset} = selector || {}
         if (this.delay) await timeout(this.delay) 
         let raw_objs = []

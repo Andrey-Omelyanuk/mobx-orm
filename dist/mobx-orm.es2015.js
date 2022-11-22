@@ -6,7 +6,7 @@
    * Released under the MIT license.
    */
 
-import { observable, action, makeObservable, runInAction, autorun, computed, reaction, observe, intercept, extendObservable } from 'mobx';
+import { observable, action, makeObservable, reaction, runInAction, autorun, computed, observe, intercept, extendObservable } from 'mobx';
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -422,6 +422,15 @@ class QueryBase {
         this.omit = (selector === null || selector === void 0 ? void 0 : selector.omit) || [];
         this.relations = (selector === null || selector === void 0 ? void 0 : selector.relations) || [];
         makeObservable(this);
+        this.__disposers.push(reaction(() => {
+            var _a;
+            return {
+                filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams.toString(),
+                order_by: this.order_by,
+                offset: this.offset,
+                limit: this.limit,
+            };
+        }, action('MO: Query Base - need to update', () => this.need_to_update = true), { fireImmediately: true }));
     }
     get is_loading() { return this.__is_loading; }
     get is_ready() { return this.__is_ready; }
@@ -447,7 +456,7 @@ class QueryBase {
             runInAction(() => this.__is_loading = false);
         }
     }
-    get select_many() {
+    get selector() {
         return {
             filter: this.filters,
             order_by: this.order_by,
@@ -540,25 +549,9 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], QueryBase.prototype, "load", null);
 
-/*
-Reactive items:
-- delete from the cache -> delete from items
-- add to the cache
-    - the new obj is match the filters  -> add the obj to items
-- obj was changed
-    - не было но уже    попадание по фильтрам -> add the obj to items
-    -    было но уже не попадание по фильтрам -> remove the obj from items
-*/
 class Query extends QueryBase {
     constructor(adapter, base_cache, selector) {
         super(adapter, base_cache, selector);
-        this.__disposers.push(reaction(() => {
-            var _a;
-            return {
-                filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams,
-                order_by: this.order_by,
-            };
-        }, action('MO: Query Base - need to update', () => this.need_to_update = true)));
         // watch the cache for changes, and update items if needed
         this.__disposers.push(observe(this.__base_cache, action('MO: Query - update from cache changes', (change) => {
             if (change.type == 'add') {
@@ -581,7 +574,7 @@ class Query extends QueryBase {
     }
     async shadowLoad() {
         try {
-            let objs = await this.__adapter.load(this.select_many);
+            let objs = await this.__adapter.load(this.selector);
             this.__load(objs);
             // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
             await new Promise(resolve => setTimeout(resolve));
@@ -673,24 +666,17 @@ class QueryPage extends QueryBase {
     get is_last_page() { return this.offset + this.limit >= this.total; }
     get current_page() { return this.offset / this.limit; }
     get total_pages() { return Math.floor(this.total / this.limit); }
-    get items() { return this.__items; }
     constructor(adapter, base_cache, selector) {
         super(adapter, base_cache, selector);
-        this.offset = (selector === null || selector === void 0 ? void 0 : selector.offset) || 0;
-        this.limit = (selector === null || selector === void 0 ? void 0 : selector.limit) || 50;
-        this.__disposers.push(reaction(() => {
-            var _a;
-            return {
-                filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams,
-                order_by: this.order_by,
-                offset: this.offset,
-                limit: this.limit,
-            };
-        }, action('MO: Query Base - need to update', () => this.need_to_update = true)));
+        runInAction(() => {
+            this.offset = (selector === null || selector === void 0 ? void 0 : selector.offset) || 0;
+            this.limit = (selector === null || selector === void 0 ? void 0 : selector.limit) || 50;
+        });
     }
+    get items() { return this.__items; }
     async shadowLoad() {
         try {
-            const objs = await this.__adapter.load(this.select_many);
+            const objs = await this.__adapter.load(this.selector);
             this.__load(objs);
             const total = await this.__adapter.getTotalCount(this.filters);
             runInAction(() => {
@@ -790,17 +776,17 @@ class Model {
         if (this.__cache.has(obj.id))
             this.__cache.delete(obj.id);
     }
-    static getQuery(props) {
-        return new Query(this.__adapter, this.__cache, props);
+    static getQuery(selector) {
+        return new Query(this.__adapter, this.__cache, selector);
     }
-    static getQueryPage(props) {
-        return new QueryPage(this.__adapter, this.__cache, props);
+    static getQueryPage(selector) {
+        return new QueryPage(this.__adapter, this.__cache, selector);
     }
     static get(id) {
         return this.__cache.get(id);
     }
-    static async find(props) {
-        return this.__adapter.find(props);
+    static async find(selector) {
+        return this.__adapter.find(selector);
     }
     static updateCache(raw_obj) {
         let obj;

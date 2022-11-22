@@ -1,4 +1,4 @@
-import { SelectMany as SelectMany$1, SelectOne as SelectOne$1 } from '@/types';
+import { Selector as Selector$1 } from '@/types';
 
 declare abstract class Filter {
     abstract get URLSearchParams(): URLSearchParams;
@@ -32,19 +32,19 @@ declare abstract class QueryBase<M extends Model> {
     __disposer_objects: {
         [field: string]: () => void;
     };
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany$1);
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector$1);
     destroy(): void;
     abstract get items(): any;
     abstract __load(objs: M[]): any;
     abstract shadowLoad(): any;
     load(): Promise<void>;
-    get select_many(): SelectMany$1;
+    get selector(): Selector$1;
     ready(): Promise<Boolean>;
     loading(): Promise<Boolean>;
 }
 
 declare class Query<M extends Model> extends QueryBase<M> {
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany$1);
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector$1);
     shadowLoad(): Promise<void>;
     get items(): M[];
     __load(objs: M[]): void;
@@ -63,8 +63,8 @@ declare class QueryPage<M extends Model> extends QueryBase<M> {
     get is_last_page(): boolean;
     get current_page(): number;
     get total_pages(): number;
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector$1);
     get items(): M[];
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany$1);
     shadowLoad(): Promise<void>;
 }
 
@@ -122,17 +122,12 @@ declare class AND_Filter extends ComboFilter {
 }
 declare function AND(...filters: Filter[]): Filter;
 
-interface SelectBase {
+interface Selector {
+    filter?: Filter;
+    order_by?: ORDER_BY;
     relations?: Array<string>;
     fields?: Array<string>;
     omit?: Array<string>;
-}
-interface SelectOne extends SelectBase {
-    filter: Filter;
-}
-interface SelectMany extends SelectBase {
-    filter?: Filter;
-    order_by?: ORDER_BY;
     offset?: number;
     limit?: number;
 }
@@ -141,16 +136,16 @@ declare abstract class Adapter<M extends Model> {
     abstract __create(raw_data: RawData): Promise<RawObject>;
     abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
     abstract __delete(obj_id: number): Promise<void>;
-    abstract __find(props: SelectOne): Promise<object>;
-    abstract __load(props: SelectMany): Promise<RawObject[]>;
+    abstract __find(props: Selector): Promise<object>;
+    abstract __load(props: Selector): Promise<RawObject[]>;
     abstract getTotalCount(where?: any): Promise<number>;
     readonly model: any;
     constructor(model: any);
     create(obj: M): Promise<M>;
     update(obj: M): Promise<M>;
     delete(obj: M): Promise<M>;
-    find(selector: SelectOne): Promise<M>;
-    load(selector?: SelectMany): Promise<M[]>;
+    find(selector: Selector): Promise<M>;
+    load(selector?: Selector): Promise<M[]>;
 }
 
 declare let local_store: {
@@ -166,8 +161,8 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     __create(raw_data: RawData): Promise<RawObject>;
     __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
     __delete(obj_id: number): Promise<void>;
-    __find(selector: SelectOne$1): Promise<RawObject>;
-    __load(selector?: SelectMany$1): Promise<RawObject[]>;
+    __find(selector: Selector$1): Promise<RawObject>;
+    __load(selector?: Selector$1): Promise<RawObject[]>;
     getTotalCount(where?: any): Promise<number>;
 }
 declare function local(): (cls: any) => void;
@@ -193,10 +188,10 @@ declare abstract class Model {
     };
     static inject(obj: Model): void;
     static eject(obj: Model): void;
-    static getQuery(props?: SelectMany): Query<Model>;
-    static getQueryPage(props?: SelectMany): QueryPage<Model>;
+    static getQuery(selector?: Selector): Query<Model>;
+    static getQueryPage(selector?: Selector): QueryPage<Model>;
     static get(id: number): Model;
-    static find(props: SelectOne): Promise<Model>;
+    static find(selector: Selector): Promise<Model>;
     static updateCache(raw_obj: any): Model;
     static clearCache(): void;
     id: number | undefined;
@@ -227,4 +222,4 @@ declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: 
 
 declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, IN, IN_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, SelectMany, SelectOne, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
+export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, IN, IN_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };

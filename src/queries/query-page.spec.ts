@@ -1,4 +1,3 @@
-import { SelectMany } from '@/types'
 import { runInAction } from 'mobx'
 import { Model, model, field, QueryPage, LocalAdapter, local, EQ } from '../'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
@@ -52,7 +51,7 @@ describe('QueryPage', () => {
         })
 
         it('need_to_update', async () => {
-                                                            expect(query.need_to_update).toBe(false)
+                                                            expect(query.need_to_update).toBe(true)
             runInAction(() => query.order_by = new Map());  expect(query.need_to_update).toBe(true)
             runInAction(() => query.need_to_update = false)
             const filter = EQ('a', 2)
@@ -93,7 +92,7 @@ describe('QueryPage', () => {
         expect(adapter_load).toHaveBeenCalledTimes(0) 
         await query.load()
         expect(adapter_load).toHaveBeenCalledTimes(1) 
-        expect(adapter_load).toHaveBeenCalledWith(query.select_many)
+        expect(adapter_load).toHaveBeenCalledWith(query.selector)
         expect(query.items).toEqual([
             cache.get(obj_a.id),
             cache.get(obj_b.id),
@@ -113,7 +112,7 @@ describe('QueryPage', () => {
 
         await query.load()
         expect(adapter_load).toHaveBeenCalledTimes(2) 
-        expect(adapter_load).toHaveBeenCalledWith(query.select_many)
+        expect(adapter_load).toHaveBeenCalledWith(query.selector)
         expect(query.items).toEqual([])
 
         // TODO: check local adapter

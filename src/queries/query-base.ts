@@ -1,8 +1,8 @@
-import { action, autorun, makeObservable, observable, runInAction } from "mobx"
+import { action, autorun, makeObservable, observable, reaction, runInAction } from "mobx"
 import { Adapter } from "../adapters"
 import { Model } from "../model"
 import { Filter } from '../filters'
-import { SelectMany } from "@/types"
+import { Selector } from "@/types"
 
 export const ASC = true 
 export const DESC = false 
@@ -38,15 +38,26 @@ export abstract class QueryBase<M extends Model> {
     __disposers         : (()=>void)[] = []
     __disposer_objects  : {[field: string]: ()=>void} = {}
 
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany) {
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
 		this.__base_cache = base_cache
 		this.__adapter    = adapter
         this.filters      = selector?.filter
-        this.order_by     = selector?.order_by || new Map()
-        this.fields       = selector?.fields || []
-        this.omit         = selector?.omit || []
+        this.order_by     = selector?.order_by  || new Map()
+        this.fields       = selector?.fields    || []
+        this.omit         = selector?.omit      || []
         this.relations    = selector?.relations || []
         makeObservable(this)
+
+        this.__disposers.push(reaction(
+            () => { return { 
+                filter  : this.filters?.URLSearchParams.toString(), 
+                order_by: this.order_by, 
+                offset  : this.offset, 
+                limit   : this.limit,
+             }},
+            action('MO: Query Base - need to update', () => this.need_to_update = true ),
+            {fireImmediately: true}
+        ))
     }
 
     destroy() {
@@ -79,7 +90,7 @@ export abstract class QueryBase<M extends Model> {
         }
     }
 
-    get select_many(): SelectMany {
+    get selector(): Selector {
         return {
             filter      : this.filters,
             order_by    : this.order_by,

@@ -1,4 +1,4 @@
-import { SelectMany } from '@/types'
+import { Selector } from '@/types'
 import { reaction, runInAction } from 'mobx'
 import { model, Model, Adapter, LocalAdapter, QueryBase, ORDER_BY, ASC, Filter, EQ } from '../'
 
@@ -13,7 +13,7 @@ describe('QueryBase', () => {
         get items() { return this.__items }
         __load(objs: M[]) { this.__items = objs }
         async shadowLoad() {}
-    	constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectMany) {
+    	constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
 			super(adapter, base_cache, selector)
 		}
     }
@@ -33,7 +33,7 @@ describe('QueryBase', () => {
     })
 
     it('constructor', async ()=> {
-        let selector: SelectMany = {
+        let selector: Selector = {
             filter: EQ('id', 1),
             order_by: new Map([ ['id', ASC], ]) 
         }
@@ -53,7 +53,7 @@ describe('QueryBase', () => {
     })
 
     it('destroy', async ()=> {
-        query.__disposers.push(         reaction(() => query.is_loading, () => null));  expect(query.__disposers.length).toBe(1)
+        query.__disposers.push(         reaction(() => query.is_loading, () => null));  expect(query.__disposers.length).toBe(2)
         query.__disposer_objects['x'] = reaction(() => query.is_loading, () => null );  expect(Object.keys(query.__disposer_objects).length).toBe(1)
         query.destroy();                                                                expect(query.__disposers.length).toBe(0)
                                                                                         expect(Object.keys(query.__disposer_objects).length).toBe(0)
