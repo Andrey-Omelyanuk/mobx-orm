@@ -85,21 +85,24 @@ describe('Query', () => {
 
     it('items', async () => {
                                         expect(query.items).toMatchObject(data_set)
-        query.order_by.set('a', ASC);   expect(query.items).toMatchObject([
+        runInAction(() => query.order_by.set('a', ASC))
+                                        expect(query.items).toMatchObject([
                                             {id: 4, a: 1}, 
                                             {id: 2, a: 2}, 
                                             {id: 3, a: 2}, 
                                             {id: 0, a: 5},
                                             {id: 1,     }, 
                                         ])
-        query.order_by.set('a', DESC);  expect(query.items).toMatchObject([
+        runInAction(() => query.order_by.set('a', DESC))
+                                        expect(query.items).toMatchObject([
                                             {id: 1,      }, 
                                             {id: 0, a: 5,},
                                             {id: 2, a: 2,}, 
                                             {id: 3, a: 2,}, 
                                             {id: 4, a: 1,}, 
                                         ])
-        query.order_by.delete('a');     expect(query.items).toMatchObject(data_set)
+        runInAction(() => query.order_by.delete('a'))
+                                        expect(query.items).toMatchObject(data_set)
 
         runInAction(() => query.filters = IN('a', [1, 2]))
                                         expect(query.items).toMatchObject([
@@ -107,7 +110,8 @@ describe('Query', () => {
                                             {id: 3, a: 2}, 
                                             {id: 4, a: 1},
                                         ])
-        query.order_by.set('a', ASC);   expect(query.items).toMatchObject([
+        runInAction(() => query.order_by.set('a', ASC))
+                                        expect(query.items).toMatchObject([
                                             {id: 4, a: 1},
                                             {id: 2, a: 2}, 
                                             {id: 3, a: 2}, 

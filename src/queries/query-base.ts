@@ -51,7 +51,8 @@ export abstract class QueryBase<M extends Model> {
         this.__disposers.push(reaction(
             () => { return { 
                 filter  : this.filters?.URLSearchParams.toString(), 
-                order_by: this.order_by, 
+                order_by: Array.from(this.order_by, ([name, value]) => ([ name, value ])), 
+                // order_by: this.order_by, 
                 offset  : this.offset, 
                 limit   : this.limit,
              }},
