@@ -1,6 +1,6 @@
 import { Selector } from '@/types'
 import { reaction, runInAction } from 'mobx'
-import { model, Model, Adapter, LocalAdapter, QueryBase, ORDER_BY, ASC, Filter, EQ } from '../'
+import { model, Model, Adapter, LocalAdapter, QueryBase, ORDER_BY, ASC, DESC, Filter, EQ } from '../'
 
 
 describe('QueryBase', () => {
@@ -83,5 +83,21 @@ describe('QueryBase', () => {
             done()
         })
         runInAction(() => query.__is_loading = false)
+    })
+
+    it('need_to_update', async () => {
+        runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
+        runInAction(() => query.order_by = new Map());      expect(query.need_to_update).toBe(true)
+        runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
+        runInAction(() => query.order_by.set('a', ASC));    expect(query.need_to_update).toBe(true)
+        runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
+        runInAction(() => query.order_by.set('a', DESC));   expect(query.need_to_update).toBe(true)
+        runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
+        runInAction(() => query.order_by.set('a', DESC));   expect(query.need_to_update).toBe(false)
+        runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
+        runInAction(() => query.order_by.set('b', ASC));    expect(query.need_to_update).toBe(true)
+        runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
+        runInAction(() => query.order_by.delete('a'));      expect(query.need_to_update).toBe(true)
+        runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
     })
 })

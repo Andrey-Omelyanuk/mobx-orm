@@ -38,6 +38,8 @@ declare abstract class QueryBase<M extends Model> {
     abstract __load(objs: M[]): any;
     abstract shadowLoad(): any;
     load(): Promise<void>;
+    get autoupdate(): boolean;
+    set autoupdate(value: boolean);
     get selector(): Selector$1;
     ready(): Promise<Boolean>;
     loading(): Promise<Boolean>;

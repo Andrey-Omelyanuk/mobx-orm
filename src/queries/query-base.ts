@@ -91,6 +91,30 @@ export abstract class QueryBase<M extends Model> {
         }
     }
 
+    get autoupdate() {
+        // TODO: move the name of disposer to const
+        return !! this.__disposer_objects['__autoupdate']
+    }
+    set autoupdate(value: boolean) {
+        if (value !== this.autoupdate) {
+            // off
+            if (!value) {
+                this.__disposer_objects['__autoupdate']()
+                delete this.__disposer_objects['__autoupdate']
+            }
+            // on 
+            else {
+                this.__disposer_objects['__autoupdate'] = reaction(
+                    () => this.need_to_update,
+                    (need_to_update) => {
+                        if (need_to_update) this.load()
+                    },
+                    { fireImmediately: true }
+                )
+            }
+        }
+    }
+
     get selector(): Selector {
         return {
             filter      : this.filters,

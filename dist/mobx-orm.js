@@ -430,7 +430,8 @@
                 var _a;
                 return {
                     filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams.toString(),
-                    order_by: this.order_by,
+                    order_by: Array.from(this.order_by, ([name, value]) => ([name, value])),
+                    // order_by: this.order_by, 
                     offset: this.offset,
                     limit: this.limit,
                 };
@@ -458,6 +459,26 @@
                 // we have to wait a next tick before set __is_loading to true, mobx recalculation should be done before
                 await new Promise(resolve => setTimeout(resolve));
                 mobx.runInAction(() => this.__is_loading = false);
+            }
+        }
+        get autoupdate() {
+            // TODO: move the name of disposer to const
+            return !!this.__disposer_objects['__autoupdate'];
+        }
+        set autoupdate(value) {
+            if (value !== this.autoupdate) {
+                // off
+                if (!value) {
+                    this.__disposer_objects['__autoupdate']();
+                    delete this.__disposer_objects['__autoupdate'];
+                }
+                // on 
+                else {
+                    this.__disposer_objects['__autoupdate'] = mobx.reaction(() => this.need_to_update, (need_to_update) => {
+                        if (need_to_update)
+                            this.load();
+                    }, { fireImmediately: true });
+                }
             }
         }
         get selector() {
@@ -660,7 +681,7 @@
             this.__items.splice(0, this.__items.length);
             this.__items.push(...objs);
         }
-        setPageSize(size) { this.limit = size; }
+        setPageSize(size) { this.limit = size; this.offset = 0; }
         setPage(n) { this.offset = this.limit * n; }
         goToFirstPage() { this.offset = 0; }
         goToPrevPage() { this.offset = this.offset < this.limit ? 0 : this.offset - this.limit; }

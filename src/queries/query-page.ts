@@ -13,7 +13,7 @@ export class QueryPage<M extends Model> extends QueryBase<M> {
         this.__items.push(...objs)
     }
 
-    @action('MO: set page size') setPageSize(size: number) { this.limit = size }
+    @action('MO: set page size') setPageSize(size: number) { this.limit = size; this.offset = 0 }
     @action('MO: set page')   setPage(n: number) { this.offset = this.limit * n }
     @action('MO: fisrt page') goToFirstPage() { this.offset = 0 }
     @action('MO: prev page')  goToPrevPage () { this.offset = this.offset < this.limit ? 0 : this.offset - this.limit }
