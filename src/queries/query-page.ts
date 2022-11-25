@@ -23,7 +23,7 @@ export class QueryPage<M extends Model> extends QueryBase<M> {
     get is_first_page() : boolean { return this.offset === 0 }
     get is_last_page () : boolean { return this.offset + this.limit >= this.total }
     get current_page()  : number  { return this.offset / this.limit }
-    get total_pages()   : number  { return Math.floor(this.total / this.limit) }
+    get total_pages()   : number  { return Math.ceil(this.total / this.limit) }
 
     constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
         super(adapter, base_cache, selector)

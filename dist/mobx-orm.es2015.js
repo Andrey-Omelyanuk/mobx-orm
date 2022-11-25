@@ -686,7 +686,7 @@ class QueryPage extends QueryBase {
     get is_first_page() { return this.offset === 0; }
     get is_last_page() { return this.offset + this.limit >= this.total; }
     get current_page() { return this.offset / this.limit; }
-    get total_pages() { return Math.floor(this.total / this.limit); }
+    get total_pages() { return Math.ceil(this.total / this.limit); }
     constructor(adapter, base_cache, selector) {
         super(adapter, base_cache, selector);
         runInAction(() => {
