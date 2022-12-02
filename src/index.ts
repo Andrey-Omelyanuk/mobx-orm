@@ -1,4 +1,5 @@
 export * from './model'
+export * from './read-only-model'
 export * from './fields'
 export * from './filters'
 export * from './queries'

@@ -4,20 +4,20 @@ import { Model, model, field, foreign, one, many } from './'
 describe('Model Instance', () => {
 
     describe('constructor()', () => {
-        it('empty', async () => {
+        it('empty', () => {
             @model class A extends Model { @field a }     
                                                 ; expect(A.__cache.size).toBe(0)
             let a = new A()                     ; expect(A.__cache.size).toBe(0)
                                                 ; expect(a).toMatchObject({__init_data: {a: undefined}, id: undefined, a :undefined })
         })
-        it('only id', async () => {
+        it('only id', () => {
             @model class A extends Model { @field a }     
                                                 ; expect(A.__cache.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.__cache.size).toBe(1)
                                                   expect(A.__cache.get(a.id)).toBe(a)
                                                 ; expect(a).toMatchObject({__init_data: {a: undefined}, id: 1, a: undefined})
         })
-        it('id + value', async () => {
+        it('id + value', () => {
             @model class A extends Model { @field a }     
                                                 ; expect(A.__cache.size).toBe(0)
             let a = new A({id: 1, a: 2})        ; expect(A.__cache.size).toBe(1)
@@ -25,7 +25,7 @@ describe('Model Instance', () => {
                                                 ; expect(a).toMatchObject({__init_data: {a: 2}, id: 1, a: 2})
         })
 
-        it('default property', async () => {
+        it('default property', () => {
             @model class A extends Model {
                 @field a : number = 1 
                 @field b : number 
