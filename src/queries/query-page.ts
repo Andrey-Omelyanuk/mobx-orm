@@ -14,16 +14,16 @@ export class QueryPage<M extends Model> extends QueryBase<M> {
     }
 
     @action('MO: set page size') setPageSize(size: number) { this.limit = size; this.offset = 0 }
-    @action('MO: set page')   setPage(n: number) { this.offset = this.limit * n }
-    @action('MO: fisrt page') goToFirstPage() { this.offset = 0 }
-    @action('MO: prev page')  goToPrevPage () { this.offset = this.offset < this.limit ? 0 : this.offset - this.limit }
-    @action('MO: next page')  goToNextPage () { this.offset = this.offset + this.limit }
-    @action('MO: last page')  goToLastPage () { this.offset = Math.floor(this.total / this.limit) * this.limit }
+    @action('MO: set page')      setPage(n: number) { this.offset = this.limit * (n > 0 ? n-1 : 0) }
+    @action('MO: fisrt page')    goToFirstPage() { this.setPage(1) }
+    @action('MO: prev page')     goToPrevPage () { this.setPage(this.current_page - 1) }
+    @action('MO: next page')     goToNextPage () { this.setPage(this.current_page + 1) }
+    @action('MO: last page')     goToLastPage () { this.setPage(this.total_pages) }
 
     get is_first_page() : boolean { return this.offset === 0 }
     get is_last_page () : boolean { return this.offset + this.limit >= this.total }
-    get current_page()  : number  { return this.offset / this.limit }
-    get total_pages()   : number  { return Math.ceil(this.total / this.limit) }
+    get current_page()  : number  { return this.offset / this.limit + 1 }
+    get total_pages()   : number  { return this.total ? Math.ceil(this.total / this.limit) : 1 }
 
     constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
         super(adapter, base_cache, selector)

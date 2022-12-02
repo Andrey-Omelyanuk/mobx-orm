@@ -20,7 +20,7 @@ export abstract class QueryBase<M extends Model> {
     // I cannot declare these observables directly into QueryPage
     @observable offset      : number
     @observable limit       : number
-    @observable total       : number
+    @observable total       : number = 0
 
     @observable need_to_update: boolean = false // set to true then filters/order_by/page/page_size was changed and back to false after load
 

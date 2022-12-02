@@ -66,7 +66,7 @@ describe('QueryPage', () => {
     })
 
     it('shadowLoad', async ()=> {
-                            expect(query.total).toBe(undefined)
+                            expect(query.total).toBe(0)
                             expect(query_load).toHaveBeenCalledTimes(0)
                             expect(adapter_load).toHaveBeenCalledTimes(0)
                             expect(adapter_getTotalCount).toHaveBeenCalledTimes(0)
@@ -104,6 +104,102 @@ describe('QueryPage', () => {
         runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
     })
 
+    describe('pagination', () => {
+        it('setPage', async () => {
+                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.setPage(0)        ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.setPage(1)        ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.setPage(2)        ; expect([query.limit, query.offset]).toMatchObject([50, 50])
+
+            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
+            query.setPage(1)        ; expect([query.limit, query.offset]).toMatchObject([10, 0])
+            query.setPage(2)        ; expect([query.limit, query.offset]).toMatchObject([10, 10])
+            query.setPage(3)        ; expect([query.limit, query.offset]).toMatchObject([10, 20])
+        })
+        it('setPageSize', async () => {
+                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
+            query.setPageSize(20)   ; expect([query.limit, query.offset]).toMatchObject([20, 0])
+        })
+        it('goToFirstPage', async () => {
+                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([50, 450])
+            query.goToFirstPage()   ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.goToFirstPage()   ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
+            query.goToFirstPage()   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
+        })
+        it('goToPrevPage', async () => {
+                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.goToPrevPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([50, 450])
+            query.goToPrevPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 400])
+            query.goToPrevPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 350])
+            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
+            query.goToPrevPage()    ; expect([query.limit, query.offset]).toMatchObject([10, 80])
+        })
+        it('goToNextPage', async () => {
+                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.goToNextPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 50])
+            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([50, 450])
+            query.goToNextPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 500])
+            query.goToNextPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 550])
+            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
+            query.goToNextPage()    ; expect([query.limit, query.offset]).toMatchObject([10, 100])
+        })
+        it('goToLastPage', async () => {
+                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+
+            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([50, 450])
+            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+
+            query.total = 50 
+            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+
+            query.total = 51 
+            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 50])
+
+            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
+            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([10, 50])
+
+            query.total = 50 
+            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([10, 40])
+        })
+        it('is_first_page', async () => {
+                                      expect(query.is_first_page).toBe(true)
+            query.setPage(0)        ; expect(query.is_first_page).toBe(true)
+            query.setPage(1)        ; expect(query.is_first_page).toBe(true)
+            query.setPage(2)        ; expect(query.is_first_page).toBe(false)
+        })
+        it('is_last_page', async () => {
+                                      expect(query.is_last_page).toBe(true)
+            query.setPage(0)        ; expect(query.is_last_page).toBe(true)
+            query.setPage(1)        ; expect(query.is_last_page).toBe(true)
+            query.setPage(2)        ; expect(query.is_last_page).toBe(true)
+            query.total = 1000      ; expect(query.is_last_page).toBe(false)
+        })
+        it('current_page', async () => {
+                                      expect(query.current_page).toBe(1)
+            query.setPage(-1)       ; expect(query.current_page).toBe(1)
+            query.setPage(0)        ; expect(query.current_page).toBe(1)
+            query.setPage(1)        ; expect(query.current_page).toBe(1)
+            query.setPage(2)        ; expect(query.current_page).toBe(2)
+        })
+        it('total_pages', async () => {
+                                      expect(query.total_pages).toBe(1)
+            query.total = 50        ; expect(query.total_pages).toBe(1)
+            query.total = 51        ; expect(query.total_pages).toBe(2)
+            query.total = 100       ; expect(query.total_pages).toBe(2)
+            query.total = 200       ; expect(query.total_pages).toBe(4)
+        })
+    })
+
     it('e2e', async () => {
         expect(adapter_load).toHaveBeenCalledTimes(0) 
         await query.load()
@@ -117,7 +213,7 @@ describe('QueryPage', () => {
             cache.get(obj_e.id),
         ])
 
-        query.setPage(1)
+        query.setPage(2)
         expect(query.items).toEqual([
             cache.get(obj_a.id),
             cache.get(obj_b.id),
