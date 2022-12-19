@@ -215,6 +215,13 @@ declare abstract class Model {
 }
 declare function model(constructor: any): any;
 
+declare abstract class ReadOnlyModel extends Model {
+    create(): Promise<void>;
+    update(): Promise<void>;
+    delete(): Promise<void>;
+    save(): Promise<void>;
+}
+
 declare function field_field(obj: any, field_name: any): void;
 declare function field(cls: any, field_name: string): void;
 
@@ -224,4 +231,4 @@ declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: 
 
 declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, IN, IN_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
+export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, IN, IN_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };

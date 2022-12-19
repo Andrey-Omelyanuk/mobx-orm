@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.44
+   * mobx-orm.js v1.0.47
    * Released under the MIT license.
    */
 
@@ -362,7 +362,7 @@
                 enumerable: true,
                 configurable: true,
                 writable: true,
-                value: void 0
+                value: 0
             });
             Object.defineProperty(this, "need_to_update", {
                 enumerable: true,
@@ -682,15 +682,15 @@
             this.__items.push(...objs);
         }
         setPageSize(size) { this.limit = size; this.offset = 0; }
-        setPage(n) { this.offset = this.limit * n; }
-        goToFirstPage() { this.offset = 0; }
-        goToPrevPage() { this.offset = this.offset < this.limit ? 0 : this.offset - this.limit; }
-        goToNextPage() { this.offset = this.offset + this.limit; }
-        goToLastPage() { this.offset = Math.floor(this.total / this.limit) * this.limit; }
+        setPage(n) { this.offset = this.limit * (n > 0 ? n - 1 : 0); }
+        goToFirstPage() { this.setPage(1); }
+        goToPrevPage() { this.setPage(this.current_page - 1); }
+        goToNextPage() { this.setPage(this.current_page + 1); }
+        goToLastPage() { this.setPage(this.total_pages); }
         get is_first_page() { return this.offset === 0; }
         get is_last_page() { return this.offset + this.limit >= this.total; }
-        get current_page() { return this.offset / this.limit; }
-        get total_pages() { return Math.ceil(this.total / this.limit); }
+        get current_page() { return this.offset / this.limit + 1; }
+        get total_pages() { return this.total ? Math.ceil(this.total / this.limit) : 1; }
         constructor(adapter, base_cache, selector) {
             super(adapter, base_cache, selector);
             mobx.runInAction(() => {
@@ -1009,6 +1009,13 @@
         f.prototype = original.prototype; // copy prototype so intanceof operator still works
         Object.defineProperty(f, "name", { value: original.name });
         return f; // return new constructor (will override original)
+    }
+
+    class ReadOnlyModel extends Model {
+        async create() { throw (`You cannot create the obj, ${this.model.name} is READ ONLY model`); }
+        async update() { throw (`You cannot update the obj, ${this.model.name} is READ ONLY model`); }
+        async delete() { throw (`You cannot delete the obj, ${this.model.name} is READ ONLY model`); }
+        async save() { throw (`You cannot save the obj, ${this.model.name} is READ ONLY model`); }
     }
 
     function field_field(obj, field_name) {
@@ -1337,6 +1344,7 @@
     exports.Query = Query;
     exports.QueryBase = QueryBase;
     exports.QueryPage = QueryPage;
+    exports.ReadOnlyModel = ReadOnlyModel;
     exports.SingleFilter = SingleFilter;
     exports.field = field;
     exports.field_field = field_field;
