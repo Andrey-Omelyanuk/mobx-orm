@@ -1,0 +1,19 @@
+name: Unittest 
+on: [pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone branch to runer
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 17.8.x
+
+      - name: Install deps
+        run: yarn install --frozen-lockfile
+
+      - name: Run tests
+        run: yarn test
