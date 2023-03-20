@@ -77,12 +77,14 @@ declare enum ValueType {
 }
 declare abstract class SingleFilter extends Filter {
     readonly field: string;
-    value: any;
     readonly value_type: ValueType;
-    options: Query<Model>;
-    constructor(field: string, value?: any, value_type?: ValueType);
+    value: any;
+    readonly options?: Query<Model>;
+    __disposers: (() => void)[];
+    constructor(field: string, value?: any, value_type?: ValueType, options?: Query<Model>);
     get URLSearchParams(): URLSearchParams;
     abstract get URIField(): string;
+    set(value: any): void;
     setFromURI(uri: string): void;
     abstract operator(value_a: any, value_b: any): boolean;
     isMatch(obj: any): boolean;
@@ -138,6 +140,7 @@ declare abstract class Adapter<M extends Model> {
     abstract __create(raw_data: RawData): Promise<RawObject>;
     abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
     abstract __delete(obj_id: number): Promise<void>;
+    abstract __get(obj_id: number): Promise<object>;
     abstract __find(props: Selector): Promise<object>;
     abstract __load(props: Selector): Promise<RawObject[]>;
     abstract getTotalCount(where?: any): Promise<number>;
@@ -146,6 +149,7 @@ declare abstract class Adapter<M extends Model> {
     create(obj: M): Promise<M>;
     update(obj: M): Promise<M>;
     delete(obj: M): Promise<M>;
+    get(obj_id: number): Promise<M>;
     find(selector: Selector): Promise<M>;
     load(selector?: Selector): Promise<M[]>;
 }
@@ -164,6 +168,7 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
     __delete(obj_id: number): Promise<void>;
     __find(selector: Selector$1): Promise<RawObject>;
+    __get(obj_id: number): Promise<RawObject>;
     __load(selector?: Selector$1): Promise<RawObject[]>;
     getTotalCount(where?: any): Promise<number>;
 }
@@ -209,6 +214,7 @@ declare abstract class Model {
     update(): Promise<any>;
     delete(): Promise<any>;
     save(): Promise<any>;
+    refresh(): Promise<any>;
     refreshInitData(): void;
     cancelLocalChanges(): void;
     updateFromRaw(raw_obj: any): void;

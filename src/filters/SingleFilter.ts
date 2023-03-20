@@ -15,7 +15,7 @@ export enum ValueType {
 export abstract class SingleFilter extends Filter {
     readonly    field       : string
     readonly    value_type  : ValueType 
-    @observable value       : string|number|boolean|null|undefined|string[]|number[]
+    @observable value       : any // string|number|boolean|null|undefined|string[]|number[]
     readonly    options    ?: Query<Model> // TODO: use generic type 
 
     __disposers             : (()=>void)[] = []

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.0.48
+   * mobx-orm.js v1.1.49
    * Released under the MIT license.
    */
 
@@ -44,10 +44,17 @@ var ValueType;
     ValueType[ValueType["NUMBER"] = 1] = "NUMBER";
     ValueType[ValueType["BOOL"] = 2] = "BOOL";
 })(ValueType || (ValueType = {}));
+// TODO: use generic type
 class SingleFilter extends Filter {
-    constructor(field, value, value_type) {
+    constructor(field, value, value_type, options) {
         super();
         Object.defineProperty(this, "field", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "value_type", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -58,19 +65,20 @@ class SingleFilter extends Filter {
             configurable: true,
             writable: true,
             value: void 0
-        }); // string|number|boolean|null|undefined|Array<any>
-        Object.defineProperty(this, "value_type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        }); // string|number|boolean|null|undefined|string[]|number[]
         Object.defineProperty(this, "options", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
-        }); // use it for UI when we need to show options for select
+        }); // TODO: use generic type 
+        Object.defineProperty(this, "__disposers", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
+        this.options = options;
         this.field = field;
         // auto detect type if type was not provided
         if (value_type === undefined) {
@@ -90,12 +98,20 @@ class SingleFilter extends Filter {
         }
         this.value = value;
         makeObservable(this);
+        // this.__disposers.push(autorun(() => {
+        //     if (this.value === undefined && getDefaultValue !== undefined) {
+        //         this.value = getDefaultValue(this)
+        //     }
+        // }
     }
     get URLSearchParams() {
         let search_params = new URLSearchParams();
         let value = this.deserialize();
         value !== undefined && search_params.set(this.URIField, value);
         return search_params;
+    }
+    set(value) {
+        this.value = value;
     }
     setFromURI(uri) {
         const search_params = new URLSearchParams(uri);
@@ -165,6 +181,12 @@ __decorate([
     observable,
     __metadata("design:type", Object)
 ], SingleFilter.prototype, "value", void 0);
+__decorate([
+    action('MO: Filter - set'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], SingleFilter.prototype, "set", null);
 __decorate([
     action('MO: Filter - set from URI'),
     __metadata("design:type", Function),
@@ -867,6 +889,8 @@ class Model {
     async update() { return await this.model.__adapter.update(this); }
     async delete() { return await this.model.__adapter.delete(this); }
     async save() { return this.id === undefined ? this.create() : this.update(); }
+    // update the object from the server
+    async refresh() { return await this.model.__adapter.get(this.id); }
     refreshInitData() {
         if (this.__init_data === undefined)
             this.__init_data = {};
@@ -1193,6 +1217,10 @@ class Adapter {
         runInAction(() => obj.id = undefined);
         return obj;
     }
+    async get(obj_id) {
+        let raw_obj = await this.__get(obj_id);
+        return this.model.updateCache(raw_obj);
+    }
     /* Returns ONE object */
     async find(selector) {
         let raw_obj = await this.__find(selector);
@@ -1273,6 +1301,13 @@ class LocalAdapter extends Adapter {
         delete local_store[this.store_name][obj_id];
     }
     async __find(selector) {
+        if (this.delay)
+            await timeout(this.delay);
+        // TODO: apply where, and throw error if no obj or multi objs
+        let raw_obj = Object.values(local_store[this.store_name])[0];
+        return raw_obj;
+    }
+    async __get(obj_id) {
         if (this.delay)
             await timeout(this.delay);
         // TODO: apply where, and throw error if no obj or multi objs

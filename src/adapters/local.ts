@@ -71,6 +71,13 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         return raw_obj
     }
 
+    async __get(obj_id: number) : Promise<RawObject> {
+        if (this.delay) await timeout(this.delay) 
+        // TODO: apply where, and throw error if no obj or multi objs
+        let raw_obj = Object.values(local_store[this.store_name])[0]
+        return raw_obj
+    }
+
     async __load (selector?: Selector) : Promise<RawObject[]> {
         const {filter, order_by, limit, offset} = selector || {}
         if (this.delay) await timeout(this.delay) 

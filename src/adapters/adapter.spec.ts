@@ -17,6 +17,7 @@ describe('Adapter', () => {
         async __delete(obj_id: number) : Promise<RawObject> { return }
         async __load(selector: Selector) : Promise<RawObject[]> { return [obj_a, obj_b] }
         async __find(selector: Selector): Promise<object> { return obj_a; }
+        async __get(obj_id: number): Promise<object> { return obj_a; }
         async getTotalCount(where?): Promise<number> { return 0; }
     }
 
