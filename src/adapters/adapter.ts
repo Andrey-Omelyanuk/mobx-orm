@@ -8,6 +8,7 @@ export abstract class  Adapter<M extends Model> {
     abstract __create(raw_data: RawData): Promise<RawObject>
     abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>
     abstract __delete(obj_id: number): Promise<void>
+    abstract __get(obj_id: number): Promise<object>
     abstract __find(props: Selector): Promise<object>
     abstract __load(props: Selector): Promise<RawObject[]>
     abstract getTotalCount(where?): Promise<number>
@@ -36,6 +37,11 @@ export abstract class  Adapter<M extends Model> {
         await this.__delete(obj.id)
         runInAction(() => obj.id = undefined )
         return obj
+    }
+
+    async get(obj_id: number): Promise<M> {
+        let raw_obj = await this.__get(obj_id)
+        return this.model.updateCache(raw_obj)
     }
 
     /* Returns ONE object */
