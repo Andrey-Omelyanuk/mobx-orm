@@ -141,6 +141,8 @@ export abstract class Model {
     async update() { return await this.model.__adapter.update(this) }
     async delete() { return await this.model.__adapter.delete(this) }
     async save  () { return this.id === undefined ? this.create() : this.update() }
+    // update the object from the server
+    async refresh() { return await this.model.__adapter.get(this.id) }
 
     @action('MO: obj - refresh init data')
     refreshInitData() {

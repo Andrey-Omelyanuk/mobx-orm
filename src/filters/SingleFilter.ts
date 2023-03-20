@@ -1,4 +1,4 @@
-import { action, makeObservable, observable } from "mobx"
+import { action, autorun, makeObservable, observable } from "mobx"
 import { Model } from "../model"
 import { Query } from "../queries" 
 import { Filter } from "./Filter"
@@ -11,14 +11,26 @@ export enum ValueType {
     BOOL
 }
 
+// TODO: use generic type
 export abstract class SingleFilter extends Filter {
     readonly    field       : string
-    @observable value       : any // string|number|boolean|null|undefined|Array<any>
     readonly    value_type  : ValueType 
-                options     : Query<Model> // use it for UI when we need to show options for select
+    @observable value       : string|number|boolean|null|undefined|string[]|number[]
+    readonly    options    ?: Query<Model> // TODO: use generic type 
 
-    constructor(field: string, value?: any, value_type?: ValueType) {
+    __disposers             : (()=>void)[] = []
+
+    constructor(
+        field: string,
+        value?: any,
+        value_type?: ValueType,
+        options?: Query<Model>,
+        // getDefaultValue?: (filter: SingleFilter) => any,
+        // localstorage_key?: string,
+        // sync_url?: boolean
+    ) {
         super()
+        this.options = options
         this.field = field
         // auto detect type if type was not provided
         if (value_type === undefined) {
@@ -38,6 +50,12 @@ export abstract class SingleFilter extends Filter {
         }
         this.value = value
         makeObservable(this)
+
+        // this.__disposers.push(autorun(() => {
+        //     if (this.value === undefined && getDefaultValue !== undefined) {
+        //         this.value = getDefaultValue(this)
+        //     }
+        // }
     }
 
     get URLSearchParams(): URLSearchParams{
@@ -49,6 +67,11 @@ export abstract class SingleFilter extends Filter {
 
     abstract get URIField() : string
 
+    @action('MO: Filter - set')
+    set(value: any) {
+        this.value = value
+    }
+
     @action('MO: Filter - set from URI')
     setFromURI(uri: string) {
         const search_params = new URLSearchParams(uri)
@@ -56,6 +79,14 @@ export abstract class SingleFilter extends Filter {
         const value         = search_params.has(field_name) ? search_params.get(field_name) : undefined
         this.serialize(value)
     }
+
+    // TODO: move it to Filter class
+    // for debug the filter
+    // log() {
+    //     return autorun(() => {
+    //         console.log(`Filter ${this.field} is ${this.value}`)
+    //     })
+    // }
 
     abstract operator(value_a, value_b) : boolean
 
