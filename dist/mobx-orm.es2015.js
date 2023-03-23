@@ -251,6 +251,12 @@ class EQ_Filter extends SingleFilter {
     operator(value_a, value_b) {
         return value_a === value_b;
     }
+    alias(alias_field) {
+        const alias_filter = EQ(alias_field, this.value, this.value_type);
+        // TODO: unsubscribe
+        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
+        return alias_filter;
+    }
 }
 function EQ(field, value, value_type) {
     return new EQ_Filter(field, value, value_type);
@@ -263,6 +269,12 @@ class NOT_EQ_Filter extends SingleFilter {
     operator(value_a, value_b) {
         return value_a !== value_b;
     }
+    alias(alias_field) {
+        const alias_filter = NOT_EQ(alias_field, this.value, this.value_type);
+        // TODO: unsubscribe
+        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
+        return alias_filter;
+    }
 }
 function NOT_EQ(field, value, value_type) {
     return new NOT_EQ_Filter(field, value, value_type);
@@ -274,6 +286,12 @@ class IN_Filter extends SingleFilter {
             value = [];
         }
         super(field, value, value_type);
+    }
+    alias(alias_field) {
+        const alias_filter = IN(alias_field, this.value, this.value_type);
+        // TODO: unsubscribe
+        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
+        return alias_filter;
     }
     serialize(value) {
         if (value === undefined) {

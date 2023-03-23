@@ -9,7 +9,15 @@ describe('SingleFilter', () => {
         operator(value_a: any, value_b: any): boolean {
             return true 
         }
+
+        alias(alias_field: any): SingleFilter {
+            const alias_filter =  new FilterClass(alias_field, this.value, this.value_type) 
+            // TODO: unsubscribe
+            reaction(() => this.value, (value) => { alias_filter.value = value }, { fireImmediately: true })
+            return alias_filter
+        }
     }
+
 
     function F(field: string, value?: any, value_type?: ValueType) : SingleFilter {
         return new FilterClass(field, value, value_type)

@@ -1,3 +1,4 @@
+import { reaction } from "mobx"
 import { SingleFilter, ValueType } from "./SingleFilter"
 
 
@@ -8,6 +9,13 @@ export class IN_Filter extends SingleFilter {
             value = []
         }
         super(field, value, value_type)
+    }
+
+    alias(alias_field: any): SingleFilter {
+        const alias_filter = IN(alias_field, this.value, this.value_type) 
+        // TODO: unsubscribe
+        reaction(() => this.value, (value) => { alias_filter.value = value }, { fireImmediately: true })
+        return alias_filter
     }
 
     serialize(value: string|undefined) : void {

@@ -87,6 +87,7 @@ declare abstract class SingleFilter extends Filter {
     set(value: any): void;
     setFromURI(uri: string): void;
     abstract operator(value_a: any, value_b: any): boolean;
+    abstract alias(alias_field: any): SingleFilter;
     isMatch(obj: any): boolean;
     serialize(value: string | undefined): void;
     deserialize(value?: any): string;
@@ -103,17 +104,20 @@ declare abstract class ComboFilter extends Filter {
 declare class EQ_Filter extends SingleFilter {
     get URIField(): string;
     operator(value_a: any, value_b: any): boolean;
+    alias(alias_field: any): SingleFilter;
 }
 declare function EQ(field: string, value?: any, value_type?: ValueType): SingleFilter;
 
 declare class NOT_EQ_Filter extends SingleFilter {
     get URIField(): string;
     operator(value_a: any, value_b: any): boolean;
+    alias(alias_field: any): SingleFilter;
 }
 declare function NOT_EQ(field: string, value?: any, value_type?: ValueType): SingleFilter;
 
 declare class IN_Filter extends SingleFilter {
     constructor(field: string, value?: any, value_type?: ValueType);
+    alias(alias_field: any): SingleFilter;
     serialize(value: string | undefined): void;
     deserialize(): string;
     get URIField(): string;

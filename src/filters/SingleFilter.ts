@@ -89,6 +89,7 @@ export abstract class SingleFilter extends Filter {
     // }
 
     abstract operator(value_a, value_b) : boolean
+    abstract alias(alias_field) : SingleFilter
 
     isMatch(obj: any): boolean {
         // it's always match if value of filter is undefined

@@ -1,3 +1,4 @@
+import { reaction } from "mobx"
 import { SingleFilter, ValueType } from "./SingleFilter"
 
 
@@ -10,6 +11,13 @@ export class NOT_EQ_Filter extends SingleFilter {
     operator(value_a: any, value_b: any): boolean {
         return value_a !== value_b
         
+    }
+
+    alias(alias_field: any): SingleFilter {
+        const alias_filter = NOT_EQ(alias_field, this.value, this.value_type) 
+        // TODO: unsubscribe
+        reaction(() => this.value, (value) => { alias_filter.value = value }, { fireImmediately: true })
+        return alias_filter
     }
 }
 
