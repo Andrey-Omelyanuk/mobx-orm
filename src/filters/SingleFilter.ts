@@ -16,7 +16,7 @@ export abstract class SingleFilter extends Filter {
     readonly    field       : string
     readonly    value_type  : ValueType 
     @observable value       : any // string|number|boolean|null|undefined|string[]|number[]
-    readonly    options    ?: Query<Model> // TODO: use generic type 
+                options    ?: Query<Model> // TODO: use generic type 
 
     __disposers             : (()=>void)[] = []
 

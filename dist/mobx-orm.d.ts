@@ -79,7 +79,7 @@ declare abstract class SingleFilter extends Filter {
     readonly field: string;
     readonly value_type: ValueType;
     value: any;
-    readonly options?: Query<Model>;
+    options?: Query<Model>;
     __disposers: (() => void)[];
     constructor(field: string, value?: any, value_type?: ValueType, options?: Query<Model>);
     get URLSearchParams(): URLSearchParams;
