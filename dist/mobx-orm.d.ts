@@ -73,7 +73,9 @@ declare class QueryPage<M extends Model> extends QueryBase<M> {
 declare enum ValueType {
     STRING = 0,
     NUMBER = 1,
-    BOOL = 2
+    BOOL = 2,
+    DATETIME = 3,
+    DATE = 4
 }
 declare abstract class SingleFilter extends Filter {
     readonly field: string;
@@ -114,6 +116,34 @@ declare class NOT_EQ_Filter extends SingleFilter {
     alias(alias_field: any): SingleFilter;
 }
 declare function NOT_EQ(field: string, value?: any, value_type?: ValueType): SingleFilter;
+
+declare class GT_Filter extends SingleFilter {
+    get URIField(): string;
+    operator(value_a: any, value_b: any): boolean;
+    alias(alias_field: any): SingleFilter;
+}
+declare function GT(field: string, value?: any, value_type?: ValueType): SingleFilter;
+
+declare class GTE_Filter extends SingleFilter {
+    get URIField(): string;
+    operator(value_a: any, value_b: any): boolean;
+    alias(alias_field: any): SingleFilter;
+}
+declare function GTE(field: string, value?: any, value_type?: ValueType): SingleFilter;
+
+declare class LT_Filter extends SingleFilter {
+    get URIField(): string;
+    operator(value_a: any, value_b: any): boolean;
+    alias(alias_field: any): SingleFilter;
+}
+declare function LT(field: string, value?: any, value_type?: ValueType): SingleFilter;
+
+declare class LTE_Filter extends SingleFilter {
+    get URIField(): string;
+    operator(value_a: any, value_b: any): boolean;
+    alias(alias_field: any): SingleFilter;
+}
+declare function LTE(field: string, value?: any, value_type?: ValueType): SingleFilter;
 
 declare class IN_Filter extends SingleFilter {
     constructor(field: string, value?: any, value_type?: ValueType);
@@ -241,4 +271,4 @@ declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: 
 
 declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, IN, IN_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
+export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, IN, IN_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };

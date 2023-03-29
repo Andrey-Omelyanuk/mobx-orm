@@ -8,7 +8,9 @@ import { Filter } from "./Filter"
 export enum ValueType {
     STRING,
     NUMBER,
-    BOOL
+    BOOL,
+    DATETIME,
+    DATE,
 }
 
 // TODO: use generic type

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.50
+   * mobx-orm.js v1.1.51
    * Released under the MIT license.
    */
 
@@ -47,6 +47,8 @@
         ValueType[ValueType["STRING"] = 0] = "STRING";
         ValueType[ValueType["NUMBER"] = 1] = "NUMBER";
         ValueType[ValueType["BOOL"] = 2] = "BOOL";
+        ValueType[ValueType["DATETIME"] = 3] = "DATETIME";
+        ValueType[ValueType["DATE"] = 4] = "DATE";
     })(exports.ValueType || (exports.ValueType = {}));
     // TODO: use generic type
     class SingleFilter extends Filter {
@@ -282,6 +284,78 @@
     }
     function NOT_EQ(field, value, value_type) {
         return new NOT_EQ_Filter(field, value, value_type);
+    }
+
+    class GT_Filter extends SingleFilter {
+        get URIField() {
+            return `${this.field}__gt`;
+        }
+        operator(value_a, value_b) {
+            return value_a > value_b;
+        }
+        alias(alias_field) {
+            const alias_filter = GT(alias_field, this.value, this.value_type);
+            // TODO: unsubscribe
+            mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
+            return alias_filter;
+        }
+    }
+    function GT(field, value, value_type) {
+        return new GT_Filter(field, value, value_type);
+    }
+
+    class GTE_Filter extends SingleFilter {
+        get URIField() {
+            return `${this.field}__gte`;
+        }
+        operator(value_a, value_b) {
+            return value_a >= value_b;
+        }
+        alias(alias_field) {
+            const alias_filter = GTE(alias_field, this.value, this.value_type);
+            // TODO: unsubscribe
+            mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
+            return alias_filter;
+        }
+    }
+    function GTE(field, value, value_type) {
+        return new GTE_Filter(field, value, value_type);
+    }
+
+    class LT_Filter extends SingleFilter {
+        get URIField() {
+            return `${this.field}__lt`;
+        }
+        operator(value_a, value_b) {
+            return value_a < value_b;
+        }
+        alias(alias_field) {
+            const alias_filter = LT(alias_field, this.value, this.value_type);
+            // TODO: unsubscribe
+            mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
+            return alias_filter;
+        }
+    }
+    function LT(field, value, value_type) {
+        return new LT_Filter(field, value, value_type);
+    }
+
+    class LTE_Filter extends SingleFilter {
+        get URIField() {
+            return `${this.field}__lte`;
+        }
+        operator(value_a, value_b) {
+            return value_a <= value_b;
+        }
+        alias(alias_field) {
+            const alias_filter = LTE(alias_field, this.value, this.value_type);
+            // TODO: unsubscribe
+            mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
+            return alias_filter;
+        }
+    }
+    function LTE(field, value, value_type) {
+        return new LTE_Filter(field, value, value_type);
     }
 
     class IN_Filter extends SingleFilter {
@@ -1388,8 +1462,16 @@
     exports.EQ = EQ;
     exports.EQ_Filter = EQ_Filter;
     exports.Filter = Filter;
+    exports.GT = GT;
+    exports.GTE = GTE;
+    exports.GTE_Filter = GTE_Filter;
+    exports.GT_Filter = GT_Filter;
     exports.IN = IN;
     exports.IN_Filter = IN_Filter;
+    exports.LT = LT;
+    exports.LTE = LTE;
+    exports.LTE_Filter = LTE_Filter;
+    exports.LT_Filter = LT_Filter;
     exports.LocalAdapter = LocalAdapter;
     exports.Model = Model;
     exports.NOT_EQ = NOT_EQ;
