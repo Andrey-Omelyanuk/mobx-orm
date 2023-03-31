@@ -155,6 +155,20 @@ declare class IN_Filter extends SingleFilter {
 }
 declare function IN(field: string, value?: any[], value_type?: ValueType): SingleFilter;
 
+declare class LIKE_Filter extends SingleFilter {
+    get URIField(): string;
+    operator(current_value: any, filter_value: any): boolean;
+    alias(alias_field: any): SingleFilter;
+}
+declare function LIKE(field: string, value?: any, value_type?: ValueType): SingleFilter;
+
+declare class ILIKE_Filter extends SingleFilter {
+    get URIField(): string;
+    operator(current_value: any, filter_value: any): boolean;
+    alias(alias_field: any): SingleFilter;
+}
+declare function ILIKE(field: string, value?: any, value_type?: ValueType): SingleFilter;
+
 declare class AND_Filter extends ComboFilter {
     isMatch(obj: any): boolean;
 }
@@ -271,4 +285,4 @@ declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: 
 
 declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, IN, IN_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
+export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };

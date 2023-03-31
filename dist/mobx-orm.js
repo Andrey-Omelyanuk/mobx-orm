@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.51
+   * mobx-orm.js v1.1.53
    * Released under the MIT license.
    */
 
@@ -411,6 +411,42 @@
     }
     function IN(field, value, value_type) {
         return new IN_Filter(field, value, value_type);
+    }
+
+    class LIKE_Filter extends SingleFilter {
+        get URIField() {
+            return `${this.field}__contains`;
+        }
+        operator(current_value, filter_value) {
+            return current_value.includes(filter_value);
+        }
+        alias(alias_field) {
+            const alias_filter = LIKE(alias_field, this.value, this.value_type);
+            // TODO: unsubscribe
+            mobx.reaction(() => this.value, (value) => { alias_filter.set(value); }, { fireImmediately: true });
+            return alias_filter;
+        }
+    }
+    function LIKE(field, value, value_type) {
+        return new LIKE_Filter(field, value, value_type);
+    }
+
+    class ILIKE_Filter extends SingleFilter {
+        get URIField() {
+            return `${this.field}__icontains`;
+        }
+        operator(current_value, filter_value) {
+            return current_value.toLowerCase().includes(filter_value.toLowerCase());
+        }
+        alias(alias_field) {
+            const alias_filter = ILIKE(alias_field, this.value, this.value_type);
+            // TODO: unsubscribe
+            mobx.reaction(() => this.value, (value) => { alias_filter.set(value); }, { fireImmediately: true });
+            return alias_filter;
+        }
+    }
+    function ILIKE(field, value, value_type) {
+        return new ILIKE_Filter(field, value, value_type);
     }
 
     class AND_Filter extends ComboFilter {
@@ -1466,8 +1502,12 @@
     exports.GTE = GTE;
     exports.GTE_Filter = GTE_Filter;
     exports.GT_Filter = GT_Filter;
+    exports.ILIKE = ILIKE;
+    exports.ILIKE_Filter = ILIKE_Filter;
     exports.IN = IN;
     exports.IN_Filter = IN_Filter;
+    exports.LIKE = LIKE;
+    exports.LIKE_Filter = LIKE_Filter;
     exports.LT = LT;
     exports.LTE = LTE;
     exports.LTE_Filter = LTE_Filter;

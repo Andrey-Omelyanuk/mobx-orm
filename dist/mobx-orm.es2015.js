@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.51
+   * mobx-orm.js v1.1.53
    * Released under the MIT license.
    */
 
@@ -407,6 +407,42 @@ class IN_Filter extends SingleFilter {
 }
 function IN(field, value, value_type) {
     return new IN_Filter(field, value, value_type);
+}
+
+class LIKE_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__contains`;
+    }
+    operator(current_value, filter_value) {
+        return current_value.includes(filter_value);
+    }
+    alias(alias_field) {
+        const alias_filter = LIKE(alias_field, this.value, this.value_type);
+        // TODO: unsubscribe
+        reaction(() => this.value, (value) => { alias_filter.set(value); }, { fireImmediately: true });
+        return alias_filter;
+    }
+}
+function LIKE(field, value, value_type) {
+    return new LIKE_Filter(field, value, value_type);
+}
+
+class ILIKE_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__icontains`;
+    }
+    operator(current_value, filter_value) {
+        return current_value.toLowerCase().includes(filter_value.toLowerCase());
+    }
+    alias(alias_field) {
+        const alias_filter = ILIKE(alias_field, this.value, this.value_type);
+        // TODO: unsubscribe
+        reaction(() => this.value, (value) => { alias_filter.set(value); }, { fireImmediately: true });
+        return alias_filter;
+    }
+}
+function ILIKE(field, value, value_type) {
+    return new ILIKE_Filter(field, value, value_type);
 }
 
 class AND_Filter extends ComboFilter {
@@ -1449,5 +1485,5 @@ function local() {
 //     "or",   ["field_a", "<=",  5, "and", "field_b", "contain", "test"]
 // ]
 
-export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, IN, IN_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, Query, QueryBase, QueryPage, ReadOnlyModel, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
+export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, Query, QueryBase, QueryPage, ReadOnlyModel, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
 //# sourceMappingURL=mobx-orm.es2015.js.map
