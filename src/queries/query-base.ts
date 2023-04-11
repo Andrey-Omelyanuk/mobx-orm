@@ -1,6 +1,6 @@
 import { action, autorun, makeObservable, observable, reaction, runInAction } from "mobx"
-import { Adapter } from "../adapters"
-import { Model } from "../model"
+import { Adapter } from '../adapters'
+import { Model } from '../model'
 import { Filter } from '../filters'
 import { Selector } from "@/types"
 
@@ -109,7 +109,8 @@ export abstract class QueryBase<M extends Model> {
                     (need_to_update) => {
                         if (need_to_update) this.load()
                     },
-                    { fireImmediately: true }
+                    // autoupdate can be triggered a lot of times, let's debounce it using by delay
+                    { fireImmediately: true, delay: 200 }
                 )
             }
         }
