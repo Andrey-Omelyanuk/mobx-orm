@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.54
+   * mobx-orm.js v1.1.55
    * Released under the MIT license.
    */
 
@@ -627,9 +627,7 @@
                     this.__disposer_objects['__autoupdate'] = mobx.reaction(() => this.need_to_update, (need_to_update) => {
                         if (need_to_update)
                             this.load();
-                    }, 
-                    // autoupdate can be triggered a lot of times, let's debounce it using by delay
-                    { fireImmediately: true, delay: 200 });
+                    }, { fireImmediately: true });
                 }
             }
         }

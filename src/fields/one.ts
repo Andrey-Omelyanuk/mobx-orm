@@ -32,7 +32,7 @@ export function one(remote_model: any, remote_foreign_id_name?: string) {
                             id: remote_obj[remote_foreign_id_name],
                             obj: model.__cache.get(remote_obj[remote_foreign_id_name])}
                         },
-                        action(disposer_name, (_new, _old) => {
+                        action(disposer_name, (_new: any, _old: any) => {
                             if (_old?.obj) _old.obj[field_name] = _new.id ? undefined : null
                             if (_new?.obj) _new.obj[field_name] = remote_obj
                         }),

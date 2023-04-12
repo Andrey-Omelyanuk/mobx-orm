@@ -109,8 +109,7 @@ export abstract class QueryBase<M extends Model> {
                     (need_to_update) => {
                         if (need_to_update) this.load()
                     },
-                    // autoupdate can be triggered a lot of times, let's debounce it using by delay
-                    { fireImmediately: true, delay: 200 }
+                    { fireImmediately: true }
                 )
             }
         }
