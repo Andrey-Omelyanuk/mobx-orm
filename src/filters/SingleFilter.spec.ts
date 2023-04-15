@@ -58,10 +58,20 @@ describe('SingleFilter', () => {
         describe('Type: Bool', () => {
             it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.BOOL)).toMatchObject({field: 'A', value: undefined, value_type: ValueType.BOOL})})
             it('A = null'       , ()=>{ expect(F('A',      null, ValueType.BOOL)).toMatchObject({field: 'A', value:      null, value_type: ValueType.BOOL})})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.BOOL)).toMatchObject({field: 'A', value:      '10', value_type: ValueType.BOOL})})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.BOOL)).toMatchObject({field: 'A', value:       10 , value_type: ValueType.BOOL})})
             it('A = true'       , ()=>{ expect(F('A',      true, ValueType.BOOL)).toMatchObject({field: 'A', value:      true, value_type: ValueType.BOOL})})
             it('A = false'      , ()=>{ expect(F('A',     false, ValueType.BOOL)).toMatchObject({field: 'A', value:     false, value_type: ValueType.BOOL})})
+            // TODO: it should be an error
+            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.BOOL)).toMatchObject({field: 'A', value:      '10', value_type: ValueType.BOOL})})
+            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.BOOL)).toMatchObject({field: 'A', value:       10 , value_type: ValueType.BOOL})})
+        })
+        describe('Type: Date', () => {
+            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.DATE)).toMatchObject({field: 'A', value: undefined, value_type: ValueType.DATE})})
+            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.DATE)).toMatchObject({field: 'A', value:      null, value_type: ValueType.DATE})})
+            // TODO: it should be an error
+            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.DATE)).toMatchObject({field: 'A', value:      '10', value_type: ValueType.DATE})})
+            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.DATE)).toMatchObject({field: 'A', value:       10 , value_type: ValueType.DATE})})
+            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.DATE)).toMatchObject({field: 'A', value:      true, value_type: ValueType.DATE})})
+            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.DATE)).toMatchObject({field: 'A', value:     false, value_type: ValueType.DATE})})
         })
     })
 
@@ -89,6 +99,26 @@ describe('SingleFilter', () => {
             it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.BOOL).URLSearchParams.toString()).toBe('field=true')})
             it('A = true'       , ()=>{ expect(F('A',      true, ValueType.BOOL).URLSearchParams.toString()).toBe('field=true')})
             it('A = false'      , ()=>{ expect(F('A',     false, ValueType.BOOL).URLSearchParams.toString()).toBe('field=false')})
+        })
+        describe('Type: Date', () => {
+            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.DATE).URLSearchParams.toString()).toBe('')})
+            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.DATE).URLSearchParams.toString()).toBe('field=null')})
+            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.DATE).URLSearchParams.toString()).toBe('field=')})
+            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.DATE).URLSearchParams.toString()).toBe('field=')})
+            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.DATE).URLSearchParams.toString()).toBe('field=')})
+            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.DATE).URLSearchParams.toString()).toBe('field=')})
+            it('A = 2023-04-15Z'             , ()=>{ expect(F('A', new Date('2023-04-15Z')             , ValueType.DATE).URLSearchParams.toString()).toBe('field=2023-04-15Z')})
+            it('A = 2023-04-15T00:00:00.000Z', ()=>{ expect(F('A', new Date('2023-04-15T00:00:00.000Z'), ValueType.DATE).URLSearchParams.toString()).toBe('field=2023-04-15Z')})
+        })
+        describe('Type: DateTime', () => {
+            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.DATETIME).URLSearchParams.toString()).toBe('')})
+            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.DATETIME).URLSearchParams.toString()).toBe('field=null')})
+            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.DATETIME).URLSearchParams.toString()).toBe('field=')})
+            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.DATETIME).URLSearchParams.toString()).toBe('field=')})
+            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.DATETIME).URLSearchParams.toString()).toBe('field=')})
+            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.DATETIME).URLSearchParams.toString()).toBe('field=')})
+            it('A = 2023-04-15Z'             , ()=>{ expect(F('A', new Date('2023-04-15Z')             , ValueType.DATETIME).URLSearchParams.toString()).toBe('field=2023-04-15T00%3A00%3A00.000Z')})
+            it('A = 2023-04-15T00:00:00.000Z', ()=>{ expect(F('A', new Date('2023-04-15T00:00:00.000Z'), ValueType.DATETIME).URLSearchParams.toString()).toBe('field=2023-04-15T00%3A00%3A00.000Z')})
         })
     })
 
@@ -125,6 +155,19 @@ describe('SingleFilter', () => {
             it('field=text' , () => { f.setFromURI('field=text' ); expect(f).toMatchObject({field: 'A', value: undefined})})
             it('field=true' , () => { f.setFromURI('field=true' ); expect(f).toMatchObject({field: 'A', value: true})})
             it('field=false', () => { f.setFromURI('field=false'); expect(f).toMatchObject({field: 'A', value: false})})
+        })
+        describe('Type: Date', () => {
+            let f
+            beforeEach(() => { f = F('A', undefined, ValueType.DATE) })
+            it(''           , () => { f.setFromURI(''           ); expect(f).toMatchObject({field: 'A', value: undefined})})
+            // it('xxx=xxx'    , () => { f.setFromURI('xxx=xxx'    ); expect(f).toMatchObject({field: 'A', value: undefined})})
+            // it('field=null' , () => { f.setFromURI('field=null' ); expect(f).toMatchObject({field: 'A', value: null})})
+            // it('field=10'   , () => { f.setFromURI('field=10'   ); expect(f).toMatchObject({field: 'A', value: undefined})})
+            // it('field=text' , () => { f.setFromURI('field=text' ); expect(f).toMatchObject({field: 'A', value: undefined})})
+            // it('field=true' , () => { f.setFromURI('field=true' ); expect(f).toMatchObject({field: 'A', value: true})})
+            // it('field=false', () => { f.setFromURI('field=false'); expect(f).toMatchObject({field: 'A', value: false})})
+            it('field=2023-04-15Z'              , () => { f.setFromURI('field=2023-04-15Z' );                  expect(f).toMatchObject({field: 'A', value: new Date('2023-04-15Z')})})
+            it('field=2023-04-15T00:00:00.000Z' , () => { f.setFromURI('field=2023-04-15T00%3A00%3A00.000Z' ); expect(f).toMatchObject({field: 'A', value: new Date('2023-04-15T00:00:00.000Z')})})
         })
     })
 
@@ -228,7 +271,7 @@ describe('SingleFilter', () => {
             it(`${field}, ${JSON.stringify(obj)} === ${JSON.stringify(r)}`, () => {
                 match(obj, field as string, 0, o)
                 expect(o.mock.calls.length).toBe(count_call)
-                for (let i = 0; i < count_call; i++) {
+                for (let i = 0; i < (count_call as number); i++) {
                     expect(o.mock.calls[0][0]).toBe(r)
                     expect(o.mock.calls[0][1]).toBe(0)
                 }

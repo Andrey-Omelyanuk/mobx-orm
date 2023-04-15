@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.55
+   * mobx-orm.js v1.1.56
    * Released under the MIT license.
    */
 
@@ -43,6 +43,7 @@ var ValueType;
     ValueType[ValueType["STRING"] = 0] = "STRING";
     ValueType[ValueType["NUMBER"] = 1] = "NUMBER";
     ValueType[ValueType["BOOL"] = 2] = "BOOL";
+    // TODO: we need more tests for DATE and DATETIME
     ValueType[ValueType["DATETIME"] = 3] = "DATETIME";
     ValueType[ValueType["DATE"] = 4] = "DATE";
 })(ValueType || (ValueType = {}));
@@ -92,7 +93,7 @@ class SingleFilter extends Filter {
                     this.value_type = ValueType.BOOL;
                     break;
                 default:
-                    this.value_type = ValueType.STRING;
+                    this.value_type = value instanceof Date ? ValueType.DATETIME : ValueType.STRING;
             }
         }
         else {
@@ -151,6 +152,10 @@ class SingleFilter extends Filter {
                 // I'm not shure that it is string
                 result = value === 'true' ? true : value === 'false' ? false : undefined;
                 break;
+            case ValueType.DATE:
+            case ValueType.DATETIME:
+                result = new Date(value);
+                break;
         }
         this.value = result;
     }
@@ -176,6 +181,10 @@ class SingleFilter extends Filter {
             case ValueType.BOOL:
                 // I'm not shure that it is string
                 return !!value ? 'true' : 'false';
+            case ValueType.DATE:
+                return value instanceof Date ? value.toISOString().split('T')[0] + 'Z' : "";
+            case ValueType.DATETIME:
+                return value instanceof Date ? value.toISOString() : "";
         }
     }
 }

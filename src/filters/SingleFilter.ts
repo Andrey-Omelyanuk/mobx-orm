@@ -9,6 +9,7 @@ export enum ValueType {
     STRING,
     NUMBER,
     BOOL,
+    // TODO: we need more tests for DATE and DATETIME
     DATETIME,
     DATE,
 }
@@ -36,6 +37,7 @@ export abstract class SingleFilter extends Filter {
         this.field = field
         // auto detect type if type was not provided
         if (value_type === undefined) {
+
             switch (typeof value) {
                 case 'number':
                     this.value_type = ValueType.NUMBER
@@ -44,7 +46,7 @@ export abstract class SingleFilter extends Filter {
                     this.value_type = ValueType.BOOL
                     break
                 default:
-                    this.value_type = ValueType.STRING
+                    this.value_type = value instanceof Date ? ValueType.DATETIME : ValueType.STRING
             }
         }
         else {
@@ -124,6 +126,10 @@ export abstract class SingleFilter extends Filter {
                 // I'm not shure that it is string
                 result = value === 'true' ? true : value === 'false' ? false : undefined
                 break
+            case ValueType.DATE:
+            case ValueType.DATETIME:
+                result = new Date(value) 
+                break
         }
         this.value = result 
     }
@@ -148,6 +154,10 @@ export abstract class SingleFilter extends Filter {
             case ValueType.BOOL:
                 // I'm not shure that it is string
                 return !!value ? 'true' : 'false' 
+            case ValueType.DATE:
+                return value instanceof Date ? (value as Date).toISOString().split('T')[0]+'Z' : ""
+            case ValueType.DATETIME:
+                return value instanceof Date ? (value as Date).toISOString() : ""
         }
     }
 }

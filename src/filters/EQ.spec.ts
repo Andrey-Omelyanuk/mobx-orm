@@ -15,6 +15,7 @@ describe('EQ Filter', () => {
         it('null === "text"'    , ()=>{ expect(EQ('A').operator(null, 'text')).toBe(false) })
         it('"text" === "text"'  , ()=>{ expect(EQ('A').operator('text', 'text')).toBe(true) })
         it('"text" === "textX"' , ()=>{ expect(EQ('A').operator('text', 'textA')).toBe(false) })
+        it('Date(now) === Date(now)' , ()=>{ const now = new Date(); expect(EQ('A').operator(now, now)).toBe(true) })
     })
 
     describe('isMatch', () => {
