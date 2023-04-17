@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.56
+   * mobx-orm.js v1.1.57
    * Released under the MIT license.
    */
 
@@ -257,7 +257,7 @@ class ComboFilter extends Filter {
 
 class EQ_Filter extends SingleFilter {
     get URIField() {
-        return `${this.field}__eq`;
+        return `${this.field}`;
     }
     operator(value_a, value_b) {
         return value_a === value_b;
@@ -269,8 +269,17 @@ class EQ_Filter extends SingleFilter {
         return alias_filter;
     }
 }
+// EQV is a verbose version of EQ
+class EQV_Filter extends EQ_Filter {
+    get URIField() {
+        return `${this.field}__eq`;
+    }
+}
 function EQ(field, value, value_type) {
     return new EQ_Filter(field, value, value_type);
+}
+function EQV(field, value, value_type) {
+    return new EQV_Filter(field, value, value_type);
 }
 
 class NOT_EQ_Filter extends SingleFilter {
@@ -1494,5 +1503,5 @@ function local() {
 //     "or",   ["field_a", "<=",  5, "and", "field_b", "contain", "test"]
 // ]
 
-export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, Query, QueryBase, QueryPage, ReadOnlyModel, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
+export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, Query, QueryBase, QueryPage, ReadOnlyModel, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
 //# sourceMappingURL=mobx-orm.es2015.js.map

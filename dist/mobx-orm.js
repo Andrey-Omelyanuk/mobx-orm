@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.56
+   * mobx-orm.js v1.1.57
    * Released under the MIT license.
    */
 
@@ -261,7 +261,7 @@
 
     class EQ_Filter extends SingleFilter {
         get URIField() {
-            return `${this.field}__eq`;
+            return `${this.field}`;
         }
         operator(value_a, value_b) {
             return value_a === value_b;
@@ -273,8 +273,17 @@
             return alias_filter;
         }
     }
+    // EQV is a verbose version of EQ
+    class EQV_Filter extends EQ_Filter {
+        get URIField() {
+            return `${this.field}__eq`;
+        }
+    }
     function EQ(field, value, value_type) {
         return new EQ_Filter(field, value, value_type);
+    }
+    function EQV(field, value, value_type) {
+        return new EQV_Filter(field, value, value_type);
     }
 
     class NOT_EQ_Filter extends SingleFilter {
@@ -1505,6 +1514,8 @@
     exports.ComboFilter = ComboFilter;
     exports.DESC = DESC;
     exports.EQ = EQ;
+    exports.EQV = EQV;
+    exports.EQV_Filter = EQV_Filter;
     exports.EQ_Filter = EQ_Filter;
     exports.Filter = Filter;
     exports.GT = GT;

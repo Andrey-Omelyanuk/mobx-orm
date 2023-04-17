@@ -108,7 +108,11 @@ declare class EQ_Filter extends SingleFilter {
     operator(value_a: any, value_b: any): boolean;
     alias(alias_field: any): SingleFilter;
 }
+declare class EQV_Filter extends EQ_Filter {
+    get URIField(): string;
+}
 declare function EQ(field: string, value?: any, value_type?: ValueType): SingleFilter;
+declare function EQV(field: string, value?: any, value_type?: ValueType): SingleFilter;
 
 declare class NOT_EQ_Filter extends SingleFilter {
     get URIField(): string;
@@ -285,4 +289,4 @@ declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: 
 
 declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
+export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };

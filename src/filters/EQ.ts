@@ -5,7 +5,7 @@ import { SingleFilter, ValueType } from "./SingleFilter"
 export class EQ_Filter extends SingleFilter {
 
     get URIField(): string {
-        return `${this.field}__eq` 
+        return `${this.field}` 
     }
 
     operator(value_a: any, value_b: any): boolean {
@@ -20,6 +20,17 @@ export class EQ_Filter extends SingleFilter {
     }
 }
 
+// EQV is a verbose version of EQ
+export class EQV_Filter extends EQ_Filter {
+    get URIField(): string {
+        return `${this.field}__eq` 
+    }
+}
+
 export function EQ(field: string, value?: any, value_type?: ValueType) : SingleFilter {
     return new EQ_Filter(field, value, value_type)
+}
+
+export function EQV(field: string, value?: any, value_type?: ValueType) : SingleFilter {
+    return new EQV_Filter(field, value, value_type)
 }

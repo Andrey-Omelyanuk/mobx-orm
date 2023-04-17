@@ -1,12 +1,17 @@
-import { EQ } from '../'
+import { EQ, EQV } from '../'
 
 
 describe('EQ Filter', () => {
     describe('URLField', () => {
-        it('A'      , ()=>{ expect(EQ('A'    ).URIField).toBe('A__eq')})
-        it('B'      , ()=>{ expect(EQ('B'    ).URIField).toBe('B__eq')})
-        it('A_B'    , ()=>{ expect(EQ('A_B'  ).URIField).toBe('A_B__eq')})
-        it('A__B'   , ()=>{ expect(EQ('A__B' ).URIField).toBe('A__B__eq')})
+        it('A'      , ()=>{ expect(EQ('A'    ).URIField).toBe('A')})
+        it('B'      , ()=>{ expect(EQ('B'    ).URIField).toBe('B')})
+        it('A_B'    , ()=>{ expect(EQ('A_B'  ).URIField).toBe('A_B')})
+        it('A__B'   , ()=>{ expect(EQ('A__B' ).URIField).toBe('A__B')})
+
+        it('A'      , ()=>{ expect(EQV('A'    ).URIField).toBe('A__eq')})
+        it('B'      , ()=>{ expect(EQV('B'    ).URIField).toBe('B__eq')})
+        it('A_B'    , ()=>{ expect(EQV('A_B'  ).URIField).toBe('A_B__eq')})
+        it('A__B'   , ()=>{ expect(EQV('A__B' ).URIField).toBe('A__B__eq')})
     })
 
     describe('operator', () => {
