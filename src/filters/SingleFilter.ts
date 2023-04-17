@@ -155,7 +155,7 @@ export abstract class SingleFilter extends Filter {
                 // I'm not shure that it is string
                 return !!value ? 'true' : 'false' 
             case ValueType.DATE:
-                return value instanceof Date ? (value as Date).toISOString().split('T')[0]+'Z' : ""
+                return value instanceof Date ? (value as Date).toISOString().split('T')[0] : ""
             case ValueType.DATETIME:
                 return value instanceof Date ? (value as Date).toISOString() : ""
         }

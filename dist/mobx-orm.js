@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.57
+   * mobx-orm.js v1.1.58
    * Released under the MIT license.
    */
 
@@ -186,7 +186,7 @@
                     // I'm not shure that it is string
                     return !!value ? 'true' : 'false';
                 case exports.ValueType.DATE:
-                    return value instanceof Date ? value.toISOString().split('T')[0] + 'Z' : "";
+                    return value instanceof Date ? value.toISOString().split('T')[0] : "";
                 case exports.ValueType.DATETIME:
                     return value instanceof Date ? value.toISOString() : "";
             }
