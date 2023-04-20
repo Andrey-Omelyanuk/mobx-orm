@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.58
+   * mobx-orm.js v1.1.59
    * Released under the MIT license.
    */
 
@@ -603,7 +603,7 @@
                     offset: this.offset,
                     limit: this.limit,
                 };
-            }, mobx.action('MO: Query Base - need to update', () => this.need_to_update = true), { fireImmediately: true }));
+            }, mobx.action('MO: Query Base - need to update', () => this.need_to_update = true), { fireImmediately: true, delay: 200 }));
         }
         get is_loading() { return this.__is_loading; }
         get is_ready() { return this.__is_ready; }

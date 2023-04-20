@@ -57,7 +57,7 @@ export abstract class QueryBase<M extends Model> {
                 limit   : this.limit,
              }},
             action('MO: Query Base - need to update', () => this.need_to_update = true ),
-            {fireImmediately: true}
+            { fireImmediately: true, delay: 200 }
         ))
     }
 
