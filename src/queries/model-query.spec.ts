@@ -1,6 +1,6 @@
 import { Selector } from '@/types'
 import { reaction, runInAction } from 'mobx'
-import { model, Model, Adapter, LocalAdapter, QueryBase, ORDER_BY, ASC, DESC, Filter, EQ } from '../'
+import { model, Model, Adapter, LocalAdapter, QueryBase, ORDER_BY, ASC, DESC, Filter, EQ } from '..'
 
 
 describe('QueryBase', () => {

@@ -1,7 +1,7 @@
 import { action, intercept, makeObservable, observable, observe } from 'mobx'
-import { Adapter } from './adapters'
-import { Query, QueryPage, ORDER_BY } from './queries'
-import { Selector } from './types'
+import { ModelAdapter } from './adapters'
+import { ModelQuery, ModelQueryPage, ModelQuerySync } from './queries'
+import { Selector } from './selector'
 
 
 export type RawObject = any 
@@ -10,7 +10,7 @@ export type RawData   = any
 
 export abstract class Model {
     // this static properties will be copied to real model in the model decorator
-    static __adapter  : Adapter<Model> 
+    static __adapter  : ModelAdapter<Model> 
     static __cache    : Map<number, Model>
     // - fields
     // - relations (not exist on outside)
@@ -50,12 +50,16 @@ export abstract class Model {
             this.__cache.delete(obj.id)
     }
 
-    static getQuery(selector?: Selector): Query<Model>  {
-        return new Query<Model>(this.__adapter, this.__cache, selector)
+    static getQuery(selector?: Selector)  {
+        return new ModelQuery(this.__adapter, selector)
     }
 
-    static getQueryPage(selector?: Selector): QueryPage<Model> {
-        return new QueryPage(this.__adapter, this.__cache, selector)
+    static getQueryPage(selector?: Selector) {
+        return new ModelQueryPage(this.__adapter, selector)
+    }
+
+    static getQuerySync(selector?: Selector) {
+        return new ModelQuerySync(this.__adapter, this.__cache, selector)
     }
 
     static get(id: number) {

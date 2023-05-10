@@ -1,105 +1,120 @@
-import { action, runInAction, computed, observe, reaction } from 'mobx'
-import { Model } from '../model'
+import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
 import { Adapter } from '../adapters'
-import { QueryBase, ASC } from './query-base'
-import { Selector } from '@/types'
+import { Selector } from '../selector'
+import { waitIsFalse, waitIsTrue } from "@/utils"
 
+const DISPOSER_AUTOUPDATE = "__autoupdate"
 
-export class Query<M extends Model> extends QueryBase<M> {
+export class Query <M> {
+    @observable total         : number = 0
+    @observable need_to_update: boolean = false // set to true then filters/order_by/page/page_size was changed and back to false after load
 
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
-        super(adapter, base_cache, selector)
+    get is_loading () { return this.__is_loading  }
+    get is_ready   () { return this.__is_ready    }
+    get error      () { return this.__error       }
+    
+    readonly selector: Selector
+    readonly adapter: Adapter<M>
+    @observable __items: M[] = []
+    @observable __is_loading  : boolean = false 
+    @observable __is_ready    : boolean = false 
+    @observable __error       : string = '' 
 
-        // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(this.__base_cache, 
-            action('MO: Query - update from cache changes',
-            (change: any) => {
-                if (change.type == 'add') {
-                    this.__watch_obj(change.newValue)
-                }
-                if (change.type == "delete") {
-                    let id = change.name
-                    let obj  = change.oldValue
+    __disposers         : (()=>void)[] = []
+    __disposer_objects  : {[field: string]: ()=>void} = {}
 
-                    this.__disposer_objects[id]()
-                    delete this.__disposer_objects[id]
+    constructor(adapter: Adapter<M>, selector?: Selector) {
+        this.adapter = adapter
+        this.selector = selector ? selector : new Selector()
+        makeObservable(this)
 
-                    let i = this.__items.indexOf(obj)
-                    if (i != -1)
-                        this.__items.splice(i, 1)
-                }
-            })
+        this.__disposers.push(reaction(
+            () => this.selector.URLSearchParams.toString(),
+            action('MO: Query Base - need to update', () => this.need_to_update = true ),
+            { fireImmediately: true, delay: 200 }
         ))
+    }
 
-        // ch all exist objects of model 
-        for(let [id, obj] of this.__base_cache) {
-            this.__watch_obj(obj)
+    destroy() {
+        while(this.__disposers.length) {
+            this.__disposers.pop()()
+        }
+        for(let __id in this.__disposer_objects) {
+            this.__disposer_objects[__id]()
+            delete this.__disposer_objects[__id]
+        } 
+    }
+
+    get items() {
+        return this.__items 
+    }
+
+    async __load() {
+        const objs = await this.adapter.load(this.selector)
+        runInAction(() => {
+            this.__items = objs
+            this.total = objs.length
+        })
+    }
+
+    // use it if everybody should know that the query data is updating
+    @action('MO: Query Base - load')
+    async load() {
+        this.__is_loading = true
+        try {
+            await this.shadowLoad()
+        }
+        finally {
+            runInAction(() => this.__is_loading = false)
         }
     }
 
+    // use it if nobody should know that the query data is updating
+    // for example you need to update the current data on the page and you don't want to show a spinner
     @action('MO: Query Base - shadow load')
     async shadowLoad() {
         try {
-            let objs = await this.__adapter.load(this.selector)
-            this.__load(objs)
-            // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
-            await new Promise(resolve => setTimeout(resolve))
-            runInAction(() => {
-                this.__is_ready = true
-                this.need_to_update = false 
-            })
+            await this.__load()
         }
         catch(e) {
-            // 'MO: Query Base - shadow load - error',
-            runInAction( () => this.__error = e)
-            throw e
+            runInAction(() => {
+                this.__error = e
+            })
+        }
+        finally {
+            runInAction(() => {
+                if (!this.__is_ready) this.__is_ready = true
+                if (this.need_to_update) this.need_to_update = false 
+            })
         }
     }
 
-    @computed
-    get items() { 
-        let __items = this.__items.map(x=>x) // copy __items (not deep)
-        if (this.order_by.size) {
-            let compare = (a, b) => {
-                for(const [key, value] of this.order_by) {
-                    if (value === ASC) {
-                        if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
-                        if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return -1
-                        if (a[key] < b[key]) return -1
-                        if (a[key] > b[key]) return  1
-                    }
-                    else {
-                        if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return -1
-                        if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return  1
-                        if (a[key] < b[key]) return  1
-                        if (a[key] > b[key]) return -1
-                    }
-                }
-                return 0
+    get autoupdate() {
+        return !! this.__disposer_objects[DISPOSER_AUTOUPDATE]
+    }
+
+    set autoupdate(value: boolean) {
+        if (value !== this.autoupdate) {
+            // on 
+            if (value) {
+                this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
+                    () => this.need_to_update,
+                    (need_to_update) => {
+                        if (need_to_update) this.load()
+                    },
+                    { fireImmediately: true }
+                )
             }
-            __items.sort(compare)
+            // off
+            else {
+                this.__disposer_objects[DISPOSER_AUTOUPDATE]()
+                delete this.__disposer_objects[DISPOSER_AUTOUPDATE]
+            }
         }
-        return __items 
     }
 
-    __load(objs: M[]) {
-        // Query don't need to overide the items, query's items should be get only from the cache
-        // Query page have to use it only 
-    }
-
-    __watch_obj(obj) {
-        if (this.__disposer_objects[obj.id]) this.__disposer_objects[obj.id]()
-        this.__disposer_objects[obj.id] = reaction(
-            () =>  !this.filters || this.filters.isMatch(obj),
-            action('MO: Query - obj was changed',
-            (should: boolean) => {
-                let i = this.__items.indexOf(obj)
-                // should be in the items and it is not in the items? add it to the items
-                if ( should && i == -1) this.__items.push(obj)
-                // should not be in the items and it is in the items? remove it from the items
-                if (!should && i != -1) this.__items.splice(i, 1)
-            }),
-            { fireImmediately: true }
-        )
-    }
+    // use it if you need use promise instead of observe is_ready
+    ready = async () => waitIsTrue('__is_ready')
+    // use it if you need use promise instead of observe is_loading
+    loading = async () => waitIsFalse('__is_loading')
 }

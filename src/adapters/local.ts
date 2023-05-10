@@ -1,6 +1,6 @@
 import { Selector } from '@/types'
 import { Model, RawData, RawObject } from '../model'
-import { Adapter }  from './adapter'
+import { ModelAdapter }  from './model-adapter'
 
 /*
 You can use this adapter for mock data or for unit test
@@ -15,7 +15,7 @@ function timeout(ms: number) {
 }
 
 
-export class LocalAdapter<M extends Model> extends Adapter<M> {
+export class LocalAdapter<M extends Model> extends ModelAdapter<M> {
 
     readonly store_name: string
 
