@@ -1,4 +1,4 @@
-import { Selector } from '@/types'
+import { Selector } from '../selector'
 import { runInAction } from 'mobx'
 import { Model, model, field, Query, LocalAdapter, EQ, IN, ASC, DESC } from '../'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 

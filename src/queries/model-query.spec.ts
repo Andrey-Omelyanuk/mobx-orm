@@ -1,4 +1,4 @@
-import { Selector } from '@/types'
+import { Selector } from '../selector'
 import { reaction, runInAction } from 'mobx'
 import { model, Model, Adapter, LocalAdapter, QueryBase, ORDER_BY, ASC, DESC, Filter, EQ } from '..'
 

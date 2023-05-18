@@ -14,7 +14,7 @@ export class Selector {
     @observable fields      ?: Array<string>
     @observable omit        ?: Array<string>
 
-    constructor(filter?, order_by?, offset?, limit?, relations?, fields?, omit?) {
+    constructor(filter?: Filter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]) {
         this.filter    = filter
         this.order_by  = order_by
         this.offset    = offset
@@ -30,6 +30,10 @@ export class Selector {
         // let value = this.deserialize() 
         // value !== undefined && search_params.set(this.URIField, value)
         return search_params
+    }
+
+    set URLSearchParams(search_params: URLSearchParams) {
+
     }
 
     setFromURI(uri: string) {

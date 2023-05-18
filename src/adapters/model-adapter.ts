@@ -1,6 +1,6 @@
 import { runInAction } from 'mobx'
 import { Model, RawObject, RawData } from '../model'
-import { Selector } from '../types'
+import { Selector } from '../selector'
 import { Adapter } from './adapter'
 
 

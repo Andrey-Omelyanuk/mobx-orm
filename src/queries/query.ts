@@ -1,7 +1,7 @@
 import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
+import { waitIsFalse, waitIsTrue } from '../utils'
 import { Adapter } from '../adapters'
 import { Selector } from '../selector'
-import { waitIsFalse, waitIsTrue } from "@/utils"
 
 const DISPOSER_AUTOUPDATE = "__autoupdate"
 
@@ -45,9 +45,7 @@ export class Query <M> {
         } 
     }
 
-    get items() {
-        return this.__items 
-    }
+    get items() { return this.__items }
 
     async __load() {
         const objs = await this.adapter.load(this.selector)

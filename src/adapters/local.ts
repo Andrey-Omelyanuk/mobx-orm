@@ -1,4 +1,4 @@
-import { Selector } from '@/types'
+import { Selector } from '../selector'
 import { Model, RawData, RawObject } from '../model'
 import { ModelAdapter }  from './model-adapter'
 

@@ -2,8 +2,7 @@ import { action, runInAction } from "mobx"
 import { Adapter } from "../adapters"
 import { Query } from './query'
 import { Selector } from '../selector' 
-
-const DEFAULT_PAGE_SIZE = 50
+import { config } from '../config'
 
 export class QueryPage<T> extends Query<T> {
 
@@ -23,11 +22,9 @@ export class QueryPage<T> extends Query<T> {
         super(adapter, selector)
         runInAction(() => {
             if (this.selector.offset === undefined) this.selector.offset = 0
-            if (this.selector.limit  === undefined) this.selector.limit = DEFAULT_PAGE_SIZE
+            if (this.selector.limit  === undefined) this.selector.limit = config.DEFAULT_PAGE_SIZE
         })
     }
-
-    get items() { return this.__items }
 
     async __load() {
         const objs = await this.adapter.load(this.selector)

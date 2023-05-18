@@ -1,18 +1,24 @@
 import { action, runInAction } from "mobx"
 import { Model } from '../model'
-import { QueryPage } from './query-page'
+import { Query } from './query'
+import { Selector } from '../selector' 
+import { Adapter } from '../adapters'
+import { config } from '../config'
 
 
-export class ModelQueryInfinity<M extends Model> extends QueryPage<M> {
-    // special cases for infinity scroll
-    @action('MO: set page size') setPageSize(size: number) {} 
-    @action('MO: set page')      setPage(n: number) {}
+export class ModelQueryInfinity<M extends Model> extends Query<M> {
     // you can reset all and start from beginning
-    @action('MO: fisrt page')    goToFirstPage() { this.__items = []; this.selector.offset = 0 }
-    @action('MO: prev page')     goToPrevPage () {}
+    @action('MO: fisrt page') goToFirstPage() { this.__items = []; this.selector.offset = 0 }
     // you can scroll only forward
-    @action('MO: next page')     goToNextPage () { this.setPage(this.current_page + 1) }
-    @action('MO: last page')     goToLastPage () {}
+    @action('MO: next page')  goToNextPage () { this.selector.offset = this.selector.offset + this.selector.limit  }
+
+    constructor(adapter: Adapter<M>, selector?: Selector) {
+        super(adapter, selector)
+        runInAction(() => {
+            if (this.selector.offset === undefined) this.selector.offset = 0
+            if (this.selector.limit  === undefined) this.selector.limit = config.DEFAULT_PAGE_SIZE
+        })
+    }
 
     async __load() {
         const objs = await this.adapter.load(this.selector)

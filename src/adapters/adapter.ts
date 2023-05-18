@@ -1,4 +1,4 @@
-import { Selector } from '../types'
+import { Selector } from '../selector'
 
 
 export abstract class Adapter<T> {

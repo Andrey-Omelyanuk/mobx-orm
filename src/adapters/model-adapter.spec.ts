@@ -1,4 +1,4 @@
-import { Selector } from '@/types';
+import { Selector } from '../selector'
 import { model, Model, RawObject, field, ModelAdapter } from '..'
 import { EQ } from '../filters' 
 import { obj_a, obj_b } from '../test.utils' 
@@ -65,7 +65,7 @@ describe('ModelAdapter', () => {
     })
 
     it('find', async ()=> {
-        const selector: Selector = { filter: EQ ('')  }
+        const selector = new Selector(EQ (''))
                                                 expect(__find).toHaveBeenCalledTimes(0)
         let obj = await adapter.find(selector); expect(__find).toHaveBeenCalledTimes(1)
                                                 expect(__find).toHaveBeenCalledWith(selector)
