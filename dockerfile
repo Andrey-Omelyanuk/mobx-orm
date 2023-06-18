@@ -1,4 +1,5 @@
-FROM node:17.8-alpine3.15
+ARG ARCH=""
+FROM ${ARCH}node:18.16-alpine3.18
 RUN apk add --no-cache git
 WORKDIR /app
 COPY package.json .
