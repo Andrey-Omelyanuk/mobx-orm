@@ -3,10 +3,6 @@ build:
 	docker build -t ${PROJECT_NAME} . ; \
     docker run -v ${PWD}:/app ${PROJECT_NAME} yarn install
 
-build-arm:
-	docker build --build-arg ARCH="arm64v8/" -t ${PROJECT_NAME} . ; \
-    docker run -v ${PWD}:/app ${PROJECT_NAME} yarn install
-
 dev:
 	docker run --rm -it -v ${PWS}:/app ${PROJECT_NAME} yarn dev 
 
