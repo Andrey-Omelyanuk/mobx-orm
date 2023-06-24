@@ -1,5 +1,5 @@
 import { runInAction } from 'mobx'
-import { Model, model, field, QueryPage, LocalAdapter, local, EQ, ASC, DESC } from '../'
+import { Model, model, field, QueryPage, LocalAdapter, local, EQ, ASC, DESC } from '..'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
 
 

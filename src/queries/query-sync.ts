@@ -5,7 +5,7 @@ import { Query } from './query'
 import { Selector, ASC } from '../selector' 
 
 
-export class ModelQuerySync <M extends Model> extends Query<M> {
+export class QuerySync <M> extends Query<M> {
 
     constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
         super(adapter, selector)

@@ -1,10 +1,9 @@
 PROJECT_NAME=mobx-orm
 build:
-	docker build -t ${PROJECT_NAME} . ; \
-    docker run -v ${PWD}:/app ${PROJECT_NAME} yarn install
+	docker build -t ${PROJECT_NAME} .
 
 dev:
-	docker run --rm -it -v ${PWS}:/app ${PROJECT_NAME} yarn dev 
+	docker run --rm -it -v ${PWS}:/app ${PROJECT_NAME} yarn install && yarn dev 
 
 # chrome://inspect/#devices
 debug:

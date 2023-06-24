@@ -6,7 +6,7 @@ import { Adapter } from '../adapters'
 import { config } from '../config'
 
 
-export class ModelQueryInfinity<M extends Model> extends Query<M> {
+export class QueryInfinity<M extends Model> extends Query<M> {
     // you can reset all and start from beginning
     @action('MO: fisrt page') goToFirstPage() { this.__items = []; this.selector.offset = 0 }
     // you can scroll only forward

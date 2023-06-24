@@ -33,5 +33,8 @@ export class QueryPage<T> extends Query<T> {
             this.__items = objs
             this.total = total
         })
+        // we have to wait the next tick
+        // mobx should finished recalculation (object relations, computed fields, etc.)
+        await new Promise(resolve => setTimeout(resolve))
     }
 }
