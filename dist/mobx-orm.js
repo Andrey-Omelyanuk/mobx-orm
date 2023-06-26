@@ -479,8 +479,7 @@
     }
     function AND(...filters) { return new AND_Filter(filters); }
 
-    const ASC = true;
-    const DESC = false;
+    // Depricated
     class QueryBase {
         constructor(adapter, base_cache, selector) {
             Object.defineProperty(this, "filters", {
@@ -742,6 +741,108 @@
         __metadata("design:returntype", Promise)
     ], QueryBase.prototype, "load", null);
 
+    const ASC = true;
+    const DESC = false;
+    class SelectorX {
+        constructor(filter, order_by, offset, limit, relations, fields, omit) {
+            Object.defineProperty(this, "filter", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "order_by", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "offset", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "limit", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "relations", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "fields", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "omit", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.filter = filter;
+            this.order_by = order_by;
+            this.offset = offset;
+            this.limit = limit;
+            this.relations = relations;
+            this.fields = fields;
+            this.omit = omit;
+            mobx.makeObservable(this);
+        }
+        get URLSearchParams() {
+            let search_params = new URLSearchParams();
+            // let value = this.deserialize() 
+            // value !== undefined && search_params.set(this.URIField, value)
+            return search_params;
+        }
+        set URLSearchParams(search_params) {
+        }
+        setFromURI(uri) {
+            // const search_params = new URLSearchParams(uri)
+            // const field_name    = this.URIField
+            // const value         = search_params.has(field_name) ? search_params.get(field_name) : undefined
+            // this.serialize(value)
+        }
+        syncURL(applyFunc) {
+        }
+    }
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Filter)
+    ], SelectorX.prototype, "filter", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Object)
+    ], SelectorX.prototype, "order_by", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Number)
+    ], SelectorX.prototype, "offset", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Number)
+    ], SelectorX.prototype, "limit", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Array)
+    ], SelectorX.prototype, "relations", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Array)
+    ], SelectorX.prototype, "fields", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Array)
+    ], SelectorX.prototype, "omit", void 0);
+
+    // Depricated
     class Query extends QueryBase {
         constructor(adapter, base_cache, selector) {
             super(adapter, base_cache, selector);
@@ -844,6 +945,7 @@
         __metadata("design:paramtypes", [])
     ], Query.prototype, "items", null);
 
+    // Depriated
     class QueryPage extends QueryBase {
         __load(objs) {
             this.__items.splice(0, this.__items.length);
@@ -933,6 +1035,420 @@
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", Promise)
     ], QueryPage.prototype, "shadowLoad", null);
+
+    function waitIsTrue(field_name) {
+        return new Promise((resolve, reject) => {
+            mobx.autorun((reaction) => {
+                if (this[field_name]) {
+                    reaction.dispose();
+                    resolve(true);
+                }
+            });
+        });
+    }
+    function waitIsFalse(field_name) {
+        return new Promise((resolve, reject) => {
+            mobx.autorun((reaction) => {
+                if (!this[field_name]) {
+                    reaction.dispose();
+                    resolve(true);
+                }
+            });
+        });
+    }
+
+    const DISPOSER_AUTOUPDATE = "__autoupdate";
+    class QueryX {
+        constructor(adapter, selector) {
+            Object.defineProperty(this, "total", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: 0
+            });
+            Object.defineProperty(this, "need_to_update", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: false
+            }); // set to true when filters/order_by/page/page_size was changed and back to false after load
+            Object.defineProperty(this, "selector", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "adapter", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "__items", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: []
+            });
+            Object.defineProperty(this, "__is_loading", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: false
+            });
+            Object.defineProperty(this, "__is_ready", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: false
+            });
+            Object.defineProperty(this, "__error", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: ''
+            });
+            Object.defineProperty(this, "__disposers", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: []
+            });
+            Object.defineProperty(this, "__disposer_objects", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: {}
+            });
+            // use it if you need use promise instead of observe is_ready
+            Object.defineProperty(this, "ready", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: async () => waitIsTrue('__is_ready')
+            });
+            // use it if you need use promise instead of observe is_loading
+            Object.defineProperty(this, "loading", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: async () => waitIsFalse('__is_loading')
+            });
+            this.adapter = adapter;
+            this.selector = selector ? selector : new SelectorX();
+            mobx.makeObservable(this);
+            this.__disposers.push(mobx.reaction(() => this.selector.URLSearchParams.toString(), mobx.action('MO: Query Base - need to update', () => this.need_to_update = true), { fireImmediately: true, delay: 200 }));
+        }
+        get is_loading() { return this.__is_loading; }
+        get is_ready() { return this.__is_ready; }
+        get error() { return this.__error; }
+        destroy() {
+            while (this.__disposers.length) {
+                this.__disposers.pop()();
+            }
+            for (let __id in this.__disposer_objects) {
+                this.__disposer_objects[__id]();
+                delete this.__disposer_objects[__id];
+            }
+        }
+        get items() { return this.__items; }
+        async __load() {
+            const objs = await this.adapter.load(this.selector);
+            mobx.runInAction(() => {
+                this.__items = objs;
+                this.total = objs.length;
+            });
+            // we have to wait the next tick
+            // mobx should finished recalculation (object relations, computed fields, etc.)
+            await new Promise(resolve => setTimeout(resolve));
+        }
+        // use it if everybody should know that the query data is updating
+        async load() {
+            this.__is_loading = true;
+            try {
+                await this.shadowLoad();
+            }
+            finally {
+                mobx.runInAction(() => this.__is_loading = false);
+            }
+        }
+        // use it if nobody should know that the query data is updating
+        // for example you need to update the current data on the page and you don't want to show a spinner
+        async shadowLoad() {
+            try {
+                await this.__load();
+            }
+            catch (e) {
+                mobx.runInAction(() => {
+                    this.__error = e;
+                });
+            }
+            finally {
+                mobx.runInAction(() => {
+                    if (!this.__is_ready)
+                        this.__is_ready = true;
+                    if (this.need_to_update)
+                        this.need_to_update = false;
+                });
+            }
+        }
+        get autoupdate() {
+            return !!this.__disposer_objects[DISPOSER_AUTOUPDATE];
+        }
+        set autoupdate(value) {
+            if (value !== this.autoupdate) {
+                // on 
+                if (value) {
+                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = mobx.reaction(() => this.need_to_update, (need_to_update) => {
+                        if (need_to_update)
+                            this.load();
+                    }, { fireImmediately: true });
+                }
+                // off
+                else {
+                    this.__disposer_objects[DISPOSER_AUTOUPDATE]();
+                    delete this.__disposer_objects[DISPOSER_AUTOUPDATE];
+                }
+            }
+        }
+    }
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Number)
+    ], QueryX.prototype, "total", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], QueryX.prototype, "need_to_update", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Array)
+    ], QueryX.prototype, "__items", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], QueryX.prototype, "__is_loading", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], QueryX.prototype, "__is_ready", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", String)
+    ], QueryX.prototype, "__error", void 0);
+    __decorate([
+        mobx.action('MO: Query Base - load'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", Promise)
+    ], QueryX.prototype, "load", null);
+    __decorate([
+        mobx.action('MO: Query Base - shadow load'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", Promise)
+    ], QueryX.prototype, "shadowLoad", null);
+
+    // Global config of Mobx-ORM
+    const config = {
+        DEFAULT_PAGE_SIZE: 50
+    };
+
+    class QueryXPage extends QueryX {
+        setPageSize(size) { this.selector.limit = size; this.selector.offset = 0; }
+        setPage(n) { this.selector.offset = this.selector.limit * (n > 0 ? n - 1 : 0); }
+        goToFirstPage() { this.setPage(1); }
+        goToPrevPage() { this.setPage(this.current_page - 1); }
+        goToNextPage() { this.setPage(this.current_page + 1); }
+        goToLastPage() { this.setPage(this.total_pages); }
+        get is_first_page() { return this.selector.offset === 0; }
+        get is_last_page() { return this.selector.offset + this.selector.limit >= this.total; }
+        get current_page() { return this.selector.offset / this.selector.limit + 1; }
+        get total_pages() { return this.total ? Math.ceil(this.total / this.selector.limit) : 1; }
+        constructor(adapter, selector) {
+            super(adapter, selector);
+            mobx.runInAction(() => {
+                if (this.selector.offset === undefined)
+                    this.selector.offset = 0;
+                if (this.selector.limit === undefined)
+                    this.selector.limit = config.DEFAULT_PAGE_SIZE;
+            });
+        }
+        async __load() {
+            const objs = await this.adapter.load(this.selector);
+            const total = await this.adapter.getTotalCount(this.selector.filter);
+            mobx.runInAction(() => {
+                this.__items = objs;
+                this.total = total;
+            });
+            // we have to wait the next tick
+            // mobx should finished recalculation (object relations, computed fields, etc.)
+            await new Promise(resolve => setTimeout(resolve));
+        }
+    }
+    __decorate([
+        mobx.action('MO: set page size'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Number]),
+        __metadata("design:returntype", void 0)
+    ], QueryXPage.prototype, "setPageSize", null);
+    __decorate([
+        mobx.action('MO: set page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Number]),
+        __metadata("design:returntype", void 0)
+    ], QueryXPage.prototype, "setPage", null);
+    __decorate([
+        mobx.action('MO: fisrt page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryXPage.prototype, "goToFirstPage", null);
+    __decorate([
+        mobx.action('MO: prev page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryXPage.prototype, "goToPrevPage", null);
+    __decorate([
+        mobx.action('MO: next page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryXPage.prototype, "goToNextPage", null);
+    __decorate([
+        mobx.action('MO: last page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryXPage.prototype, "goToLastPage", null);
+
+    class QueryXSync extends QueryX {
+        constructor(adapter, base_cache, selector) {
+            super(adapter, selector);
+            // watch the cache for changes, and update items if needed
+            this.__disposers.push(mobx.observe(base_cache, mobx.action('MO: Query - update from cache changes', (change) => {
+                if (change.type == 'add') {
+                    this.__watch_obj(change.newValue);
+                }
+                if (change.type == "delete") {
+                    let id = change.name;
+                    let obj = change.oldValue;
+                    this.__disposer_objects[id]();
+                    delete this.__disposer_objects[id];
+                    let i = this.__items.indexOf(obj);
+                    if (i != -1) {
+                        this.__items.splice(i, 1);
+                        this.total = this.__items.length;
+                    }
+                }
+            })));
+            // ch all exist objects of model 
+            for (let [id, obj] of base_cache) {
+                this.__watch_obj(obj);
+            }
+        }
+        async __load() {
+            // Query don't need to overide the __items,
+            // query's items should be get only from the cache
+            await this.adapter.load(this.selector);
+            // we have to wait the next tick
+            // mobx should finished recalculation for model-objects
+            await new Promise(resolve => setTimeout(resolve));
+        }
+        get items() {
+            var _a;
+            let __items = this.__items.map(x => x); // copy __items (not deep)
+            if ((_a = this.selector.order_by) === null || _a === void 0 ? void 0 : _a.size) {
+                let compare = (a, b) => {
+                    for (const [key, value] of this.selector.order_by) {
+                        if (value === ASC) {
+                            if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
+                                return 1;
+                            if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
+                                return -1;
+                            if (a[key] < b[key])
+                                return -1;
+                            if (a[key] > b[key])
+                                return 1;
+                        }
+                        else {
+                            if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
+                                return -1;
+                            if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
+                                return 1;
+                            if (a[key] < b[key])
+                                return 1;
+                            if (a[key] > b[key])
+                                return -1;
+                        }
+                    }
+                    return 0;
+                };
+                __items.sort(compare);
+            }
+            return __items;
+        }
+        __watch_obj(obj) {
+            if (this.__disposer_objects[obj.id])
+                this.__disposer_objects[obj.id]();
+            this.__disposer_objects[obj.id] = mobx.reaction(() => !this.selector.filter || this.selector.filter.isMatch(obj), mobx.action('MO: Query - obj was changed', (should) => {
+                let i = this.__items.indexOf(obj);
+                // should be in the items and it is not in the items? add it to the items
+                if (should && i == -1)
+                    this.__items.push(obj);
+                // should not be in the items and it is in the items? remove it from the items
+                if (!should && i != -1)
+                    this.__items.splice(i, 1);
+                if (this.total != this.__items.length)
+                    this.total = this.__items.length;
+            }), { fireImmediately: true });
+        }
+    }
+    __decorate([
+        mobx.computed,
+        __metadata("design:type", Object),
+        __metadata("design:paramtypes", [])
+    ], QueryXSync.prototype, "items", null);
+
+    class QueryXInfinity extends QueryX {
+        // you can reset all and start from beginning
+        goToFirstPage() { this.__items = []; this.selector.offset = 0; }
+        // you can scroll only forward
+        goToNextPage() { this.selector.offset = this.selector.offset + this.selector.limit; }
+        constructor(adapter, selector) {
+            super(adapter, selector);
+            mobx.runInAction(() => {
+                if (this.selector.offset === undefined)
+                    this.selector.offset = 0;
+                if (this.selector.limit === undefined)
+                    this.selector.limit = config.DEFAULT_PAGE_SIZE;
+            });
+        }
+        async __load() {
+            const objs = await this.adapter.load(this.selector);
+            const total = await this.adapter.getTotalCount(this.selector.filter);
+            mobx.runInAction(() => {
+                this.__items.push(...objs);
+                this.total = total;
+            });
+            // we have to wait the next tick
+            // mobx should finished recalculation for model-objects
+            await new Promise(resolve => setTimeout(resolve));
+        }
+    }
+    __decorate([
+        mobx.action('MO: fisrt page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryXInfinity.prototype, "goToFirstPage", null);
+    __decorate([
+        mobx.action('MO: next page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryXInfinity.prototype, "goToNextPage", null);
 
     class Model {
         constructor(...args) {
@@ -1539,7 +2055,12 @@
     exports.Query = Query;
     exports.QueryBase = QueryBase;
     exports.QueryPage = QueryPage;
+    exports.QueryX = QueryX;
+    exports.QueryXInfinity = QueryXInfinity;
+    exports.QueryXPage = QueryXPage;
+    exports.QueryXSync = QueryXSync;
     exports.ReadOnlyModel = ReadOnlyModel;
+    exports.SelectorX = SelectorX;
     exports.SingleFilter = SingleFilter;
     exports.field = field;
     exports.field_field = field_field;

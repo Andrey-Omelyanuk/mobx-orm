@@ -9,6 +9,21 @@ declare abstract class Filter {
 declare const ASC = true;
 declare const DESC = false;
 declare type ORDER_BY = Map<string, boolean>;
+declare class SelectorX {
+    filter?: Filter;
+    order_by?: ORDER_BY;
+    offset?: number;
+    limit?: number;
+    relations?: Array<string>;
+    fields?: Array<string>;
+    omit?: Array<string>;
+    constructor(filter?: Filter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]);
+    get URLSearchParams(): URLSearchParams;
+    set URLSearchParams(search_params: URLSearchParams);
+    setFromURI(uri: string): void;
+    syncURL(applyFunc: any): void;
+}
+
 declare abstract class QueryBase<M extends Model> {
     filters: Filter;
     order_by: ORDER_BY;
@@ -68,6 +83,63 @@ declare class QueryPage<M extends Model> extends QueryBase<M> {
     constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector$1);
     get items(): M[];
     shadowLoad(): Promise<void>;
+}
+
+declare class QueryX<M extends Model> {
+    total: number;
+    need_to_update: boolean;
+    get is_loading(): boolean;
+    get is_ready(): boolean;
+    get error(): string;
+    readonly selector: SelectorX;
+    readonly adapter: Adapter<M>;
+    __items: M[];
+    __is_loading: boolean;
+    __is_ready: boolean;
+    __error: string;
+    __disposers: (() => void)[];
+    __disposer_objects: {
+        [field: string]: () => void;
+    };
+    constructor(adapter: Adapter<M>, selector?: SelectorX);
+    destroy(): void;
+    get items(): M[];
+    __load(): Promise<void>;
+    load(): Promise<void>;
+    shadowLoad(): Promise<void>;
+    get autoupdate(): boolean;
+    set autoupdate(value: boolean);
+    ready: () => Promise<Boolean>;
+    loading: () => Promise<Boolean>;
+}
+
+declare class QueryXPage<M extends Model> extends QueryX<M> {
+    setPageSize(size: number): void;
+    setPage(n: number): void;
+    goToFirstPage(): void;
+    goToPrevPage(): void;
+    goToNextPage(): void;
+    goToLastPage(): void;
+    get is_first_page(): boolean;
+    get is_last_page(): boolean;
+    get current_page(): number;
+    get total_pages(): number;
+    constructor(adapter: Adapter<M>, selector?: SelectorX);
+    __load(): Promise<void>;
+}
+
+declare class QueryXSync<M extends Model> extends QueryX<M> {
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectorX);
+    __load(): Promise<void>;
+    get items(): M[];
+    __watch_obj(obj: any): void;
+}
+
+declare class QueryXInfinity<M extends Model> extends QueryX<M> {
+    goToFirstPage(): void;
+    goToNextPage(): void;
+    constructor(adapter: Adapter<M>, selector?: SelectorX);
+    __load(): Promise<void>;
 }
 
 declare enum ValueType {
@@ -289,4 +361,4 @@ declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: 
 
 declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
+export { AND, AND_Filter, ASC, Adapter, ComboFilter, DESC, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXInfinity, QueryXPage, QueryXSync, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, ValueType, field, field_field, foreign, local, local_store, many, match, model, one };
