@@ -1,18 +1,17 @@
-import { action, runInAction, computed, observe, reaction } from 'mobx'
-import { Model } from '../model'
+import { action, computed, observe, reaction } from 'mobx'
 import { Adapter } from '../adapters'
-import { QueryBase } from './query-base'
-import { ASC } from '../selector'
-import { Selector } from '@/types'
+import { QueryX } from './query-x'
+import { Model } from '../model'
+import { SelectorX as Selector, ASC } from '../selector' 
 
-// Depricated
-export class Query<M extends Model> extends QueryBase<M> {
+
+export class QueryXSync <M extends Model> extends QueryX<M> {
 
     constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
-        super(adapter, base_cache, selector)
+        super(adapter, selector)
 
         // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(this.__base_cache, 
+        this.__disposers.push(observe(base_cache, 
             action('MO: Query - update from cache changes',
             (change: any) => {
                 if (change.type == 'add') {
@@ -26,43 +25,35 @@ export class Query<M extends Model> extends QueryBase<M> {
                     delete this.__disposer_objects[id]
 
                     let i = this.__items.indexOf(obj)
-                    if (i != -1)
+                    if (i != -1) {
                         this.__items.splice(i, 1)
+                        this.total = this.__items.length
+                    }
                 }
             })
         ))
 
         // ch all exist objects of model 
-        for(let [id, obj] of this.__base_cache) {
+        for(let [id, obj] of base_cache) {
             this.__watch_obj(obj)
         }
     }
 
-    @action('MO: Query Base - shadow load')
-    async shadowLoad() {
-        try {
-            let objs = await this.__adapter.load(this.selector)
-            this.__load(objs)
-            // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
-            await new Promise(resolve => setTimeout(resolve))
-            runInAction(() => {
-                this.__is_ready = true
-                this.need_to_update = false 
-            })
-        }
-        catch(e) {
-            // 'MO: Query Base - shadow load - error',
-            runInAction( () => this.__error = e)
-            throw e
-        }
+    async __load() {
+        // Query don't need to overide the __items,
+        // query's items should be get only from the cache
+        await this.adapter.load(this.selector)
+        // we have to wait the next tick
+        // mobx should finished recalculation for model-objects
+        await new Promise(resolve => setTimeout(resolve))
     }
 
     @computed
     get items() { 
         let __items = this.__items.map(x=>x) // copy __items (not deep)
-        if (this.order_by.size) {
+        if (this.selector.order_by?.size) {
             let compare = (a, b) => {
-                for(const [key, value] of this.order_by) {
+                for(const [key, value] of this.selector.order_by) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
                         if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return -1
@@ -83,15 +74,10 @@ export class Query<M extends Model> extends QueryBase<M> {
         return __items 
     }
 
-    __load(objs: M[]) {
-        // Query don't need to overide the items, query's items should be get only from the cache
-        // Query page have to use it only 
-    }
-
     __watch_obj(obj) {
         if (this.__disposer_objects[obj.id]) this.__disposer_objects[obj.id]()
         this.__disposer_objects[obj.id] = reaction(
-            () =>  !this.filters || this.filters.isMatch(obj),
+            () =>  !this.selector.filter || this.selector.filter.isMatch(obj),
             action('MO: Query - obj was changed',
             (should: boolean) => {
                 let i = this.__items.indexOf(obj)
@@ -99,6 +85,9 @@ export class Query<M extends Model> extends QueryBase<M> {
                 if ( should && i == -1) this.__items.push(obj)
                 // should not be in the items and it is in the items? remove it from the items
                 if (!should && i != -1) this.__items.splice(i, 1)
+
+                if (this.total != this.__items.length) 
+                    this.total = this.__items.length
             }),
             { fireImmediately: true }
         )

@@ -4,7 +4,7 @@ import { Adapter } from "../adapters"
 import { QueryBase } from './query-base'
 import { Selector } from "@/types"
 
-
+// Depriated
 export class QueryPage<M extends Model> extends QueryBase<M> {
 
     @action('MO: Query Page - load')

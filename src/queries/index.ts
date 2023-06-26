@@ -1,4 +1,7 @@
 export * from './query-base'
 export * from './query'
 export * from './query-page'
-// TODO: query-endless like a query-page but for endless scroll feature
+export * from './query-x'
+export * from './query-x-page'
+export * from './query-x-sync'
+export * from './query-x-infinity'

@@ -1,5 +1,3 @@
-
-
 export let obj_a = {id: 0, a: 5, b: 'a', c: true } 
 export let obj_b = {id: 1,       b: 'c', c: false} 
 export let obj_c = {id: 2, a: 2,         c: false} 

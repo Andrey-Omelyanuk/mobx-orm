@@ -1,5 +1,5 @@
 import { Filter } from "./filters"
-import { ORDER_BY } from "./queries"
+import { ORDER_BY } from "./selector"
 
 
 export interface Selector {

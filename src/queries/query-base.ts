@@ -3,12 +3,9 @@ import { Adapter } from '../adapters'
 import { Model } from '../model'
 import { Filter } from '../filters'
 import { Selector } from "@/types"
+import { ORDER_BY } from "../selector"
 
-export const ASC = true 
-export const DESC = false 
-export type ORDER_BY = Map<string, boolean>
-
-
+// Depricated
 export abstract class QueryBase<M extends Model> {
 
     @observable filters     : Filter

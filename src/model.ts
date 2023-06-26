@@ -1,6 +1,6 @@
 import { action, intercept, makeObservable, observable, observe } from 'mobx'
 import { Adapter } from './adapters'
-import { Query, QueryPage, ORDER_BY } from './queries'
+import { Query, QueryPage } from './queries'
 import { Selector } from './types'
 
 
