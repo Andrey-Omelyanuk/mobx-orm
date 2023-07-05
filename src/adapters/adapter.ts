@@ -20,22 +20,40 @@ export abstract class  Adapter<M extends Model> {
     }
 
     async create(obj: M) : Promise<M> {
-        let raw_obj = await this.__create(obj.raw_data)
-        obj.updateFromRaw(raw_obj)
-        obj.refreshInitData() // backend can return default values and they should be in __init_data
+        try {
+            let raw_obj = await this.__create(obj.raw_data)
+            obj.updateFromRaw(raw_obj)
+            obj.refreshInitData() // backend can return default values and they should be in __init_data
+            obj.setError(undefined)
+        }
+        catch (e) {
+            obj.setError(e.response.data)
+        }
         return obj
     }
 
     async update(obj: M) : Promise<M> {
-        let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data)
-        obj.updateFromRaw(raw_obj)
-        obj.refreshInitData()
+        try {
+            let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data)
+            obj.updateFromRaw(raw_obj)
+            obj.refreshInitData()
+            obj.setError(undefined)
+        }
+        catch (e) {
+            obj.setError(e.response.data)
+        }
         return obj
     }
 
     async delete(obj: M) : Promise<M> {
-        await this.__delete(obj.id)
-        runInAction(() => obj.id = undefined )
+        try {
+            await this.__delete(obj.id)
+            runInAction(() => obj.id = undefined )
+            obj.setError(undefined)
+        }
+        catch (e) {
+            obj.setError(e.response.data)
+        }
         return obj
     }
 

@@ -87,10 +87,10 @@ export abstract class Model {
         }
     }
 
-
     @observable id: number|undefined = undefined
 
     @observable __init_data: any   
+    @observable __errors: any   
     __disposers = new Map()
 
     constructor (...args) { }
@@ -143,6 +143,11 @@ export abstract class Model {
     async save  () { return this.id === undefined ? this.create() : this.update() }
     // update the object from the server
     async refresh() { return await this.model.__adapter.get(this.id) }
+
+    @action
+    setError(error: any) {
+        this.__errors = error
+    }
 
     @action('MO: obj - refresh init data')
     refreshInitData() {
