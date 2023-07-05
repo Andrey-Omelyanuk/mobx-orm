@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.1.59
+   * mobx-orm.js v1.2.0
    * Released under the MIT license.
    */
 
@@ -1460,6 +1460,12 @@ class Model {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "__errors", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "__disposers", {
             enumerable: true,
             configurable: true,
@@ -1553,6 +1559,9 @@ class Model {
     async save() { return this.id === undefined ? this.create() : this.update(); }
     // update the object from the server
     async refresh() { return await this.model.__adapter.get(this.id); }
+    setError(error) {
+        this.__errors = error;
+    }
     refreshInitData() {
         if (this.__init_data === undefined)
             this.__init_data = {};
@@ -1607,6 +1616,16 @@ __decorate([
     observable,
     __metadata("design:type", Object)
 ], Model.prototype, "__init_data", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Object)
+], Model.prototype, "__errors", void 0);
+__decorate([
+    action,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], Model.prototype, "setError", null);
 __decorate([
     action('MO: obj - refresh init data'),
     __metadata("design:type", Function),
@@ -1863,20 +1882,38 @@ class Adapter {
         this.model = model;
     }
     async create(obj) {
-        let raw_obj = await this.__create(obj.raw_data);
-        obj.updateFromRaw(raw_obj);
-        obj.refreshInitData(); // backend can return default values and they should be in __init_data
+        try {
+            let raw_obj = await this.__create(obj.raw_data);
+            obj.updateFromRaw(raw_obj);
+            obj.refreshInitData(); // backend can return default values and they should be in __init_data
+            obj.setError(undefined);
+        }
+        catch (e) {
+            obj.setError(e.response.data);
+        }
         return obj;
     }
     async update(obj) {
-        let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data);
-        obj.updateFromRaw(raw_obj);
-        obj.refreshInitData();
+        try {
+            let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data);
+            obj.updateFromRaw(raw_obj);
+            obj.refreshInitData();
+            obj.setError(undefined);
+        }
+        catch (e) {
+            obj.setError(e.response.data);
+        }
         return obj;
     }
     async delete(obj) {
-        await this.__delete(obj.id);
-        runInAction(() => obj.id = undefined);
+        try {
+            await this.__delete(obj.id);
+            runInAction(() => obj.id = undefined);
+            obj.setError(undefined);
+        }
+        catch (e) {
+            obj.setError(e.response.data);
+        }
         return obj;
     }
     async get(obj_id) {

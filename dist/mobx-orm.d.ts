@@ -327,6 +327,7 @@ declare abstract class Model {
     static clearCache(): void;
     id: number | undefined;
     __init_data: any;
+    __errors: any;
     __disposers: Map<any, any>;
     constructor(...args: any[]);
     get model(): any;
@@ -339,6 +340,7 @@ declare abstract class Model {
     delete(): Promise<any>;
     save(): Promise<any>;
     refresh(): Promise<any>;
+    setError(error: any): void;
     refreshInitData(): void;
     cancelLocalChanges(): void;
     updateFromRaw(raw_obj: any): void;
