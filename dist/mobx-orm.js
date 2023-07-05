@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.0
+   * mobx-orm.js v1.2.1
    * Released under the MIT license.
    */
 
@@ -1894,6 +1894,7 @@
             }
             catch (e) {
                 obj.setError(e.response.data);
+                throw e;
             }
             return obj;
         }
@@ -1906,6 +1907,7 @@
             }
             catch (e) {
                 obj.setError(e.response.data);
+                throw e;
             }
             return obj;
         }
@@ -1917,6 +1919,7 @@
             }
             catch (e) {
                 obj.setError(e.response.data);
+                throw e;
             }
             return obj;
         }
