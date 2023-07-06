@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.3
+   * mobx-orm.js v1.2.4
    * Released under the MIT license.
    */
 
@@ -1883,7 +1883,7 @@ class Adapter {
         this.model = model;
     }
     async action(obj, name, kwargs) {
-        return await this.model.__adapter.action(obj.id, name, kwargs);
+        return await this.model.__adapter.__action(obj.id, name, kwargs);
     }
     async create(obj) {
         try {

@@ -21,7 +21,7 @@ export abstract class  Adapter<M extends Model> {
     }
 
     async action(obj: M, name: string, kwargs: Object) : Promise<any> {
-        return await this.model.__adapter.action(obj.id, name, kwargs)
+        return await this.model.__adapter.__action(obj.id, name, kwargs)
     }
 
     async create(obj: M) : Promise<M> {
