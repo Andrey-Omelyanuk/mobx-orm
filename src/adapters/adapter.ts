@@ -5,10 +5,10 @@ import { Selector } from '../types'
 
 export abstract class  Adapter<M extends Model> {
 
-    abstract __action(name: string, kwargs: Object) : Promise<any>
     abstract __create(raw_data: RawData): Promise<RawObject>
     abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>
     abstract __delete(obj_id: number): Promise<void>
+    abstract __action(obj_id: number, name: string, kwargs: Object) : Promise<any>
     abstract __get(obj_id: number): Promise<object>
     abstract __find(props: Selector): Promise<object>
     abstract __load(props: Selector): Promise<RawObject[]>
@@ -20,8 +20,8 @@ export abstract class  Adapter<M extends Model> {
         this.model = model 
     }
 
-    async action(name: string, kwargs: Object) : Promise<any> {
-        return await this.model.__adapter.action(name, kwargs)
+    async action(obj: M, name: string, kwargs: Object) : Promise<any> {
+        return await this.model.__adapter.action(obj.id, name, kwargs)
     }
 
     async create(obj: M) : Promise<M> {

@@ -12,10 +12,10 @@ describe('Adapter', () => {
 
     // abstract __delete(obj_id: string): Promise<object>
 
-        async __action(name: string, kwargs: Object) : Promise<any> { return }
         async __create(raw_data: RawObject) : Promise<RawObject> { raw_data.id = 1; return raw_data }
         async __update(obj_id: number, only_changed_raw_data: RawObject) : Promise<RawObject> { return only_changed_raw_data }
         async __delete(obj_id: number) : Promise<RawObject> { return }
+        async __action(obj_id: number, name: string, kwargs: Object) : Promise<any> { return }
         async __load(selector: Selector) : Promise<RawObject[]> { return [obj_a, obj_b] }
         async __find(selector: Selector): Promise<object> { return obj_a; }
         async __get(obj_id: number): Promise<object> { return obj_a; }

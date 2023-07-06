@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.2
+   * mobx-orm.js v1.2.3
    * Released under the MIT license.
    */
 
@@ -1557,7 +1557,7 @@
             }
             return is_changed;
         }
-        async action(name, kwargs) { return await this.model.__adapter.action(name, kwargs); }
+        async action(name, kwargs) { return await this.model.__adapter.action(this, name, kwargs); }
         async create() { return await this.model.__adapter.create(this); }
         async update() { return await this.model.__adapter.update(this); }
         async delete() { return await this.model.__adapter.delete(this); }
@@ -1886,8 +1886,8 @@
             });
             this.model = model;
         }
-        async action(name, kwargs) {
-            return await this.model.__adapter.action(name, kwargs);
+        async action(obj, name, kwargs) {
+            return await this.model.__adapter.action(obj.id, name, kwargs);
         }
         async create(obj) {
             try {
@@ -1983,7 +1983,7 @@
             }
             local_store[this.store_name] = objs;
         }
-        async __action(name, kwargs) {
+        async __action(obj_id, name, kwargs) {
         }
         async __create(raw_data) {
             if (this.delay)

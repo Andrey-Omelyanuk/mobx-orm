@@ -137,7 +137,7 @@ export abstract class Model {
         return is_changed 
     }
 
-    async action(name: string, kwargs: Object) { return await this.model.__adapter.action(name, kwargs) }
+    async action(name: string, kwargs: Object) { return await this.model.__adapter.action(this, name, kwargs) }
     async create() { return await this.model.__adapter.create(this) }
     async update() { return await this.model.__adapter.update(this) }
     async delete() { return await this.model.__adapter.delete(this) }

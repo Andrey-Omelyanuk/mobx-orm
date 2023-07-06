@@ -261,17 +261,17 @@ interface Selector {
 }
 
 declare abstract class Adapter<M extends Model> {
-    abstract __action(name: string, kwargs: Object): Promise<any>;
     abstract __create(raw_data: RawData): Promise<RawObject>;
     abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
     abstract __delete(obj_id: number): Promise<void>;
+    abstract __action(obj_id: number, name: string, kwargs: Object): Promise<any>;
     abstract __get(obj_id: number): Promise<object>;
     abstract __find(props: Selector): Promise<object>;
     abstract __load(props: Selector): Promise<RawObject[]>;
     abstract getTotalCount(where?: any): Promise<number>;
     readonly model: any;
     constructor(model: any);
-    action(name: string, kwargs: Object): Promise<any>;
+    action(obj: M, name: string, kwargs: Object): Promise<any>;
     create(obj: M): Promise<M>;
     update(obj: M): Promise<M>;
     delete(obj: M): Promise<M>;
@@ -290,7 +290,7 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     delay: number;
     init_local_data(data: RawObject[]): void;
     constructor(model: any, store_name?: string);
-    __action(name: string, kwargs: Object): Promise<any>;
+    __action(obj_id: number, name: string, kwargs: Object): Promise<any>;
     __create(raw_data: RawData): Promise<RawObject>;
     __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
     __delete(obj_id: number): Promise<void>;

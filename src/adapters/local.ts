@@ -36,7 +36,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         local_store[this.store_name] = {}
     }
 
-    async __action(name: string, kwargs: Object) : Promise<any> {
+    async __action(obj_id: number, name: string, kwargs: Object) : Promise<any> {
     }
 
     async __create(raw_data: RawData) : Promise<RawObject> {
