@@ -36,6 +36,9 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         local_store[this.store_name] = {}
     }
 
+    async __action(name: string, kwargs: Object) : Promise<any> {
+    }
+
     async __create(raw_data: RawData) : Promise<RawObject> {
         if (this.delay) await timeout(this.delay) 
 
