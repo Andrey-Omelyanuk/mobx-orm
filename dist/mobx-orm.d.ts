@@ -325,6 +325,7 @@ declare abstract class Model {
     static getQuery(selector?: Selector): Query<Model>;
     static getQueryPage(selector?: Selector): QueryPage<Model>;
     static get(id: number): Model;
+    static findById(id: number): Promise<Model>;
     static find(selector: Selector): Promise<Model>;
     static updateCache(raw_obj: any): Model;
     static clearCache(): void;

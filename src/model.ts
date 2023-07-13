@@ -62,6 +62,10 @@ export abstract class Model {
         return this.__cache.get(id)
     }
 
+    static async findById(id: number) : Promise<Model> {
+        return this.__adapter.get(id) 
+    }
+
     static async find(selector: Selector) : Promise<Model> {
         return this.__adapter.find(selector) 
     }

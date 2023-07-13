@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.4
+   * mobx-orm.js v1.2.5
    * Released under the MIT license.
    */
 
@@ -1499,6 +1499,9 @@
         }
         static get(id) {
             return this.__cache.get(id);
+        }
+        static async findById(id) {
+            return this.__adapter.get(id);
         }
         static async find(selector) {
             return this.__adapter.find(selector);
