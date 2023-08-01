@@ -29,11 +29,12 @@ export class SelectorX {
     get URLSearchParams(): URLSearchParams{
         const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
         const order_by = []
-        for (const field of this.order_by.keys()) {
-            const value = this.order_by.get(field)
-            const _field = field.replace(/\./g, '__')
-            order_by.push(value === ASC ? `${_field}` : `-${_field}`)
-        }
+        if (this.order_by?.size) 
+            for (const field of this.order_by.keys()) {
+                const value = this.order_by.get(field)
+                const _field = field.replace(/\./g, '__')
+                order_by.push(value === ASC ? `${_field}` : `-${_field}`)
+            }
         if (order_by.length             ) searchParams.set('__order_by' , order_by.join())
         if (this.limit !== undefined    ) searchParams.set('__limit'    , this.limit as any)
         if (this.offset !== undefined   ) searchParams.set('__offset'   , this.offset as any)

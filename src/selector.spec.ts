@@ -27,11 +27,11 @@ describe('Selector', () => {
         expect(selector.URLSearchParams.toString()).toBe(
             'test_number=0&'+
             'test_string=zero&'+
-            '__order_by=asc,-desc&'+
-            '__limit=100&__offset=500&'+
-            '__relations=rel_a,rel_b&'+
-            '__field=field_a,field_b&'+
-            '__omit=omit_a,omit_b'
+            '__order_by=asc%2C-desc&'+
+            '__limit=500&__offset=100&'+
+            '__relations=rel_a%2Crel_b&'+
+            '__fields=field_a%2Cfield_b&'+
+            '__omit=omit_a%2Comit_b'
         )
     })
 })

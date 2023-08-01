@@ -2,11 +2,16 @@ SHELL := /bin/bash
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
+help:
+	@echo "build            : " 
+	@echo "dev				: " 
+	@echo "debug            : " 
+	@echo "test        		: " 
+	@echo "test-e2e       	: "  
+	@echo "stop             : " 
+
 build:
 	docker build -t mobx-orm .
-
-rebuild:
-	docker build --no-cache -t mobx-orm .
 
 dev:
 	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn dev 
@@ -23,6 +28,5 @@ test:
 test-e2e:
 	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn build && yarn e2e 
 
-publish:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn test && yarn build && yarn e2e 
-	npm publish	
+stop:
+	docker compose down

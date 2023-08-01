@@ -1,6 +1,6 @@
 import { action, autorun, makeObservable, observable } from "mobx"
 import { XFilter } from "./Filter"
-import { Value } from "@/value"
+import { Value } from "../value"
 
 
 export abstract class XSingleFilter extends XFilter {

@@ -1,4 +1,4 @@
-import { makeAutoObservable, observable, reaction, runInAction } from 'mobx'
+import { makeObservable, observable, reaction, runInAction } from 'mobx'
 import { Model, Query } from '..'
 
 
@@ -14,14 +14,14 @@ export abstract class Value<T> {
         value !== undefined && (this.isReady = true)
         this.options = options
         this.__disposers.push(reaction(
-            () => this?.options.need_to_update,
+            () => this.options?.need_to_update,
             (needToReset) =>  needToReset && runInAction(() => this.isReady = false)
         ) )
         this.__disposers.push(reaction(
             () => this.value,
             () => runInAction(() => this.isReady = true)
         ))
-        makeAutoObservable(this)
+        makeObservable(this)
     }
 
     destroy() {
@@ -40,6 +40,7 @@ export class StringValue extends Value<string|null|undefined> {
     serialize(value?: string): string|null|undefined {
         if (value === undefined) return undefined
         if (value === 'null')    return null
+        if (value === null)      return null
         return value
     }
     deserialize(value: string|null|undefined): string {
@@ -53,6 +54,7 @@ export class NumberValue extends Value<number|null|undefined> {
     serialize(value?: string): number|null|undefined {
         if (value === undefined) return undefined
         if (value === 'null')    return null
+        if (value === null)      return null
         let result = parseInt(value)
         if (isNaN(result)) result = undefined
         return result

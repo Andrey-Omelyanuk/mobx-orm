@@ -17,7 +17,7 @@ describe('QueryXSync', () => {
         const query = new QueryXSync<A>(adapter, cache)
         expect(query).toMatchObject({
             items: [],
-            total: 0,
+            total: undefined,
             selector: new Selector(),
             adapter: adapter,
             need_to_update: true,
@@ -33,7 +33,7 @@ describe('QueryXSync', () => {
         const query = new QueryXSync<A>(adapter, cache, selector)
         expect(query).toMatchObject({
             items: [],
-            total: 0,
+            total: undefined,
             selector: selector,
             adapter: adapter,
             need_to_update: true,

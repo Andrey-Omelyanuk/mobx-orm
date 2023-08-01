@@ -16,7 +16,7 @@ describe('QueryX', () => {
         const query = new QueryX<A>(adapter)
         expect(query).toMatchObject({
             items: [],
-            total: 0,
+            total: undefined,
             selector: new Selector(),
             adapter: adapter,
             need_to_update: true,
@@ -30,7 +30,7 @@ describe('QueryX', () => {
         const query = new QueryX<A>(adapter, selector)
         expect(query).toMatchObject({
             items: [],
-            total: 0,
+            total: undefined,
             selector: selector,
             adapter: adapter,
             need_to_update: true,
