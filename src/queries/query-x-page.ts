@@ -1,5 +1,5 @@
-import { action, runInAction } from "mobx"
-import { Adapter } from "../adapters"
+import { action, runInAction } from 'mobx'
+import { Adapter } from '../adapters'
 import { QueryX } from './query-x'
 import { SelectorX as Selector } from '../selector' 
 import { config } from '../config'

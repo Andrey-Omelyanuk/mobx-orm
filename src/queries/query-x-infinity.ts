@@ -1,4 +1,4 @@
-import { action, runInAction } from "mobx"
+import { action, runInAction } from 'mobx'
 import { Model } from '../model'
 import { QueryX } from './query-x'
 import { SelectorX as Selector } from '../selector' 
@@ -22,10 +22,11 @@ export class QueryXInfinity<M extends Model> extends QueryX<M> {
 
     async __load() {
         const objs = await this.adapter.load(this.selector)
-        const total = await this.adapter.getTotalCount(this.selector.filter)
         runInAction(() => {
             this.__items.push(...objs)
-            this.total = total
+            // total is not make sense for infinity queries
+            // total = 1 show that last page is reached
+            if (objs.length < this.selector.limit) this.total = 1
         })
         // we have to wait the next tick
         // mobx should finished recalculation for model-objects

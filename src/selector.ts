@@ -1,12 +1,12 @@
-import { makeObservable, observable } from "mobx"
-import { Filter } from "./filters"
+import { makeObservable, observable } from 'mobx'
+import { XFilter } from './filters-x'
 
 export const ASC = true 
 export const DESC = false 
 export type ORDER_BY = Map<string, boolean>
 
 export class SelectorX {
-    @observable filter      ?: Filter 
+    @observable filter      ?: XFilter 
     @observable order_by    ?: ORDER_BY 
     @observable offset      ?: number
     @observable limit       ?: number
@@ -14,7 +14,7 @@ export class SelectorX {
     @observable fields      ?: Array<string>
     @observable omit        ?: Array<string>
 
-    constructor(filter?: Filter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]) {
+    constructor(filter?: XFilter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]) {
         this.filter    = filter
         this.order_by  = order_by
         this.offset    = offset
@@ -25,25 +25,21 @@ export class SelectorX {
         makeObservable(this)
     }
 
+    // TODO: should be able to setup 
     get URLSearchParams(): URLSearchParams{
-        let search_params = new URLSearchParams()
-        // let value = this.deserialize() 
-        // value !== undefined && search_params.set(this.URIField, value)
-        return search_params
-    }
-
-    set URLSearchParams(search_params: URLSearchParams) {
-
-    }
-
-    setFromURI(uri: string) {
-        // const search_params = new URLSearchParams(uri)
-        // const field_name    = this.URIField
-        // const value         = search_params.has(field_name) ? search_params.get(field_name) : undefined
-        // this.serialize(value)
-    }
-
-    syncURL(applyFunc) {
-
+        const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
+        const order_by = []
+        for (const field of this.order_by.keys()) {
+            const value = this.order_by.get(field)
+            const _field = field.replace(/\./g, '__')
+            order_by.push(value === ASC ? `${_field}` : `-${_field}`)
+        }
+        if (order_by.length             ) searchParams.set('__order_by' , order_by.join())
+        if (this.limit !== undefined    ) searchParams.set('__limit'    , this.limit as any)
+        if (this.offset !== undefined   ) searchParams.set('__offset'   , this.offset as any)
+        if (this.relations?.length      ) searchParams.set('__relations', this.relations as any)
+        if (this.fields?.length         ) searchParams.set('__fields'   , this.fields as any)
+        if (this.omit?.length           ) searchParams.set('__omit'     , this.omit as any)
+        return searchParams
     }
 }

@@ -7,7 +7,7 @@ import { Model } from '../model'
 const DISPOSER_AUTOUPDATE = "__autoupdate"
 
 export class QueryX <M extends Model> {
-    @observable total         : number = 0
+    @observable total         : number
     @observable need_to_update: boolean = false // set to true when filters/order_by/page/page_size was changed and back to false after load
 
     get is_loading () { return this.__is_loading  }
@@ -52,7 +52,6 @@ export class QueryX <M extends Model> {
         const objs = await this.adapter.load(this.selector)
         runInAction(() => {
             this.__items = objs
-            this.total = objs.length
         })
         // we have to wait the next tick
         // mobx should finished recalculation (object relations, computed fields, etc.)
@@ -100,7 +99,7 @@ export class QueryX <M extends Model> {
             // on 
             if (value) {
                 this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
-                    () => this.need_to_update,
+                    () => this.need_to_update && this.selector.filter.isReady,
                     (need_to_update) => {
                         if (need_to_update) this.load()
                     },

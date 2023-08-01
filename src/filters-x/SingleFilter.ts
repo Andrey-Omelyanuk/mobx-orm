@@ -15,6 +15,10 @@ export abstract class XSingleFilter extends XFilter {
         makeObservable(this)
     }
 
+    get isReady(): boolean {
+        return this.value.isReady
+    }
+
     get URLSearchParams(): URLSearchParams{
         let search_params = new URLSearchParams()
         let value = this.value.deserialize(this.value) 

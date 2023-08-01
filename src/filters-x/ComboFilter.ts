@@ -9,6 +9,13 @@ export abstract class XComboFilter extends XFilter {
         this.filters = filters
     }
 
+    get isReady(): boolean {
+        for(let filter of this.filters) {
+            if (!filter.isReady) return false
+        }
+        return true
+    }
+
     get URLSearchParams(): URLSearchParams{
         let search_params = new URLSearchParams()
         for(let filter of this.filters) {
