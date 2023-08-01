@@ -36,7 +36,7 @@ export abstract class Value<T> {
     }
 }
 
-class StringValue extends Value<string|null|undefined> {
+export class StringValue extends Value<string|null|undefined> {
     serialize(value?: string): string|null|undefined {
         if (value === undefined) return undefined
         if (value === 'null')    return null
@@ -49,7 +49,7 @@ class StringValue extends Value<string|null|undefined> {
     }
 } 
 
-class NumberValue extends Value<number|null|undefined> {
+export class NumberValue extends Value<number|null|undefined> {
     serialize(value?: string): number|null|undefined {
         if (value === undefined) return undefined
         if (value === 'null')    return null
@@ -65,7 +65,7 @@ class NumberValue extends Value<number|null|undefined> {
     }
 }
 
-class BoolValue extends Value<boolean|null|undefined> {
+export class BoolValue extends Value<boolean|null|undefined> {
     serialize(value?: string): boolean|null|undefined {
         if (value === undefined) return undefined
         if (value === 'null')    return null
@@ -79,7 +79,7 @@ class BoolValue extends Value<boolean|null|undefined> {
     }
 }
 
-class DateTimeValue extends Value<Date|null|undefined> {
+export class DateTimeValue extends Value<Date|null|undefined> {
     serialize(value?: string): Date|null|undefined {
         if (value === undefined) return undefined
         if (value === 'null')    return null
@@ -93,7 +93,7 @@ class DateTimeValue extends Value<Date|null|undefined> {
     }
 }
 
-class DateValue extends Value<Date|null|undefined> {
+export class DateValue extends Value<Date|null|undefined> {
     serialize(value?: string): Date {
         if (value === undefined) return undefined
         if (value === 'null')    return null
@@ -107,7 +107,7 @@ class DateValue extends Value<Date|null|undefined> {
     }
 }
 
-class ArrayStringValue extends Value<string[]> {
+export class ArrayStringValue extends Value<string[]> {
     serialize(value?: string) : string[] {
         let result = [] 
         if (value !== undefined) {
@@ -135,7 +135,7 @@ class ArrayStringValue extends Value<string[]> {
     }
 }
 
-class ArrayNumberValue extends Value<number[]> {
+export class ArrayNumberValue extends Value<number[]> {
     serialize(value?: string) : number[] {
         let result = [] 
         if (value !== undefined) {
