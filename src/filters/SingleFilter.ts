@@ -9,17 +9,15 @@ export enum ValueType {
     STRING,
     NUMBER,
     BOOL,
-    // TODO: we need more tests for DATE and DATETIME
     DATETIME,
     DATE,
 }
 
-// TODO: use generic type
 export abstract class SingleFilter extends Filter {
     readonly    field       : string
     readonly    value_type  : ValueType 
     @observable value       : any // string|number|boolean|null|undefined|string[]|number[]
-                options    ?: Query<Model> // TODO: use generic type 
+                options    ?: Query<Model> 
 
     __disposers             : (()=>void)[] = []
 
@@ -83,14 +81,6 @@ export abstract class SingleFilter extends Filter {
         const value         = search_params.has(field_name) ? search_params.get(field_name) : undefined
         this.serialize(value)
     }
-
-    // TODO: move it to Filter class
-    // for debug the filter
-    // log() {
-    //     return autorun(() => {
-    //         console.log(`Filter ${this.field} is ${this.value}`)
-    //     })
-    // }
 
     abstract operator(value_a, value_b) : boolean
     abstract alias(alias_field) : SingleFilter

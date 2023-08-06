@@ -44,7 +44,6 @@ describe('LocalAdapter', () => {
         })
     })
 
-    // TODO
     it('__create', async ()=> {
         @model class C extends Model {}
         let adapter = new LocalAdapter(C)
@@ -101,10 +100,6 @@ describe('LocalAdapter', () => {
                 [a.id]: a.raw_obj, 
             })
         })
-
-        // TODO
-        // it('update does not exist object', async ()=> {
-        // })
     })
 
     describe('delete', () => {
@@ -123,7 +118,6 @@ describe('LocalAdapter', () => {
     })
 
     describe('load', () => {
-        // TODO: this test should be in adapter.spec.ts
         it('load', async ()=> {
             adapter.init_local_data(data_set)
             let objs = await adapter.load()
@@ -168,13 +162,5 @@ describe('LocalAdapter', () => {
             adapter.init_local_data(data_set_b)
             expect(local_store['A'][data_set_b[0].id]).toMatchObject(data_set_b[0])
         })
-
-        // TODO
-        // it('error: data has no id', async ()=> {
-        // })
-
-        // TODO
-        // it('error: data has duplication id', async ()=> {
-        // })
     })
 })

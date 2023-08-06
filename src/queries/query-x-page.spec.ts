@@ -227,12 +227,5 @@ describe('QueryPage', () => {
         expect(adapter_load).toHaveBeenCalledWith(query.selector)
         expect(query.items).toEqual([])
 
-        // TODO: check local adapter
-        // query.setPageSize(2)
-        // await query.load()
-        // expect(query.items).toEqual([
-        //     cache.get(obj_c.id),
-        //     cache.get(obj_d.id),
-        // ])
     })
 })

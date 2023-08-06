@@ -14,7 +14,6 @@ export class ILIKE_Filter extends SingleFilter {
 
     alias(alias_field: any): SingleFilter {
         const alias_filter = ILIKE(alias_field, this.value, this.value_type) 
-        // TODO: unsubscribe
         reaction(() => this.value, (value) => { alias_filter.set(value) }, { fireImmediately: true })
         return alias_filter
     }

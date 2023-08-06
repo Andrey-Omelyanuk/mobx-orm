@@ -35,7 +35,7 @@ describe('Field: foreign', () => {
                 @field      a_id: number
                 @foreign(A) a   : A 
             }
-            foreign(B)(A.prototype, 'b') // TODO: band-aid
+            foreign(B)(A.prototype, 'b') 
             expect(A.__relations['b'].settings.foreign_model).toBe(B)
             expect(A.__relations['b'].settings.foreign_id_name).toBe('b_id')
             expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()

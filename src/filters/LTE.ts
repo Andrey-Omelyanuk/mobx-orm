@@ -14,7 +14,6 @@ export class LTE_Filter extends SingleFilter {
 
     alias(alias_field: any): SingleFilter {
         const alias_filter = LTE(alias_field, this.value, this.value_type) 
-        // TODO: unsubscribe
         reaction(() => this.value, (value) => { alias_filter.value = value }, { fireImmediately: true })
         return alias_filter
     }

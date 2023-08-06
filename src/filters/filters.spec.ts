@@ -1,7 +1,6 @@
 import { runInAction } from 'mobx'
 import { EQ, EQV, IN, AND, ValueType } from '../'
 
-// TODO: move these tests
 
 describe('Filters', () => {
 

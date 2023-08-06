@@ -69,14 +69,12 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
 
     async __find(selector: Selector) : Promise<RawObject> {
         if (this.delay) await timeout(this.delay) 
-        // TODO: apply where, and throw error if no obj or multi objs
         let raw_obj = Object.values(local_store[this.store_name])[0]
         return raw_obj
     }
 
     async __get(obj_id: number) : Promise<RawObject> {
         if (this.delay) await timeout(this.delay) 
-        // TODO: apply where, and throw error if no obj or multi objs
         let raw_obj = Object.values(local_store[this.store_name])[0]
         return raw_obj
     }
@@ -126,9 +124,3 @@ export function local() {
         cls.__proto__.__adapter = adapter 
     }
 }
-
-// TODO: where example
-// let where = [
-//             ["field_a", "==", 10, "and", "field_b == 20"],
-//     "or",   ["field_a", "<=",  5, "and", "field_b", "contain", "test"]
-// ]

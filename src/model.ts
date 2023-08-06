@@ -162,7 +162,6 @@ export abstract class Model {
         }
     }
 
-    // TODO: add test
     @action('MO: obj - cancel local changes')
     cancelLocalChanges() {
         for (let field_name in this.model.__fields) {

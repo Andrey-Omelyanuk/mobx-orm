@@ -1,7 +1,5 @@
-///<reference path="../dist/mobx-orm.d.ts" />
 import { Model, model, local, field, foreign, one, many } from '../dist/mobx-orm'
 
-// TODO: update the tests
 
 describe('Other tests: Passports.', () => {
 
@@ -99,7 +97,6 @@ describe('Other tests: Passports.', () => {
         }
     }
 
-    // TODO: finish it
     it('...', async ()=> {
         let userA = new User({user_name: 'A'}); await userA.save()
         let userB = new User({user_name: 'B'}); await userB.save()

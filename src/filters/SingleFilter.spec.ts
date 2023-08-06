@@ -12,7 +12,6 @@ describe('SingleFilter', () => {
 
         alias(alias_field: any): SingleFilter {
             const alias_filter =  new FilterClass(alias_field, this.value, this.value_type) 
-            // TODO: unsubscribe
             reaction(() => this.value, (value) => { alias_filter.value = value }, { fireImmediately: true })
             return alias_filter
         }
@@ -60,14 +59,12 @@ describe('SingleFilter', () => {
             it('A = null'       , ()=>{ expect(F('A',      null, ValueType.BOOL)).toMatchObject({field: 'A', value:      null, value_type: ValueType.BOOL})})
             it('A = true'       , ()=>{ expect(F('A',      true, ValueType.BOOL)).toMatchObject({field: 'A', value:      true, value_type: ValueType.BOOL})})
             it('A = false'      , ()=>{ expect(F('A',     false, ValueType.BOOL)).toMatchObject({field: 'A', value:     false, value_type: ValueType.BOOL})})
-            // TODO: it should be an error
             it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.BOOL)).toMatchObject({field: 'A', value:      '10', value_type: ValueType.BOOL})})
             it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.BOOL)).toMatchObject({field: 'A', value:       10 , value_type: ValueType.BOOL})})
         })
         describe('Type: Date', () => {
             it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.DATE)).toMatchObject({field: 'A', value: undefined, value_type: ValueType.DATE})})
             it('A = null'       , ()=>{ expect(F('A',      null, ValueType.DATE)).toMatchObject({field: 'A', value:      null, value_type: ValueType.DATE})})
-            // TODO: it should be an error
             it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.DATE)).toMatchObject({field: 'A', value:      '10', value_type: ValueType.DATE})})
             it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.DATE)).toMatchObject({field: 'A', value:       10 , value_type: ValueType.DATE})})
             it('A = true'       , ()=>{ expect(F('A',      true, ValueType.DATE)).toMatchObject({field: 'A', value:      true, value_type: ValueType.DATE})})

@@ -25,7 +25,6 @@ export class SelectorX {
         makeObservable(this)
     }
 
-    // TODO: should be able to setup 
     get URLSearchParams(): URLSearchParams{
         const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
         const order_by = []
