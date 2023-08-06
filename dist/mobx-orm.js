@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.5
+   * mobx-orm.js v1.2.6
    * Released under the MIT license.
    */
 
@@ -47,11 +47,9 @@
         ValueType[ValueType["STRING"] = 0] = "STRING";
         ValueType[ValueType["NUMBER"] = 1] = "NUMBER";
         ValueType[ValueType["BOOL"] = 2] = "BOOL";
-        // TODO: we need more tests for DATE and DATETIME
         ValueType[ValueType["DATETIME"] = 3] = "DATETIME";
         ValueType[ValueType["DATE"] = 4] = "DATE";
     })(exports.ValueType || (exports.ValueType = {}));
-    // TODO: use generic type
     class SingleFilter extends Filter {
         constructor(field, value, value_type, options) {
             super();
@@ -78,7 +76,7 @@
                 configurable: true,
                 writable: true,
                 value: void 0
-            }); // TODO: use generic type 
+            });
             Object.defineProperty(this, "__disposers", {
                 enumerable: true,
                 configurable: true,
@@ -130,7 +128,7 @@
             // it's always match if value of filter is undefined
             if (this.value === undefined)
                 return true;
-            return match(obj, this.field, this.value, this.operator);
+            return match$1(obj, this.field, this.value, this.operator);
         }
         // convert from string
         serialize(value) {
@@ -208,7 +206,7 @@
         __metadata("design:paramtypes", [String]),
         __metadata("design:returntype", void 0)
     ], SingleFilter.prototype, "setFromURI", null);
-    function match(obj, field_name, filter_value, operator) {
+    function match$1(obj, field_name, filter_value, operator) {
         let field_names = field_name.split('__');
         let current_field_name = field_names[0];
         let current_value = obj[current_field_name];
@@ -221,13 +219,13 @@
                 if (Array.isArray(current_value)) {
                     let result = false;
                     for (const item of current_value) {
-                        result = match(item, next_field_name, filter_value, operator);
+                        result = match$1(item, next_field_name, filter_value, operator);
                         if (result)
                             return result;
                     }
                 }
                 else {
-                    return match(current_value, next_field_name, filter_value, operator);
+                    return match$1(current_value, next_field_name, filter_value, operator);
                 }
             }
         }
@@ -268,7 +266,6 @@
         }
         alias(alias_field) {
             const alias_filter = EQ(alias_field, this.value, this.value_type);
-            // TODO: unsubscribe
             mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
             return alias_filter;
         }
@@ -295,7 +292,6 @@
         }
         alias(alias_field) {
             const alias_filter = NOT_EQ(alias_field, this.value, this.value_type);
-            // TODO: unsubscribe
             mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
             return alias_filter;
         }
@@ -313,7 +309,6 @@
         }
         alias(alias_field) {
             const alias_filter = GT(alias_field, this.value, this.value_type);
-            // TODO: unsubscribe
             mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
             return alias_filter;
         }
@@ -331,7 +326,6 @@
         }
         alias(alias_field) {
             const alias_filter = GTE(alias_field, this.value, this.value_type);
-            // TODO: unsubscribe
             mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
             return alias_filter;
         }
@@ -349,7 +343,6 @@
         }
         alias(alias_field) {
             const alias_filter = LT(alias_field, this.value, this.value_type);
-            // TODO: unsubscribe
             mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
             return alias_filter;
         }
@@ -367,7 +360,6 @@
         }
         alias(alias_field) {
             const alias_filter = LTE(alias_field, this.value, this.value_type);
-            // TODO: unsubscribe
             mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
             return alias_filter;
         }
@@ -385,7 +377,6 @@
         }
         alias(alias_field) {
             const alias_filter = IN(alias_field, this.value, this.value_type);
-            // TODO: unsubscribe
             mobx.reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
             return alias_filter;
         }
@@ -440,7 +431,6 @@
         }
         alias(alias_field) {
             const alias_filter = LIKE(alias_field, this.value, this.value_type);
-            // TODO: unsubscribe
             mobx.reaction(() => this.value, (value) => { alias_filter.set(value); }, { fireImmediately: true });
             return alias_filter;
         }
@@ -458,7 +448,6 @@
         }
         alias(alias_field) {
             const alias_filter = ILIKE(alias_field, this.value, this.value_type);
-            // TODO: unsubscribe
             mobx.reaction(() => this.value, (value) => { alias_filter.set(value); }, { fireImmediately: true });
             return alias_filter;
         }
@@ -741,6 +730,141 @@
         __metadata("design:returntype", Promise)
     ], QueryBase.prototype, "load", null);
 
+    class XFilter {
+    }
+
+    class Value {
+        constructor(value, options) {
+            Object.defineProperty(this, "value", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "isReady", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: false
+            });
+            Object.defineProperty(this, "options", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            }); // should be a Query
+            Object.defineProperty(this, "__disposers", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: []
+            });
+            this.value = value;
+            value !== undefined && (this.isReady = true);
+            this.options = options;
+            this.__disposers.push(mobx.reaction(() => { var _a; return (_a = this.options) === null || _a === void 0 ? void 0 : _a.need_to_update; }, (needToReset) => needToReset && mobx.runInAction(() => this.isReady = false)));
+            this.__disposers.push(mobx.reaction(() => this.value, () => mobx.runInAction(() => this.isReady = true)));
+            mobx.makeObservable(this);
+        }
+        destroy() {
+            this.__disposers.forEach(disposer => disposer());
+        }
+        toString() {
+            return this.deserialize(this.value);
+        }
+    }
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Object)
+    ], Value.prototype, "value", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], Value.prototype, "isReady", void 0);
+
+    class XSingleFilter extends XFilter {
+        constructor(field, value) {
+            super();
+            Object.defineProperty(this, "field", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "value", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "__disposers", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: []
+            });
+            this.field = field;
+            this.value = value;
+            mobx.makeObservable(this);
+        }
+        get isReady() {
+            return this.value.isReady;
+        }
+        get URLSearchParams() {
+            let search_params = new URLSearchParams();
+            let value = this.value.deserialize(this.value);
+            value !== undefined && search_params.set(this.URIField, value);
+            return search_params;
+        }
+        setFromURI(uri) {
+            const search_params = new URLSearchParams(uri);
+            const field_name = this.URIField;
+            const value = search_params.has(field_name) ? search_params.get(field_name) : undefined;
+            this.value.value = this.value.serialize(value);
+        }
+        isMatch(obj) {
+            // it's always match if value of filter is undefined
+            if (this.value === undefined)
+                return true;
+            return match(obj, this.field, this.value.value, this.operator);
+        }
+    }
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Value)
+    ], XSingleFilter.prototype, "value", void 0);
+    __decorate([
+        mobx.action('MO: Filter - set from URI'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [String]),
+        __metadata("design:returntype", void 0)
+    ], XSingleFilter.prototype, "setFromURI", null);
+    function match(obj, field_name, filter_value, operator) {
+        let field_names = field_name.split('__');
+        let current_field_name = field_names[0];
+        let current_value = obj[current_field_name];
+        if (field_names.length === 1)
+            return operator(current_value, filter_value);
+        else if (field_names.length > 1) {
+            let next_field_name = field_name.substring(field_names[0].length + 2);
+            // we have object relation
+            if (typeof current_value === 'object' && current_value !== null) {
+                if (Array.isArray(current_value)) {
+                    let result = false;
+                    for (const item of current_value) {
+                        result = match(item, next_field_name, filter_value, operator);
+                        if (result)
+                            return result;
+                    }
+                }
+                else {
+                    return match(current_value, next_field_name, filter_value, operator);
+                }
+            }
+        }
+        return false;
+    }
+
     const ASC = true;
     const DESC = false;
     class SelectorX {
@@ -797,25 +921,33 @@
             mobx.makeObservable(this);
         }
         get URLSearchParams() {
-            let search_params = new URLSearchParams();
-            // let value = this.deserialize() 
-            // value !== undefined && search_params.set(this.URIField, value)
-            return search_params;
-        }
-        set URLSearchParams(search_params) {
-        }
-        setFromURI(uri) {
-            // const search_params = new URLSearchParams(uri)
-            // const field_name    = this.URIField
-            // const value         = search_params.has(field_name) ? search_params.get(field_name) : undefined
-            // this.serialize(value)
-        }
-        syncURL(applyFunc) {
+            var _a, _b, _c, _d;
+            const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams();
+            const order_by = [];
+            if ((_a = this.order_by) === null || _a === void 0 ? void 0 : _a.size)
+                for (const field of this.order_by.keys()) {
+                    const value = this.order_by.get(field);
+                    const _field = field.replace(/\./g, '__');
+                    order_by.push(value === ASC ? `${_field}` : `-${_field}`);
+                }
+            if (order_by.length)
+                searchParams.set('__order_by', order_by.join());
+            if (this.limit !== undefined)
+                searchParams.set('__limit', this.limit);
+            if (this.offset !== undefined)
+                searchParams.set('__offset', this.offset);
+            if ((_b = this.relations) === null || _b === void 0 ? void 0 : _b.length)
+                searchParams.set('__relations', this.relations);
+            if ((_c = this.fields) === null || _c === void 0 ? void 0 : _c.length)
+                searchParams.set('__fields', this.fields);
+            if ((_d = this.omit) === null || _d === void 0 ? void 0 : _d.length)
+                searchParams.set('__omit', this.omit);
+            return searchParams;
         }
     }
     __decorate([
         mobx.observable,
-        __metadata("design:type", Filter)
+        __metadata("design:type", XFilter)
     ], SelectorX.prototype, "filter", void 0);
     __decorate([
         mobx.observable,
@@ -1064,7 +1196,7 @@
                 enumerable: true,
                 configurable: true,
                 writable: true,
-                value: 0
+                value: void 0
             });
             Object.defineProperty(this, "need_to_update", {
                 enumerable: true,
@@ -1156,7 +1288,6 @@
             const objs = await this.adapter.load(this.selector);
             mobx.runInAction(() => {
                 this.__items = objs;
-                this.total = objs.length;
             });
             // we have to wait the next tick
             // mobx should finished recalculation (object relations, computed fields, etc.)
@@ -1199,7 +1330,7 @@
             if (value !== this.autoupdate) {
                 // on 
                 if (value) {
-                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = mobx.reaction(() => this.need_to_update, (need_to_update) => {
+                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = mobx.reaction(() => this.need_to_update && this.selector.filter.isReady, (need_to_update) => {
                         if (need_to_update)
                             this.load();
                     }, { fireImmediately: true });
@@ -1427,10 +1558,12 @@
         }
         async __load() {
             const objs = await this.adapter.load(this.selector);
-            const total = await this.adapter.getTotalCount(this.selector.filter);
             mobx.runInAction(() => {
                 this.__items.push(...objs);
-                this.total = total;
+                // total is not make sense for infinity queries
+                // total = 1 show that last page is reached
+                if (objs.length < this.selector.limit)
+                    this.total = 1;
             });
             // we have to wait the next tick
             // mobx should finished recalculation for model-objects
@@ -1577,7 +1710,6 @@
                 this.__init_data[field_name] = this[field_name];
             }
         }
-        // TODO: add test
         cancelLocalChanges() {
             for (let field_name in this.model.__fields) {
                 if (this[field_name] !== this.__init_data[field_name]) {
@@ -2018,14 +2150,12 @@
         async __find(selector) {
             if (this.delay)
                 await timeout(this.delay);
-            // TODO: apply where, and throw error if no obj or multi objs
             let raw_obj = Object.values(local_store[this.store_name])[0];
             return raw_obj;
         }
         async __get(obj_id) {
             if (this.delay)
                 await timeout(this.delay);
-            // TODO: apply where, and throw error if no obj or multi objs
             let raw_obj = Object.values(local_store[this.store_name])[0];
             return raw_obj;
         }
@@ -2066,11 +2196,6 @@
             cls.__proto__.__adapter = adapter;
         };
     }
-    // TODO: where example
-    // let where = [
-    //             ["field_a", "==", 10, "and", "field_b == 20"],
-    //     "or",   ["field_a", "<=",  5, "and", "field_b", "contain", "test"]
-    // ]
 
     exports.AND = AND;
     exports.AND_Filter = AND_Filter;
@@ -2117,7 +2242,7 @@
     exports.local = local;
     exports.local_store = local_store;
     exports.many = many;
-    exports.match = match;
+    exports.match = match$1;
     exports.model = model;
     exports.one = one;
 

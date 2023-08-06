@@ -6,22 +6,26 @@ declare abstract class Filter {
     abstract isMatch(obj: any): boolean;
 }
 
+declare abstract class XFilter {
+    abstract get URLSearchParams(): URLSearchParams;
+    abstract setFromURI(uri: string): void;
+    abstract isMatch(obj: any): boolean;
+    abstract get isReady(): boolean;
+}
+
 declare const ASC = true;
 declare const DESC = false;
 declare type ORDER_BY = Map<string, boolean>;
 declare class SelectorX {
-    filter?: Filter;
+    filter?: XFilter;
     order_by?: ORDER_BY;
     offset?: number;
     limit?: number;
     relations?: Array<string>;
     fields?: Array<string>;
     omit?: Array<string>;
-    constructor(filter?: Filter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]);
+    constructor(filter?: XFilter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]);
     get URLSearchParams(): URLSearchParams;
-    set URLSearchParams(search_params: URLSearchParams);
-    setFromURI(uri: string): void;
-    syncURL(applyFunc: any): void;
 }
 
 declare abstract class QueryBase<M extends Model> {
