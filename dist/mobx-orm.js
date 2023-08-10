@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.6
+   * mobx-orm.js v1.2.7
    * Released under the MIT license.
    */
 
@@ -625,7 +625,9 @@
             if (value !== this.autoupdate) {
                 // off
                 if (!value) {
-                    this.__disposer_objects['__autoupdate']();
+                    if (this.__disposer_objects['__autoupdate']) {
+                        this.__disposer_objects['__autoupdate']();
+                    }
                     delete this.__disposer_objects['__autoupdate'];
                 }
                 // on 
