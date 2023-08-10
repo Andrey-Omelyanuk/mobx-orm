@@ -96,7 +96,9 @@ export abstract class QueryBase<M extends Model> {
         if (value !== this.autoupdate) {
             // off
             if (!value) {
-                this.__disposer_objects['__autoupdate']()
+                if (this.__disposer_objects['__autoupdate']) {
+                    this.__disposer_objects['__autoupdate']()
+                }
                 delete this.__disposer_objects['__autoupdate']
             }
             // on 
