@@ -1,7 +1,7 @@
 import { runInAction } from 'mobx'
 import { Model, RawObject, RawData } from '../model'
 import { Selector } from '../types'
-
+import { SelectorX } from '../selector'
 
 export abstract class  Adapter<M extends Model> {
 
@@ -10,8 +10,8 @@ export abstract class  Adapter<M extends Model> {
     abstract __delete(obj_id: number): Promise<void>
     abstract __action(obj_id: number, name: string, kwargs: Object) : Promise<any>
     abstract __get(obj_id: number): Promise<object>
-    abstract __find(props: Selector): Promise<object>
-    abstract __load(props: Selector): Promise<RawObject[]>
+    abstract __find(props: Selector | SelectorX): Promise<object>
+    abstract __load(props: Selector | SelectorX): Promise<RawObject[]>
     abstract getTotalCount(where?): Promise<number>
 
     readonly model: any
@@ -71,13 +71,13 @@ export abstract class  Adapter<M extends Model> {
     }
 
     /* Returns ONE object */
-    async find(selector: Selector): Promise<M> {
+    async find(selector: Selector | SelectorX): Promise<M> {
         let raw_obj = await this.__find(selector)
         return this.model.updateCache(raw_obj)
     }
 
     /* Returns MANY objects */
-    async load(selector?: Selector):Promise<M[]> {
+    async load(selector?: Selector | SelectorX):Promise<M[]> {
         let raw_objs = await this.__load(selector)
         let objs: M[] = []
         // it should be happend in one big action

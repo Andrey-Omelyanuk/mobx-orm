@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.7
+   * mobx-orm.js v1.2.8
    * Released under the MIT license.
    */
 
@@ -783,6 +783,145 @@
         mobx.observable,
         __metadata("design:type", Boolean)
     ], Value.prototype, "isReady", void 0);
+    class StringValue extends Value {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            if (value === null)
+                return null;
+            return value;
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value;
+        }
+    }
+    class NumberValue extends Value {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            if (value === null)
+                return null;
+            let result = parseInt(value);
+            if (isNaN(result))
+                result = undefined;
+            return result;
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return '' + value;
+        }
+    }
+    class BoolValue extends Value {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            return value === 'true' ? true : value === 'false' ? false : undefined;
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return !!value ? 'true' : 'false';
+        }
+    }
+    class DateTimeValue extends Value {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            return new Date(value);
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value instanceof Date ? value.toISOString() : "";
+        }
+    }
+    class DateValue extends Value {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            return new Date(value);
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value instanceof Date ? value.toISOString().split('T')[0] : "";
+        }
+    }
+    class ArrayStringValue extends Value {
+        serialize(value) {
+            let result = [];
+            if (value !== undefined) {
+                let converter = new StringValue();
+                for (const i of value.split(',')) {
+                    let tmp = converter.serialize(i);
+                    if (tmp !== undefined) {
+                        result.push(tmp);
+                    }
+                }
+            }
+            return result;
+        }
+        deserialize(value) {
+            let result = [];
+            for (const i of this.value) {
+                let converter = new StringValue();
+                let v = converter.deserialize(i);
+                if (v !== undefined) {
+                    result.push(v);
+                }
+            }
+            return result.length ? result.join(',') : undefined;
+        }
+    }
+    class ArrayNumberValue extends Value {
+        serialize(value) {
+            let result = [];
+            if (value !== undefined) {
+                let converter = new NumberValue();
+                for (const i of value.split(',')) {
+                    let tmp = converter.serialize(i);
+                    if (tmp !== undefined) {
+                        result.push(tmp);
+                    }
+                }
+            }
+            return result;
+        }
+        deserialize(value) {
+            let result = [];
+            for (const i of value) {
+                let converter = new NumberValue();
+                let v = converter.deserialize(i);
+                if (v !== undefined) {
+                    result.push(v);
+                }
+            }
+            return result.length ? result.join(',') : undefined;
+        }
+    }
 
     class XSingleFilter extends XFilter {
         constructor(field, value) {
@@ -866,6 +1005,174 @@
         }
         return false;
     }
+
+    class XComboFilter extends XFilter {
+        constructor(filters) {
+            super();
+            Object.defineProperty(this, "filters", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.filters = filters;
+        }
+        get isReady() {
+            for (let filter of this.filters) {
+                if (!filter.isReady)
+                    return false;
+            }
+            return true;
+        }
+        get URLSearchParams() {
+            let search_params = new URLSearchParams();
+            for (let filter of this.filters) {
+                filter.URLSearchParams.forEach((value, key) => search_params.set(key, value));
+            }
+            return search_params;
+        }
+        setFromURI(uri) {
+            for (let filter of this.filters) {
+                filter.setFromURI(uri);
+            }
+        }
+    }
+
+    class XEQ_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}`;
+        }
+        operator(value_a, value_b) {
+            return value_a === value_b;
+        }
+    }
+    // EQV is a verbose version of EQ
+    class XEQV_Filter extends XEQ_Filter {
+        get URIField() {
+            return `${this.field}__eq`;
+        }
+    }
+    function XEQ(field, value) {
+        return new XEQ_Filter(field, value);
+    }
+    function XEQV(field, value) {
+        return new XEQV_Filter(field, value);
+    }
+
+    class XNOT_EQ_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__not_eq`;
+        }
+        operator(value_a, value_b) {
+            return value_a !== value_b;
+        }
+    }
+    function XNOT_EQ(field, value) {
+        return new XNOT_EQ_Filter(field, value);
+    }
+
+    class XGT_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__gt`;
+        }
+        operator(value_a, value_b) {
+            return value_a > value_b;
+        }
+    }
+    function XGT(field, value) {
+        return new XGT_Filter(field, value);
+    }
+
+    class XGTE_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__gte`;
+        }
+        operator(value_a, value_b) {
+            return value_a >= value_b;
+        }
+    }
+    function XGTE(field, value) {
+        return new XGTE_Filter(field, value);
+    }
+
+    class XLT_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__lt`;
+        }
+        operator(value_a, value_b) {
+            return value_a < value_b;
+        }
+    }
+    function XLT(field, value) {
+        return new XLT_Filter(field, value);
+    }
+
+    class XLTE_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__lte`;
+        }
+        operator(value_a, value_b) {
+            return value_a <= value_b;
+        }
+    }
+    function XLTE(field, value) {
+        return new XLTE_Filter(field, value);
+    }
+
+    class XIN_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__in`;
+        }
+        operator(value_a, value_b) {
+            // it's always match if value of filter is empty []
+            if (value_b.length === 0)
+                return true;
+            for (let v of value_b) {
+                if (v === value_a)
+                    return true;
+            }
+            return false;
+        }
+    }
+    function XIN(field, value) {
+        return new XIN_Filter(field, value);
+    }
+
+    class XLIKE_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__contains`;
+        }
+        operator(current_value, filter_value) {
+            return current_value.includes(filter_value);
+        }
+    }
+    function XLIKE(field, value) {
+        return new XLIKE_Filter(field, value);
+    }
+
+    class XILIKE_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__icontains`;
+        }
+        operator(current_value, filter_value) {
+            return current_value.toLowerCase().includes(filter_value.toLowerCase());
+        }
+    }
+    function XILIKE(field, value) {
+        return new XILIKE_Filter(field, value);
+    }
+
+    class XAND_Filter extends XComboFilter {
+        isMatch(obj) {
+            for (let filter of this.filters) {
+                if (!filter.isMatch(obj)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    function XAND(...filters) { return new XAND_Filter(filters); }
 
     const ASC = true;
     const DESC = false;
@@ -2203,8 +2510,13 @@
     exports.AND_Filter = AND_Filter;
     exports.ASC = ASC;
     exports.Adapter = Adapter;
+    exports.ArrayNumberValue = ArrayNumberValue;
+    exports.ArrayStringValue = ArrayStringValue;
+    exports.BoolValue = BoolValue;
     exports.ComboFilter = ComboFilter;
     exports.DESC = DESC;
+    exports.DateTimeValue = DateTimeValue;
+    exports.DateValue = DateValue;
     exports.EQ = EQ;
     exports.EQV = EQV;
     exports.EQV_Filter = EQV_Filter;
@@ -2228,6 +2540,7 @@
     exports.Model = Model;
     exports.NOT_EQ = NOT_EQ;
     exports.NOT_EQ_Filter = NOT_EQ_Filter;
+    exports.NumberValue = NumberValue;
     exports.Query = Query;
     exports.QueryBase = QueryBase;
     exports.QueryPage = QueryPage;
@@ -2238,6 +2551,33 @@
     exports.ReadOnlyModel = ReadOnlyModel;
     exports.SelectorX = SelectorX;
     exports.SingleFilter = SingleFilter;
+    exports.StringValue = StringValue;
+    exports.Value = Value;
+    exports.XAND = XAND;
+    exports.XAND_Filter = XAND_Filter;
+    exports.XComboFilter = XComboFilter;
+    exports.XEQ = XEQ;
+    exports.XEQV = XEQV;
+    exports.XEQV_Filter = XEQV_Filter;
+    exports.XEQ_Filter = XEQ_Filter;
+    exports.XFilter = XFilter;
+    exports.XGT = XGT;
+    exports.XGTE = XGTE;
+    exports.XGTE_Filter = XGTE_Filter;
+    exports.XGT_Filter = XGT_Filter;
+    exports.XILIKE = XILIKE;
+    exports.XILIKE_Filter = XILIKE_Filter;
+    exports.XIN = XIN;
+    exports.XIN_Filter = XIN_Filter;
+    exports.XLIKE = XLIKE;
+    exports.XLIKE_Filter = XLIKE_Filter;
+    exports.XLT = XLT;
+    exports.XLTE = XLTE;
+    exports.XLTE_Filter = XLTE_Filter;
+    exports.XLT_Filter = XLT_Filter;
+    exports.XNOT_EQ = XNOT_EQ;
+    exports.XNOT_EQ_Filter = XNOT_EQ_Filter;
+    exports.XSingleFilter = XSingleFilter;
     exports.field = field;
     exports.field_field = field_field;
     exports.foreign = foreign;
@@ -2247,6 +2587,8 @@
     exports.match = match$1;
     exports.model = model;
     exports.one = one;
+    exports.waitIsFalse = waitIsFalse;
+    exports.waitIsTrue = waitIsTrue;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

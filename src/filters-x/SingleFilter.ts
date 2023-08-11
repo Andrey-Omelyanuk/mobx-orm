@@ -48,7 +48,7 @@ export abstract class XSingleFilter extends XFilter {
 }
 
 
-export function match(obj: any, field_name: string, filter_value: any, operator: (value_a, value_b) => boolean): boolean {
+function match(obj: any, field_name: string, filter_value: any, operator: (value_a, value_b) => boolean): boolean {
     let field_names = field_name.split('__')
     let current_field_name = field_names[0]
     let current_value = obj[current_field_name]
