@@ -1,6 +1,6 @@
 import { SelectorX as Selector, ASC, DESC } from './selector'
 import { XAND as AND, XEQ as EQ } from './filters-x'
-import { NumberValue, StringValue } from './value'
+import { NumberValue, StringValue } from './values'
 
 
 describe('Selector', () => {

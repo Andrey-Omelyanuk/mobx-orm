@@ -32,7 +32,7 @@ export abstract class XSingleFilter extends XFilter {
         const search_params = new URLSearchParams(uri)
         const field_name    = this.URIField
         const value         = search_params.has(field_name) ? search_params.get(field_name) : undefined
-        this.value.value    = this.value.serialize(value)
+        this.value.set(this.value.serialize(value))
     }
 
     abstract operator(value_a, value_b) : boolean
