@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.8
+   * mobx-orm.js v1.2.9
    * Released under the MIT license.
    */
 
@@ -743,7 +743,7 @@ class Value {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: false
+            value: void 0
         });
         Object.defineProperty(this, "options", {
             enumerable: true,
@@ -758,11 +758,22 @@ class Value {
             value: []
         });
         this.value = value;
-        value !== undefined && (this.isReady = true);
+        this.isReady = !(options === null || options === void 0 ? void 0 : options.need_to_update);
         this.options = options;
-        this.__disposers.push(reaction(() => { var _a; return (_a = this.options) === null || _a === void 0 ? void 0 : _a.need_to_update; }, (needToReset) => needToReset && runInAction(() => this.isReady = false)));
-        this.__disposers.push(reaction(() => this.value, () => runInAction(() => this.isReady = true)));
         makeObservable(this);
+        if (this.options) {
+            this.__disposers.push(reaction(() => this.options.need_to_update, (needToReset) => {
+                if (needToReset) {
+                    this.isReady = false;
+                }
+            }));
+        }
+    }
+    set(value) {
+        this.value = value;
+        if (!this.options.need_to_update) {
+            this.isReady = true;
+        }
     }
     destroy() {
         this.__disposers.forEach(disposer => disposer());
@@ -779,6 +790,13 @@ __decorate([
     observable,
     __metadata("design:type", Boolean)
 ], Value.prototype, "isReady", void 0);
+__decorate([
+    action,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], Value.prototype, "set", null);
+
 class StringValue extends Value {
     serialize(value) {
         if (value === undefined)
@@ -797,6 +815,7 @@ class StringValue extends Value {
         return value;
     }
 }
+
 class NumberValue extends Value {
     serialize(value) {
         if (value === undefined)
@@ -818,7 +837,8 @@ class NumberValue extends Value {
         return '' + value;
     }
 }
-class BoolValue extends Value {
+
+class BooleanValue extends Value {
     serialize(value) {
         if (value === undefined)
             return undefined;
@@ -834,22 +854,7 @@ class BoolValue extends Value {
         return !!value ? 'true' : 'false';
     }
 }
-class DateTimeValue extends Value {
-    serialize(value) {
-        if (value === undefined)
-            return undefined;
-        if (value === 'null')
-            return null;
-        return new Date(value);
-    }
-    deserialize(value) {
-        if (value === undefined)
-            return undefined;
-        if (value === null)
-            return 'null';
-        return value instanceof Date ? value.toISOString() : "";
-    }
-}
+
 class DateValue extends Value {
     serialize(value) {
         if (value === undefined)
@@ -866,6 +871,24 @@ class DateValue extends Value {
         return value instanceof Date ? value.toISOString().split('T')[0] : "";
     }
 }
+
+class DateTimeValue extends Value {
+    serialize(value) {
+        if (value === undefined)
+            return undefined;
+        if (value === 'null')
+            return null;
+        return new Date(value);
+    }
+    deserialize(value) {
+        if (value === undefined)
+            return undefined;
+        if (value === null)
+            return 'null';
+        return value instanceof Date ? value.toISOString() : "";
+    }
+}
+
 class ArrayStringValue extends Value {
     serialize(value) {
         let result = [];
@@ -892,6 +915,7 @@ class ArrayStringValue extends Value {
         return result.length ? result.join(',') : undefined;
     }
 }
+
 class ArrayNumberValue extends Value {
     serialize(value) {
         let result = [];
@@ -957,7 +981,7 @@ class XSingleFilter extends XFilter {
         const search_params = new URLSearchParams(uri);
         const field_name = this.URIField;
         const value = search_params.has(field_name) ? search_params.get(field_name) : undefined;
-        this.value.value = this.value.serialize(value);
+        this.value.set(this.value.serialize(value));
     }
     isMatch(obj) {
         // it's always match if value of filter is undefined
@@ -1759,7 +1783,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], QueryXPage.prototype, "goToLastPage", null);
 
-class QueryXSync extends QueryX {
+class QueryXCacheSync extends QueryX {
     constructor(adapter, base_cache, selector) {
         super(adapter, selector);
         // watch the cache for changes, and update items if needed
@@ -1845,9 +1869,9 @@ __decorate([
     computed,
     __metadata("design:type", Object),
     __metadata("design:paramtypes", [])
-], QueryXSync.prototype, "items", null);
+], QueryXCacheSync.prototype, "items", null);
 
-class QueryXInfinity extends QueryX {
+class QueryXStream extends QueryX {
     // you can reset all and start from beginning
     goToFirstPage() { this.__items = []; this.selector.offset = 0; }
     // you can scroll only forward
@@ -1880,13 +1904,13 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], QueryXInfinity.prototype, "goToFirstPage", null);
+], QueryXStream.prototype, "goToFirstPage", null);
 __decorate([
     action('MO: next page'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], QueryXInfinity.prototype, "goToNextPage", null);
+], QueryXStream.prototype, "goToNextPage", null);
 
 class Model {
     constructor(...args) {
@@ -1928,6 +1952,18 @@ class Model {
     static eject(obj) {
         if (this.__cache.has(obj.id))
             this.__cache.delete(obj.id);
+    }
+    static getQueryX(selector) {
+        return new QueryX(this.__adapter, selector);
+    }
+    static getQueryXPage(selector) {
+        return new QueryXPage(this.__adapter, selector);
+    }
+    static getQueryXCacheSync(selector) {
+        return new QueryXCacheSync(this.__adapter, this.__cache, selector);
+    }
+    static getQueryXStream(selector) {
+        return new QueryXStream(this.__adapter, selector);
     }
     static getQuery(selector) {
         return new Query(this.__adapter, this.__cache, selector);
@@ -2502,5 +2538,5 @@ function local() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BoolValue, ComboFilter, DESC, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, Query, QueryBase, QueryPage, QueryX, QueryXInfinity, QueryXPage, QueryXSync, ReadOnlyModel, SelectorX, SingleFilter, StringValue, Value, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BooleanValue, ComboFilter, DESC, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringValue, Value, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

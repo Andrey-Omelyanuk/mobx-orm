@@ -1,4 +1,4 @@
-import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
+import { action, makeObservable, observable, reaction } from 'mobx'
 import { Model, Query } from '..'
 
 export abstract class Value<T> {

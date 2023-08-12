@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.8
+   * mobx-orm.js v1.2.9
    * Released under the MIT license.
    */
 
@@ -747,7 +747,7 @@
                 enumerable: true,
                 configurable: true,
                 writable: true,
-                value: false
+                value: void 0
             });
             Object.defineProperty(this, "options", {
                 enumerable: true,
@@ -762,11 +762,22 @@
                 value: []
             });
             this.value = value;
-            value !== undefined && (this.isReady = true);
+            this.isReady = !(options === null || options === void 0 ? void 0 : options.need_to_update);
             this.options = options;
-            this.__disposers.push(mobx.reaction(() => { var _a; return (_a = this.options) === null || _a === void 0 ? void 0 : _a.need_to_update; }, (needToReset) => needToReset && mobx.runInAction(() => this.isReady = false)));
-            this.__disposers.push(mobx.reaction(() => this.value, () => mobx.runInAction(() => this.isReady = true)));
             mobx.makeObservable(this);
+            if (this.options) {
+                this.__disposers.push(mobx.reaction(() => this.options.need_to_update, (needToReset) => {
+                    if (needToReset) {
+                        this.isReady = false;
+                    }
+                }));
+            }
+        }
+        set(value) {
+            this.value = value;
+            if (!this.options.need_to_update) {
+                this.isReady = true;
+            }
         }
         destroy() {
             this.__disposers.forEach(disposer => disposer());
@@ -783,6 +794,13 @@
         mobx.observable,
         __metadata("design:type", Boolean)
     ], Value.prototype, "isReady", void 0);
+    __decorate([
+        mobx.action,
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object]),
+        __metadata("design:returntype", void 0)
+    ], Value.prototype, "set", null);
+
     class StringValue extends Value {
         serialize(value) {
             if (value === undefined)
@@ -801,6 +819,7 @@
             return value;
         }
     }
+
     class NumberValue extends Value {
         serialize(value) {
             if (value === undefined)
@@ -822,7 +841,8 @@
             return '' + value;
         }
     }
-    class BoolValue extends Value {
+
+    class BooleanValue extends Value {
         serialize(value) {
             if (value === undefined)
                 return undefined;
@@ -838,22 +858,7 @@
             return !!value ? 'true' : 'false';
         }
     }
-    class DateTimeValue extends Value {
-        serialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === 'null')
-                return null;
-            return new Date(value);
-        }
-        deserialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === null)
-                return 'null';
-            return value instanceof Date ? value.toISOString() : "";
-        }
-    }
+
     class DateValue extends Value {
         serialize(value) {
             if (value === undefined)
@@ -870,6 +875,24 @@
             return value instanceof Date ? value.toISOString().split('T')[0] : "";
         }
     }
+
+    class DateTimeValue extends Value {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            return new Date(value);
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value instanceof Date ? value.toISOString() : "";
+        }
+    }
+
     class ArrayStringValue extends Value {
         serialize(value) {
             let result = [];
@@ -896,6 +919,7 @@
             return result.length ? result.join(',') : undefined;
         }
     }
+
     class ArrayNumberValue extends Value {
         serialize(value) {
             let result = [];
@@ -961,7 +985,7 @@
             const search_params = new URLSearchParams(uri);
             const field_name = this.URIField;
             const value = search_params.has(field_name) ? search_params.get(field_name) : undefined;
-            this.value.value = this.value.serialize(value);
+            this.value.set(this.value.serialize(value));
         }
         isMatch(obj) {
             // it's always match if value of filter is undefined
@@ -1763,7 +1787,7 @@
         __metadata("design:returntype", void 0)
     ], QueryXPage.prototype, "goToLastPage", null);
 
-    class QueryXSync extends QueryX {
+    class QueryXCacheSync extends QueryX {
         constructor(adapter, base_cache, selector) {
             super(adapter, selector);
             // watch the cache for changes, and update items if needed
@@ -1849,9 +1873,9 @@
         mobx.computed,
         __metadata("design:type", Object),
         __metadata("design:paramtypes", [])
-    ], QueryXSync.prototype, "items", null);
+    ], QueryXCacheSync.prototype, "items", null);
 
-    class QueryXInfinity extends QueryX {
+    class QueryXStream extends QueryX {
         // you can reset all and start from beginning
         goToFirstPage() { this.__items = []; this.selector.offset = 0; }
         // you can scroll only forward
@@ -1884,13 +1908,13 @@
         __metadata("design:type", Function),
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", void 0)
-    ], QueryXInfinity.prototype, "goToFirstPage", null);
+    ], QueryXStream.prototype, "goToFirstPage", null);
     __decorate([
         mobx.action('MO: next page'),
         __metadata("design:type", Function),
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", void 0)
-    ], QueryXInfinity.prototype, "goToNextPage", null);
+    ], QueryXStream.prototype, "goToNextPage", null);
 
     class Model {
         constructor(...args) {
@@ -1932,6 +1956,18 @@
         static eject(obj) {
             if (this.__cache.has(obj.id))
                 this.__cache.delete(obj.id);
+        }
+        static getQueryX(selector) {
+            return new QueryX(this.__adapter, selector);
+        }
+        static getQueryXPage(selector) {
+            return new QueryXPage(this.__adapter, selector);
+        }
+        static getQueryXCacheSync(selector) {
+            return new QueryXCacheSync(this.__adapter, this.__cache, selector);
+        }
+        static getQueryXStream(selector) {
+            return new QueryXStream(this.__adapter, selector);
         }
         static getQuery(selector) {
             return new Query(this.__adapter, this.__cache, selector);
@@ -2512,7 +2548,7 @@
     exports.Adapter = Adapter;
     exports.ArrayNumberValue = ArrayNumberValue;
     exports.ArrayStringValue = ArrayStringValue;
-    exports.BoolValue = BoolValue;
+    exports.BooleanValue = BooleanValue;
     exports.ComboFilter = ComboFilter;
     exports.DESC = DESC;
     exports.DateTimeValue = DateTimeValue;
@@ -2545,9 +2581,9 @@
     exports.QueryBase = QueryBase;
     exports.QueryPage = QueryPage;
     exports.QueryX = QueryX;
-    exports.QueryXInfinity = QueryXInfinity;
+    exports.QueryXCacheSync = QueryXCacheSync;
     exports.QueryXPage = QueryXPage;
-    exports.QueryXSync = QueryXSync;
+    exports.QueryXStream = QueryXStream;
     exports.ReadOnlyModel = ReadOnlyModel;
     exports.SelectorX = SelectorX;
     exports.SingleFilter = SingleFilter;
