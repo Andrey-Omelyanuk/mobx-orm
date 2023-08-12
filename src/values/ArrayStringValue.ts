@@ -1,0 +1,30 @@
+import { Value } from './Value'
+import { StringValue } from './StringValue'
+
+export class ArrayStringValue extends Value<string[]> {
+    serialize(value?: string) : string[] {
+        let result = [] 
+        if (value !== undefined) {
+            let converter = new StringValue()
+            for (const i of value.split(',')) {
+                let tmp = converter.serialize(i)
+                if (tmp !== undefined) {
+                    result.push(tmp)
+                }
+            }
+        }
+        return result
+    }
+
+    deserialize(value: string[]) : string {
+        let result = [] 
+        for (const i of this.value) {
+            let converter = new StringValue()
+            let v = converter.deserialize(i) 
+            if (v !== undefined) {
+                result.push(v)
+            }
+        }
+        return result.length ? result.join(',') : undefined
+    }
+}

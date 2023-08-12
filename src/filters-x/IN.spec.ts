@@ -1,6 +1,5 @@
-import { NumberValue } from '../value'
+import { NumberValue } from '../values'
 import { XIN as IN } from './IN'
-
 
 describe('IN', () => {
     const filter = IN('field', new NumberValue(1))

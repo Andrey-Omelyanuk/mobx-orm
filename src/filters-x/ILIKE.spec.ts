@@ -1,6 +1,5 @@
-import { NumberValue } from '../value'
+import { NumberValue } from '../values'
 import { XILIKE as ILIKE } from './ILIKE'
-
 
 describe('ILIKE', () => {
     const filter = ILIKE('field', new NumberValue(1))

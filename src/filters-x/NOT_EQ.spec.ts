@@ -1,6 +1,5 @@
-import { NumberValue } from '../value'
+import { NumberValue } from '../values'
 import { XNOT_EQ as NOT_EQ } from './NOT_EQ'
-
 
 describe('NOT_EQ', () => {
     const filter = NOT_EQ('field', new NumberValue(1))

@@ -1,6 +1,5 @@
-import { NumberValue } from '../value'
+import { NumberValue } from '../values'
 import { XLTE as LTE } from './LTE'
-
 
 describe('LTE', () => {
     const filter = LTE('field', new NumberValue(1))

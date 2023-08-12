@@ -1,6 +1,5 @@
+import { Value } from '../values'
 import { XSingleFilter } from "./SingleFilter"
-import { Value } from "../value"
-
 
 export class XGT_Filter extends XSingleFilter {
 

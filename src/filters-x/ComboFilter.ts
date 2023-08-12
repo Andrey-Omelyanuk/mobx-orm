@@ -4,10 +4,12 @@ import { XFilter } from "./Filter"
 export abstract class XComboFilter extends XFilter {
     readonly filters: XFilter[]
 
-    constructor(filters?: XFilter[]) {
+    constructor(filters: XFilter[]) {
         super()
         this.filters = filters
     }
+
+    abstract isMatch(obj: any) : boolean
 
     get isReady(): boolean {
         for(let filter of this.filters) {

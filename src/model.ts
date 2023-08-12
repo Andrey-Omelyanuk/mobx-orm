@@ -1,7 +1,8 @@
 import { action, intercept, makeObservable, observable, observe } from 'mobx'
 import { Adapter } from './adapters'
-import { Query, QueryPage } from './queries'
+import { Query, QueryPage, QueryX, QueryXPage, QueryXStream, QueryXCacheSync } from './queries'
 import { Selector } from './types'
+import { SelectorX } from './selector'
 
 
 export type RawObject = any 
@@ -48,6 +49,22 @@ export abstract class Model {
     static eject(obj: Model) {
         if (this.__cache.has(obj.id)) 
             this.__cache.delete(obj.id)
+    }
+
+    static getQueryX(selector?: SelectorX): QueryX<Model>  {
+        return new QueryX<Model>(this.__adapter, selector)
+    }
+
+    static getQueryXPage(selector?: SelectorX): QueryXPage<Model>  {
+        return new QueryXPage<Model>(this.__adapter, selector)
+    }
+
+    static getQueryXCacheSync(selector?: SelectorX): QueryXCacheSync<Model>  {
+        return new QueryXCacheSync<Model>(this.__adapter, this.__cache, selector)
+    }
+
+    static getQueryXStream(selector?: SelectorX): QueryXStream<Model>  {
+        return new QueryXStream<Model>(this.__adapter, selector)
     }
 
     static getQuery(selector?: Selector): Query<Model>  {

@@ -1,7 +1,6 @@
 import { XComboFilter } from "./ComboFilter"
 import { XFilter } from "./Filter"
 
-
 export class XAND_Filter extends XComboFilter {
 
     isMatch(obj: any) : boolean {

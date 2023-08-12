@@ -1,6 +1,5 @@
-import { NumberValue } from '../value'
+import { NumberValue } from '../values'
 import { XEQ as EQ, XEQV as EQV } from './EQ'
-
 
 describe('EQ', () => {
     const filter = EQ('field', new NumberValue(1))

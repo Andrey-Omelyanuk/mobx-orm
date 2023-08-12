@@ -1,6 +1,5 @@
-import { NumberValue } from '../value'
+import { NumberValue } from '../values'
 import { XGTE as GTE } from './GTE'
-
 
 describe('GTE', () => {
     const filter = GTE('field', new NumberValue(1))

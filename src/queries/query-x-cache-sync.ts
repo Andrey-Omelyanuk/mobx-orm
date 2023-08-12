@@ -5,7 +5,7 @@ import { Model } from '../model'
 import { SelectorX as Selector, ASC } from '../selector' 
 
 
-export class QueryXSync <M extends Model> extends QueryX<M> {
+export class QueryXCacheSync <M extends Model> extends QueryX<M> {
 
     constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
         super(adapter, selector)

@@ -1,6 +1,5 @@
-import { NumberValue } from '../value'
+import { NumberValue } from '../values'
 import { XGT as GT } from './GT'
-
 
 describe('GT', () => {
     const filter = GT('field', new NumberValue(1))

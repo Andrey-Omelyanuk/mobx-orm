@@ -1,6 +1,5 @@
-import { Value } from "../value"
+import { Value } from '../values'
 import { XSingleFilter } from "./SingleFilter"
-
 
 export class XLIKE_Filter extends XSingleFilter {
 

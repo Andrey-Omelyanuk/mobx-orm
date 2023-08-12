@@ -1,6 +1,5 @@
-import { NumberValue } from '../value'
+import { NumberValue } from '../values'
 import { XLT as LT } from './LT'
-
 
 describe('LT', () => {
     const filter = LT('field', new NumberValue(1))

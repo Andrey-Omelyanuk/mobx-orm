@@ -1,6 +1,5 @@
-import { NumberValue } from '../value'
+import { NumberValue } from '../values'
 import { XLIKE as LIKE } from './LIKE'
-
 
 describe('LIKE', () => {
     const filter = LIKE('field', new NumberValue(1))
