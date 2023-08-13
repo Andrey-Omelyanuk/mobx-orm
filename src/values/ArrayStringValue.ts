@@ -4,7 +4,7 @@ import { StringValue } from './StringValue'
 export class ArrayStringValue extends Value<string[]> {
     serialize(value?: string) : string[] {
         let result = [] 
-        if (value !== undefined) {
+        if (value) {
             let converter = new StringValue()
             for (const i of value.split(',')) {
                 let tmp = converter.serialize(i)
@@ -18,11 +18,13 @@ export class ArrayStringValue extends Value<string[]> {
 
     deserialize(value: string[]) : string {
         let result = [] 
-        for (const i of this.value) {
-            let converter = new StringValue()
-            let v = converter.deserialize(i) 
-            if (v !== undefined) {
-                result.push(v)
+        if (value) {
+            for (const i of value) {
+                let converter = new StringValue()
+                let v = converter.deserialize(i) 
+                if (v !== undefined) {
+                    result.push(v)
+                }
             }
         }
         return result.length ? result.join(',') : undefined

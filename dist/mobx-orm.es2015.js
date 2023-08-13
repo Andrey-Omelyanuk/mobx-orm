@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.10
+   * mobx-orm.js v1.2.11
    * Released under the MIT license.
    */
 
@@ -892,7 +892,7 @@ class DateTimeValue extends Value {
 class ArrayStringValue extends Value {
     serialize(value) {
         let result = [];
-        if (value !== undefined) {
+        if (value) {
             let converter = new StringValue();
             for (const i of value.split(',')) {
                 let tmp = converter.serialize(i);
@@ -905,11 +905,13 @@ class ArrayStringValue extends Value {
     }
     deserialize(value) {
         let result = [];
-        for (const i of this.value) {
-            let converter = new StringValue();
-            let v = converter.deserialize(i);
-            if (v !== undefined) {
-                result.push(v);
+        if (value) {
+            for (const i of value) {
+                let converter = new StringValue();
+                let v = converter.deserialize(i);
+                if (v !== undefined) {
+                    result.push(v);
+                }
             }
         }
         return result.length ? result.join(',') : undefined;
@@ -919,7 +921,7 @@ class ArrayStringValue extends Value {
 class ArrayNumberValue extends Value {
     serialize(value) {
         let result = [];
-        if (value !== undefined) {
+        if (value) {
             let converter = new NumberValue();
             for (const i of value.split(',')) {
                 let tmp = converter.serialize(i);
@@ -932,11 +934,13 @@ class ArrayNumberValue extends Value {
     }
     deserialize(value) {
         let result = [];
-        for (const i of value) {
-            let converter = new NumberValue();
-            let v = converter.deserialize(i);
-            if (v !== undefined) {
-                result.push(v);
+        if (value) {
+            for (const i of value) {
+                let converter = new NumberValue();
+                let v = converter.deserialize(i);
+                if (v !== undefined) {
+                    result.push(v);
+                }
             }
         }
         return result.length ? result.join(',') : undefined;
