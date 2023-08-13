@@ -27,7 +27,7 @@ export abstract class Value<T> {
 
     @action set(value: T) {
         (this.value as any) = value
-        if (!this.options.need_to_update) {
+        if (this.options && !this.options.need_to_update) {
             this.isReady = true
         }
     }

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.12
+   * mobx-orm.js v1.2.13
    * Released under the MIT license.
    */
 
@@ -771,7 +771,7 @@ class Value {
     }
     set(value) {
         this.value = value;
-        if (!this.options.need_to_update) {
+        if (this.options && !this.options.need_to_update) {
             this.isReady = true;
         }
     }
