@@ -20,13 +20,14 @@ export abstract class XSingleFilter extends XFilter {
 
     get URLSearchParams(): URLSearchParams{
         let search_params = new URLSearchParams()
-        let value = this.value.deserialize(this.value) 
+        let value = this.value.deserialize(this.value.value) 
         value !== undefined && search_params.set(this.URIField, value)
         return search_params
     }
 
     abstract get URIField() : string
 
+    // DEPRECATED
     @action('MO: Filter - set from URI')
     setFromURI(uri: string) {
         const search_params = new URLSearchParams(uri)

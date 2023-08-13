@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.11
+   * mobx-orm.js v1.2.12
    * Released under the MIT license.
    */
 
@@ -981,10 +981,11 @@
         }
         get URLSearchParams() {
             let search_params = new URLSearchParams();
-            let value = this.value.deserialize(this.value);
+            let value = this.value.deserialize(this.value.value);
             value !== undefined && search_params.set(this.URIField, value);
             return search_params;
         }
+        // DEPRECATED
         setFromURI(uri) {
             const search_params = new URLSearchParams(uri);
             const field_name = this.URIField;
