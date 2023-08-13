@@ -459,10 +459,45 @@ declare abstract class Model {
     };
     static inject(obj: Model): void;
     static eject(obj: Model): void;
-    static getQueryX(selector?: SelectorX): QueryX<Model>;
-    static getQueryXPage(selector?: SelectorX): QueryXPage<Model>;
-    static getQueryXCacheSync(selector?: SelectorX): QueryXCacheSync<Model>;
-    static getQueryXStream(selector?: SelectorX): QueryXStream<Model>;
+    static getQueryX<T extends Model>(options?: {
+        filter?: XFilter;
+        order_by?: Map<string, boolean>;
+        offset?: number;
+        limit?: number;
+        relations?: Array<string>;
+        fields?: Array<string>;
+        omit?: Array<string>;
+        autoupdate?: boolean;
+    }): QueryX<T>;
+    static getQueryXPage<T extends Model>(options?: {
+        filter?: XFilter;
+        order_by?: Map<string, boolean>;
+        offset?: number;
+        limit?: number;
+        relations?: Array<string>;
+        fields?: Array<string>;
+        omit?: Array<string>;
+        autoupdate?: boolean;
+    }): QueryXPage<T>;
+    static getQueryXCacheSync<T extends Model>(options?: {
+        filter?: XFilter;
+        order_by?: Map<string, boolean>;
+        offset?: number;
+        limit?: number;
+        relations?: Array<string>;
+        fields?: Array<string>;
+        omit?: Array<string>;
+        autoupdate?: boolean;
+    }): QueryXCacheSync<T>;
+    static getQueryXStream<T extends Model>(options?: {
+        filter?: XFilter;
+        order_by?: Map<string, boolean>;
+        limit?: number;
+        relations?: Array<string>;
+        fields?: Array<string>;
+        omit?: Array<string>;
+        autoupdate?: boolean;
+    }): QueryXStream<T>;
     static getQuery(selector?: Selector): Query<Model>;
     static getQueryPage(selector?: Selector): QueryPage<Model>;
     static get(id: number): Model;

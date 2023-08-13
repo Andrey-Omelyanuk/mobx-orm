@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.9
+   * mobx-orm.js v1.2.10
    * Released under the MIT license.
    */
 
@@ -1957,17 +1957,41 @@
             if (this.__cache.has(obj.id))
                 this.__cache.delete(obj.id);
         }
-        static getQueryX(selector) {
-            return new QueryX(this.__adapter, selector);
+        // TODO: need to refactor
+        static getQueryX(options) {
+            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
+            const query = new QueryX(this.__adapter, selector);
+            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
+                mobx.runInAction(() => query.autoupdate = options.autoupdate);
+            }
+            return query;
         }
-        static getQueryXPage(selector) {
-            return new QueryXPage(this.__adapter, selector);
+        // TODO: need to refactor
+        static getQueryXPage(options) {
+            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
+            const query = new QueryXPage(this.__adapter, selector);
+            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
+                mobx.runInAction(() => query.autoupdate = options.autoupdate);
+            }
+            return query;
         }
-        static getQueryXCacheSync(selector) {
-            return new QueryXCacheSync(this.__adapter, this.__cache, selector);
+        // TODO: need to refactor
+        static getQueryXCacheSync(options) {
+            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
+            const query = new QueryXCacheSync(this.__adapter, this.__cache, selector);
+            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
+                mobx.runInAction(() => query.autoupdate = options.autoupdate);
+            }
+            return query;
         }
-        static getQueryXStream(selector) {
-            return new QueryXStream(this.__adapter, selector);
+        // TODO: need to refactor
+        static getQueryXStream(options) {
+            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, 0, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
+            const query = new QueryXStream(this.__adapter, selector);
+            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
+                mobx.runInAction(() => query.autoupdate = options.autoupdate);
+            }
+            return query;
         }
         static getQuery(selector) {
             return new Query(this.__adapter, this.__cache, selector);
