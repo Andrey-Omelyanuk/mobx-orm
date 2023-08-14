@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.13
+   * mobx-orm.js v1.2.14
    * Released under the MIT license.
    */
 
@@ -1608,6 +1608,14 @@ class QueryX {
     get is_loading() { return this.__is_loading; }
     get is_ready() { return this.__is_ready; }
     get error() { return this.__error; }
+    // backward compatibility, remove it in the future
+    get filters() { return this.selector.filter; }
+    get order_by() { return this.selector.order_by; }
+    get offset() { return this.selector.offset; }
+    get limit() { return this.selector.limit; }
+    get fields() { return this.selector.fields; }
+    get omit() { return this.selector.omit; }
+    get relations() { return this.selector.relations; }
     destroy() {
         while (this.__disposers.length) {
             this.__disposers.pop()();

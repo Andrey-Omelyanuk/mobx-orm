@@ -239,6 +239,13 @@ declare class QueryX<M extends Model> {
         [field: string]: () => void;
     };
     constructor(adapter: Adapter<M>, selector?: SelectorX);
+    get filters(): XFilter;
+    get order_by(): ORDER_BY;
+    get offset(): number;
+    get limit(): number;
+    get fields(): string[];
+    get omit(): string[];
+    get relations(): string[];
     destroy(): void;
     get items(): M[];
     __load(): Promise<void>;
