@@ -16,7 +16,7 @@ export class SelectorX {
 
     constructor(filter?: XFilter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]) {
         this.filter    = filter
-        this.order_by  = order_by
+        this.order_by  = order_by ? order_by : new Map()
         this.offset    = offset
         this.limit     = limit
         this.relations = relations

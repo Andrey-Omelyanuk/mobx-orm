@@ -4,7 +4,7 @@ import { Adapter } from '../adapters'
 import { SelectorX as Selector } from '../selector'
 import { Model } from '../model'
 
-const DISPOSER_AUTOUPDATE = "__autoupdate"
+export const DISPOSER_AUTOUPDATE = "__autoupdate"
 
 export class QueryX <M extends Model> {
     @observable total         : number
@@ -13,6 +13,9 @@ export class QueryX <M extends Model> {
     get is_loading () { return this.__is_loading  }
     get is_ready   () { return this.__is_ready    }
     get error      () { return this.__error       }
+    // we going to migrate to JS style
+    get isLoading () { return this.__is_loading  }
+    get isReady   () { return this.__is_ready    }
     
     readonly selector: Selector
     readonly adapter: Adapter<M>
@@ -32,7 +35,7 @@ export class QueryX <M extends Model> {
         this.__disposers.push(reaction(
             () => this.selector.URLSearchParams.toString(),
             action('MO: Query Base - need to update', () => this.need_to_update = true ),
-            { fireImmediately: true, delay: 200 }
+            { fireImmediately: true }
         ))
     }
 
@@ -108,7 +111,7 @@ export class QueryX <M extends Model> {
             // on 
             if (value) {
                 this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
-                    () => this.need_to_update && this.selector.filter.isReady,
+                    () => this.need_to_update && (this.selector.filter === undefined || this.selector.filter.isReady),
                     (need_to_update) => {
                         if (need_to_update) this.load()
                     },
@@ -124,7 +127,7 @@ export class QueryX <M extends Model> {
     }
 
     // use it if you need use promise instead of observe is_ready
-    ready = async () => waitIsTrue('__is_ready')
+    ready = async () => waitIsTrue(this, '__is_ready')
     // use it if you need use promise instead of observe is_loading
-    loading = async () => waitIsFalse('__is_loading')
+    loading = async () => waitIsFalse(this, '__is_loading')
 }

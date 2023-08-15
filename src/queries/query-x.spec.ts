@@ -1,6 +1,6 @@
 import { reaction, runInAction } from 'mobx'
-import { model, SelectorX as Selector, Model, QueryX, Adapter, LocalAdapter, ORDER_BY, ASC, DESC, Filter, EQ } from '../'
-
+import { model, SelectorX as Selector, Model, LocalAdapter, ORDER_BY, ASC, DESC, XEQ, StringValue } from '../'
+import { QueryX, DISPOSER_AUTOUPDATE } from './query-x'
 
 describe('QueryX', () => {
 
@@ -24,6 +24,7 @@ describe('QueryX', () => {
             is_ready: false,
             error: '',
         })
+        expect(query.__disposers.length).toBe(1)
     })
     it('constructor: with selector', async ()=> {
         const selector = new Selector()
@@ -38,6 +39,7 @@ describe('QueryX', () => {
             is_ready: false,
             error: '',
         })
+        expect(query.__disposers.length).toBe(1)
     })
 
     it('destroy', async ()=> {
@@ -48,18 +50,48 @@ describe('QueryX', () => {
                                                                                         expect(Object.keys(query.__disposer_objects).length).toBe(0)
     })
 
-    // async __load() {
     it('load', (done) => {
-        const query = new QueryX<A>(adapter)
-        expect(query.is_loading).toBe(false)
-        query.load().finally(()=> {
-            expect(query.is_loading).toBe(false)
+        const query = new QueryX<A>(adapter);       expect(query.is_loading).toBe(false)
+        query.load().finally(()=> {                 expect(query.is_loading).toBe(false)
             done()
-        })
-        expect(query.is_loading).toBe(true)
+        });                                         expect(query.is_loading).toBe(true)
     })
-    // async shadowLoad() {
-    // get autoupdate() {
-    // set autoupdate(value: boolean) {
 
+    it('shadowLoad', (done) => {
+        const query = new QueryX<A>(adapter);       expect(query.is_loading).toBe(false)
+        query.shadowLoad().finally(()=> {           expect(query.is_loading).toBe(false)
+            done()
+        });                                         expect(query.is_loading).toBe(false)
+    })
+
+    it('autoupdate on/off', async () => {
+        const query = new QueryX<A>(adapter);       expect(query.autoupdate).toBe(false)
+                                                    expect(query.__disposer_objects[DISPOSER_AUTOUPDATE]).toBe(undefined)
+        query.autoupdate = true;                    expect(query.autoupdate).toBe(true)
+                                                    expect(query.__disposer_objects[DISPOSER_AUTOUPDATE]).not.toBe(undefined)                     
+        query.autoupdate = false;                   expect(query.autoupdate).toBe(false)
+                                                    expect(query.__disposer_objects[DISPOSER_AUTOUPDATE]).toBe(undefined)                     
+    })
+
+    it('autoupdate after updates', async () => {
+        const options = new QueryX<A>(adapter)
+        const value   = new StringValue('test', options)
+        const filter  = XEQ('name', value)
+        const query = new QueryX<A>(adapter, new Selector(filter))
+
+        query.autoupdate = true;    expect(query.filters.isReady).toBe(false)
+                                    expect(query.need_to_update).toBe(true)
+
+        await options.load();       expect(query.filters.isReady).toBe(false)
+                                    expect(query.need_to_update).toBe(true)
+
+        value.set('test');          expect(query.filters.isReady).toBe(true)
+                                    expect(query.need_to_update).toBe(true)
+
+        await query.ready();        expect(query.need_to_update).toBe(false)
+
+        runInAction(() => query.selector.order_by.set('name', DESC))
+
+                                    expect(query.need_to_update).toBe(true)
+    })
 })

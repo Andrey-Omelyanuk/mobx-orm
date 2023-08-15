@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.14
+   * mobx-orm.js v1.2.x
    * Released under the MIT license.
    */
 
@@ -1246,7 +1246,7 @@ class SelectorX {
             value: void 0
         });
         this.filter = filter;
-        this.order_by = order_by;
+        this.order_by = order_by ? order_by : new Map();
         this.offset = offset;
         this.limit = limit;
         this.relations = relations;
@@ -1502,20 +1502,20 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], QueryPage.prototype, "shadowLoad", null);
 
-function waitIsTrue(field_name) {
+function waitIsTrue(obj, field) {
     return new Promise((resolve, reject) => {
         autorun((reaction) => {
-            if (this[field_name]) {
+            if (obj[field]) {
                 reaction.dispose();
                 resolve(true);
             }
         });
     });
 }
-function waitIsFalse(field_name) {
+function waitIsFalse(obj, field) {
     return new Promise((resolve, reject) => {
         autorun((reaction) => {
-            if (!this[field_name]) {
+            if (!obj[field]) {
                 reaction.dispose();
                 resolve(true);
             }
@@ -1591,23 +1591,26 @@ class QueryX {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: async () => waitIsTrue('__is_ready')
+            value: async () => waitIsTrue(this, '__is_ready')
         });
         // use it if you need use promise instead of observe is_loading
         Object.defineProperty(this, "loading", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: async () => waitIsFalse('__is_loading')
+            value: async () => waitIsFalse(this, '__is_loading')
         });
         this.adapter = adapter;
         this.selector = selector ? selector : new SelectorX();
         makeObservable(this);
-        this.__disposers.push(reaction(() => this.selector.URLSearchParams.toString(), action('MO: Query Base - need to update', () => this.need_to_update = true), { fireImmediately: true, delay: 200 }));
+        this.__disposers.push(reaction(() => this.selector.URLSearchParams.toString(), action('MO: Query Base - need to update', () => this.need_to_update = true), { fireImmediately: true }));
     }
     get is_loading() { return this.__is_loading; }
     get is_ready() { return this.__is_ready; }
     get error() { return this.__error; }
+    // we going to migrate to JS style
+    get isLoading() { return this.__is_loading; }
+    get isReady() { return this.__is_ready; }
     // backward compatibility, remove it in the future
     get filters() { return this.selector.filter; }
     get order_by() { return this.selector.order_by; }
@@ -1672,7 +1675,7 @@ class QueryX {
         if (value !== this.autoupdate) {
             // on 
             if (value) {
-                this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(() => this.need_to_update && this.selector.filter.isReady, (need_to_update) => {
+                this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(() => this.need_to_update && (this.selector.filter === undefined || this.selector.filter.isReady), (need_to_update) => {
                     if (need_to_update)
                         this.load();
                 }, { fireImmediately: true });
@@ -1738,6 +1741,11 @@ class QueryXPage extends QueryX {
     get is_last_page() { return this.selector.offset + this.selector.limit >= this.total; }
     get current_page() { return this.selector.offset / this.selector.limit + 1; }
     get total_pages() { return this.total ? Math.ceil(this.total / this.selector.limit) : 1; }
+    // we going to migrate to JS style
+    get isFirstPage() { return this.selector.offset === 0; }
+    get isLastPage() { return this.selector.offset + this.selector.limit >= this.total; }
+    get currentPage() { return this.selector.offset / this.selector.limit + 1; }
+    get totalPages() { return this.total ? Math.ceil(this.total / this.selector.limit) : 1; }
     constructor(adapter, selector) {
         super(adapter, selector);
         runInAction(() => {
@@ -2575,5 +2583,5 @@ function local() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BooleanValue, ComboFilter, DESC, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringValue, Value, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BooleanValue, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringValue, Value, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

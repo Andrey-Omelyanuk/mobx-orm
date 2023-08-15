@@ -18,6 +18,11 @@ export class QueryXPage<M extends Model> extends QueryX<M> {
     get is_last_page () : boolean { return this.selector.offset + this.selector.limit >= this.total }
     get current_page()  : number  { return this.selector.offset / this.selector.limit + 1 }
     get total_pages()   : number  { return this.total ? Math.ceil(this.total / this.selector.limit) : 1 }
+    // we going to migrate to JS style
+    get isFirstPage() : boolean { return this.selector.offset === 0 }
+    get isLastPage () : boolean { return this.selector.offset + this.selector.limit >= this.total }
+    get currentPage() : number  { return this.selector.offset / this.selector.limit + 1 }
+    get totalPages()  : number  { return this.total ? Math.ceil(this.total / this.selector.limit) : 1 }
 
     constructor(adapter: Adapter<M>, selector?: Selector) {
         super(adapter, selector)

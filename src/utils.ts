@@ -1,9 +1,9 @@
 import { autorun } from "mobx"
 
-export function waitIsTrue(field_name: string) : Promise<Boolean> {
+export function waitIsTrue(obj: any, field: string) : Promise<Boolean> {
     return new Promise((resolve, reject) => { 
         autorun((reaction) => {
-            if (this[field_name]) {
+            if (obj[field]) {
                 reaction.dispose()
                 resolve(true) 
             }
@@ -11,10 +11,10 @@ export function waitIsTrue(field_name: string) : Promise<Boolean> {
     })
 }
 
-export function waitIsFalse(field_name: string) : Promise<Boolean> {
+export function waitIsFalse(obj: any, field: string) : Promise<Boolean> {
     return new Promise((resolve, reject) => { 
         autorun((reaction) => {
-            if (!this[field_name]) {
+            if (!obj[field]) {
                 reaction.dispose()
                 resolve(true) 
             }

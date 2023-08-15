@@ -222,12 +222,15 @@ declare class QueryPage<M extends Model> extends QueryBase<M> {
     shadowLoad(): Promise<void>;
 }
 
+declare const DISPOSER_AUTOUPDATE = "__autoupdate";
 declare class QueryX<M extends Model> {
     total: number;
     need_to_update: boolean;
     get is_loading(): boolean;
     get is_ready(): boolean;
     get error(): string;
+    get isLoading(): boolean;
+    get isReady(): boolean;
     readonly selector: SelectorX;
     readonly adapter: Adapter<M>;
     __items: M[];
@@ -268,6 +271,10 @@ declare class QueryXPage<M extends Model> extends QueryX<M> {
     get is_last_page(): boolean;
     get current_page(): number;
     get total_pages(): number;
+    get isFirstPage(): boolean;
+    get isLastPage(): boolean;
+    get currentPage(): number;
+    get totalPages(): number;
     constructor(adapter: Adapter<M>, selector?: SelectorX);
     __load(): Promise<void>;
 }
@@ -551,7 +558,7 @@ declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: 
 
 declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
 
-declare function waitIsTrue(field_name: string): Promise<Boolean>;
-declare function waitIsFalse(field_name: string): Promise<Boolean>;
+declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
+declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BooleanValue, ComboFilter, DESC, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, StringValue, Value, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BooleanValue, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, StringValue, Value, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };
