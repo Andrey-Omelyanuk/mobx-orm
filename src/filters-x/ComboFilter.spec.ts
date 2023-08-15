@@ -12,9 +12,9 @@ describe('ComboFilter', () => {
 
     it('isReady', () => {
         expect(new TestComboFilter([]).isReady).toBe(true)
-        const filter = new TestComboFilter([
-            EQ('test', new StringValue('test', new Query(TestModel.__adapter)))
-        ])
+        // const filter = new TestComboFilter([
+        //     EQ('test', new StringValue('test', new Query(TestModel.__adapter)))
+        // ])
         // expect(filter.isReady).toBe(false) 
     })
     it('URLSearchParams', () => {

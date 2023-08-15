@@ -58,14 +58,16 @@ declare class DateTimeValue extends Value<Date | null | undefined> {
     deserialize(value: Date | null | undefined): string;
 }
 
-declare class ArrayStringValue extends Value<string[]> {
-    constructor(args?: ValueConstructorArgs<string[]>);
+declare abstract class ArrayValue<T> extends Value<T> {
+    constructor(args?: ValueConstructorArgs<T>);
+}
+
+declare class ArrayStringValue extends ArrayValue<string[]> {
     serialize(value?: string): string[];
     deserialize(value: string[]): string;
 }
 
-declare class ArrayNumberValue extends Value<number[]> {
-    constructor(args?: ValueConstructorArgs<number[]>);
+declare class ArrayNumberValue extends ArrayValue<number[]> {
     serialize(value?: string): number[];
     deserialize(value: number[]): string;
 }

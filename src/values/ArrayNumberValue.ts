@@ -1,13 +1,7 @@
-import { Value, ValueConstructorArgs } from './Value'
+import { ArrayValue } from './ArrayValue'
 import { NumberValue } from './NumberValue'
 
-export class ArrayNumberValue extends Value<number[]> {
-
-    // TODO: multi-value base class
-    constructor(args?: ValueConstructorArgs<number[]>) {
-        if (args === undefined || args.value ) args = { ...args, value: []}
-        super(args)
-    }
+export class ArrayNumberValue extends ArrayValue<number[]> {
 
     serialize(value?: string) : number[] {
         let result = [] 

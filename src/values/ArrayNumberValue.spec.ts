@@ -2,6 +2,7 @@ import { ArrayNumberValue } from './ArrayNumberValue'
 
 describe('ArrayNumberValue', () => {
     let value = new ArrayNumberValue()
+
     describe('serialize', () => {
         it('"0"'      , async () => { expect(value.serialize('0'      )).toMatchObject([0,])})
         it('"0,1,2"'  , async () => { expect(value.serialize('0,1,2'  )).toMatchObject([0,1,2,])})

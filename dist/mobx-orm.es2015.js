@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.18
+   * mobx-orm.js v1.2.19
    * Released under the MIT license.
    */
 
@@ -918,13 +918,15 @@ class DateTimeValue extends Value {
     }
 }
 
-class ArrayStringValue extends Value {
-    // TODO: multi-value base class
+class ArrayValue extends Value {
     constructor(args) {
-        if (args === undefined || args.value)
+        if (args === undefined || args.value === undefined)
             args = Object.assign(Object.assign({}, args), { value: [] });
         super(args);
     }
+}
+
+class ArrayStringValue extends ArrayValue {
     serialize(value) {
         let result = [];
         if (value) {
@@ -953,13 +955,7 @@ class ArrayStringValue extends Value {
     }
 }
 
-class ArrayNumberValue extends Value {
-    // TODO: multi-value base class
-    constructor(args) {
-        if (args === undefined || args.value)
-            args = Object.assign(Object.assign({}, args), { value: [] });
-        super(args);
-    }
+class ArrayNumberValue extends ArrayValue {
     serialize(value) {
         let result = [];
         if (value) {
