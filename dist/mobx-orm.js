@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.17
+   * mobx-orm.js v1.2.18
    * Released under the MIT license.
    */
 
@@ -923,6 +923,12 @@
     }
 
     class ArrayStringValue extends Value {
+        // TODO: multi-value base class
+        constructor(args) {
+            if (args === undefined || args.value)
+                args = Object.assign(Object.assign({}, args), { value: [] });
+            super(args);
+        }
         serialize(value) {
             let result = [];
             if (value) {
@@ -952,6 +958,12 @@
     }
 
     class ArrayNumberValue extends Value {
+        // TODO: multi-value base class
+        constructor(args) {
+            if (args === undefined || args.value)
+                args = Object.assign(Object.assign({}, args), { value: [] });
+            super(args);
+        }
         serialize(value) {
             let result = [];
             if (value) {

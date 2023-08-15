@@ -1,7 +1,7 @@
 import { action, makeObservable, observable, reaction } from 'mobx'
 import { Model, Query } from '..'
 
-interface ValueConstructorArgs<T> {
+export interface ValueConstructorArgs<T> {
     value?: T,
     options?: any,
     syncURL?: string,

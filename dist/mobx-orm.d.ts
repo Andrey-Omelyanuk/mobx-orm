@@ -59,11 +59,13 @@ declare class DateTimeValue extends Value<Date | null | undefined> {
 }
 
 declare class ArrayStringValue extends Value<string[]> {
+    constructor(args?: ValueConstructorArgs<string[]>);
     serialize(value?: string): string[];
     deserialize(value: string[]): string;
 }
 
 declare class ArrayNumberValue extends Value<number[]> {
+    constructor(args?: ValueConstructorArgs<number[]>);
     serialize(value?: string): number[];
     deserialize(value: number[]): string;
 }
@@ -566,4 +568,4 @@ declare function many(remote_model: any, remote_foreign_id_name?: string): (cls:
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BooleanValue, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, StringValue, Value, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BooleanValue, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, StringValue, Value, ValueConstructorArgs, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };
