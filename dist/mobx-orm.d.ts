@@ -8,22 +8,29 @@ declare abstract class Filter {
 
 declare abstract class XFilter {
     abstract get URLSearchParams(): URLSearchParams;
-    abstract setFromURI(uri: string): void;
     abstract isMatch(obj: any): boolean;
     abstract get isReady(): boolean;
 }
 
+interface ValueConstructorArgs<T> {
+    value?: T;
+    options?: any;
+    syncURL?: string;
+    syncLocalStorage?: string;
+}
 declare abstract class Value<T> {
     readonly value: T;
     isReady: boolean;
     readonly options: Query<Model>;
+    readonly syncURL?: string;
     __disposers: any[];
-    constructor(value?: T, options?: any);
+    constructor(args?: ValueConstructorArgs<T>);
     set(value: T): void;
     destroy(): void;
     abstract serialize(value?: string): T;
     abstract deserialize(value: T): string;
     toString(): string;
+    __doSyncURL(): () => void;
 }
 
 declare class StringValue extends Value<string | null | undefined> {
@@ -69,7 +76,6 @@ declare abstract class XSingleFilter extends XFilter {
     get isReady(): boolean;
     get URLSearchParams(): URLSearchParams;
     abstract get URIField(): string;
-    setFromURI(uri: string): void;
     abstract operator(value_a: any, value_b: any): boolean;
     isMatch(obj: any): boolean;
 }
@@ -80,7 +86,6 @@ declare abstract class XComboFilter extends XFilter {
     abstract isMatch(obj: any): boolean;
     get isReady(): boolean;
     get URLSearchParams(): URLSearchParams;
-    setFromURI(uri: string): void;
 }
 
 declare class XEQ_Filter extends XSingleFilter {

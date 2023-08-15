@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.x
+   * mobx-orm.js v1.2.17
    * Released under the MIT license.
    */
 
@@ -732,7 +732,8 @@ class XFilter {
 }
 
 class Value {
-    constructor(value, options) {
+    constructor(args) {
+        var _a;
         Object.defineProperty(this, "value", {
             enumerable: true,
             configurable: true,
@@ -751,15 +752,22 @@ class Value {
             writable: true,
             value: void 0
         }); // should be a Query
+        Object.defineProperty(this, "syncURL", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "__disposers", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: []
         });
-        this.value = value;
-        this.isReady = !(options === null || options === void 0 ? void 0 : options.need_to_update);
-        this.options = options;
+        this.value = args === null || args === void 0 ? void 0 : args.value;
+        this.options = args === null || args === void 0 ? void 0 : args.options;
+        this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
+        this.isReady = !((_a = this.options) === null || _a === void 0 ? void 0 : _a.need_to_update);
         makeObservable(this);
         if (this.options) {
             this.__disposers.push(reaction(() => this.options.need_to_update, (needToReset) => {
@@ -768,6 +776,7 @@ class Value {
                 }
             }));
         }
+        this.syncURL !== undefined && this.__disposers.push(this.__doSyncURL());
     }
     set(value) {
         this.value = value;
@@ -780,6 +789,26 @@ class Value {
     }
     toString() {
         return this.deserialize(this.value);
+    }
+    __doSyncURL() {
+        // init from URL Search Params
+        const name = this.syncURL;
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.has(name)) {
+            this.set(this.serialize(searchParams.get(name)));
+        }
+        // watch for changes and update URL
+        return reaction(() => this.value, (value) => {
+            const searchParams = new URLSearchParams(window.location.search);
+            if ((value === '' || value === undefined || (Array.isArray(value) && !value.length))) {
+                searchParams.delete(name);
+            }
+            else {
+                searchParams.set(name, this.deserialize(this.value));
+            }
+            // update URL
+            window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`);
+        }, { fireImmediately: true });
     }
 }
 __decorate([
@@ -981,13 +1010,6 @@ class XSingleFilter extends XFilter {
         value !== undefined && search_params.set(this.URIField, value);
         return search_params;
     }
-    // DEPRECATED
-    setFromURI(uri) {
-        const search_params = new URLSearchParams(uri);
-        const field_name = this.URIField;
-        const value = search_params.has(field_name) ? search_params.get(field_name) : undefined;
-        this.value.set(this.value.serialize(value));
-    }
     isMatch(obj) {
         // it's always match if value of filter is undefined
         if (this.value === undefined)
@@ -999,12 +1021,6 @@ __decorate([
     observable,
     __metadata("design:type", Value)
 ], XSingleFilter.prototype, "value", void 0);
-__decorate([
-    action('MO: Filter - set from URI'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], XSingleFilter.prototype, "setFromURI", null);
 function match(obj, field_name, filter_value, operator) {
     let field_names = field_name.split('__');
     let current_field_name = field_names[0];
@@ -1055,11 +1071,6 @@ class XComboFilter extends XFilter {
             filter.URLSearchParams.forEach((value, key) => search_params.set(key, value));
         }
         return search_params;
-    }
-    setFromURI(uri) {
-        for (let filter of this.filters) {
-            filter.setFromURI(uri);
-        }
     }
 }
 
