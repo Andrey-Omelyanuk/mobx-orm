@@ -2,7 +2,7 @@ import { NumberValue } from '../values'
 import { XEQ as EQ, XEQV as EQV } from './EQ'
 
 describe('EQ', () => {
-    const filter = EQ('field', new NumberValue(1))
+    const filter = EQ('field', new NumberValue({value: 1}))
 
     it('URIField', async () => {
         expect(filter.URIField).toBe('field')
@@ -19,7 +19,7 @@ describe('EQ', () => {
 })
 
 describe('EQV', () => {
-    const filter = EQV('field', new NumberValue(1))
+    const filter = EQV('field', new NumberValue({value: 1}))
 
     it('URIField', async () => {
         expect(filter.URIField).toBe('field__eq')

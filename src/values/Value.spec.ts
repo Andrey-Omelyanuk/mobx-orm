@@ -18,7 +18,7 @@ describe('Value', () => {
             expect(value.__disposers.length).toBe(0)
         })
         it('with value and no options', async () => {
-            const value = new TestValue('test')
+            const value = new TestValue({value: 'test'})
             expect(value.value).toBe('test')
             expect(value.options).toBe(undefined)
             expect(value.isReady).toBe(true)
@@ -26,7 +26,7 @@ describe('Value', () => {
         })
         it('with value and options', async () => {
             const options = TestModel.getQueryX()
-            const value = new TestValue('test', options)
+            const value = new TestValue({value: 'test', options})
             expect(value.value).toBe('test')
             expect(value.options).toBe(options)
             expect(value.isReady).toBe(false)
@@ -40,7 +40,7 @@ describe('Value', () => {
         })
         it('with not ready options ', async () => {
             const options = TestModel.getQueryX()
-            const value = new TestValue(undefined, options)     ; expect(value.isReady).toBe(false)
+            const value = new TestValue({options})              ; expect(value.isReady).toBe(false)
             runInAction(() => options.need_to_update = false)   ; expect(value.isReady).toBe(false)
             value.set('test')                                   ; expect(value.isReady).toBe(true)
         })
@@ -48,7 +48,7 @@ describe('Value', () => {
             const options = TestModel.getQueryX()
             runInAction(() => options.need_to_update = false)
 
-            const value = new TestValue(undefined, options)     ; expect(value.isReady).toBe(true)
+            const value = new TestValue({options})              ; expect(value.isReady).toBe(true)
             value.set('test')                                   ; expect(value.isReady).toBe(true)
             runInAction(() => options.need_to_update = true)    ; expect(value.isReady).toBe(false)
             value.set('test')                                   ; expect(value.isReady).toBe(false)

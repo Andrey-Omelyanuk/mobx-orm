@@ -27,15 +27,6 @@ export abstract class XSingleFilter extends XFilter {
 
     abstract get URIField() : string
 
-    // DEPRECATED
-    @action('MO: Filter - set from URI')
-    setFromURI(uri: string) {
-        const search_params = new URLSearchParams(uri)
-        const field_name    = this.URIField
-        const value         = search_params.has(field_name) ? search_params.get(field_name) : undefined
-        this.value.set(this.value.serialize(value))
-    }
-
     abstract operator(value_a, value_b) : boolean
 
     isMatch(obj: any): boolean {

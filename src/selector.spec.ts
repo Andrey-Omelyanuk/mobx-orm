@@ -12,8 +12,8 @@ describe('Selector', () => {
         let selector = new Selector(
             // filter
             AND(
-                EQ('test_number', new NumberValue(0)),
-                EQ('test_string', new StringValue('zero')),
+                EQ('test_number', new NumberValue({value: 0})),
+                EQ('test_string', new StringValue({value: 'zero'})),
             ),
             // order by
             new Map([['asc', ASC], ['desc', DESC]]),

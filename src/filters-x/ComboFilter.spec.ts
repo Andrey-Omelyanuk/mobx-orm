@@ -20,7 +20,4 @@ describe('ComboFilter', () => {
     it('URLSearchParams', () => {
         // TODO: implement
     })
-    it('setFromURI', () => {
-        // TODO: implement
-    })
 })

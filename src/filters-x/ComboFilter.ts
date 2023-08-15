@@ -1,6 +1,5 @@
 import { XFilter } from "./Filter"
 
-
 export abstract class XComboFilter extends XFilter {
     readonly filters: XFilter[]
 
@@ -24,11 +23,5 @@ export abstract class XComboFilter extends XFilter {
             filter.URLSearchParams.forEach((value, key) => search_params.set(key, value))
         }
         return search_params
-    }
-
-    setFromURI(uri: string) {
-        for(let filter of this.filters) {
-            filter.setFromURI(uri) 
-        }
     }
 }

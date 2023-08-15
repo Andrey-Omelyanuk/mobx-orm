@@ -1,7 +1,6 @@
 import { Value } from '../values'
 import { XSingleFilter } from "./SingleFilter"
 
-
 export class XLTE_Filter extends XSingleFilter {
 
     get URIField(): string {

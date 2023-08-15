@@ -75,7 +75,7 @@ describe('QueryX', () => {
 
     it('autoupdate after updates', async () => {
         const options = new QueryX<A>(adapter)
-        const value   = new StringValue('test', options)
+        const value   = new StringValue({value: 'test', options})
         const filter  = XEQ('name', value)
         const query = new QueryX<A>(adapter, new Selector(filter))
 

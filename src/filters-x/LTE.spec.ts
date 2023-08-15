@@ -2,7 +2,7 @@ import { NumberValue } from '../values'
 import { XLTE as LTE } from './LTE'
 
 describe('LTE', () => {
-    const filter = LTE('field', new NumberValue(1))
+    const filter = LTE('field', new NumberValue({value: 1}))
 
     it('URIField', async () => {
         expect(filter.URIField).toBe('field__lte')

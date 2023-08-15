@@ -2,7 +2,7 @@ import { NumberValue } from '../values'
 import { XGT as GT } from './GT'
 
 describe('GT', () => {
-    const filter = GT('field', new NumberValue(1))
+    const filter = GT('field', new NumberValue({value: 1}))
 
     it('URIField', async () => {
         expect(filter.URIField).toBe('field__gt')

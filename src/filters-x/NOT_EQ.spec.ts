@@ -2,7 +2,7 @@ import { NumberValue } from '../values'
 import { XNOT_EQ as NOT_EQ } from './NOT_EQ'
 
 describe('NOT_EQ', () => {
-    const filter = NOT_EQ('field', new NumberValue(1))
+    const filter = NOT_EQ('field', new NumberValue({value: 1}))
 
     it('URIField', async () => {
         expect(filter.URIField).toBe('field__not_eq')
