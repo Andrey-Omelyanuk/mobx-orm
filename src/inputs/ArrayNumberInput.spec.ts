@@ -1,7 +1,7 @@
-import { ArrayNumberValue } from './ArrayNumberValue' 
+import { ArrayNumberInput } from './ArrayNumberInput' 
 
-describe('ArrayNumberValue', () => {
-    let value = new ArrayNumberValue()
+describe('ArrayNumberInput', () => {
+    let value = new ArrayNumberInput()
 
     describe('serialize', () => {
         it('"0"'      , async () => { expect(value.serialize('0'      )).toMatchObject([0,])})

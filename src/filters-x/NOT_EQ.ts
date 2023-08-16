@@ -1,4 +1,4 @@
-import { Value } from '../values'
+import { Input } from '../inputs'
 import { XSingleFilter } from "./SingleFilter"
 
 export class XNOT_EQ_Filter extends XSingleFilter {
@@ -13,6 +13,6 @@ export class XNOT_EQ_Filter extends XSingleFilter {
     }
 }
 
-export function XNOT_EQ(field: string, value: Value<any>) : XSingleFilter {
+export function XNOT_EQ(field: string, value: Input<any>) : XSingleFilter {
     return new XNOT_EQ_Filter(field, value)
 }

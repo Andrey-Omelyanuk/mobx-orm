@@ -1,4 +1,4 @@
-import { Value } from '../values'
+import { Input } from '../inputs'
 import { XSingleFilter } from "./SingleFilter"
 
 export class XILIKE_Filter extends XSingleFilter {
@@ -12,6 +12,6 @@ export class XILIKE_Filter extends XSingleFilter {
     }
 }
 
-export function XILIKE(field: string, value: Value<any>) : XSingleFilter {
+export function XILIKE(field: string, value: Input<any>) : XSingleFilter {
     return new XILIKE_Filter(field, value)
 }

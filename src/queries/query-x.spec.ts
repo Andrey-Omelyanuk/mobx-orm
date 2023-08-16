@@ -1,5 +1,5 @@
 import { reaction, runInAction } from 'mobx'
-import { model, SelectorX as Selector, Model, LocalAdapter, ORDER_BY, ASC, DESC, XEQ, StringValue } from '../'
+import { model, SelectorX as Selector, Model, LocalAdapter, ORDER_BY, ASC, DESC, XEQ, StringInput } from '../'
 import { QueryX, DISPOSER_AUTOUPDATE } from './query-x'
 
 describe('QueryX', () => {
@@ -75,7 +75,7 @@ describe('QueryX', () => {
 
     it('autoupdate after updates', async () => {
         const options = new QueryX<A>(adapter)
-        const value   = new StringValue({value: 'test', options})
+        const value   = new StringInput({value: 'test', options})
         const filter  = XEQ('name', value)
         const query = new QueryX<A>(adapter, new Selector(filter))
 

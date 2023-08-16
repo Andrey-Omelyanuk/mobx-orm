@@ -1,7 +1,7 @@
-import { StringValue } from './StringValue'
+import { StringInput } from './StringInput'
 
 describe('StringValue', () => {
-    let value = new StringValue()
+    let value = new StringInput()
     describe('serialize', () => {
         it('"0"'      , async () => { expect(value.serialize('0'      )).toBe('0') })
         it('"test"'   , async () => { expect(value.serialize('test'   )).toBe('test') })

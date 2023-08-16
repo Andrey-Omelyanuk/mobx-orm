@@ -1,11 +1,11 @@
-import { NumberValue } from '..'
+import { NumberInput } from '..'
 import { XAND as AND } from './AND'
 import { XEQ as EQ } from './EQ'
 
 describe('AND', () => {
     it('isMatch', () => {
-        const a = new NumberValue({value: 1})
-        const b = new NumberValue({value: 2})
+        const a = new NumberInput({value: 1})
+        const b = new NumberInput({value: 2})
         const obj_true = { a: 1, b: 2 }
         const obj_false = { a: 1, b: 1 }
          expect(AND(EQ('a', a), EQ('b', b)).isMatch(obj_true)).toBe(true)

@@ -1,4 +1,4 @@
-import { Value } from '../values'
+import { Input } from '../inputs'
 import { XSingleFilter } from "./SingleFilter"
 
 export class XGT_Filter extends XSingleFilter {
@@ -12,6 +12,6 @@ export class XGT_Filter extends XSingleFilter {
     }
 }
 
-export function XGT(field: string, value: Value<any>) : XSingleFilter {
+export function XGT(field: string, value: Input<any>) : XSingleFilter {
     return new XGT_Filter(field, value)
 }

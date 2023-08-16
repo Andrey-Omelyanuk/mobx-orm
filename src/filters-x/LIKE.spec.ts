@@ -1,8 +1,8 @@
-import { NumberValue } from '../values'
+import { NumberInput } from '../inputs'
 import { XLIKE as LIKE } from './LIKE'
 
 describe('LIKE', () => {
-    const filter = LIKE('field', new NumberValue({value: 1}))
+    const filter = LIKE('field', new NumberInput({value: 1}))
 
     it('URIField', async () => {
         expect(filter.URIField).toBe('field__contains')

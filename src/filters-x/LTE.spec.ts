@@ -1,8 +1,8 @@
-import { NumberValue } from '../values'
+import { NumberInput } from '../inputs'
 import { XLTE as LTE } from './LTE'
 
 describe('LTE', () => {
-    const filter = LTE('field', new NumberValue({value: 1}))
+    const filter = LTE('field', new NumberInput({value: 1}))
 
     it('URIField', async () => {
         expect(filter.URIField).toBe('field__lte')

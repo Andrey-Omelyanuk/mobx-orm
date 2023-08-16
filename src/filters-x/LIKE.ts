@@ -1,4 +1,4 @@
-import { Value } from '../values'
+import { Input } from '../inputs'
 import { XSingleFilter } from "./SingleFilter"
 
 export class XLIKE_Filter extends XSingleFilter {
@@ -12,6 +12,6 @@ export class XLIKE_Filter extends XSingleFilter {
     }
 }
 
-export function XLIKE(field: string, value: Value<any>) : XSingleFilter {
+export function XLIKE(field: string, value: Input<any>) : XSingleFilter {
     return new XLIKE_Filter(field, value)
 }

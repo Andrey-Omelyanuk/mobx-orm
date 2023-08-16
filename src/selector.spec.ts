@@ -1,6 +1,6 @@
 import { SelectorX as Selector, ASC, DESC } from './selector'
 import { XAND as AND, XEQ as EQ } from './filters-x'
-import { NumberValue, StringValue } from './values'
+import { NumberInput, StringInput } from './inputs'
 
 
 describe('Selector', () => {
@@ -12,8 +12,8 @@ describe('Selector', () => {
         let selector = new Selector(
             // filter
             AND(
-                EQ('test_number', new NumberValue({value: 0})),
-                EQ('test_string', new StringValue({value: 'zero'})),
+                EQ('test_number', new NumberInput({value: 0})),
+                EQ('test_string', new StringInput({value: 'zero'})),
             ),
             // order by
             new Map([['asc', ASC], ['desc', DESC]]),

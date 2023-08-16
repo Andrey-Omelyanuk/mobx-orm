@@ -1,6 +1,6 @@
-import { Value } from './Value'
+import { Input } from './Input'
 
-export class NumberValue extends Value<number|null|undefined> {
+export class NumberInput extends Input<number|null|undefined> {
     serialize(value?: string): number|null|undefined {
         if (value === undefined) return undefined
         if (value === 'null')    return null

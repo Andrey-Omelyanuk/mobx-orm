@@ -1,4 +1,4 @@
-import { Value } from '../values'
+import { Input } from '../inputs'
 import { XSingleFilter } from "./SingleFilter"
 
 export class XLTE_Filter extends XSingleFilter {
@@ -12,6 +12,6 @@ export class XLTE_Filter extends XSingleFilter {
     }
 }
 
-export function XLTE(field: string, value: Value<any>) : XSingleFilter {
+export function XLTE(field: string, value: Input<any>) : XSingleFilter {
     return new XLTE_Filter(field, value)
 }

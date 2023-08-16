@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.19
+   * mobx-orm.js v1.2.20
    * Released under the MIT license.
    */
 
@@ -731,7 +731,7 @@ __decorate([
 class XFilter {
 }
 
-class Value {
+class Input {
     constructor(args) {
         var _a;
         Object.defineProperty(this, "value", {
@@ -814,19 +814,19 @@ class Value {
 __decorate([
     observable,
     __metadata("design:type", Object)
-], Value.prototype, "value", void 0);
+], Input.prototype, "value", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], Value.prototype, "isReady", void 0);
+], Input.prototype, "isReady", void 0);
 __decorate([
     action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], Value.prototype, "set", null);
+], Input.prototype, "set", null);
 
-class StringValue extends Value {
+class StringInput extends Input {
     serialize(value) {
         if (value === undefined)
             return undefined;
@@ -845,7 +845,7 @@ class StringValue extends Value {
     }
 }
 
-class NumberValue extends Value {
+class NumberInput extends Input {
     serialize(value) {
         if (value === undefined)
             return undefined;
@@ -867,7 +867,7 @@ class NumberValue extends Value {
     }
 }
 
-class BooleanValue extends Value {
+class BooleanInput extends Input {
     serialize(value) {
         if (value === undefined)
             return undefined;
@@ -884,7 +884,7 @@ class BooleanValue extends Value {
     }
 }
 
-class DateValue extends Value {
+class DateInput extends Input {
     serialize(value) {
         if (value === undefined)
             return undefined;
@@ -901,7 +901,7 @@ class DateValue extends Value {
     }
 }
 
-class DateTimeValue extends Value {
+class DateTimeInput extends Input {
     serialize(value) {
         if (value === undefined)
             return undefined;
@@ -918,7 +918,7 @@ class DateTimeValue extends Value {
     }
 }
 
-class ArrayValue extends Value {
+class ArrayInput extends Input {
     constructor(args) {
         if (args === undefined || args.value === undefined)
             args = Object.assign(Object.assign({}, args), { value: [] });
@@ -926,11 +926,11 @@ class ArrayValue extends Value {
     }
 }
 
-class ArrayStringValue extends ArrayValue {
+class ArrayStringInput extends ArrayInput {
     serialize(value) {
         let result = [];
         if (value) {
-            let converter = new StringValue();
+            let converter = new StringInput();
             for (const i of value.split(',')) {
                 let tmp = converter.serialize(i);
                 if (tmp !== undefined) {
@@ -944,7 +944,7 @@ class ArrayStringValue extends ArrayValue {
         let result = [];
         if (value) {
             for (const i of value) {
-                let converter = new StringValue();
+                let converter = new StringInput();
                 let v = converter.deserialize(i);
                 if (v !== undefined) {
                     result.push(v);
@@ -955,11 +955,11 @@ class ArrayStringValue extends ArrayValue {
     }
 }
 
-class ArrayNumberValue extends ArrayValue {
+class ArrayNumberInput extends ArrayInput {
     serialize(value) {
         let result = [];
         if (value) {
-            let converter = new NumberValue();
+            let converter = new NumberInput();
             for (const i of value.split(',')) {
                 let tmp = converter.serialize(i);
                 if (tmp !== undefined) {
@@ -973,7 +973,7 @@ class ArrayNumberValue extends ArrayValue {
         let result = [];
         if (value) {
             for (const i of value) {
-                let converter = new NumberValue();
+                let converter = new NumberInput();
                 let v = converter.deserialize(i);
                 if (v !== undefined) {
                     result.push(v);
@@ -1027,7 +1027,7 @@ class XSingleFilter extends XFilter {
 }
 __decorate([
     observable,
-    __metadata("design:type", Value)
+    __metadata("design:type", Input)
 ], XSingleFilter.prototype, "value", void 0);
 function match(obj, field_name, filter_value, operator) {
     let field_names = field_name.split('__');
@@ -2602,5 +2602,5 @@ function local() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BooleanValue, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringValue, Value, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

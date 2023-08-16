@@ -1,8 +1,8 @@
-import { NumberValue } from '../values'
+import { NumberInput } from '../inputs'
 import { XGTE as GTE } from './GTE'
 
 describe('GTE', () => {
-    const filter = GTE('field', new NumberValue({value: 1}))
+    const filter = GTE('field', new NumberInput({value: 1}))
 
     it('URIField', async () => {
         expect(filter.URIField).toBe('field__gte')

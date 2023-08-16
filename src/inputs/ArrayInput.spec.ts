@@ -1,7 +1,7 @@
-import { ArrayValue } from './ArrayValue' 
+import { ArrayInput } from './ArrayInput' 
 
-describe('ArrayStringValue', () => {
-    class TestClass extends ArrayValue<string[]> {
+describe('ArrayInput', () => {
+    class TestClass extends ArrayInput<string[]> {
         constructor(args?: any) {
             super(args)
         }

@@ -1,12 +1,12 @@
-import { ArrayValue } from './ArrayValue'
-import { NumberValue } from './NumberValue'
+import { ArrayInput } from './ArrayInput'
+import { NumberInput } from './NumberInput'
 
-export class ArrayNumberValue extends ArrayValue<number[]> {
+export class ArrayNumberInput extends ArrayInput<number[]> {
 
     serialize(value?: string) : number[] {
         let result = [] 
         if (value) {
-            let converter = new NumberValue()
+            let converter = new NumberInput()
             for (const i of value.split(',')) {
                 let tmp = converter.serialize(i)
                 if (tmp !== undefined) {
@@ -21,7 +21,7 @@ export class ArrayNumberValue extends ArrayValue<number[]> {
         let result = [] 
         if (value) {
             for (const i of value) {
-                let converter = new NumberValue()
+                let converter = new NumberInput()
                 let v = converter.deserialize(i) 
                 if (v !== undefined) {
                     result.push(v)

@@ -1,7 +1,7 @@
-import { NumberValue } from './NumberValue'
+import { NumberInput } from './NumberInput'
 
-describe('NumberValue', () => {
-    let value = new NumberValue()
+describe('NumberInput', () => {
+    let value = new NumberInput()
     describe('serialize', () => {
         it('"0"'      , async () => { expect(value.serialize('0'      )).toBe(0) })
         it('"test"'   , async () => { expect(value.serialize('test'   )).toBe(undefined) })

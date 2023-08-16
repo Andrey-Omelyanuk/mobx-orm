@@ -1,6 +1,6 @@
-import { Value } from "./Value"
+import { Input } from "./Input"
 
-export class BooleanValue extends Value<boolean|null|undefined> {
+export class BooleanInput extends Input<boolean|null|undefined> {
     serialize(value?: string): boolean|null|undefined {
         if (value === undefined) return undefined
         if (value === 'null')    return null

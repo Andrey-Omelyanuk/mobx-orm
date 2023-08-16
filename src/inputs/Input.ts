@@ -1,14 +1,14 @@
 import { action, makeObservable, observable, reaction } from 'mobx'
 import { Model, Query } from '..'
 
-export interface ValueConstructorArgs<T> {
+export interface InputConstructorArgs<T> {
     value?: T,
     options?: any,
     syncURL?: string,
     syncLocalStorage?: string
 }
 
-export abstract class Value<T> {
+export abstract class Input<T> {
 
     @observable readonly value   : T
     @observable          isReady : boolean
@@ -16,7 +16,7 @@ export abstract class Value<T> {
                 readonly syncURL?: string
     __disposers = [] 
 
-    constructor(args?: ValueConstructorArgs<T>) {
+    constructor(args?: InputConstructorArgs<T>) {
         this.value = args?.value
         this.options = args?.options
         this.syncURL = args?.syncURL

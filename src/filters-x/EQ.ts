@@ -1,4 +1,4 @@
-import { Value } from '../values'
+import { Input } from '../inputs'
 import { XSingleFilter } from './SingleFilter'
 
 export class XEQ_Filter extends XSingleFilter {
@@ -19,10 +19,10 @@ export class XEQV_Filter extends XEQ_Filter {
     }
 }
 
-export function XEQ(field: string, value: Value<any>) : XSingleFilter {
+export function XEQ(field: string, value: Input<any>) : XSingleFilter {
     return new XEQ_Filter(field, value)
 }
 
-export function XEQV(field: string, value: Value<any>) : XSingleFilter {
+export function XEQV(field: string, value: Input<any>) : XSingleFilter {
     return new XEQV_Filter(field, value)
 }

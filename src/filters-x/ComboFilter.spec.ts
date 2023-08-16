@@ -1,4 +1,4 @@
-import { XComboFilter as ComboFilter, Model, QueryX as Query, StringValue } from '..'
+import { XComboFilter as ComboFilter, Model, QueryX as Query, StringInput } from '..'
 import { XEQ as EQ } from './EQ'
 
 describe('ComboFilter', () => {

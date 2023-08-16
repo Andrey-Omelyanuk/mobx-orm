@@ -1,8 +1,8 @@
-import { NumberValue } from '../values'
+import { NumberInput } from '../inputs'
 import { XILIKE as ILIKE } from './ILIKE'
 
 describe('ILIKE', () => {
-    const filter = ILIKE('field', new NumberValue({value: 1}))
+    const filter = ILIKE('field', new NumberInput({value: 1}))
 
     it('URIField', async () => {
         expect(filter.URIField).toBe('field__icontains')

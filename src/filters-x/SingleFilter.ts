@@ -1,13 +1,13 @@
 import { action, autorun, makeObservable, observable } from 'mobx'
 import { XFilter } from './Filter'
-import { Value } from '../values'
+import { Input } from '../inputs'
 
 export abstract class XSingleFilter extends XFilter {
     readonly    field       : string
-    @observable value       : Value<any> 
+    @observable value       : Input<any> 
     __disposers             : (()=>void)[] = []
 
-    constructor(field: string, value: Value<any>) {
+    constructor(field: string, value: Input<any>) {
         super()
         this.field = field
         this.value = value

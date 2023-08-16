@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.19
+   * mobx-orm.js v1.2.20
    * Released under the MIT license.
    */
 
@@ -735,7 +735,7 @@
     class XFilter {
     }
 
-    class Value {
+    class Input {
         constructor(args) {
             var _a;
             Object.defineProperty(this, "value", {
@@ -818,19 +818,19 @@
     __decorate([
         mobx.observable,
         __metadata("design:type", Object)
-    ], Value.prototype, "value", void 0);
+    ], Input.prototype, "value", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Boolean)
-    ], Value.prototype, "isReady", void 0);
+    ], Input.prototype, "isReady", void 0);
     __decorate([
         mobx.action,
         __metadata("design:type", Function),
         __metadata("design:paramtypes", [Object]),
         __metadata("design:returntype", void 0)
-    ], Value.prototype, "set", null);
+    ], Input.prototype, "set", null);
 
-    class StringValue extends Value {
+    class StringInput extends Input {
         serialize(value) {
             if (value === undefined)
                 return undefined;
@@ -849,7 +849,7 @@
         }
     }
 
-    class NumberValue extends Value {
+    class NumberInput extends Input {
         serialize(value) {
             if (value === undefined)
                 return undefined;
@@ -871,7 +871,7 @@
         }
     }
 
-    class BooleanValue extends Value {
+    class BooleanInput extends Input {
         serialize(value) {
             if (value === undefined)
                 return undefined;
@@ -888,7 +888,7 @@
         }
     }
 
-    class DateValue extends Value {
+    class DateInput extends Input {
         serialize(value) {
             if (value === undefined)
                 return undefined;
@@ -905,7 +905,7 @@
         }
     }
 
-    class DateTimeValue extends Value {
+    class DateTimeInput extends Input {
         serialize(value) {
             if (value === undefined)
                 return undefined;
@@ -922,7 +922,7 @@
         }
     }
 
-    class ArrayValue extends Value {
+    class ArrayInput extends Input {
         constructor(args) {
             if (args === undefined || args.value === undefined)
                 args = Object.assign(Object.assign({}, args), { value: [] });
@@ -930,11 +930,11 @@
         }
     }
 
-    class ArrayStringValue extends ArrayValue {
+    class ArrayStringInput extends ArrayInput {
         serialize(value) {
             let result = [];
             if (value) {
-                let converter = new StringValue();
+                let converter = new StringInput();
                 for (const i of value.split(',')) {
                     let tmp = converter.serialize(i);
                     if (tmp !== undefined) {
@@ -948,7 +948,7 @@
             let result = [];
             if (value) {
                 for (const i of value) {
-                    let converter = new StringValue();
+                    let converter = new StringInput();
                     let v = converter.deserialize(i);
                     if (v !== undefined) {
                         result.push(v);
@@ -959,11 +959,11 @@
         }
     }
 
-    class ArrayNumberValue extends ArrayValue {
+    class ArrayNumberInput extends ArrayInput {
         serialize(value) {
             let result = [];
             if (value) {
-                let converter = new NumberValue();
+                let converter = new NumberInput();
                 for (const i of value.split(',')) {
                     let tmp = converter.serialize(i);
                     if (tmp !== undefined) {
@@ -977,7 +977,7 @@
             let result = [];
             if (value) {
                 for (const i of value) {
-                    let converter = new NumberValue();
+                    let converter = new NumberInput();
                     let v = converter.deserialize(i);
                     if (v !== undefined) {
                         result.push(v);
@@ -1031,7 +1031,7 @@
     }
     __decorate([
         mobx.observable,
-        __metadata("design:type", Value)
+        __metadata("design:type", Input)
     ], XSingleFilter.prototype, "value", void 0);
     function match(obj, field_name, filter_value, operator) {
         let field_names = field_name.split('__');
@@ -2610,14 +2610,14 @@
     exports.AND_Filter = AND_Filter;
     exports.ASC = ASC;
     exports.Adapter = Adapter;
-    exports.ArrayNumberValue = ArrayNumberValue;
-    exports.ArrayStringValue = ArrayStringValue;
-    exports.BooleanValue = BooleanValue;
+    exports.ArrayNumberInput = ArrayNumberInput;
+    exports.ArrayStringInput = ArrayStringInput;
+    exports.BooleanInput = BooleanInput;
     exports.ComboFilter = ComboFilter;
     exports.DESC = DESC;
     exports.DISPOSER_AUTOUPDATE = DISPOSER_AUTOUPDATE;
-    exports.DateTimeValue = DateTimeValue;
-    exports.DateValue = DateValue;
+    exports.DateInput = DateInput;
+    exports.DateTimeInput = DateTimeInput;
     exports.EQ = EQ;
     exports.EQV = EQV;
     exports.EQV_Filter = EQV_Filter;
@@ -2631,6 +2631,7 @@
     exports.ILIKE_Filter = ILIKE_Filter;
     exports.IN = IN;
     exports.IN_Filter = IN_Filter;
+    exports.Input = Input;
     exports.LIKE = LIKE;
     exports.LIKE_Filter = LIKE_Filter;
     exports.LT = LT;
@@ -2641,7 +2642,7 @@
     exports.Model = Model;
     exports.NOT_EQ = NOT_EQ;
     exports.NOT_EQ_Filter = NOT_EQ_Filter;
-    exports.NumberValue = NumberValue;
+    exports.NumberInput = NumberInput;
     exports.Query = Query;
     exports.QueryBase = QueryBase;
     exports.QueryPage = QueryPage;
@@ -2652,8 +2653,7 @@
     exports.ReadOnlyModel = ReadOnlyModel;
     exports.SelectorX = SelectorX;
     exports.SingleFilter = SingleFilter;
-    exports.StringValue = StringValue;
-    exports.Value = Value;
+    exports.StringInput = StringInput;
     exports.XAND = XAND;
     exports.XAND_Filter = XAND_Filter;
     exports.XComboFilter = XComboFilter;

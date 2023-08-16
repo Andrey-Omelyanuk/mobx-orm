@@ -12,19 +12,19 @@ declare abstract class XFilter {
     abstract get isReady(): boolean;
 }
 
-interface ValueConstructorArgs<T> {
+interface InputConstructorArgs<T> {
     value?: T;
     options?: any;
     syncURL?: string;
     syncLocalStorage?: string;
 }
-declare abstract class Value<T> {
+declare abstract class Input<T> {
     readonly value: T;
     isReady: boolean;
     readonly options: Query<Model>;
     readonly syncURL?: string;
     __disposers: any[];
-    constructor(args?: ValueConstructorArgs<T>);
+    constructor(args?: InputConstructorArgs<T>);
     set(value: T): void;
     destroy(): void;
     abstract serialize(value?: string): T;
@@ -33,50 +33,50 @@ declare abstract class Value<T> {
     __doSyncURL(): () => void;
 }
 
-declare class StringValue extends Value<string | null | undefined> {
+declare class StringInput extends Input<string | null | undefined> {
     serialize(value?: string): string | null | undefined;
     deserialize(value: string | null | undefined): string;
 }
 
-declare class NumberValue extends Value<number | null | undefined> {
+declare class NumberInput extends Input<number | null | undefined> {
     serialize(value?: string): number | null | undefined;
     deserialize(value: number | null | undefined): string;
 }
 
-declare class BooleanValue extends Value<boolean | null | undefined> {
+declare class BooleanInput extends Input<boolean | null | undefined> {
     serialize(value?: string): boolean | null | undefined;
     deserialize(value: boolean | null | undefined): string;
 }
 
-declare class DateValue extends Value<Date | null | undefined> {
+declare class DateInput extends Input<Date | null | undefined> {
     serialize(value?: string): Date;
     deserialize(value: Date | null | undefined): string;
 }
 
-declare class DateTimeValue extends Value<Date | null | undefined> {
+declare class DateTimeInput extends Input<Date | null | undefined> {
     serialize(value?: string): Date | null | undefined;
     deserialize(value: Date | null | undefined): string;
 }
 
-declare abstract class ArrayValue<T> extends Value<T> {
-    constructor(args?: ValueConstructorArgs<T>);
+declare abstract class ArrayInput<T> extends Input<T> {
+    constructor(args?: InputConstructorArgs<T>);
 }
 
-declare class ArrayStringValue extends ArrayValue<string[]> {
+declare class ArrayStringInput extends ArrayInput<string[]> {
     serialize(value?: string): string[];
     deserialize(value: string[]): string;
 }
 
-declare class ArrayNumberValue extends ArrayValue<number[]> {
+declare class ArrayNumberInput extends ArrayInput<number[]> {
     serialize(value?: string): number[];
     deserialize(value: number[]): string;
 }
 
 declare abstract class XSingleFilter extends XFilter {
     readonly field: string;
-    value: Value<any>;
+    value: Input<any>;
     __disposers: (() => void)[];
-    constructor(field: string, value: Value<any>);
+    constructor(field: string, value: Input<any>);
     get isReady(): boolean;
     get URLSearchParams(): URLSearchParams;
     abstract get URIField(): string;
@@ -99,56 +99,56 @@ declare class XEQ_Filter extends XSingleFilter {
 declare class XEQV_Filter extends XEQ_Filter {
     get URIField(): string;
 }
-declare function XEQ(field: string, value: Value<any>): XSingleFilter;
-declare function XEQV(field: string, value: Value<any>): XSingleFilter;
+declare function XEQ(field: string, value: Input<any>): XSingleFilter;
+declare function XEQV(field: string, value: Input<any>): XSingleFilter;
 
 declare class XNOT_EQ_Filter extends XSingleFilter {
     get URIField(): string;
     operator(value_a: any, value_b: any): boolean;
 }
-declare function XNOT_EQ(field: string, value: Value<any>): XSingleFilter;
+declare function XNOT_EQ(field: string, value: Input<any>): XSingleFilter;
 
 declare class XGT_Filter extends XSingleFilter {
     get URIField(): string;
     operator(value_a: any, value_b: any): boolean;
 }
-declare function XGT(field: string, value: Value<any>): XSingleFilter;
+declare function XGT(field: string, value: Input<any>): XSingleFilter;
 
 declare class XGTE_Filter extends XSingleFilter {
     get URIField(): string;
     operator(value_a: any, value_b: any): boolean;
 }
-declare function XGTE(field: string, value: Value<any>): XSingleFilter;
+declare function XGTE(field: string, value: Input<any>): XSingleFilter;
 
 declare class XLT_Filter extends XSingleFilter {
     get URIField(): string;
     operator(value_a: any, value_b: any): boolean;
 }
-declare function XLT(field: string, value: Value<any>): XSingleFilter;
+declare function XLT(field: string, value: Input<any>): XSingleFilter;
 
 declare class XLTE_Filter extends XSingleFilter {
     get URIField(): string;
     operator(value_a: any, value_b: any): boolean;
 }
-declare function XLTE(field: string, value: Value<any>): XSingleFilter;
+declare function XLTE(field: string, value: Input<any>): XSingleFilter;
 
 declare class XIN_Filter extends XSingleFilter {
     get URIField(): string;
     operator(value_a: any, value_b: any): boolean;
 }
-declare function XIN(field: string, value: Value<any>): XSingleFilter;
+declare function XIN(field: string, value: Input<any>): XSingleFilter;
 
 declare class XLIKE_Filter extends XSingleFilter {
     get URIField(): string;
     operator(current_value: any, filter_value: any): boolean;
 }
-declare function XLIKE(field: string, value: Value<any>): XSingleFilter;
+declare function XLIKE(field: string, value: Input<any>): XSingleFilter;
 
 declare class XILIKE_Filter extends XSingleFilter {
     get URIField(): string;
     operator(current_value: any, filter_value: any): boolean;
 }
-declare function XILIKE(field: string, value: Value<any>): XSingleFilter;
+declare function XILIKE(field: string, value: Input<any>): XSingleFilter;
 
 declare class XAND_Filter extends XComboFilter {
     isMatch(obj: any): boolean;
@@ -570,4 +570,4 @@ declare function many(remote_model: any, remote_foreign_id_name?: string): (cls:
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayNumberValue, ArrayStringValue, BooleanValue, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateTimeValue, DateValue, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberValue, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, StringValue, Value, ValueConstructorArgs, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };
