@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.20
+   * mobx-orm.js v1.2.21
    * Released under the MIT license.
    */
 
@@ -781,6 +781,7 @@
                 }));
             }
             this.syncURL !== undefined && this.__disposers.push(this.__doSyncURL());
+            (args === null || args === void 0 ? void 0 : args.autoReset) && this.options && this.__disposers.push(mobx.reaction(() => this.options.is_ready, (is_ready) => is_ready && args.autoReset(this), { fireImmediately: true }));
         }
         set(value) {
             this.value = value;
@@ -2610,6 +2611,7 @@
     exports.AND_Filter = AND_Filter;
     exports.ASC = ASC;
     exports.Adapter = Adapter;
+    exports.ArrayInput = ArrayInput;
     exports.ArrayNumberInput = ArrayNumberInput;
     exports.ArrayStringInput = ArrayStringInput;
     exports.BooleanInput = BooleanInput;

@@ -6,6 +6,7 @@ export interface InputConstructorArgs<T> {
     options?: any,
     syncURL?: string,
     syncLocalStorage?: string
+    autoReset?: (input: Input<T>) => void
 }
 
 export abstract class Input<T> {
@@ -33,6 +34,14 @@ export abstract class Input<T> {
             ))
         }
         this.syncURL !== undefined && this.__disposers.push(this.__doSyncURL())
+
+        args?.autoReset && this.options && this.__disposers.push(
+            reaction(
+                () => this.options.is_ready,
+                (is_ready) => is_ready && args.autoReset(this),
+                { fireImmediately: true },
+            )
+        )
     }
 
     @action set(value: T) {

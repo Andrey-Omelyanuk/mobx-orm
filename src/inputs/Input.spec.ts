@@ -56,4 +56,22 @@ describe('Input', () => {
             input.set('test')                                   ; expect(input.isReady).toBe(true)
         })
     })
+
+    it('autoReset', async () => {
+        const options = TestModel.getQueryX()
+        const input = new TestInput({
+            value: 'one',
+            options,
+            autoReset: (i) => i.set('two')
+        })
+                                                            expect(input.__disposers.length).toBe(2)
+                                                            expect(input.options.is_ready).toBe(false)
+                                                            expect(input.value).toBe('one')
+        runInAction(() => options.__is_ready = true);       expect(input.value).toBe('two')
+        runInAction(() => options.__is_ready = false);      expect(input.value).toBe('two')
+        input.set('three');                                 expect(input.value).toBe('three')
+        runInAction(() => options.__is_ready = true);       expect(input.value).toBe('two')
+        input.set('three');                                 expect(input.value).toBe('three')
+        runInAction(() => options.__is_ready = true);       expect(input.value).toBe('three')
+    })
 })
