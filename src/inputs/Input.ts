@@ -1,5 +1,5 @@
 import { action, makeObservable, observable, reaction } from 'mobx'
-import { Model, Query } from '..'
+import { Model, QueryX as Query } from '..'
 
 export interface InputConstructorArgs<T> {
     value?: T,
@@ -21,11 +21,11 @@ export abstract class Input<T> {
         this.value = args?.value
         this.options = args?.options
         this.syncURL = args?.syncURL
-        this.isReady = !this.options?.need_to_update
+        this.isReady = this.options === undefined || this.options?.isReady
         makeObservable(this)
         if (this.options) {
             this.__disposers.push(reaction(
-                () => this.options.need_to_update,
+                () => !this.options.is_ready,
                 (needToReset) => {
                     if (needToReset) {
                         this.isReady = false
@@ -46,7 +46,7 @@ export abstract class Input<T> {
 
     @action set(value: T) {
         (this.value as any) = value
-        if (this.options && !this.options.need_to_update) {
+        if (this.options?.isReady) {
             this.isReady = true
         }
     }

@@ -34,7 +34,10 @@ export class QueryX <M extends Model> {
 
         this.__disposers.push(reaction(
             () => this.selector.URLSearchParams.toString(),
-            action('MO: Query Base - need to update', () => this.need_to_update = true ),
+            action('MO: Query Base - need to update', () => {
+                this.need_to_update = true
+                this.__is_ready = false
+            }),
             { fireImmediately: true }
         ))
     }

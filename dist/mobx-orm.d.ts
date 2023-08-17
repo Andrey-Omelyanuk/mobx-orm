@@ -22,7 +22,7 @@ interface InputConstructorArgs<T> {
 declare abstract class Input<T> {
     readonly value: T;
     isReady: boolean;
-    readonly options: Query<Model>;
+    readonly options: QueryX<Model>;
     readonly syncURL?: string;
     __disposers: any[];
     constructor(args?: InputConstructorArgs<T>);

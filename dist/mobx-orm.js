@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.23
+   * mobx-orm.js v1.2.24
    * Released under the MIT license.
    */
 
@@ -771,10 +771,10 @@
             this.value = args === null || args === void 0 ? void 0 : args.value;
             this.options = args === null || args === void 0 ? void 0 : args.options;
             this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
-            this.isReady = !((_a = this.options) === null || _a === void 0 ? void 0 : _a.need_to_update);
+            this.isReady = this.options === undefined || ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady);
             mobx.makeObservable(this);
             if (this.options) {
-                this.__disposers.push(mobx.reaction(() => this.options.need_to_update, (needToReset) => {
+                this.__disposers.push(mobx.reaction(() => !this.options.is_ready, (needToReset) => {
                     if (needToReset) {
                         this.isReady = false;
                     }
@@ -784,8 +784,9 @@
             (args === null || args === void 0 ? void 0 : args.autoReset) && this.options && this.__disposers.push(mobx.reaction(() => this.options.is_ready, (is_ready) => is_ready && args.autoReset(this), { fireImmediately: true }));
         }
         set(value) {
+            var _a;
             this.value = value;
-            if (this.options && !this.options.need_to_update) {
+            if ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady) {
                 this.isReady = true;
             }
         }
@@ -1668,7 +1669,10 @@
             this.adapter = adapter;
             this.selector = selector ? selector : new SelectorX();
             mobx.makeObservable(this);
-            this.__disposers.push(mobx.reaction(() => this.selector.URLSearchParams.toString(), mobx.action('MO: Query Base - need to update', () => this.need_to_update = true), { fireImmediately: true }));
+            this.__disposers.push(mobx.reaction(() => this.selector.URLSearchParams.toString(), mobx.action('MO: Query Base - need to update', () => {
+                this.need_to_update = true;
+                this.__is_ready = false;
+            }), { fireImmediately: true }));
         }
         get is_loading() { return this.__is_loading; }
         get is_ready() { return this.__is_ready; }
