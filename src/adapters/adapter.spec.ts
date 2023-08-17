@@ -1,12 +1,12 @@
 import { Selector } from '@/types';
 import { model, Model, RawObject, field, Adapter } from '../'
-import { EQ } from '../filters' 
-import { obj_a, obj_b } from '../test.utils' 
+import { EQ } from '../filters'
+import { obj_a, obj_b } from '../test.utils'
 
 
 describe('Adapter', () => {
 
-    @model class A extends Model { @field x: string }
+    @model class A extends Model { @field b: string }
 
     class TestAdapter extends Adapter<A> {
 
@@ -22,20 +22,21 @@ describe('Adapter', () => {
         async getTotalCount(where?): Promise<number> { return 0; }
     }
 
-    let adapter: TestAdapter, cache: Map<number, A>, __load: any, __create: any, __update: any, __delete: any, __find: any
+    let adapter: TestAdapter, cache: Map<number, A>, __load: any, __create: any, __update: any, __delete: any, __get: any, __find: any
 
     beforeAll(() => {
         cache = (<any>A).__proto__.__cache
-        adapter = new TestAdapter(A) 
+        adapter = new TestAdapter(A)
         __load   = jest.spyOn(adapter, '__load')
         __create = jest.spyOn(adapter, '__create')
         __update = jest.spyOn(adapter, '__update')
         __delete = jest.spyOn(adapter, '__delete')
+        __get    = jest.spyOn(adapter, '__get')
         __find   = jest.spyOn(adapter, '__find')
     })
 
     afterEach(async () => {
-        A.clearCache() 
+        A.clearCache()
         jest.clearAllMocks()
     })
 
@@ -52,12 +53,12 @@ describe('Adapter', () => {
     })
 
     it('update', async ()=> {
-        let a = new A({id: 1, x: 'test'});  expect(__update).toHaveBeenCalledTimes(0)
-                                            expect(a.__init_data).toEqual({x: 'test'})
-            a.x = 'xxx';                    expect(a.__init_data).toEqual({x: 'test'})
+        let a = new A({id: 1, b: 'test'});  expect(__update).toHaveBeenCalledTimes(0)
+                                            expect(a.__init_data).toEqual({b: 'test'})
+            a.b = 'xxx';                    expect(a.__init_data).toEqual({b: 'test'})
         let b = await adapter.update(a);    expect(b).toBe(a)
                                             expect(__update).toHaveBeenCalledTimes(1)
-                                            expect(a.__init_data).toEqual({x: 'xxx'})
+                                            expect(a.__init_data).toEqual({b: 'xxx'})
     })
 
     it('delete', async ()=> {
@@ -66,6 +67,15 @@ describe('Adapter', () => {
         let b = await adapter.delete(a);    expect(b).toBe(a)
                                             expect(a.id).toBe(undefined)
                                             expect(__delete).toHaveBeenCalledTimes(1)
+    })
+
+    it('get', async ()=> {
+        let a = new A({id: 0, b: 'test'});  expect(__get).toHaveBeenCalledTimes(0)
+                                            expect(a.__init_data).toEqual({b: 'test'})
+        let b = await adapter.get(0);       expect(__get).toHaveBeenCalledTimes(1)
+                                            expect(__get).toHaveBeenCalledWith(0)
+                                            expect(b).toBe(a)
+                                            expect(a.__init_data).toEqual({b: 'a'})
     })
 
     it('find', async ()=> {
