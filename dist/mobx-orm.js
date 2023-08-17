@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.21
+   * mobx-orm.js v1.2.22
    * Released under the MIT license.
    */
 
@@ -2474,12 +2474,16 @@
         }
         async get(obj_id) {
             let raw_obj = await this.__get(obj_id);
-            return this.model.updateCache(raw_obj);
+            const obj = this.model.updateCache(raw_obj);
+            obj.refreshInitData();
+            return obj;
         }
         /* Returns ONE object */
         async find(selector) {
             let raw_obj = await this.__find(selector);
-            return this.model.updateCache(raw_obj);
+            const obj = this.model.updateCache(raw_obj);
+            obj.refreshInitData();
+            return obj;
         }
         /* Returns MANY objects */
         async load(selector) {
@@ -2488,7 +2492,9 @@
             // it should be happend in one big action
             mobx.runInAction(() => {
                 for (let raw_obj of raw_objs) {
-                    objs.push(this.model.updateCache(raw_obj));
+                    const obj = this.model.updateCache(raw_obj);
+                    obj.refreshInitData();
+                    objs.push(obj);
                 }
             });
             return objs;

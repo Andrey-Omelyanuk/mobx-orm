@@ -67,13 +67,17 @@ export abstract class  Adapter<M extends Model> {
 
     async get(obj_id: number): Promise<M> {
         let raw_obj = await this.__get(obj_id)
-        return this.model.updateCache(raw_obj)
+        const obj = this.model.updateCache(raw_obj)
+        obj.refreshInitData()
+        return obj
     }
 
     /* Returns ONE object */
     async find(selector: Selector | SelectorX): Promise<M> {
         let raw_obj = await this.__find(selector)
-        return this.model.updateCache(raw_obj)
+        const obj = this.model.updateCache(raw_obj)
+        obj.refreshInitData()
+        return obj
     }
 
     /* Returns MANY objects */
@@ -83,7 +87,9 @@ export abstract class  Adapter<M extends Model> {
         // it should be happend in one big action
         runInAction(() => {
             for (let raw_obj of raw_objs) {
-                objs.push(this.model.updateCache(raw_obj))
+                const obj = this.model.updateCache(raw_obj)
+                obj.refreshInitData()
+                objs.push(obj)
             }
         })
         return objs
