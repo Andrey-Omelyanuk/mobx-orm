@@ -25,14 +25,14 @@ describe('Model Class', () => {
     describe('eject()', () => {
         it('...', async () => {
             @model class A extends Model {}
-            A.inject({id: 1} as Model)      
+            A.inject({id: 1} as Model)
             A.inject({id: 2} as Model)          ; expect(A.__cache.size).toBe(2)
             A.eject ({id: 1} as Model)          ; expect(A.__cache.size).toBe(1)
             A.eject ({id: 2} as Model)          ; expect(A.__cache.size).toBe(0)
         })
         it('double eject', async () => {
             @model class A extends Model {}
-            A.inject({id: 1} as Model)      
+            A.inject({id: 1} as Model)
             A.inject({id: 2} as Model)          ; expect(A.__cache.size).toBe(2)
             A.eject ({id: 2} as Model)          ; expect(A.__cache.size).toBe(1)
             A.eject ({id: 2} as Model)          ; expect(A.__cache.size).toBe(1)
@@ -57,8 +57,8 @@ describe('Model Class', () => {
 
         it('obj = empty ', async () => {
             @model class A extends Model { @field a: number }
-            let a = new A({id: 1, a: 2})            
-            let raw_obj = {}                        
+            let a = new A({id: 1, a: 2})
+            let raw_obj = {}
             let obj = A.updateCache(raw_obj)        ; expect(obj).toMatchObject({})
                                                       expect(a).toMatchObject({id: 1, a: 2 })
         })
@@ -69,6 +69,15 @@ describe('Model Class', () => {
             let raw_obj = {id: 1, a: 3}             ; expect(a).toMatchObject({id: 1, a: 2 })
             let obj = A.updateCache(raw_obj)        ; expect(a).toBe(obj)
                                                       expect(a).toMatchObject({id: 1, a: 3 })
+        })
+
+        it('obj = changed ', async () => {
+            @model class A extends Model { @field a: number }
+            let a = new A({id: 1, a: 2})            ; expect(a.is_changed).toBe(false)
+            let raw_obj = {id: 1, a: 3}
+            let obj = A.updateCache(raw_obj)        ; expect(obj).toMatchObject({id: 1, a: 3})
+                                                      expect(a).toMatchObject({id: 1, a: 3})
+                                                      expect(a.is_changed).toBe(false)
         })
     })
 

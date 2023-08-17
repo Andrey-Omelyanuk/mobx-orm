@@ -6,13 +6,13 @@ import { SelectorX } from './selector'
 import { XFilter as Filter } from './filters-x'
 
 
-export type RawObject = any 
-export type RawData   = any 
+export type RawObject = any
+export type RawData   = any
 
 
 export abstract class Model {
     // this static properties will be copied to real model in the model decorator
-    static __adapter  : Adapter<Model> 
+    static __adapter  : Adapter<Model>
     static __cache    : Map<number, Model>
     // - fields
     // - relations (not exist on outside)
@@ -29,7 +29,7 @@ export abstract class Model {
         [field_name: string]: {
             decorator   : (obj: Model, field_name: string) => void,
             settings    : any
-            // there is no serializer of deserializer because 
+            // there is no serializer of deserializer because
             // it is derivative and does not come from outside
         }
     }
@@ -37,7 +37,7 @@ export abstract class Model {
     // add obj to the cache
     @action('MO: model - inject')
     static inject(obj: Model) {
-        if (obj.id === undefined)                    
+        if (obj.id === undefined)
             throw new Error(`Object should have id!`)
         if (this.__cache.has(obj.id)) {
             throw new Error(`Object with id ${obj.id} already exist in the cache of model: "${this.prototype.constructor.name}")`)
@@ -48,7 +48,7 @@ export abstract class Model {
     // remove obj from the cache
     @action('MO: model - eject')
     static eject(obj: Model) {
-        if (this.__cache.has(obj.id)) 
+        if (this.__cache.has(obj.id))
             this.__cache.delete(obj.id)
     }
 
@@ -145,7 +145,7 @@ export abstract class Model {
         const selector = new SelectorX(
             options?.filter,
             options?.order_by,
-            0, 
+            0,
             options?.limit,
             options?.relations,
             options?.fields,
@@ -171,11 +171,11 @@ export abstract class Model {
     }
 
     static async findById(id: number) : Promise<Model> {
-        return this.__adapter.get(id) 
+        return this.__adapter.get(id)
     }
 
     static async find(selector: Selector) : Promise<Model> {
-        return this.__adapter.find(selector) 
+        return this.__adapter.find(selector)
     }
 
     @action('MO: model - update the cache from raw')
@@ -184,6 +184,7 @@ export abstract class Model {
         if (this.__cache.has(raw_obj.id)) {
             obj = this.__cache.get(raw_obj.id)
             obj.updateFromRaw(raw_obj)
+            obj.refreshInitData()
         }
         else {
             obj = new (<any>this)(raw_obj)
@@ -193,16 +194,16 @@ export abstract class Model {
 
     @action('MO: model - clear the cache')
     static clearCache() {
-        // id = undefined is equal to remove obj from cache 
+        // id = undefined is equal to remove obj from cache
         for (let obj of this.__cache.values()) {
-            obj.id = undefined 
+            obj.id = undefined
         }
     }
 
     @observable id: number|undefined = undefined
 
-    @observable __init_data: any   
-    @observable __errors: any   
+    @observable __init_data: any
+    @observable __errors: any
     __disposers = new Map()
 
     constructor (...args) { }
@@ -228,7 +229,7 @@ export abstract class Model {
         raw_obj.id = this.id
         return raw_obj
     }
-    
+
     get only_changed_raw_data() : any {
         let raw_data: any = {}
         for(let field_name in this.model.__fields) {
@@ -246,7 +247,7 @@ export abstract class Model {
                 is_changed = true
             }
         }
-        return is_changed 
+        return is_changed
     }
 
     async action(name: string, kwargs: Object) { return await this.model.__adapter.action(this, name, kwargs) }
@@ -284,7 +285,7 @@ export abstract class Model {
         if (this.id === undefined && raw_obj.id !== undefined) {
             this.id = raw_obj.id
         }
-        // update the fields if the raw data is exist and it is different 
+        // update the fields if the raw data is exist and it is different
         for(let field_name in this.model.__fields) {
             if (raw_obj[field_name] !== undefined && raw_obj[field_name] !== this[field_name]) {
                 this[field_name] = raw_obj[field_name]
@@ -304,7 +305,7 @@ export abstract class Model {
                         settings.remote_model.updateCache(i)
                     }
                 }
-                // one 
+                // one
                 else {
                     settings.remote_model.updateCache(raw_obj[relation])
                 }
@@ -340,7 +341,7 @@ export function model(constructor) {
             }))
         obj.__disposers.set('after changes',
             observe(obj, 'id', (change) => {
-                if (obj.id !== undefined) 
+                if (obj.id !== undefined)
                     obj.model.inject(obj)
             }))
 
