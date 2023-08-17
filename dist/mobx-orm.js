@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.22
+   * mobx-orm.js v1.2.23
    * Released under the MIT license.
    */
 
@@ -988,6 +988,47 @@
             return result.length ? result.join(',') : undefined;
         }
     }
+
+    const defaultAutoReset = (input) => {
+        var _a;
+        if (!input.options)
+            return;
+        // if value still in options, do nothing
+        for (const item of input.options.items) {
+            if (item.id === input.value) {
+                return;
+            }
+        }
+        // otherwise set available id or undefined
+        input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
+    };
+    const autoResetUndefined = (input) => {
+        if (!input.options)
+            return;
+        input.set(undefined);
+    };
+    const defaultAutoResetArrayOfIDs = (input) => {
+        if (!input.options)
+            return;
+        // if one of values not in options, reset the input 
+        for (const id of input.value) {
+            let found = false;
+            for (const item of input.options.items) {
+                if (item.id === id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                input.set([]);
+            }
+        }
+    };
+    const autoResetArrayToEmpty = (input) => {
+        if (!input.options)
+            return;
+        input.set([]);
+    };
 
     class XSingleFilter extends XFilter {
         constructor(field, value) {
@@ -2687,6 +2728,10 @@
     exports.XNOT_EQ = XNOT_EQ;
     exports.XNOT_EQ_Filter = XNOT_EQ_Filter;
     exports.XSingleFilter = XSingleFilter;
+    exports.autoResetArrayToEmpty = autoResetArrayToEmpty;
+    exports.autoResetUndefined = autoResetUndefined;
+    exports.defaultAutoReset = defaultAutoReset;
+    exports.defaultAutoResetArrayOfIDs = defaultAutoResetArrayOfIDs;
     exports.field = field;
     exports.field_field = field_field;
     exports.foreign = foreign;

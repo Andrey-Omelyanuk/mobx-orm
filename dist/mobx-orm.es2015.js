@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.22
+   * mobx-orm.js v1.2.23
    * Released under the MIT license.
    */
 
@@ -984,6 +984,47 @@ class ArrayNumberInput extends ArrayInput {
         return result.length ? result.join(',') : undefined;
     }
 }
+
+const defaultAutoReset = (input) => {
+    var _a;
+    if (!input.options)
+        return;
+    // if value still in options, do nothing
+    for (const item of input.options.items) {
+        if (item.id === input.value) {
+            return;
+        }
+    }
+    // otherwise set available id or undefined
+    input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
+};
+const autoResetUndefined = (input) => {
+    if (!input.options)
+        return;
+    input.set(undefined);
+};
+const defaultAutoResetArrayOfIDs = (input) => {
+    if (!input.options)
+        return;
+    // if one of values not in options, reset the input 
+    for (const id of input.value) {
+        let found = false;
+        for (const item of input.options.items) {
+            if (item.id === id) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            input.set([]);
+        }
+    }
+};
+const autoResetArrayToEmpty = (input) => {
+    if (!input.options)
+        return;
+    input.set([]);
+};
 
 class XSingleFilter extends XFilter {
     constructor(field, value) {
@@ -2609,5 +2650,5 @@ function local() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayToEmpty, autoResetUndefined, defaultAutoReset, defaultAutoResetArrayOfIDs, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map
