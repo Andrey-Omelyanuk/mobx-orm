@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.25
+   * mobx-orm.js v1.2.26
    * Released under the MIT license.
    */
 
@@ -800,7 +800,7 @@ class Input {
             this.set(this.serialize(searchParams.get(name)));
         }
         // watch for URL changes and update Input
-        window.addEventListener('locationchange', function () {
+        window.addEventListener('popstate', () => {
             let params = new URLSearchParams(document.location.search);
             if (params.has(name)) {
                 const value = params.get(name);

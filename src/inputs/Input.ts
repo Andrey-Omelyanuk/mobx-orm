@@ -16,12 +16,12 @@ export abstract class Input<T> {
                 readonly options : Query<Model> // should be a Query
                 readonly syncURL?: string
     __disposers = [] 
-
+    
     constructor(args?: InputConstructorArgs<T>) {
         this.value = args?.value
         this.options = args?.options
         this.syncURL = args?.syncURL
-        this.isReady = this.options === undefined || this.options?.isReady
+                this.isReady = this.options === undefined || this.options?.isReady
         makeObservable(this)
         if (this.options) {
             this.__disposers.push(reaction(
@@ -71,7 +71,7 @@ export abstract class Input<T> {
         }
         
         // watch for URL changes and update Input
-        window.addEventListener('locationchange', function () {
+        window.addEventListener('popstate', () => {
             let params = new URLSearchParams(document.location.search)
             if (params.has(name)) {
                 const value = params.get(name)
