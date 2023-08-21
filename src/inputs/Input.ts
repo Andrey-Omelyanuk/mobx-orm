@@ -69,7 +69,19 @@ export abstract class Input<T> {
         if (searchParams.has(name)) {
             this.set(this.serialize(searchParams.get(name)))
         }
-        // watch for changes and update URL
+        
+        // watch for URL changes and update Input
+        window.addEventListener('locationchange', function () {
+            let params = new URLSearchParams(document.location.search)
+            if (params.has(name)) {
+                const value = params.get(name)
+                if (value !== this.deserialize(this.value)) {
+                    this.set(this.serialize(value))
+                }
+            }
+        })
+
+        // watch for Input changes and update URL
         return reaction(
             () => this.value,
             (value: any) => {
