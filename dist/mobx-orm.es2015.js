@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.24
+   * mobx-orm.js v1.2.25
    * Released under the MIT license.
    */
 
@@ -799,7 +799,17 @@ class Input {
         if (searchParams.has(name)) {
             this.set(this.serialize(searchParams.get(name)));
         }
-        // watch for changes and update URL
+        // watch for URL changes and update Input
+        window.addEventListener('locationchange', function () {
+            let params = new URLSearchParams(document.location.search);
+            if (params.has(name)) {
+                const value = params.get(name);
+                if (value !== this.deserialize(this.value)) {
+                    this.set(this.serialize(value));
+                }
+            }
+        });
+        // watch for Input changes and update URL
         return reaction(() => this.value, (value) => {
             const searchParams = new URLSearchParams(window.location.search);
             if ((value === '' || value === undefined || (Array.isArray(value) && !value.length))) {
@@ -986,27 +996,28 @@ class ArrayNumberInput extends ArrayInput {
     }
 }
 
-const defaultAutoReset = (input) => {
+// TODO: fix types
+function autoResetId(input) {
     var _a;
     if (!input.options)
-        return;
+        input.set(input.value);
     // if value still in options, do nothing
     for (const item of input.options.items) {
         if (item.id === input.value) {
-            return;
+            input.set(input.value);
         }
     }
     // otherwise set available id or undefined
     input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
-};
-const autoResetUndefined = (input) => {
+}
+const autoResetDefault = (input) => {
     if (!input.options)
-        return;
+        input.set(input.value);
     input.set(undefined);
 };
-const defaultAutoResetArrayOfIDs = (input) => {
+const autoResetArrayOfIDs = (input) => {
     if (!input.options)
-        return;
+        input.set([]);
     // if one of values not in options, reset the input 
     for (const id of input.value) {
         let found = false;
@@ -1020,10 +1031,11 @@ const defaultAutoResetArrayOfIDs = (input) => {
             input.set([]);
         }
     }
+    input.set(input.value);
 };
 const autoResetArrayToEmpty = (input) => {
     if (!input.options)
-        return;
+        input.set(input.value);
     input.set([]);
 };
 
@@ -2654,5 +2666,5 @@ function local() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayToEmpty, autoResetUndefined, defaultAutoReset, defaultAutoResetArrayOfIDs, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

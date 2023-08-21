@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.24
+   * mobx-orm.js v1.2.25
    * Released under the MIT license.
    */
 
@@ -803,7 +803,17 @@
             if (searchParams.has(name)) {
                 this.set(this.serialize(searchParams.get(name)));
             }
-            // watch for changes and update URL
+            // watch for URL changes and update Input
+            window.addEventListener('locationchange', function () {
+                let params = new URLSearchParams(document.location.search);
+                if (params.has(name)) {
+                    const value = params.get(name);
+                    if (value !== this.deserialize(this.value)) {
+                        this.set(this.serialize(value));
+                    }
+                }
+            });
+            // watch for Input changes and update URL
             return mobx.reaction(() => this.value, (value) => {
                 const searchParams = new URLSearchParams(window.location.search);
                 if ((value === '' || value === undefined || (Array.isArray(value) && !value.length))) {
@@ -990,27 +1000,28 @@
         }
     }
 
-    const defaultAutoReset = (input) => {
+    // TODO: fix types
+    function autoResetId(input) {
         var _a;
         if (!input.options)
-            return;
+            input.set(input.value);
         // if value still in options, do nothing
         for (const item of input.options.items) {
             if (item.id === input.value) {
-                return;
+                input.set(input.value);
             }
         }
         // otherwise set available id or undefined
         input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
-    };
-    const autoResetUndefined = (input) => {
+    }
+    const autoResetDefault = (input) => {
         if (!input.options)
-            return;
+            input.set(input.value);
         input.set(undefined);
     };
-    const defaultAutoResetArrayOfIDs = (input) => {
+    const autoResetArrayOfIDs = (input) => {
         if (!input.options)
-            return;
+            input.set([]);
         // if one of values not in options, reset the input 
         for (const id of input.value) {
             let found = false;
@@ -1024,10 +1035,11 @@
                 input.set([]);
             }
         }
+        input.set(input.value);
     };
     const autoResetArrayToEmpty = (input) => {
         if (!input.options)
-            return;
+            input.set(input.value);
         input.set([]);
     };
 
@@ -2732,10 +2744,10 @@
     exports.XNOT_EQ = XNOT_EQ;
     exports.XNOT_EQ_Filter = XNOT_EQ_Filter;
     exports.XSingleFilter = XSingleFilter;
+    exports.autoResetArrayOfIDs = autoResetArrayOfIDs;
     exports.autoResetArrayToEmpty = autoResetArrayToEmpty;
-    exports.autoResetUndefined = autoResetUndefined;
-    exports.defaultAutoReset = defaultAutoReset;
-    exports.defaultAutoResetArrayOfIDs = defaultAutoResetArrayOfIDs;
+    exports.autoResetDefault = autoResetDefault;
+    exports.autoResetId = autoResetId;
     exports.field = field;
     exports.field_field = field_field;
     exports.foreign = foreign;
