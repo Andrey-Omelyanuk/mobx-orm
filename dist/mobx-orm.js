@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.26
+   * mobx-orm.js v1.2.27
    * Released under the MIT license.
    */
 
@@ -2492,6 +2492,7 @@
             return await this.model.__adapter.__action(obj.id, name, kwargs);
         }
         async create(obj) {
+            var _a;
             try {
                 let raw_obj = await this.__create(obj.raw_data);
                 obj.updateFromRaw(raw_obj);
@@ -2499,12 +2500,13 @@
                 obj.setError(undefined);
             }
             catch (e) {
-                obj.setError(e.response.data);
+                obj.setError((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
                 throw e;
             }
             return obj;
         }
         async update(obj) {
+            var _a;
             try {
                 let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data);
                 obj.updateFromRaw(raw_obj);
@@ -2512,19 +2514,20 @@
                 obj.setError(undefined);
             }
             catch (e) {
-                obj.setError(e.response.data);
+                obj.setError((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
                 throw e;
             }
             return obj;
         }
         async delete(obj) {
+            var _a;
             try {
                 await this.__delete(obj.id);
                 mobx.runInAction(() => obj.id = undefined);
                 obj.setError(undefined);
             }
             catch (e) {
-                obj.setError(e.response.data);
+                obj.setError((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
                 throw e;
             }
             return obj;

@@ -32,7 +32,7 @@ export abstract class  Adapter<M extends Model> {
             obj.setError(undefined)
         }
         catch (e) {
-            obj.setError(e.response.data)
+            obj.setError(e.response?.data)
             throw e
         }
         return obj
@@ -46,7 +46,7 @@ export abstract class  Adapter<M extends Model> {
             obj.setError(undefined)
         }
         catch (e) {
-            obj.setError(e.response.data)
+            obj.setError(e.response?.data)
             throw e
         }
         return obj
@@ -59,7 +59,7 @@ export abstract class  Adapter<M extends Model> {
             obj.setError(undefined)
         }
         catch (e) {
-            obj.setError(e.response.data)
+            obj.setError(e.response?.data)
             throw e
         }
         return obj
