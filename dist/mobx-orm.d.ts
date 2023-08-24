@@ -24,6 +24,7 @@ declare abstract class Input<T> {
     isReady: boolean;
     readonly options: QueryX<Model>;
     readonly syncURL?: string;
+    readonly syncLocalStorage?: string;
     __disposers: any[];
     constructor(args?: InputConstructorArgs<T>);
     set(value: T): void;
@@ -32,6 +33,7 @@ declare abstract class Input<T> {
     abstract deserialize(value: T): string;
     toString(): string;
     __doSyncURL(): () => void;
+    __doSyncLocalStorage(): () => void;
 }
 
 declare class StringInput extends Input<string | null | undefined> {

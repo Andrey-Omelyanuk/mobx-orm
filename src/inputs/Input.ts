@@ -15,13 +15,15 @@ export abstract class Input<T> {
     @observable          isReady : boolean
                 readonly options : Query<Model> // should be a Query
                 readonly syncURL?: string
+                readonly syncLocalStorage?: string
     __disposers = [] 
     
     constructor(args?: InputConstructorArgs<T>) {
         this.value = args?.value
         this.options = args?.options
         this.syncURL = args?.syncURL
-                this.isReady = this.options === undefined || this.options?.isReady
+        this.syncLocalStorage = args?.syncLocalStorage
+        this.isReady = this.options === undefined || this.options?.isReady
         makeObservable(this)
         if (this.options) {
             this.__disposers.push(reaction(
@@ -33,7 +35,9 @@ export abstract class Input<T> {
                 } 
             ))
         }
+
         this.syncURL !== undefined && this.__disposers.push(this.__doSyncURL())
+        this.syncLocalStorage !== undefined && this.__disposers.push(this.__doSyncLocalStorage())
 
         args?.autoReset && this.options && this.__disposers.push(
             reaction(
@@ -89,10 +93,30 @@ export abstract class Input<T> {
                 if ((value === '' || value === undefined || (Array.isArray(value) && !value.length))) {
                     searchParams.delete(name)
                 } else {
-                    searchParams.set(name, this.deserialize(this.value))
+                    searchParams.set(name, this.deserialize(value))
                 }
                 // update URL
                 window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`)
+            },
+            { fireImmediately: true },
+        )
+    }
+
+    __doSyncLocalStorage (): () => void {
+        const name = this.syncLocalStorage
+        const value = this.serialize(localStorage.getItem(name))
+        if (this.value !== value) {
+            this.set(value)
+        }
+        return reaction(
+            () => this.value,
+            (value) => {
+                if (value !== undefined) {
+                    localStorage.setItem(name, this.deserialize(value))
+                } else {
+                    localStorage.removeItem(name)
+                }
+
             },
             { fireImmediately: true },
         )

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.27
+   * mobx-orm.js v1.2.28
    * Released under the MIT license.
    */
 
@@ -758,6 +758,12 @@ class Input {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "syncLocalStorage", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "__disposers", {
             enumerable: true,
             configurable: true,
@@ -767,6 +773,7 @@ class Input {
         this.value = args === null || args === void 0 ? void 0 : args.value;
         this.options = args === null || args === void 0 ? void 0 : args.options;
         this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
+        this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
         this.isReady = this.options === undefined || ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady);
         makeObservable(this);
         if (this.options) {
@@ -777,6 +784,7 @@ class Input {
             }));
         }
         this.syncURL !== undefined && this.__disposers.push(this.__doSyncURL());
+        this.syncLocalStorage !== undefined && this.__disposers.push(this.__doSyncLocalStorage());
         (args === null || args === void 0 ? void 0 : args.autoReset) && this.options && this.__disposers.push(reaction(() => this.options.is_ready, (is_ready) => is_ready && args.autoReset(this), { fireImmediately: true }));
     }
     set(value) {
@@ -816,10 +824,25 @@ class Input {
                 searchParams.delete(name);
             }
             else {
-                searchParams.set(name, this.deserialize(this.value));
+                searchParams.set(name, this.deserialize(value));
             }
             // update URL
             window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`);
+        }, { fireImmediately: true });
+    }
+    __doSyncLocalStorage() {
+        const name = this.syncLocalStorage;
+        const value = this.serialize(localStorage.getItem(name));
+        if (this.value !== value) {
+            this.set(value);
+        }
+        return reaction(() => this.value, (value) => {
+            if (value !== undefined) {
+                localStorage.setItem(name, this.deserialize(value));
+            }
+            else {
+                localStorage.removeItem(name);
+            }
         }, { fireImmediately: true });
     }
 }
