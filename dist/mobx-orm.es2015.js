@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.29
+   * mobx-orm.js v1.2.30
    * Released under the MIT license.
    */
 
@@ -832,7 +832,7 @@ class Input {
     }
     __doSyncLocalStorage() {
         const name = this.syncLocalStorage;
-        const value = this.serialize(localStorage.has(name) ? localStorage.getItem(name) : undefined);
+        const value = this.serialize(localStorage.getItem(name) === null ? localStorage.getItem(name) : undefined);
         if (this.value !== value) {
             this.set(value);
         }
