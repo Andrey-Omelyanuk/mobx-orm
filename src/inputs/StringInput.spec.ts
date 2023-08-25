@@ -7,7 +7,7 @@ describe('StringValue', () => {
         it('"test"'   , async () => { expect(value.serialize('test'   )).toBe('test') })
         it('"null"'   , async () => { expect(value.serialize('null'   )).toBe(null) })
         it('undefined', async () => { expect(value.serialize(undefined)).toBe(undefined) })
-        it('null'     , async () => { expect(value.serialize(null     )).toBe(null) })
+        it('null'     , async () => { expect(value.serialize(null     )).toBe(undefined) })
     })
     describe('deserialize', () => {
         it('"0"'      , async () => { expect(value.deserialize('0'      )).toBe('0') })

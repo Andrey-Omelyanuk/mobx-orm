@@ -104,7 +104,7 @@ export abstract class Input<T> {
 
     __doSyncLocalStorage (): () => void {
         const name = this.syncLocalStorage
-        const value = this.serialize(localStorage.getItem(name) === null ? localStorage.getItem(name) : undefined)
+        const value = this.serialize(localStorage.getItem(name))
         if (this.value !== value) {
             this.set(value)
         }

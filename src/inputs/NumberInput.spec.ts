@@ -7,7 +7,7 @@ describe('NumberInput', () => {
         it('"test"'   , async () => { expect(value.serialize('test'   )).toBe(undefined) })
         it('"null"'   , async () => { expect(value.serialize('null'   )).toBe(null) })
         it('undefined', async () => { expect(value.serialize(undefined)).toBe(undefined) })
-        it('null'     , async () => { expect(value.serialize(null     )).toBe(null) })
+        it('null'     , async () => { expect(value.serialize(null     )).toBe(undefined) })
     })
 
     describe('deserialize', () => {

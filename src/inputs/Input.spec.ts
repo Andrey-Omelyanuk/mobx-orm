@@ -137,4 +137,33 @@ describe('Input', () => {
                                                                     expect(inputB.options.isReady).toBe(true)
                                                                     expect(inputB.isReady).toBe(true)
     })
+
+    describe('syncLocalStorage', () => {
+        it('empty', async () => {
+            const name = 'test'
+            const string_input = new StringInput({ syncLocalStorage: name })
+            expect(string_input.value).toBe(undefined)
+            expect(localStorage.getItem(name)).toBe(null)
+
+            const number_input = new NumberInput({ syncLocalStorage: name })
+            expect(number_input.value).toBe(undefined)
+            expect(localStorage.getItem(name)).toBe(null)
+        })
+
+        it('input has value but LocalStorage has more priority', async () => {
+            const name = 'test'
+            localStorage.setItem(name, 'xxx')
+            const input = new StringInput({value: 'test', syncLocalStorage: name })
+            expect(input.value).toBe('xxx')
+            expect(localStorage.getItem(name)).toBe('xxx')
+        })
+
+        it('set input.value and get it in LocalStorage', async () => {
+            const name = 'test', value = 'xxx'
+            const input = new StringInput({ syncLocalStorage: name })
+            input.set(value)
+            expect(input.value).toBe(value)
+            expect(localStorage.getItem(name)).toBe(value)
+        })
+    })
 })
