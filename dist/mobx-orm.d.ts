@@ -75,7 +75,7 @@ declare class ArrayNumberInput extends ArrayInput<number[]> {
     deserialize(value: number[]): string;
 }
 
-declare function autoResetId(input: any): void;
+declare function autoResetId(input: NumberInput): void;
 declare const autoResetDefault: (input: any) => void;
 declare const autoResetArrayOfIDs: (input: ArrayNumberInput) => void;
 declare const autoResetArrayToEmpty: (input: any) => void;

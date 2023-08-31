@@ -1,18 +1,23 @@
-import { Input, ArrayInput, ArrayNumberInput } from '..'
+import { NumberInput, ArrayNumberInput } from '..'
 
-// TODO: fix types
-export function autoResetId(input: any) {
-    if (!input.options) input.set(input.value)
+export function autoResetId(input: NumberInput) {
+    if (!input.options) {
+        console.warn('Input with autoResetId has no options', input)
+        return 
+    }
     // if value still in options, do nothing
     for (const item of input.options.items) {
         if (item.id === input.value) {
-            input.set(input.value)
+            input.set(input.value) // we need to set value to trigger reaction
+            return
         }
     }
-    // otherwise set available id or undefined
-    input.set(input.options.items[0]?.id)
+    // otherwise set first available id
+    const firstAvailableId = input.options.items[0]?.id
+    if (firstAvailableId !== undefined) input.set(firstAvailableId)
 }
 
+// TODO: fix types
 export const autoResetDefault = (input: any) => {
     if (!input.options) input.set(input.value)
     input.set(undefined)

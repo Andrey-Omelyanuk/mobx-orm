@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.32
+   * mobx-orm.js v1.2.33
    * Released under the MIT license.
    */
 
@@ -1021,20 +1021,25 @@ class ArrayNumberInput extends ArrayInput {
     }
 }
 
-// TODO: fix types
 function autoResetId(input) {
     var _a;
-    if (!input.options)
-        input.set(input.value);
+    if (!input.options) {
+        console.warn('Input with autoResetId has no options', input);
+        return;
+    }
     // if value still in options, do nothing
     for (const item of input.options.items) {
         if (item.id === input.value) {
-            input.set(input.value);
+            input.set(input.value); // we need to set value to trigger reaction
+            return;
         }
     }
-    // otherwise set available id or undefined
-    input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
+    // otherwise set first available id
+    const firstAvailableId = (_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id;
+    if (firstAvailableId !== undefined)
+        input.set(firstAvailableId);
 }
+// TODO: fix types
 const autoResetDefault = (input) => {
     if (!input.options)
         input.set(input.value);
