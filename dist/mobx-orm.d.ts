@@ -76,8 +76,11 @@ declare class ArrayNumberInput extends ArrayInput<number[]> {
 }
 
 declare function autoResetId(input: NumberInput): void;
-declare const autoResetDefault: (input: any) => void;
+
 declare const autoResetArrayOfIDs: (input: ArrayNumberInput) => void;
+
+declare const autoResetDefault: (input: any) => void;
+
 declare const autoResetArrayToEmpty: (input: any) => void;
 
 declare abstract class XSingleFilter extends XFilter {

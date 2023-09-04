@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.33
+   * mobx-orm.js v1.2.34
    * Released under the MIT license.
    */
 
@@ -1025,6 +1025,8 @@
         }
     }
 
+    // NOTE: input with autoResetId should have the value,
+    //      undefined value => input is not ready 
     function autoResetId(input) {
         var _a;
         if (!input.options) {
@@ -1042,16 +1044,15 @@
         const firstAvailableId = (_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id;
         if (firstAvailableId !== undefined)
             input.set(firstAvailableId);
+        else
+            mobx.runInAction(() => input.value = undefined);
     }
-    // TODO: fix types
-    const autoResetDefault = (input) => {
-        if (!input.options)
-            input.set(input.value);
-        input.set(undefined);
-    };
+
     const autoResetArrayOfIDs = (input) => {
-        if (!input.options)
-            input.set([]);
+        if (!input.options) {
+            console.warn('Input with autoResetArrayOfIDs has no options', input);
+            return;
+        }
         // if one of values not in options, reset the input 
         for (const id of input.value) {
             let found = false;
@@ -1067,6 +1068,13 @@
         }
         input.set(input.value);
     };
+
+    const autoResetDefault = (input) => {
+        if (!input.options)
+            input.set(input.value);
+        input.set(undefined);
+    };
+
     const autoResetArrayToEmpty = (input) => {
         if (!input.options)
             input.set(input.value);

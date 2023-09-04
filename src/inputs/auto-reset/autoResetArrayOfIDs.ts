@@ -1,14 +1,10 @@
-import { runInAction } from 'mobx'
-import { NumberInput, ArrayNumberInput } from '..'
-
-// TODO: fix types
-export const autoResetDefault = (input: any) => {
-    if (!input.options) input.set(input.value)
-    input.set(undefined)
-}
+import { ArrayNumberInput } from '..'
 
 export const autoResetArrayOfIDs = (input: ArrayNumberInput) => {
-    if (!input.options) input.set([])
+    if (!input.options) {
+        console.warn('Input with autoResetArrayOfIDs has no options', input)
+        return 
+    }
     // if one of values not in options, reset the input 
     for (const id of input.value) {
         let found = false
@@ -23,9 +19,4 @@ export const autoResetArrayOfIDs = (input: ArrayNumberInput) => {
         }
     }
     input.set(input.value)
-}
-
-export const autoResetArrayToEmpty = (input: any) => {
-    if (!input.options) input.set(input.value)
-    input.set([])
 }
