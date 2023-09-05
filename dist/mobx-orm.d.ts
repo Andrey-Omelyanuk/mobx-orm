@@ -14,6 +14,7 @@ declare abstract class XFilter {
 
 interface InputConstructorArgs<T> {
     value?: T;
+    required?: boolean;
     options?: any;
     syncURL?: string;
     syncLocalStorage?: string;
@@ -23,6 +24,7 @@ declare abstract class Input<T> {
     readonly value: T;
     isReady: boolean;
     readonly options: QueryX<Model>;
+    readonly required?: boolean;
     readonly syncURL?: string;
     readonly syncLocalStorage?: string;
     __disposers: any[];

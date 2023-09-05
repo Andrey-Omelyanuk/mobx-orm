@@ -17,6 +17,11 @@ export function autoResetId(input: NumberInput) {
     }
     // otherwise set first available id
     const firstAvailableId = input.options.items[0]?.id
-    if (firstAvailableId !== undefined) input.set(firstAvailableId)
-    else runInAction(() => (input as any).value = undefined)
+    // if input is required and value is undefined
+    // then don't use "set" because we don't need to set isReady to true
+    if (firstAvailableId === undefined && input.required) {
+        runInAction(() => (input as any).value = undefined)
+    } else {
+        input.set(firstAvailableId)
+    }
 }

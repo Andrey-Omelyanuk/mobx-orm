@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.34
+   * mobx-orm.js v1.2.35
    * Released under the MIT license.
    */
 
@@ -737,7 +737,6 @@
 
     class Input {
         constructor(args) {
-            var _a;
             Object.defineProperty(this, "value", {
                 enumerable: true,
                 configurable: true,
@@ -756,6 +755,12 @@
                 writable: true,
                 value: void 0
             }); // should be a Query
+            Object.defineProperty(this, "required", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
             Object.defineProperty(this, "syncURL", {
                 enumerable: true,
                 configurable: true,
@@ -775,10 +780,11 @@
                 value: []
             });
             this.value = args === null || args === void 0 ? void 0 : args.value;
+            this.required = args === null || args === void 0 ? void 0 : args.required;
             this.options = args === null || args === void 0 ? void 0 : args.options;
             this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
             this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
-            this.isReady = this.options === undefined || ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady);
+            this.isReady = this.options === undefined || this.options.isReady;
             mobx.makeObservable(this);
             if (this.options) {
                 this.__disposers.push(mobx.reaction(() => !this.options.is_ready, (needToReset) => {
@@ -1042,10 +1048,14 @@
         }
         // otherwise set first available id
         const firstAvailableId = (_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id;
-        if (firstAvailableId !== undefined)
-            input.set(firstAvailableId);
-        else
+        // if input is required and value is undefined
+        // then don't use "set" because we don't need to set isReady to true
+        if (firstAvailableId === undefined && input.required) {
             mobx.runInAction(() => input.value = undefined);
+        }
+        else {
+            input.set(firstAvailableId);
+        }
     }
 
     const autoResetArrayOfIDs = (input) => {

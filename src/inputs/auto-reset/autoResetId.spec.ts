@@ -48,6 +48,20 @@ describe('autoResetId', () => {
         runInAction(() => input.isReady = false)
         autoResetId(input)
         expect(input.value).toBe(undefined)
+        expect(input.isReady).toBe(true)
+    })
+    it('input is required with options - the value is not in the options - options is empty', async () => {
+        const input = new NumberInput({
+            value: 4,
+            options: {
+                items: [],
+                isReady: true,
+            },
+            required: true,
+        })
+        runInAction(() => input.isReady = false)
+        autoResetId(input)
+        expect(input.value).toBe(undefined)
         expect(input.isReady).toBe(false)
     })
 })

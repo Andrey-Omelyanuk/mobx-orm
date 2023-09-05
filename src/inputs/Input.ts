@@ -3,6 +3,7 @@ import { Model, QueryX as Query } from '..'
 
 export interface InputConstructorArgs<T> {
     value?: T,
+    required?: boolean,
     options?: any,
     syncURL?: string,
     syncLocalStorage?: string
@@ -14,16 +15,18 @@ export abstract class Input<T> {
     @observable readonly value   : T
     @observable          isReady : boolean
                 readonly options : Query<Model> // should be a Query
+                readonly required?: boolean 
                 readonly syncURL?: string
                 readonly syncLocalStorage?: string
     __disposers = [] 
     
     constructor(args?: InputConstructorArgs<T>) {
         this.value = args?.value
+        this.required = args?.required
         this.options = args?.options
         this.syncURL = args?.syncURL
         this.syncLocalStorage = args?.syncLocalStorage
-        this.isReady = this.options === undefined || this.options?.isReady
+        this.isReady = this.options === undefined || this.options.isReady
         makeObservable(this)
         if (this.options) {
             this.__disposers.push(reaction(
