@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.35
+   * mobx-orm.js v1.2.36
    * Released under the MIT license.
    */
 
@@ -2058,6 +2058,29 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], QueryXStream.prototype, "goToNextPage", null);
 
+class QueryXRaw extends QueryX {
+    async __load() {
+        // get only raw objects from adapter
+        const objs = await this.adapter.__load(this.selector);
+        runInAction(() => {
+            this.__items = objs;
+        });
+    }
+}
+
+// TODO: fix types
+class QueryXRawPage extends QueryXPage {
+    async __load() {
+        // get only raw objects from adapter
+        const objs = await this.adapter.__load(this.selector);
+        const total = await this.adapter.getTotalCount(this.selector.filter);
+        runInAction(() => {
+            this.__items = objs;
+            this.total = total;
+        });
+    }
+}
+
 class Model {
     constructor(...args) {
         Object.defineProperty(this, "id", {
@@ -2108,10 +2131,27 @@ class Model {
         }
         return query;
     }
+    static getQueryXRaw(options) {
+        const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
+        const query = new QueryXRaw(this.__adapter, selector);
+        if (options === null || options === void 0 ? void 0 : options.autoupdate) {
+            runInAction(() => query.autoupdate = options.autoupdate);
+        }
+        return query;
+    }
     // TODO: need to refactor
     static getQueryXPage(options) {
         const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
         const query = new QueryXPage(this.__adapter, selector);
+        if (options === null || options === void 0 ? void 0 : options.autoupdate) {
+            runInAction(() => query.autoupdate = options.autoupdate);
+        }
+        return query;
+    }
+    // TODO: need to refactor
+    static getQueryXRawPage(options) {
+        const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
+        const query = new QueryXRawPage(this.__adapter, selector);
         if (options === null || options === void 0 ? void 0 : options.autoupdate) {
             runInAction(() => query.autoupdate = options.autoupdate);
         }
@@ -2717,5 +2757,5 @@ function local() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, ReadOnlyModel, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

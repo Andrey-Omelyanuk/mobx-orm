@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.35
+   * mobx-orm.js v1.2.36
    * Released under the MIT license.
    */
 
@@ -2062,6 +2062,29 @@
         __metadata("design:returntype", void 0)
     ], QueryXStream.prototype, "goToNextPage", null);
 
+    class QueryXRaw extends QueryX {
+        async __load() {
+            // get only raw objects from adapter
+            const objs = await this.adapter.__load(this.selector);
+            mobx.runInAction(() => {
+                this.__items = objs;
+            });
+        }
+    }
+
+    // TODO: fix types
+    class QueryXRawPage extends QueryXPage {
+        async __load() {
+            // get only raw objects from adapter
+            const objs = await this.adapter.__load(this.selector);
+            const total = await this.adapter.getTotalCount(this.selector.filter);
+            mobx.runInAction(() => {
+                this.__items = objs;
+                this.total = total;
+            });
+        }
+    }
+
     class Model {
         constructor(...args) {
             Object.defineProperty(this, "id", {
@@ -2112,10 +2135,27 @@
             }
             return query;
         }
+        static getQueryXRaw(options) {
+            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
+            const query = new QueryXRaw(this.__adapter, selector);
+            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
+                mobx.runInAction(() => query.autoupdate = options.autoupdate);
+            }
+            return query;
+        }
         // TODO: need to refactor
         static getQueryXPage(options) {
             const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
             const query = new QueryXPage(this.__adapter, selector);
+            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
+                mobx.runInAction(() => query.autoupdate = options.autoupdate);
+            }
+            return query;
+        }
+        // TODO: need to refactor
+        static getQueryXRawPage(options) {
+            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
+            const query = new QueryXRawPage(this.__adapter, selector);
             if (options === null || options === void 0 ? void 0 : options.autoupdate) {
                 mobx.runInAction(() => query.autoupdate = options.autoupdate);
             }
@@ -2765,6 +2805,8 @@
     exports.QueryX = QueryX;
     exports.QueryXCacheSync = QueryXCacheSync;
     exports.QueryXPage = QueryXPage;
+    exports.QueryXRaw = QueryXRaw;
+    exports.QueryXRawPage = QueryXRawPage;
     exports.QueryXStream = QueryXStream;
     exports.ReadOnlyModel = ReadOnlyModel;
     exports.SelectorX = SelectorX;
