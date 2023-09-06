@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.39
+   * mobx-orm.js v1.2.40
    * Released under the MIT license.
    */
 
@@ -824,7 +824,7 @@ class Input {
             this.options.autoupdate = false;
     }
     enable() {
-        this.disabled = true;
+        this.disabled = false;
         if (this.options)
             this.options.autoupdate = true;
     }
