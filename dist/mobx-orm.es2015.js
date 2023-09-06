@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.36
+   * mobx-orm.js v1.2.37
    * Released under the MIT license.
    */
 
@@ -739,12 +739,6 @@ class Input {
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "isReady", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
         Object.defineProperty(this, "options", {
             enumerable: true,
             configurable: true,
@@ -752,6 +746,12 @@ class Input {
             value: void 0
         }); // should be a Query
         Object.defineProperty(this, "required", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "disabled", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -769,42 +769,75 @@ class Input {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "autoReset", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "__isReady", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "__disposers", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: []
         });
+        // init all observables before use it in reaction
         this.value = args === null || args === void 0 ? void 0 : args.value;
-        this.required = args === null || args === void 0 ? void 0 : args.required;
         this.options = args === null || args === void 0 ? void 0 : args.options;
+        this.required = !!(args === null || args === void 0 ? void 0 : args.required);
+        this.disabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
         this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
         this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
-        this.isReady = this.options === undefined || this.options.isReady;
-        makeObservable(this);
+        this.autoReset = args === null || args === void 0 ? void 0 : args.autoReset;
         if (this.options) {
-            this.__disposers.push(reaction(() => !this.options.is_ready, (needToReset) => {
-                if (needToReset) {
-                    this.isReady = false;
-                }
-            }));
+            this.__isReady = false;
+            this.options.autoupdate = !this.disabled;
         }
-        this.syncURL !== undefined && this.__disposers.push(this.__doSyncURL());
-        this.syncLocalStorage !== undefined && this.__disposers.push(this.__doSyncLocalStorage());
-        (args === null || args === void 0 ? void 0 : args.autoReset) && this.options && this.__disposers.push(reaction(() => this.options.is_ready, (is_ready) => is_ready && args.autoReset(this), { fireImmediately: true }));
+        else {
+            this.__isReady = true;
+        }
+        makeObservable(this);
+        // init reactions
+        this.options && this.__disposers.push(this.__doOptions());
+        this.syncURL && this.__disposers.push(this.__doSyncURL());
+        this.syncLocalStorage && this.__disposers.push(this.__doSyncLocalStorage());
+        this.autoReset && this.__disposers.push(this.__doAutoReset());
     }
+    get isReady() { return this.__isReady && (this.options === undefined || this.options.isReady); }
     set(value) {
-        var _a;
         this.value = value;
-        if ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady) {
-            this.isReady = true;
+        if (!this.required || !(this.required && value === undefined)) {
+            this.__isReady = true;
         }
+    }
+    disable() {
+        this.disabled = true;
+        if (this.options)
+            this.options.autoupdate = false;
+    }
+    enable(value) {
+        this.disabled = true;
+        if (this.options)
+            this.options.autoupdate = true;
     }
     destroy() {
         this.__disposers.forEach(disposer => disposer());
     }
     toString() {
         return this.deserialize(this.value);
+    }
+    // Any changes in options should reset __isReady
+    __doOptions() {
+        return reaction(() => this.options.is_ready, () => this.__isReady = false);
+    }
+    __doAutoReset() {
+        return reaction(() => this.options.is_ready && !this.disabled, (is_ready) => is_ready && this.autoReset(this), { fireImmediately: true });
     }
     __doSyncURL() {
         // init from URL Search Params
@@ -859,13 +892,33 @@ __decorate([
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], Input.prototype, "isReady", void 0);
+], Input.prototype, "required", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Input.prototype, "disabled", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Input.prototype, "__isReady", void 0);
 __decorate([
     action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Input.prototype, "set", null);
+__decorate([
+    action,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], Input.prototype, "disable", null);
+__decorate([
+    action,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], Input.prototype, "enable", null);
 
 class StringInput extends Input {
     serialize(value) {
@@ -1027,8 +1080,6 @@ class ArrayNumberInput extends ArrayInput {
     }
 }
 
-// NOTE: input with autoResetId should have the value,
-//      undefined value => input is not ready 
 function autoResetId(input) {
     var _a;
     if (!input.options) {
@@ -1042,16 +1093,8 @@ function autoResetId(input) {
             return;
         }
     }
-    // otherwise set first available id
-    const firstAvailableId = (_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id;
-    // if input is required and value is undefined
-    // then don't use "set" because we don't need to set isReady to true
-    if (firstAvailableId === undefined && input.required) {
-        runInAction(() => input.value = undefined);
-    }
-    else {
-        input.set(firstAvailableId);
-    }
+    // otherwise set first available id or undefined
+    input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
 }
 
 const autoResetArrayOfIDs = (input) => {

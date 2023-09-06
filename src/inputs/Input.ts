@@ -2,60 +2,67 @@ import { action, makeObservable, observable, reaction } from 'mobx'
 import { Model, QueryX as Query } from '..'
 
 export interface InputConstructorArgs<T> {
-    value?: T,
-    required?: boolean,
-    options?: any,
-    syncURL?: string,
-    syncLocalStorage?: string
-    autoReset?: (input: Input<T>) => void
+    value            ?: T,
+    options          ?: any,
+    required         ?: boolean,
+    disabled         ?: boolean,
+    syncURL          ?: string,
+    syncLocalStorage ?: string
+    autoReset        ?: (input: Input<T>) => void
 }
 
 export abstract class Input<T> {
+    @observable          value               : T
+                readonly options            ?: Query<Model> // should be a Query
+    @observable          required            : boolean 
+    @observable          disabled            : boolean
+                readonly syncURL            ?: string
+                readonly syncLocalStorage   ?: string
+                readonly autoReset          ?: (input: Input<T>) => void
 
-    @observable readonly value   : T
-    @observable          isReady : boolean
-                readonly options : Query<Model> // should be a Query
-                readonly required?: boolean 
-                readonly syncURL?: string
-                readonly syncLocalStorage?: string
-    __disposers = [] 
+    @observable __isReady   : boolean
+                __disposers = [] 
     
     constructor(args?: InputConstructorArgs<T>) {
-        this.value = args?.value
-        this.required = args?.required
-        this.options = args?.options
-        this.syncURL = args?.syncURL
-        this.syncLocalStorage = args?.syncLocalStorage
-        this.isReady = this.options === undefined || this.options.isReady
-        makeObservable(this)
+        // init all observables before use it in reaction
+        this.value              = args?.value
+        this.options            = args?.options
+        this.required           = !!args?.required
+        this.disabled           = !!args?.disabled
+        this.syncURL            = args?.syncURL
+        this.syncLocalStorage   = args?.syncLocalStorage
+        this.autoReset          = args?.autoReset
         if (this.options) {
-            this.__disposers.push(reaction(
-                () => !this.options.is_ready,
-                (needToReset) => {
-                    if (needToReset) {
-                        this.isReady = false
-                    }
-                } 
-            ))
+            this.__isReady = false
+            this.options.autoupdate = !this.disabled
+        } else {
+            this.__isReady = true
         }
-
-        this.syncURL !== undefined && this.__disposers.push(this.__doSyncURL())
-        this.syncLocalStorage !== undefined && this.__disposers.push(this.__doSyncLocalStorage())
-
-        args?.autoReset && this.options && this.__disposers.push(
-            reaction(
-                () => this.options.is_ready,
-                (is_ready) => is_ready && args.autoReset(this),
-                { fireImmediately: true },
-            )
-        )
+        makeObservable(this)
+        // init reactions
+        this.options          && this.__disposers.push(this.__doOptions())
+        this.syncURL          && this.__disposers.push(this.__doSyncURL())
+        this.syncLocalStorage && this.__disposers.push(this.__doSyncLocalStorage())
+        this.autoReset        && this.__disposers.push(this.__doAutoReset())
     }
 
+    get isReady() { return this.__isReady && (this.options === undefined || this.options.isReady) } 
+
     @action set(value: T) {
-        (this.value as any) = value
-        if (this.options?.isReady) {
-            this.isReady = true
+        this.value = value
+        if (!this.required || !(this.required && value === undefined)) {
+            this.__isReady = true
         }
+    }
+
+    @action disable() {
+        this.disabled = true
+        if (this.options) this.options.autoupdate = false
+    }
+
+    @action enable(value) {
+        this.disabled = true
+        if (this.options) this.options.autoupdate = true
     }
 
     destroy() {
@@ -67,6 +74,22 @@ export abstract class Input<T> {
 
     toString() { // sinonim for deserialize
         return this.deserialize(this.value) 
+    }
+
+    // Any changes in options should reset __isReady
+    __doOptions(): () => void {
+        return reaction(
+            () => this.options.is_ready,
+            () => this.__isReady = false
+        )
+    }
+
+    __doAutoReset(): () => void {
+        return reaction(
+            () => this.options.is_ready && !this.disabled,
+            (is_ready) => is_ready && this.autoReset(this),
+            { fireImmediately: true },
+        )
     }
 
     __doSyncURL (): () => void {

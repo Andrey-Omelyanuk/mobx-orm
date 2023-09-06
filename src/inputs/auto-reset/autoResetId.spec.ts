@@ -19,7 +19,7 @@ describe('autoResetId', () => {
                 isReady: true,
             }
         })
-        runInAction(() => input.isReady = false)
+        runInAction(() => input.__isReady = false)
         autoResetId(input)
         expect(input.value).toBe(2)
         expect(input.isReady).toBe(true)
@@ -32,7 +32,7 @@ describe('autoResetId', () => {
                 isReady: true,
             }
         })
-        runInAction(() => input.isReady = false)
+        runInAction(() => input.__isReady = false)
         autoResetId(input)
         expect(input.value).toBe(1)
         expect(input.isReady).toBe(true)
@@ -45,7 +45,7 @@ describe('autoResetId', () => {
                 isReady: true,
             }
         })
-        runInAction(() => input.isReady = false)
+        runInAction(() => input.__isReady = false)
         autoResetId(input)
         expect(input.value).toBe(undefined)
         expect(input.isReady).toBe(true)
@@ -59,7 +59,7 @@ describe('autoResetId', () => {
             },
             required: true,
         })
-        runInAction(() => input.isReady = false)
+        runInAction(() => input.__isReady = false)
         autoResetId(input)
         expect(input.value).toBe(undefined)
         expect(input.isReady).toBe(false)

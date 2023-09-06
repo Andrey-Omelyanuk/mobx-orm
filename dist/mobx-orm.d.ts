@@ -14,26 +14,34 @@ declare abstract class XFilter {
 
 interface InputConstructorArgs<T> {
     value?: T;
-    required?: boolean;
     options?: any;
+    required?: boolean;
+    disabled?: boolean;
     syncURL?: string;
     syncLocalStorage?: string;
     autoReset?: (input: Input<T>) => void;
 }
 declare abstract class Input<T> {
-    readonly value: T;
-    isReady: boolean;
-    readonly options: QueryX<Model>;
-    readonly required?: boolean;
+    value: T;
+    readonly options?: QueryX<Model>;
+    required: boolean;
+    disabled: boolean;
     readonly syncURL?: string;
     readonly syncLocalStorage?: string;
+    readonly autoReset?: (input: Input<T>) => void;
+    __isReady: boolean;
     __disposers: any[];
     constructor(args?: InputConstructorArgs<T>);
+    get isReady(): boolean;
     set(value: T): void;
+    disable(): void;
+    enable(value: any): void;
     destroy(): void;
     abstract serialize(value?: string): T;
     abstract deserialize(value: T): string;
     toString(): string;
+    __doOptions(): () => void;
+    __doAutoReset(): () => void;
     __doSyncURL(): () => void;
     __doSyncLocalStorage(): () => void;
 }

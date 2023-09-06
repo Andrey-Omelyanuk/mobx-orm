@@ -1,8 +1,5 @@
-import { runInAction } from 'mobx'
 import { NumberInput } from '..'
 
-// NOTE: input with autoResetId should have the value,
-//      undefined value => input is not ready 
 export function autoResetId(input: NumberInput) {
     if (!input.options) {
         console.warn('Input with autoResetId has no options', input)
@@ -15,13 +12,6 @@ export function autoResetId(input: NumberInput) {
             return
         }
     }
-    // otherwise set first available id
-    const firstAvailableId = input.options.items[0]?.id
-    // if input is required and value is undefined
-    // then don't use "set" because we don't need to set isReady to true
-    if (firstAvailableId === undefined && input.required) {
-        runInAction(() => (input as any).value = undefined)
-    } else {
-        input.set(firstAvailableId)
-    }
+    // otherwise set first available id or undefined
+    input.set(input.options.items[0]?.id)
 }

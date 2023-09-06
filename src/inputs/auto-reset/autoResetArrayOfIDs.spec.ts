@@ -19,7 +19,7 @@ describe('autoResetArrayOfIDs', () => {
                 isReady: true,
             }
         })
-        runInAction(() => input.isReady = false)
+        runInAction(() => input.__isReady = false)
         autoResetArrayOfIDs(input)
         expect(input.value).toMatchObject([1, 2, ])
         expect(input.isReady).toBe(true)
@@ -32,7 +32,7 @@ describe('autoResetArrayOfIDs', () => {
                 isReady: true,
             }
         })
-        runInAction(() => input.isReady = false)
+        runInAction(() => input.__isReady = false)
         autoResetArrayOfIDs(input)
         expect(input.value).toMatchObject([])
         expect(input.isReady).toBe(true)
@@ -45,7 +45,7 @@ describe('autoResetArrayOfIDs', () => {
                 isReady: true,
             }
         })
-        runInAction(() => input.isReady = false)
+        runInAction(() => input.__isReady = false)
         autoResetArrayOfIDs(input)
         expect(input.value).toMatchObject([])
         expect(input.isReady).toBe(true)

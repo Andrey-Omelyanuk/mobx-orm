@@ -45,7 +45,7 @@ describe('Input', () => {
             expect(input.value).toBe('test')
             expect(input.options).toBe(options)
             expect(input.options.isReady).toBe(true)
-            expect(input.isReady).toBe(true)
+            expect(input.isReady).toBe(false)
             expect(input.__disposers.length).toBe(1)
         })  
     })
@@ -64,7 +64,7 @@ describe('Input', () => {
             const options = TestModel.getQueryX()
             runInAction(() => options.__is_ready = true)
 
-            const input = new TestInput({options})              ; expect(input.isReady).toBe(true)
+            const input = new TestInput({options})              ; expect(input.isReady).toBe(false)
             input.set('test')                                   ; expect(input.isReady).toBe(true)
             runInAction(() => options.__is_ready = false)       ; expect(input.isReady).toBe(false)
             input.set('test')                                   ; expect(input.isReady).toBe(false)
