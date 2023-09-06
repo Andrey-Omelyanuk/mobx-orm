@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.38
+   * mobx-orm.js v1.2.39
    * Released under the MIT license.
    */
 
@@ -813,7 +813,9 @@
             this.syncLocalStorage && this.__disposers.push(this.__doSyncLocalStorage());
             this.autoReset && this.__disposers.push(this.__doAutoReset());
         }
-        get isReady() { return this.__isReady && (this.options === undefined || this.options.isReady); }
+        get isReady() {
+            return this.disabled || (this.__isReady && (this.options === undefined || this.options.isReady));
+        }
         set(value) {
             this.value = value;
             if (!this.required || !(this.required && value === undefined)) {
@@ -1135,7 +1137,7 @@
     };
 
     class XSingleFilter extends XFilter {
-        constructor(field, value) {
+        constructor(field, input) {
             super();
             Object.defineProperty(this, "field", {
                 enumerable: true,
@@ -1143,7 +1145,7 @@
                 writable: true,
                 value: void 0
             });
-            Object.defineProperty(this, "value", {
+            Object.defineProperty(this, "input", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
@@ -1156,29 +1158,29 @@
                 value: []
             });
             this.field = field;
-            this.value = value;
+            this.input = input;
             mobx.makeObservable(this);
         }
         get isReady() {
-            return this.value.isReady;
+            return this.input.isReady;
         }
         get URLSearchParams() {
             let search_params = new URLSearchParams();
-            let value = this.value.deserialize(this.value.value);
-            value !== undefined && search_params.set(this.URIField, value);
+            let value = this.input.deserialize(this.input.value);
+            !this.input.disabled && value !== undefined && search_params.set(this.URIField, value);
             return search_params;
         }
         isMatch(obj) {
             // it's always match if value of filter is undefined
-            if (this.value === undefined)
+            if (this.input === undefined || this.input.disabled)
                 return true;
-            return match(obj, this.field, this.value.value, this.operator);
+            return match(obj, this.field, this.input.value, this.operator);
         }
     }
     __decorate([
         mobx.observable,
         __metadata("design:type", Input)
-    ], XSingleFilter.prototype, "value", void 0);
+    ], XSingleFilter.prototype, "input", void 0);
     function match(obj, field_name, filter_value, operator) {
         let field_names = field_name.split('__');
         let current_field_name = field_names[0];

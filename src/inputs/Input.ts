@@ -46,7 +46,9 @@ export abstract class Input<T> {
         this.autoReset        && this.__disposers.push(this.__doAutoReset())
     }
 
-    get isReady() { return this.__isReady && (this.options === undefined || this.options.isReady) } 
+    get isReady() {
+        return this.disabled || (this.__isReady && (this.options === undefined || this.options.isReady))
+    }
 
     @action set(value: T) {
         this.value = value

@@ -95,9 +95,9 @@ declare const autoResetArrayToEmpty: (input: any) => void;
 
 declare abstract class XSingleFilter extends XFilter {
     readonly field: string;
-    value: Input<any>;
+    input: Input<any>;
     __disposers: (() => void)[];
-    constructor(field: string, value: Input<any>);
+    constructor(field: string, input: Input<any>);
     get isReady(): boolean;
     get URLSearchParams(): URLSearchParams;
     abstract get URIField(): string;
