@@ -35,7 +35,7 @@ declare abstract class Input<T> {
     get isReady(): boolean;
     set(value: T): void;
     disable(): void;
-    enable(value: any): void;
+    enable(): void;
     destroy(): void;
     abstract serialize(value?: string): T;
     abstract deserialize(value: T): string;

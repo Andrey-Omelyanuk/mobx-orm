@@ -60,7 +60,7 @@ export abstract class Input<T> {
         if (this.options) this.options.autoupdate = false
     }
 
-    @action enable(value) {
+    @action enable() {
         this.disabled = true
         if (this.options) this.options.autoupdate = true
     }

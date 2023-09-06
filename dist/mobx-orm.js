@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.37
+   * mobx-orm.js v1.2.38
    * Released under the MIT license.
    */
 
@@ -825,7 +825,7 @@
             if (this.options)
                 this.options.autoupdate = false;
         }
-        enable(value) {
+        enable() {
             this.disabled = true;
             if (this.options)
                 this.options.autoupdate = true;
@@ -920,7 +920,7 @@
     __decorate([
         mobx.action,
         __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object]),
+        __metadata("design:paramtypes", []),
         __metadata("design:returntype", void 0)
     ], Input.prototype, "enable", null);
 
