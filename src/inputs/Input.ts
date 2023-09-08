@@ -20,6 +20,7 @@ export abstract class Input<T> {
                 readonly syncLocalStorage   ?: string
                 readonly autoReset          ?: (input: Input<T>) => void
 
+    @observable isInit      : boolean
     @observable __isReady   : boolean
                 __disposers = [] 
     
@@ -32,6 +33,7 @@ export abstract class Input<T> {
         this.syncURL            = args?.syncURL
         this.syncLocalStorage   = args?.syncLocalStorage
         this.autoReset          = args?.autoReset
+        this.isInit             = false
         if (this.options) {
             this.__isReady = false
             this.options.autoupdate = !this.disabled
@@ -54,6 +56,9 @@ export abstract class Input<T> {
         this.value = value
         if (!this.required || !(this.required && value === undefined)) {
             this.__isReady = true
+        }
+        if (!this.isInit && (!this.options || this.options?.isReady)) {
+            this.isInit = true
         }
     }
 

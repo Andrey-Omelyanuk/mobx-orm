@@ -29,6 +29,7 @@ declare abstract class Input<T> {
     readonly syncURL?: string;
     readonly syncLocalStorage?: string;
     readonly autoReset?: (input: Input<T>) => void;
+    isInit: boolean;
     __isReady: boolean;
     __disposers: any[];
     constructor(args?: InputConstructorArgs<T>);

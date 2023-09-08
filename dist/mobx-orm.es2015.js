@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.40
+   * mobx-orm.js v1.2.41
    * Released under the MIT license.
    */
 
@@ -775,6 +775,12 @@ class Input {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "isInit", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "__isReady", {
             enumerable: true,
             configurable: true,
@@ -795,6 +801,7 @@ class Input {
         this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
         this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
         this.autoReset = args === null || args === void 0 ? void 0 : args.autoReset;
+        this.isInit = false;
         if (this.options) {
             this.__isReady = false;
             this.options.autoupdate = !this.disabled;
@@ -813,9 +820,13 @@ class Input {
         return this.disabled || (this.__isReady && (this.options === undefined || this.options.isReady));
     }
     set(value) {
+        var _a;
         this.value = value;
         if (!this.required || !(this.required && value === undefined)) {
             this.__isReady = true;
+        }
+        if (!this.isInit && (!this.options || ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady))) {
+            this.isInit = true;
         }
     }
     disable() {
@@ -899,6 +910,10 @@ __decorate([
     observable,
     __metadata("design:type", Boolean)
 ], Input.prototype, "disabled", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Input.prototype, "isInit", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
