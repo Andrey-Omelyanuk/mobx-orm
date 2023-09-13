@@ -19,7 +19,8 @@ describe('Adapter', () => {
         async __load(selector: Selector) : Promise<RawObject[]> { return [obj_a, obj_b] }
         async __find(selector: Selector): Promise<object> { return obj_a; }
         async __get(obj_id: number): Promise<object> { return obj_a; }
-        async getTotalCount(where?): Promise<number> { return 0; }
+        async getTotalCount(where?): Promise<number> { return 0 }
+        async getDistinct(where, field): Promise<any[]> { return [] }
     }
 
     let adapter: TestAdapter, cache: Map<number, A>, __load: any, __create: any, __update: any, __delete: any, __find: any

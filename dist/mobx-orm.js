@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.41
+   * mobx-orm.js v1.2.42
    * Released under the MIT license.
    */
 
@@ -2145,6 +2145,25 @@
         }
     }
 
+    class QueryXDistinct extends QueryX {
+        constructor(adapter, selector, field) {
+            super(adapter, selector);
+            Object.defineProperty(this, "field", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.field = field;
+        }
+        async __load() {
+            const objs = await this.adapter.getDistinct(this.selector.filter, this.field);
+            mobx.runInAction(() => {
+                this.__items = objs;
+            });
+        }
+    }
+
     class Model {
         constructor(...args) {
             Object.defineProperty(this, "id", {
@@ -2812,6 +2831,9 @@
         async getTotalCount(where) {
             return Object.values(local_store[this.store_name]).length;
         }
+        async getDistinct(where, filed) {
+            return [];
+        }
     }
     // model decorator
     function local() {
@@ -2864,6 +2886,7 @@
     exports.QueryPage = QueryPage;
     exports.QueryX = QueryX;
     exports.QueryXCacheSync = QueryXCacheSync;
+    exports.QueryXDistinct = QueryXDistinct;
     exports.QueryXPage = QueryXPage;
     exports.QueryXRaw = QueryXRaw;
     exports.QueryXRawPage = QueryXRawPage;

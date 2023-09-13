@@ -14,7 +14,15 @@ export class SelectorX {
     @observable fields      ?: Array<string>
     @observable omit        ?: Array<string>
 
-    constructor(filter?: XFilter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]) {
+    constructor(
+        filter      ?: XFilter,
+        order_by    ?: ORDER_BY,
+        offset      ?: number,
+        limit       ?: number,
+        relations   ?: string[],
+        fields      ?: string[],
+        omit        ?: string[],
+        ) {
         this.filter    = filter
         this.order_by  = order_by ? order_by : new Map()
         this.offset    = offset

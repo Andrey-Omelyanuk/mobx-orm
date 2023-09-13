@@ -332,6 +332,12 @@ declare class QueryXRawPage<M extends Model> extends QueryXPage<M> {
     __load(): Promise<void>;
 }
 
+declare class QueryXDistinct extends QueryX<any> {
+    readonly field: string;
+    constructor(adapter: Adapter<any>, selector: SelectorX, field: string);
+    __load(): Promise<void>;
+}
+
 declare enum ValueType {
     STRING = 0,
     NUMBER = 1,
@@ -459,6 +465,7 @@ declare abstract class Adapter<M extends Model> {
     abstract __find(props: Selector | SelectorX): Promise<object>;
     abstract __load(props: Selector | SelectorX): Promise<RawObject[]>;
     abstract getTotalCount(where?: any): Promise<number>;
+    abstract getDistinct(where: XFilter, field: string): Promise<any[]>;
     readonly model: any;
     constructor(model: any);
     action(obj: M, name: string, kwargs: Object): Promise<any>;
@@ -488,6 +495,7 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     __get(obj_id: number): Promise<RawObject>;
     __load(selector?: Selector$1): Promise<RawObject[]>;
     getTotalCount(where?: any): Promise<number>;
+    getDistinct(where: any, filed: any): Promise<any[]>;
 }
 declare function local(): (cls: any) => void;
 
@@ -620,4 +628,4 @@ declare function many(remote_model: any, remote_foreign_id_name?: string): (cls:
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };

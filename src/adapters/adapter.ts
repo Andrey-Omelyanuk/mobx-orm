@@ -2,6 +2,7 @@ import { runInAction } from 'mobx'
 import { Model, RawObject, RawData } from '../model'
 import { Selector } from '../types'
 import { SelectorX } from '../selector'
+import { XFilter } from '../filters-x'
 
 export abstract class  Adapter<M extends Model> {
 
@@ -13,6 +14,7 @@ export abstract class  Adapter<M extends Model> {
     abstract __find(props: Selector | SelectorX): Promise<object>
     abstract __load(props: Selector | SelectorX): Promise<RawObject[]>
     abstract getTotalCount(where?): Promise<number>
+    abstract getDistinct(where: XFilter , field: string): Promise<any[]>
 
     readonly model: any
 

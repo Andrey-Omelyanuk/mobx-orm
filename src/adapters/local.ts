@@ -114,6 +114,10 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     async getTotalCount(where?): Promise<number> {
         return Object.values(local_store[this.store_name]).length
     }
+
+    async getDistinct(where, filed): Promise<any[]> {
+        return []
+    }
 }
 
 
