@@ -53,6 +53,7 @@ export class QueryX <M extends Model> {
     get relations() { return this.selector.relations }
 
     destroy() {
+        this.__controller?.abort()
         while(this.__disposers.length) {
             this.__disposers.pop()()
         }

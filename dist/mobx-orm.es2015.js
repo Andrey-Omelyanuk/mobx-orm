@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.45
+   * mobx-orm.js v1.2.46
    * Released under the MIT license.
    */
 
@@ -1811,6 +1811,8 @@ class QueryX {
     get omit() { return this.selector.omit; }
     get relations() { return this.selector.relations; }
     destroy() {
+        var _a;
+        (_a = this.__controller) === null || _a === void 0 ? void 0 : _a.abort();
         while (this.__disposers.length) {
             this.__disposers.pop()();
         }
