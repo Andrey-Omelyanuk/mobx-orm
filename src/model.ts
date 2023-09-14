@@ -1,6 +1,6 @@
 import { action, intercept, makeObservable, observable, observe, runInAction } from 'mobx'
 import { Adapter } from './adapters'
-import { Query, QueryPage, QueryX, QueryXPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage } from './queries'
+import { QueryXDistinct, Query, QueryPage, QueryX, QueryXPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage } from './queries'
 import { Selector } from './types'
 import { SelectorX } from './selector'
 import { XFilter as Filter } from './filters-x'
@@ -206,6 +206,20 @@ export abstract class Model {
             options?.omit,
         )
         const query = new QueryXStream<T>(this.__adapter as Adapter<T>, selector)
+        if (options?.autoupdate) {
+            runInAction(() => query.autoupdate = options.autoupdate)
+        }
+        return query
+    }
+
+    // TODO: need to refactor
+    static getQueryXDistinct(options: {
+        field: string,
+        filter?: Filter,
+        autoupdate?: boolean,
+    }): QueryXDistinct  {
+        const selector = new SelectorX(options?.filter)
+        const query = new QueryXDistinct(this.__adapter as Adapter<any>, selector, options.field)
         if (options?.autoupdate) {
             runInAction(() => query.autoupdate = options.autoupdate)
         }

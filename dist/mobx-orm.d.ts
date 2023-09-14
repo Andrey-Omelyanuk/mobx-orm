@@ -579,6 +579,11 @@ declare abstract class Model {
         omit?: Array<string>;
         autoupdate?: boolean;
     }): QueryXStream<T>;
+    static getQueryXDistinct(options: {
+        field: string;
+        filter?: XFilter;
+        autoupdate?: boolean;
+    }): QueryXDistinct;
     static getQuery(selector?: Selector): Query<Model>;
     static getQueryPage(selector?: Selector): QueryPage<Model>;
     static get(id: number): Model;

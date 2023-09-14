@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.42
+   * mobx-orm.js v1.2.43
    * Released under the MIT license.
    */
 
@@ -2249,6 +2249,15 @@ class Model {
     static getQueryXStream(options) {
         const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, 0, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
         const query = new QueryXStream(this.__adapter, selector);
+        if (options === null || options === void 0 ? void 0 : options.autoupdate) {
+            runInAction(() => query.autoupdate = options.autoupdate);
+        }
+        return query;
+    }
+    // TODO: need to refactor
+    static getQueryXDistinct(options) {
+        const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter);
+        const query = new QueryXDistinct(this.__adapter, selector, options.field);
         if (options === null || options === void 0 ? void 0 : options.autoupdate) {
             runInAction(() => query.autoupdate = options.autoupdate);
         }
