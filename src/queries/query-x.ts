@@ -24,6 +24,7 @@ export class QueryX <M extends Model> {
     @observable __is_ready    : boolean = false 
     @observable __error       : string = '' 
 
+    __controller        : AbortController
     __disposers         : (()=>void)[] = []
     __disposer_objects  : {[field: string]: ()=>void} = {}
 
@@ -64,14 +65,17 @@ export class QueryX <M extends Model> {
     get items() { return this.__items }
 
     async __load() {
-        const objs = await this.adapter.load(this.selector)
-        runInAction(() => {
-            this.__items = objs
-        })
-        // we have to wait the next tick
-        // mobx should finished recalculation (object relations, computed fields, etc.)
-        // await Promise.resolve();
-        // await new Promise(resolve => setTimeout(resolve))
+        // TODO: I don't like __controller here
+        if (this.__controller) this.__controller.abort()
+        this.__controller = new AbortController()
+        try {
+            const objs = await this.adapter.load(this.selector, this.__controller)
+            runInAction(() => {
+                this.__items = objs
+            })
+        } catch (e) {
+            if (e.name !== 'AbortError')  throw e
+        } 
     }
 
     // use it if everybody should know that the query data is updating

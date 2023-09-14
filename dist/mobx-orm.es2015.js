@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.44
+   * mobx-orm.js v1.2.45
    * Released under the MIT license.
    */
 
@@ -1756,6 +1756,12 @@ class QueryX {
             writable: true,
             value: ''
         });
+        Object.defineProperty(this, "__controller", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "__disposers", {
             enumerable: true,
             configurable: true,
@@ -1815,14 +1821,20 @@ class QueryX {
     }
     get items() { return this.__items; }
     async __load() {
-        const objs = await this.adapter.load(this.selector);
-        runInAction(() => {
-            this.__items = objs;
-        });
-        // we have to wait the next tick
-        // mobx should finished recalculation (object relations, computed fields, etc.)
-        // await Promise.resolve();
-        // await new Promise(resolve => setTimeout(resolve))
+        // TODO: I don't like __controller here
+        if (this.__controller)
+            this.__controller.abort();
+        this.__controller = new AbortController();
+        try {
+            const objs = await this.adapter.load(this.selector, this.__controller);
+            runInAction(() => {
+                this.__items = objs;
+            });
+        }
+        catch (e) {
+            if (e.name !== 'AbortError')
+                throw e;
+        }
     }
     // use it if everybody should know that the query data is updating
     async load() {
@@ -1942,15 +1954,22 @@ class QueryXPage extends QueryX {
         });
     }
     async __load() {
-        const objs = await this.adapter.load(this.selector);
-        const total = await this.adapter.getTotalCount(this.selector.filter);
-        runInAction(() => {
-            this.__items = objs;
-            this.total = total;
-        });
-        // we have to wait the next tick
-        // mobx should finished recalculation (object relations, computed fields, etc.)
-        // await new Promise(resolve => setTimeout(resolve))
+        if (this.__controller)
+            this.__controller.abort();
+        this.__controller = new AbortController();
+        try {
+            // TODO: run it in parallel
+            const objs = await this.adapter.load(this.selector, this.__controller);
+            const total = await this.adapter.getTotalCount(this.selector.filter, this.__controller);
+            runInAction(() => {
+                this.__items = objs;
+                this.total = total;
+            });
+        }
+        catch (e) {
+            if (e.name !== 'AbortError')
+                throw e;
+        }
     }
 }
 __decorate([
@@ -2016,9 +2035,18 @@ class QueryXCacheSync extends QueryX {
         }
     }
     async __load() {
-        // Query don't need to overide the __items,
-        // query's items should be get only from the cache
-        await this.adapter.load(this.selector);
+        if (this.__controller)
+            this.__controller.abort();
+        this.__controller = new AbortController();
+        try {
+            await this.adapter.load(this.selector, this.__controller);
+            // Query don't need to overide the __items,
+            // query's items should be get only from the cache
+        }
+        catch (e) {
+            if (e.name !== 'AbortError')
+                throw e;
+        }
         // we have to wait the next tick
         // mobx should finished recalculation for model-objects
         await Promise.resolve();
@@ -2094,17 +2122,23 @@ class QueryXStream extends QueryX {
         });
     }
     async __load() {
-        const objs = await this.adapter.load(this.selector);
-        runInAction(() => {
-            this.__items.push(...objs);
-            // total is not make sense for infinity queries
-            // total = 1 show that last page is reached
-            if (objs.length < this.selector.limit)
-                this.total = 1;
-        });
-        // we have to wait the next tick
-        // mobx should finished recalculation for model-objects
-        await new Promise(resolve => setTimeout(resolve));
+        if (this.__controller)
+            this.__controller.abort();
+        this.__controller = new AbortController();
+        try {
+            const objs = await this.adapter.load(this.selector, this.__controller);
+            runInAction(() => {
+                this.__items.push(...objs);
+                // total is not make sense for infinity queries
+                // total = 1 show that last page is reached
+                if (objs.length < this.selector.limit)
+                    this.total = 1;
+            });
+        }
+        catch (e) {
+            if (e.name !== 'AbortError')
+                throw e;
+        }
     }
 }
 __decorate([
@@ -2122,11 +2156,20 @@ __decorate([
 
 class QueryXRaw extends QueryX {
     async __load() {
-        // get only raw objects from adapter
-        const objs = await this.adapter.__load(this.selector);
-        runInAction(() => {
-            this.__items = objs;
-        });
+        if (this.__controller)
+            this.__controller.abort();
+        this.__controller = new AbortController();
+        try {
+            // get only raw objects from adapter
+            const objs = await this.adapter.__load(this.selector, this.__controller);
+            runInAction(() => {
+                this.__items = objs;
+            });
+        }
+        catch (e) {
+            if (e.name !== 'AbortError')
+                throw e;
+        }
     }
 }
 
@@ -2155,10 +2198,19 @@ class QueryXDistinct extends QueryX {
         this.field = field;
     }
     async __load() {
-        const objs = await this.adapter.getDistinct(this.selector.filter, this.field);
-        runInAction(() => {
-            this.__items = objs;
-        });
+        if (this.__controller)
+            this.__controller.abort();
+        this.__controller = new AbortController();
+        try {
+            const objs = await this.adapter.getDistinct(this.selector.filter, this.field, this.__controller);
+            runInAction(() => {
+                this.__items = objs;
+            });
+        }
+        catch (e) {
+            if (e.name !== 'AbortError')
+                throw e;
+        }
     }
 }
 
@@ -2662,13 +2714,13 @@ class Adapter {
         });
         this.model = model;
     }
-    async action(obj, name, kwargs) {
-        return await this.model.__adapter.__action(obj.id, name, kwargs);
+    async action(obj, name, kwargs, controller) {
+        return await this.model.__adapter.__action(obj.id, name, kwargs, controller);
     }
-    async create(obj) {
+    async create(obj, controller) {
         var _a;
         try {
-            let raw_obj = await this.__create(obj.raw_data);
+            let raw_obj = await this.__create(obj.raw_data, controller);
             obj.updateFromRaw(raw_obj);
             obj.refreshInitData(); // backend can return default values and they should be in __init_data
             obj.setError(undefined);
@@ -2679,10 +2731,10 @@ class Adapter {
         }
         return obj;
     }
-    async update(obj) {
+    async update(obj, controller) {
         var _a;
         try {
-            let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data);
+            let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data, controller);
             obj.updateFromRaw(raw_obj);
             obj.refreshInitData();
             obj.setError(undefined);
@@ -2693,10 +2745,10 @@ class Adapter {
         }
         return obj;
     }
-    async delete(obj) {
+    async delete(obj, controller) {
         var _a;
         try {
-            await this.__delete(obj.id);
+            await this.__delete(obj.id, controller);
             runInAction(() => obj.id = undefined);
             obj.setError(undefined);
         }
@@ -2706,22 +2758,22 @@ class Adapter {
         }
         return obj;
     }
-    async get(obj_id) {
+    async get(obj_id, controller) {
         let raw_obj = await this.__get(obj_id);
-        const obj = this.model.updateCache(raw_obj);
+        const obj = this.model.updateCache(raw_obj, controller);
         obj.refreshInitData();
         return obj;
     }
     /* Returns ONE object */
-    async find(selector) {
+    async find(selector, controller) {
         let raw_obj = await this.__find(selector);
-        const obj = this.model.updateCache(raw_obj);
+        const obj = this.model.updateCache(raw_obj, controller);
         obj.refreshInitData();
         return obj;
     }
     /* Returns MANY objects */
-    async load(selector) {
-        let raw_objs = await this.__load(selector);
+    async load(selector, controller) {
+        let raw_objs = await this.__load(selector, controller);
         let objs = [];
         // it should be happend in one big action
         runInAction(() => {

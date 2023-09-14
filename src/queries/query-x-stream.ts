@@ -21,15 +21,18 @@ export class QueryXStream <M extends Model> extends QueryX<M> {
     }
 
     async __load() {
-        const objs = await this.adapter.load(this.selector)
-        runInAction(() => {
-            this.__items.push(...objs)
-            // total is not make sense for infinity queries
-            // total = 1 show that last page is reached
-            if (objs.length < this.selector.limit) this.total = 1
-        })
-        // we have to wait the next tick
-        // mobx should finished recalculation for model-objects
-        await new Promise(resolve => setTimeout(resolve))
+        if (this.__controller) this.__controller.abort()
+        this.__controller = new AbortController()
+        try {
+            const objs = await this.adapter.load(this.selector, this.__controller)
+            runInAction(() => {
+                this.__items.push(...objs)
+                // total is not make sense for infinity queries
+                // total = 1 show that last page is reached
+                if (objs.length < this.selector.limit) this.total = 1
+            })
+        } catch (e) {
+            if (e.name !== 'AbortError')  throw e
+        } 
     }
 }

@@ -12,9 +12,15 @@ export class QueryXDistinct extends QueryX<any> {
     }
 
     async __load() {
-        const objs = await this.adapter.getDistinct(this.selector.filter, this.field)
-        runInAction(() => {
-            this.__items = objs
-        })
+        if (this.__controller) this.__controller.abort()
+        this.__controller = new AbortController()
+        try {
+            const objs = await this.adapter.getDistinct(this.selector.filter, this.field, this.__controller)
+            runInAction(() => {
+                this.__items = objs
+            })
+        } catch (e) {
+            if (e.name !== 'AbortError')  throw e
+        } 
     }
 }

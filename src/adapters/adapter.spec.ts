@@ -9,18 +9,20 @@ describe('Adapter', () => {
     @model class A extends Model { @field x: string }
 
     class TestAdapter extends Adapter<A> {
-
-    // abstract __delete(obj_id: string): Promise<object>
-
-        async __create(raw_data: RawObject) : Promise<RawObject> { raw_data.id = 1; return raw_data }
-        async __update(obj_id: number, only_changed_raw_data: RawObject) : Promise<RawObject> { return only_changed_raw_data }
-        async __delete(obj_id: number) : Promise<RawObject> { return }
-        async __action(obj_id: number, name: string, kwargs: Object) : Promise<any> { return }
-        async __load(selector: Selector) : Promise<RawObject[]> { return [obj_a, obj_b] }
-        async __find(selector: Selector): Promise<object> { return obj_a; }
-        async __get(obj_id: number): Promise<object> { return obj_a; }
-        async getTotalCount(where?): Promise<number> { return 0 }
-        async getDistinct(where, field): Promise<any[]> { return [] }
+        async __create(raw_data: RawObject, controller?: AbortController) : Promise<RawObject> { raw_data.id = 1; return raw_data }
+        async __update(obj_id: number, only_changed_raw_data: RawObject, controller?: AbortController) : Promise<RawObject> { return only_changed_raw_data }
+        async __delete(obj_id: number, controller?: AbortController) : Promise<RawObject> { return }
+        async __action(obj_id: number, name: string, kwargs: Object, controller?: AbortController) : Promise<any> { return }
+        async __find(selector: Selector, controller?: AbortController): Promise<object> { return obj_a; }
+        async __get(obj_id: number, controller?: AbortController): Promise<object> { return obj_a; }
+        async __load(selector: Selector, controller?: AbortController) : Promise<RawObject[]> {
+            return new Promise<RawObject[]>((resolve, reject) => {
+                controller?.signal.addEventListener('abort', () => reject('abort'))
+                setTimeout(() => resolve([obj_a, obj_b]), 1000)
+            })
+        }
+        async getTotalCount(where?, controller?: AbortController): Promise<number> { return 0 }
+        async getDistinct(where, field, controller?: AbortController): Promise<any[]> { return [] }
     }
 
     let adapter: TestAdapter, cache: Map<number, A>, __load: any, __create: any, __update: any, __delete: any, __find: any
@@ -80,10 +82,23 @@ describe('Adapter', () => {
     it('load', async ()=> {
                                             expect(__load).toHaveBeenCalledTimes(0)
         let items = await adapter.load();   expect(__load).toHaveBeenCalledTimes(1)
-                                            expect(__load).toHaveBeenCalledWith(undefined)
+                                            expect(__load).toHaveBeenCalledWith(undefined, undefined)
                                             expect(items).toEqual([
                                                 cache.get(obj_a.id),
                                                 cache.get(obj_b.id),
                                             ])
+    })
+
+    it('cancel load', async ()=> {
+        const controller = new AbortController() 
+                                            expect(__load).toHaveBeenCalledTimes(0)
+        try {
+            setTimeout(() => controller.abort(), 500)
+            let items = await adapter.load(undefined, controller);   
+        } catch (e) {
+                                            expect(e).toBe('abort')
+        }
+                                            expect(__load).toHaveBeenCalledTimes(1)
+                                            expect(__load).toHaveBeenCalledWith(undefined, controller)
     })
 })

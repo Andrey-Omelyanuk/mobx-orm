@@ -268,6 +268,7 @@ declare class QueryX<M extends Model> {
     __is_loading: boolean;
     __is_ready: boolean;
     __error: string;
+    __controller: AbortController;
     __disposers: (() => void)[];
     __disposer_objects: {
         [field: string]: () => void;
@@ -457,24 +458,24 @@ interface Selector {
 }
 
 declare abstract class Adapter<M extends Model> {
-    abstract __create(raw_data: RawData): Promise<RawObject>;
-    abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
-    abstract __delete(obj_id: number): Promise<void>;
-    abstract __action(obj_id: number, name: string, kwargs: Object): Promise<any>;
-    abstract __get(obj_id: number): Promise<object>;
-    abstract __find(props: Selector | SelectorX): Promise<object>;
-    abstract __load(props: Selector | SelectorX): Promise<RawObject[]>;
-    abstract getTotalCount(where?: any): Promise<number>;
-    abstract getDistinct(where: XFilter, field: string): Promise<any[]>;
+    abstract __create(raw_data: RawData, controller?: AbortController): Promise<RawObject>;
+    abstract __update(obj_id: number, only_changed_raw_data: RawData, controller?: AbortController): Promise<RawObject>;
+    abstract __delete(obj_id: number, controller?: AbortController): Promise<void>;
+    abstract __action(obj_id: number, name: string, kwargs: Object, controller?: AbortController): Promise<any>;
+    abstract __get(obj_id: number, controller?: AbortController): Promise<object>;
+    abstract __find(props: Selector | SelectorX, controller?: AbortController): Promise<object>;
+    abstract __load(props: Selector | SelectorX, controller?: AbortController): Promise<RawObject[]>;
+    abstract getTotalCount(where?: any, controller?: AbortController): Promise<number>;
+    abstract getDistinct(where: XFilter, field: string, controller?: AbortController): Promise<any[]>;
     readonly model: any;
     constructor(model: any);
-    action(obj: M, name: string, kwargs: Object): Promise<any>;
-    create(obj: M): Promise<M>;
-    update(obj: M): Promise<M>;
-    delete(obj: M): Promise<M>;
-    get(obj_id: number): Promise<M>;
-    find(selector: Selector | SelectorX): Promise<M>;
-    load(selector?: Selector | SelectorX): Promise<M[]>;
+    action(obj: M, name: string, kwargs: Object, controller?: AbortController): Promise<any>;
+    create(obj: M, controller?: AbortController): Promise<M>;
+    update(obj: M, controller?: AbortController): Promise<M>;
+    delete(obj: M, controller?: AbortController): Promise<M>;
+    get(obj_id: number, controller?: AbortController): Promise<M>;
+    find(selector: Selector | SelectorX, controller?: AbortController): Promise<M>;
+    load(selector?: Selector | SelectorX, controller?: AbortController): Promise<M[]>;
 }
 
 declare let local_store: {

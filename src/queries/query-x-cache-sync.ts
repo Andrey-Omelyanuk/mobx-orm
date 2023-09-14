@@ -40,9 +40,15 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
     }
 
     async __load() {
-        // Query don't need to overide the __items,
-        // query's items should be get only from the cache
-        await this.adapter.load(this.selector)
+        if (this.__controller) this.__controller.abort()
+        this.__controller = new AbortController()
+        try {
+            await this.adapter.load(this.selector, this.__controller)
+            // Query don't need to overide the __items,
+            // query's items should be get only from the cache
+        } catch (e) {
+            if (e.name !== 'AbortError')  throw e
+        } 
         // we have to wait the next tick
         // mobx should finished recalculation for model-objects
         await Promise.resolve();
