@@ -45,7 +45,8 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
         await this.adapter.load(this.selector)
         // we have to wait the next tick
         // mobx should finished recalculation for model-objects
-        await new Promise(resolve => setTimeout(resolve))
+        await Promise.resolve();
+        // await new Promise(resolve => setTimeout(resolve))
     }
 
     @computed

@@ -70,7 +70,8 @@ export class QueryX <M extends Model> {
         })
         // we have to wait the next tick
         // mobx should finished recalculation (object relations, computed fields, etc.)
-        await new Promise(resolve => setTimeout(resolve))
+        // await Promise.resolve();
+        // await new Promise(resolve => setTimeout(resolve))
     }
 
     // use it if everybody should know that the query data is updating

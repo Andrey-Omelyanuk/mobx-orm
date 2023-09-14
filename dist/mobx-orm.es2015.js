@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.43
+   * mobx-orm.js v1.2.44
    * Released under the MIT license.
    */
 
@@ -1821,7 +1821,8 @@ class QueryX {
         });
         // we have to wait the next tick
         // mobx should finished recalculation (object relations, computed fields, etc.)
-        await new Promise(resolve => setTimeout(resolve));
+        // await Promise.resolve();
+        // await new Promise(resolve => setTimeout(resolve))
     }
     // use it if everybody should know that the query data is updating
     async load() {
@@ -1949,7 +1950,7 @@ class QueryXPage extends QueryX {
         });
         // we have to wait the next tick
         // mobx should finished recalculation (object relations, computed fields, etc.)
-        await new Promise(resolve => setTimeout(resolve));
+        // await new Promise(resolve => setTimeout(resolve))
     }
 }
 __decorate([
@@ -2020,7 +2021,8 @@ class QueryXCacheSync extends QueryX {
         await this.adapter.load(this.selector);
         // we have to wait the next tick
         // mobx should finished recalculation for model-objects
-        await new Promise(resolve => setTimeout(resolve));
+        await Promise.resolve();
+        // await new Promise(resolve => setTimeout(resolve))
     }
     get items() {
         var _a;

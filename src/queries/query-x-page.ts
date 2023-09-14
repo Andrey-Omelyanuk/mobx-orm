@@ -41,6 +41,6 @@ export class QueryXPage<M extends Model> extends QueryX<M> {
         })
         // we have to wait the next tick
         // mobx should finished recalculation (object relations, computed fields, etc.)
-        await new Promise(resolve => setTimeout(resolve))
+        // await new Promise(resolve => setTimeout(resolve))
     }
 }
