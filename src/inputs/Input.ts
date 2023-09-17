@@ -48,7 +48,14 @@ export abstract class Input<T> {
     }
 
     get isReady () {
-        return this.disabled || (this.__isReady && (this.options === undefined || this.options.isReady))
+        return this.disabled
+        || (   this.__isReady 
+            && (     this.options === undefined
+                // if not required and value is undefined or empty array - it is ready
+                || (!this.required && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)))
+                ||   this.options.isReady
+            )
+        )
     }
 
     @action set (value: T) {
