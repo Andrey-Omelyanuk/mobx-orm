@@ -65,18 +65,23 @@ export class QueryX <M extends Model> {
 
     get items() { return this.__items }
 
-    async __load() {
-        // TODO: I don't like __controller here
+    async __wrap_controller(func: Function) {
         if (this.__controller) this.__controller.abort()
         this.__controller = new AbortController()
         try {
+            return func()
+        } catch (e) {
+            if (e.name !== 'AbortError')  throw e
+        } 
+    }
+
+    async __load() {
+        return this.__wrap_controller(async () => {
             const objs = await this.adapter.load(this.selector, this.__controller)
             runInAction(() => {
                 this.__items = objs
             })
-        } catch (e) {
-            if (e.name !== 'AbortError')  throw e
-        } 
+        })
     }
 
     // use it if everybody should know that the query data is updating

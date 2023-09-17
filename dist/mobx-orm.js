@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.46
+   * mobx-orm.js v1.2.47
    * Released under the MIT license.
    */
 
@@ -815,10 +815,10 @@
             }
             mobx.makeObservable(this);
             // init reactions
-            this.options && this.__disposers.push(this.__doOptions());
-            this.syncURL && this.__disposers.push(this.__doSyncURL());
-            this.syncLocalStorage && this.__disposers.push(this.__doSyncLocalStorage());
-            this.autoReset && this.__disposers.push(this.__doAutoReset());
+            this.options && this.__doOptions();
+            this.syncURL && this.__doSyncURL();
+            this.syncLocalStorage && this.__doSyncLocalStorage();
+            this.autoReset && this.__doAutoReset();
         }
         get isReady() {
             return this.disabled || (this.__isReady && (this.options === undefined || this.options.isReady));
@@ -851,10 +851,10 @@
         }
         // Any changes in options should reset __isReady
         __doOptions() {
-            return mobx.reaction(() => this.options.is_ready, () => this.__isReady = false);
+            this.__disposers.push(mobx.reaction(() => this.options.is_ready, () => this.__isReady = false));
         }
         __doAutoReset() {
-            return mobx.reaction(() => this.options.is_ready && !this.disabled, (is_ready) => is_ready && this.autoReset(this), { fireImmediately: true });
+            this.__disposers.push(mobx.reaction(() => this.options.is_ready && !this.disabled, (is_ready) => is_ready && this.autoReset(this), { fireImmediately: true }));
         }
         __doSyncURL() {
             // init from URL Search Params
@@ -864,17 +864,19 @@
                 this.set(this.serialize(searchParams.get(name)));
             }
             // watch for URL changes and update Input
-            window.addEventListener('popstate', () => {
-                let params = new URLSearchParams(document.location.search);
-                if (params.has(name)) {
-                    const value = params.get(name);
-                    if (value !== this.deserialize(this.value)) {
-                        this.set(this.serialize(value));
+            function updataInputFromURL() {
+                const searchParams = new URLSearchParams(window.location.search);
+                if (searchParams.has(name)) {
+                    const value = this.serialize(searchParams.get(name));
+                    if (this.value !== value) {
+                        this.set(value);
                     }
                 }
-            });
+            }
+            window.addEventListener('popstate', updataInputFromURL.bind(this));
+            this.__disposers.push(() => window.removeEventListener('popstate', updataInputFromURL));
             // watch for Input changes and update URL
-            return mobx.reaction(() => this.value, (value) => {
+            this.__disposers.push(mobx.reaction(() => this.value, (value) => {
                 const searchParams = new URLSearchParams(window.location.search);
                 if ((value === '' || value === undefined || (Array.isArray(value) && !value.length))) {
                     searchParams.delete(name);
@@ -884,7 +886,7 @@
                 }
                 // update URL
                 window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`);
-            }, { fireImmediately: true });
+            }, { fireImmediately: true }));
         }
         __doSyncLocalStorage() {
             const name = this.syncLocalStorage;
@@ -892,14 +894,14 @@
             if (this.value !== value) {
                 this.set(value);
             }
-            return mobx.reaction(() => this.value, (value) => {
+            this.__disposers.push(mobx.reaction(() => this.value, (value) => {
                 if (value !== undefined) {
                     localStorage.setItem(name, this.deserialize(value));
                 }
                 else {
                     localStorage.removeItem(name);
                 }
-            }, { fireImmediately: true });
+            }, { fireImmediately: true }));
         }
     }
     __decorate([
@@ -1826,21 +1828,25 @@
             }
         }
         get items() { return this.__items; }
-        async __load() {
-            // TODO: I don't like __controller here
+        async __wrap_controller(func) {
             if (this.__controller)
                 this.__controller.abort();
             this.__controller = new AbortController();
             try {
-                const objs = await this.adapter.load(this.selector, this.__controller);
-                mobx.runInAction(() => {
-                    this.__items = objs;
-                });
+                return func();
             }
             catch (e) {
                 if (e.name !== 'AbortError')
                     throw e;
             }
+        }
+        async __load() {
+            return this.__wrap_controller(async () => {
+                const objs = await this.adapter.load(this.selector, this.__controller);
+                mobx.runInAction(() => {
+                    this.__items = objs;
+                });
+            });
         }
         // use it if everybody should know that the query data is updating
         async load() {
@@ -1960,22 +1966,16 @@
             });
         }
         async __load() {
-            if (this.__controller)
-                this.__controller.abort();
-            this.__controller = new AbortController();
-            try {
-                // TODO: run it in parallel
-                const objs = await this.adapter.load(this.selector, this.__controller);
-                const total = await this.adapter.getTotalCount(this.selector.filter, this.__controller);
+            return this.__wrap_controller(async () => {
+                const [objs, total] = await Promise.all([
+                    this.adapter.load(this.selector, this.__controller),
+                    this.adapter.getTotalCount(this.selector.filter, this.__controller)
+                ]);
                 mobx.runInAction(() => {
                     this.__items = objs;
                     this.total = total;
                 });
-            }
-            catch (e) {
-                if (e.name !== 'AbortError')
-                    throw e;
-            }
+            });
         }
     }
     __decorate([

@@ -33,18 +33,15 @@ export class QueryXPage<M extends Model> extends QueryX<M> {
     }
 
     async __load() {
-        if (this.__controller) this.__controller.abort()
-        this.__controller = new AbortController()
-        try {
-            // TODO: run it in parallel
-            const objs = await this.adapter.load(this.selector, this.__controller)
-            const total = await this.adapter.getTotalCount(this.selector.filter, this.__controller)
+        return this.__wrap_controller(async () => {
+            const [objs, total] = await Promise.all([
+                this.adapter.load(this.selector, this.__controller),
+                this.adapter.getTotalCount(this.selector.filter, this.__controller)
+            ])
             runInAction(() => {
                 this.__items = objs
                 this.total = total
             })
-        } catch (e) {
-            if (e.name !== 'AbortError')  throw e
-        } 
+        })
     }
 }

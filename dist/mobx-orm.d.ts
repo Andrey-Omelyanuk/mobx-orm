@@ -41,10 +41,10 @@ declare abstract class Input<T> {
     abstract serialize(value?: string): T;
     abstract deserialize(value: T): string;
     toString(): string;
-    __doOptions(): () => void;
-    __doAutoReset(): () => void;
-    __doSyncURL(): () => void;
-    __doSyncLocalStorage(): () => void;
+    __doOptions(): void;
+    __doAutoReset(): void;
+    __doSyncURL(): void;
+    __doSyncLocalStorage(): void;
 }
 
 declare class StringInput extends Input<string | null | undefined> {
@@ -283,7 +283,8 @@ declare class QueryX<M extends Model> {
     get relations(): string[];
     destroy(): void;
     get items(): M[];
-    __load(): Promise<void>;
+    __wrap_controller(func: Function): Promise<any>;
+    __load(): Promise<any>;
     load(): Promise<void>;
     shadowLoad(): Promise<void>;
     get autoupdate(): boolean;
@@ -308,7 +309,7 @@ declare class QueryXPage<M extends Model> extends QueryX<M> {
     get currentPage(): number;
     get totalPages(): number;
     constructor(adapter: Adapter<M>, selector?: SelectorX);
-    __load(): Promise<void>;
+    __load(): Promise<any>;
 }
 
 declare class QueryXCacheSync<M extends Model> extends QueryX<M> {
