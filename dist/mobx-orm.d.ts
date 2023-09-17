@@ -35,8 +35,6 @@ declare abstract class Input<T> {
     constructor(args?: InputConstructorArgs<T>);
     get isReady(): boolean;
     set(value: T): void;
-    disable(): void;
-    enable(): void;
     destroy(): void;
     abstract serialize(value?: string): T;
     abstract deserialize(value: T): string;

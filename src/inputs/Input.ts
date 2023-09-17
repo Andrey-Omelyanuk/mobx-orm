@@ -36,7 +36,6 @@ export abstract class Input<T> {
         this.isInit             = false
         if (this.options) {
             this.__isReady = false
-            this.options.autoupdate = !this.disabled
         } else {
             this.__isReady = true
         }
@@ -60,16 +59,6 @@ export abstract class Input<T> {
         if (!this.isInit && (!this.options || this.options?.isReady)) {
             this.isInit = true
         }
-    }
-
-    @action disable () {
-        this.disabled = true
-        if (this.options) this.options.autoupdate = false
-    }
-
-    @action enable () {
-        this.disabled = false 
-        if (this.options) this.options.autoupdate = true
     }
 
     destroy () {

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.47
+   * mobx-orm.js v1.2.48
    * Released under the MIT license.
    */
 
@@ -804,7 +804,6 @@ class Input {
         this.isInit = false;
         if (this.options) {
             this.__isReady = false;
-            this.options.autoupdate = !this.disabled;
         }
         else {
             this.__isReady = true;
@@ -828,16 +827,6 @@ class Input {
         if (!this.isInit && (!this.options || ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady))) {
             this.isInit = true;
         }
-    }
-    disable() {
-        this.disabled = true;
-        if (this.options)
-            this.options.autoupdate = false;
-    }
-    enable() {
-        this.disabled = false;
-        if (this.options)
-            this.options.autoupdate = true;
     }
     destroy() {
         this.__disposers.forEach(disposer => disposer());
@@ -926,18 +915,6 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Input.prototype, "set", null);
-__decorate([
-    action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], Input.prototype, "disable", null);
-__decorate([
-    action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], Input.prototype, "enable", null);
 
 class StringInput extends Input {
     serialize(value) {
