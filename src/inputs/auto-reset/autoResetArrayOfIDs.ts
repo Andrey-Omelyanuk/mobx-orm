@@ -16,6 +16,7 @@ export const autoResetArrayOfIDs = (input: ArrayNumberInput) => {
         }
         if (!found) {
             input.set([])
+            return
         }
     }
     input.set(input.value)

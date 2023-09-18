@@ -29,6 +29,7 @@ export class QueryX <M extends Model> {
     __disposer_objects  : {[field: string]: ()=>void} = {}
 
     constructor(adapter: Adapter<M>, selector?: Selector) {
+        console.log('[Debug MobX-ORM] QueryX instance', Math.random())
         this.adapter = adapter
         this.selector = selector ? selector : new Selector()
         makeObservable(this)

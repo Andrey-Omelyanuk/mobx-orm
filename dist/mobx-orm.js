@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.49
+   * mobx-orm.js v1.2.50
    * Released under the MIT license.
    */
 
@@ -1118,6 +1118,7 @@
             }
             if (!found) {
                 input.set([]);
+                return;
             }
         }
         input.set(input.value);
@@ -1126,13 +1127,15 @@
     const autoResetDefault = (input) => {
         if (!input.options)
             input.set(input.value);
-        input.set(undefined);
+        else
+            input.set(undefined);
     };
 
     const autoResetArrayToEmpty = (input) => {
         if (!input.options)
             input.set(input.value);
-        input.set([]);
+        else
+            input.set([]);
     };
 
     class XSingleFilter extends XFilter {
@@ -1776,6 +1779,7 @@
                 writable: true,
                 value: async () => waitIsFalse(this, '__is_loading')
             });
+            console.log('[Debug MobX-ORM] QueryX instance', Math.random());
             this.adapter = adapter;
             this.selector = selector ? selector : new SelectorX();
             mobx.makeObservable(this);
