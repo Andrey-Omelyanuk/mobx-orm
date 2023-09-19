@@ -66,6 +66,8 @@ export class QueryX <M extends Model> {
             this.__disposer_objects[__id]()
             delete this.__disposer_objects[__id]
         } 
+
+        console.log('[Debug MobX-ORM] QueryX - destroyed', this.__id)
     }
 
     get items() { return this.__items }

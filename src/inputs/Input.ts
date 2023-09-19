@@ -76,6 +76,8 @@ export abstract class Input<T> {
 
     destroy () {
         this.__disposers.forEach(disposer => disposer())
+        this.options?.destroy()
+        console.log('[Debug MobX-ORM] Input - destroyed', this.__id)
     }
 
     abstract serialize  (value?: string) : T        // convert string to value
