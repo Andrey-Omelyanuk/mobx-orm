@@ -32,6 +32,7 @@ declare abstract class Input<T> {
     isInit: boolean;
     __isReady: boolean;
     __disposers: any[];
+    __id: any;
     constructor(args?: InputConstructorArgs<T>);
     get isReady(): boolean;
     set(value: T): void;
@@ -266,6 +267,7 @@ declare class QueryX<M extends Model> {
     __is_loading: boolean;
     __is_ready: boolean;
     __error: string;
+    __id: any;
     __controller: AbortController;
     __disposers: (() => void)[];
     __disposer_objects: {

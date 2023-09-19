@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.50
+   * mobx-orm.js v1.2.51
    * Released under the MIT license.
    */
 
@@ -797,6 +797,14 @@
                 writable: true,
                 value: []
             });
+            Object.defineProperty(this, "__id", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.__id = Math.random();
+            console.log('[Debug MobX-ORM] Input create - start', this.__id);
             // init all observables before use it in reaction
             this.value = args === null || args === void 0 ? void 0 : args.value;
             this.options = args === null || args === void 0 ? void 0 : args.options;
@@ -818,6 +826,7 @@
             this.syncURL && this.__doSyncURL();
             this.syncLocalStorage && this.__doSyncLocalStorage();
             this.autoReset && this.__doAutoReset();
+            console.log('[Debug MobX-ORM] Input create - finish', this.__id);
         }
         get isReady() {
             return this.disabled
@@ -829,6 +838,7 @@
         }
         set(value) {
             var _a;
+            console.log('[Debug MobX-ORM] Input set', this.__id, value);
             this.value = value;
             if (!this.required || !(this.required && value === undefined)) {
                 this.__isReady = true;
@@ -845,10 +855,18 @@
         }
         // Any changes in options should reset __isReady
         __doOptions() {
-            this.__disposers.push(mobx.reaction(() => this.options.is_ready, () => this.__isReady = false));
+            this.__disposers.push(mobx.reaction(() => this.options.is_ready, () => {
+                console.log('[Debug MobX-ORM] Input Options is ready', this.__id);
+                this.__isReady = false;
+            }));
         }
         __doAutoReset() {
-            this.__disposers.push(mobx.reaction(() => this.options.is_ready && !this.disabled, (is_ready) => is_ready && this.autoReset(this), { fireImmediately: true }));
+            this.__disposers.push(mobx.reaction(() => this.options.is_ready && !this.disabled, (is_ready) => {
+                if (is_ready) {
+                    console.log('[Debug MobX-ORM] Input AutoReset', this.__id);
+                    this.autoReset(this);
+                }
+            }, { fireImmediately: true }));
         }
         __doSyncURL() {
             // init from URL Search Params
@@ -863,6 +881,7 @@
                 if (searchParams.has(name)) {
                     const value = this.serialize(searchParams.get(name));
                     if (this.value !== value) {
+                        console.log('[Debug MobX-ORM] Input Update FROM URL', this.__id, value);
                         this.set(value);
                     }
                 }
@@ -878,6 +897,7 @@
                 else {
                     searchParams.set(name, this.deserialize(value));
                 }
+                console.log('[Debug MobX-ORM] Input Update URL', this.__id, this.value);
                 // update URL
                 window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`);
             }, { fireImmediately: true }));
@@ -1747,6 +1767,12 @@
                 writable: true,
                 value: ''
             });
+            Object.defineProperty(this, "__id", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            }); // DEBUG ONLY
             Object.defineProperty(this, "__controller", {
                 enumerable: true,
                 configurable: true,
@@ -1779,14 +1805,17 @@
                 writable: true,
                 value: async () => waitIsFalse(this, '__is_loading')
             });
-            console.log('[Debug MobX-ORM] QueryX instance', Math.random());
+            this.__id = Math.random();
+            console.log('[Debug MobX-ORM] QueryX create - start', this.__id);
             this.adapter = adapter;
             this.selector = selector ? selector : new SelectorX();
             mobx.makeObservable(this);
             this.__disposers.push(mobx.reaction(() => this.selector.URLSearchParams.toString(), mobx.action('MO: Query Base - need to update', () => {
+                console.log('[Debug MobX-ORM] QueryX - need to update', this.__id);
                 this.need_to_update = true;
                 this.__is_ready = false;
             }), { fireImmediately: true }));
+            console.log('[Debug MobX-ORM] QueryX create - finish', this.__id);
         }
         get is_loading() { return this.__is_loading; }
         get is_ready() { return this.__is_ready; }
@@ -1815,8 +1844,10 @@
         }
         get items() { return this.__items; }
         async __wrap_controller(func) {
-            if (this.__controller)
+            if (this.__controller) {
+                console.log('[Debug MobX-ORM] QueryX - abort', this.__id);
                 this.__controller.abort();
+            }
             this.__controller = new AbortController();
             try {
                 return func();
@@ -1828,6 +1859,7 @@
         }
         async __load() {
             return this.__wrap_controller(async () => {
+                console.log('[Debug MobX-ORM] QueryX - __load', this.__id);
                 const objs = await this.adapter.load(this.selector, this.__controller);
                 mobx.runInAction(() => {
                     this.__items = objs;
@@ -1872,8 +1904,10 @@
                 // on 
                 if (value) {
                     this.__disposer_objects[DISPOSER_AUTOUPDATE] = mobx.reaction(() => this.need_to_update && (this.selector.filter === undefined || this.selector.filter.isReady), (need_to_update) => {
-                        if (need_to_update)
+                        if (need_to_update) {
+                            console.log('[Debug MobX-ORM] QueryX - autoupdate', this.__id);
                             this.load();
+                        }
                     }, { fireImmediately: true });
                 }
                 // off
@@ -1953,6 +1987,7 @@
         }
         async __load() {
             return this.__wrap_controller(async () => {
+                console.log('[Debug MobX-ORM] QueryX - __load', this.__id);
                 const [objs, total] = await Promise.all([
                     this.adapter.load(this.selector, this.__controller),
                     this.adapter.getTotalCount(this.selector.filter, this.__controller)

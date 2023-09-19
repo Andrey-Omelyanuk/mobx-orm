@@ -24,12 +24,14 @@ export class QueryX <M extends Model> {
     @observable __is_ready    : boolean = false 
     @observable __error       : string = '' 
 
+    __id // DEBUG ONLY
     __controller        : AbortController
     __disposers         : (()=>void)[] = []
     __disposer_objects  : {[field: string]: ()=>void} = {}
 
     constructor(adapter: Adapter<M>, selector?: Selector) {
-        console.log('[Debug MobX-ORM] QueryX instance', Math.random())
+        this.__id = Math.random()
+        console.log('[Debug MobX-ORM] QueryX create - start', this.__id)
         this.adapter = adapter
         this.selector = selector ? selector : new Selector()
         makeObservable(this)
@@ -37,11 +39,13 @@ export class QueryX <M extends Model> {
         this.__disposers.push(reaction(
             () => this.selector.URLSearchParams.toString(),
             action('MO: Query Base - need to update', () => {
+                console.log('[Debug MobX-ORM] QueryX - need to update', this.__id)
                 this.need_to_update = true
                 this.__is_ready = false
             }),
             { fireImmediately: true }
         ))
+        console.log('[Debug MobX-ORM] QueryX create - finish', this.__id)
     }
 
     // backward compatibility, remove it in the future
@@ -67,7 +71,10 @@ export class QueryX <M extends Model> {
     get items() { return this.__items }
 
     async __wrap_controller(func: Function) {
-        if (this.__controller) this.__controller.abort()
+        if (this.__controller) {
+            console.log('[Debug MobX-ORM] QueryX - abort', this.__id)
+            this.__controller.abort()
+        }
         this.__controller = new AbortController()
         try {
             return func()
@@ -78,6 +85,7 @@ export class QueryX <M extends Model> {
 
     async __load() {
         return this.__wrap_controller(async () => {
+            console.log('[Debug MobX-ORM] QueryX - __load', this.__id)
             const objs = await this.adapter.load(this.selector, this.__controller)
             runInAction(() => {
                 this.__items = objs
@@ -128,7 +136,10 @@ export class QueryX <M extends Model> {
                 this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
                     () => this.need_to_update && (this.selector.filter === undefined || this.selector.filter.isReady),
                     (need_to_update) => {
-                        if (need_to_update) this.load()
+                        if (need_to_update) {
+                            console.log('[Debug MobX-ORM] QueryX - autoupdate', this.__id)
+                            this.load()
+                        }
                     },
                     { fireImmediately: true }
                 )

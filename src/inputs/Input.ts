@@ -23,8 +23,11 @@ export abstract class Input<T> {
     @observable isInit      : boolean
     @observable __isReady   : boolean
                 __disposers = [] 
+                __id
     
     constructor (args?: InputConstructorArgs<T>) {
+        this.__id = Math.random()
+        console.log('[Debug MobX-ORM] Input create - start', this.__id)
         // init all observables before use it in reaction
         this.value              = args?.value
         this.options            = args?.options
@@ -45,6 +48,8 @@ export abstract class Input<T> {
         this.syncURL          && this.__doSyncURL()
         this.syncLocalStorage && this.__doSyncLocalStorage()
         this.autoReset        && this.__doAutoReset()
+
+        console.log('[Debug MobX-ORM] Input create - finish', this.__id)
     }
 
     get isReady () {
@@ -59,6 +64,7 @@ export abstract class Input<T> {
     }
 
     @action set (value: T) {
+        console.log('[Debug MobX-ORM] Input set', this.__id, value)
         this.value = value
         if (!this.required || !(this.required && value === undefined)) {
             this.__isReady = true
@@ -83,14 +89,22 @@ export abstract class Input<T> {
     __doOptions () {
         this.__disposers.push(reaction(
             () => this.options.is_ready,
-            () => this.__isReady = false
+            () => {
+                console.log('[Debug MobX-ORM] Input Options is ready', this.__id)
+                this.__isReady = false
+            } 
         ))
     }
 
     __doAutoReset () {
         this.__disposers.push(reaction(
             () => this.options.is_ready && !this.disabled,
-            (is_ready) => is_ready && this.autoReset(this),
+            (is_ready) => {
+                if(is_ready) {
+                    console.log('[Debug MobX-ORM] Input AutoReset', this.__id)
+                    this.autoReset(this)
+                } 
+            },
             { fireImmediately: true },
         ))
     }
@@ -109,6 +123,7 @@ export abstract class Input<T> {
             if (searchParams.has(name)) {
                 const value = this.serialize(searchParams.get(name))
                 if (this.value !== value) {
+                    console.log('[Debug MobX-ORM] Input Update FROM URL', this.__id, value)
                     this.set(value)
                 }
             }
@@ -126,6 +141,7 @@ export abstract class Input<T> {
                 } else {
                     searchParams.set(name, this.deserialize(value))
                 }
+                console.log('[Debug MobX-ORM] Input Update URL', this.__id, this.value)
                 // update URL
                 window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`)
             },
