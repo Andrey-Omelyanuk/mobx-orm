@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.51
+   * mobx-orm.js v1.2.52
    * Released under the MIT license.
    */
 
@@ -844,7 +844,10 @@ class Input {
         }
     }
     destroy() {
+        var _a;
         this.__disposers.forEach(disposer => disposer());
+        (_a = this.options) === null || _a === void 0 ? void 0 : _a.destroy();
+        console.log('[Debug MobX-ORM] Input - destroyed', this.__id);
     }
     toString() {
         return this.deserialize(this.value);
@@ -1837,6 +1840,7 @@ class QueryX {
             this.__disposer_objects[__id]();
             delete this.__disposer_objects[__id];
         }
+        console.log('[Debug MobX-ORM] QueryX - destroyed', this.__id);
     }
     get items() { return this.__items; }
     async __wrap_controller(func) {
