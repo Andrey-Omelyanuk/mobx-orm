@@ -43,7 +43,7 @@ export abstract class Input<T> {
         this.__isReady          = !this.options
         // if debounce is on then we have to have debounced version of __setReadyTrue
         if (this.debounce)
-            this.__setReadyTrue = _.debounce(() => runInAction(() => this.__isReady = true))
+            this.__setReadyTrue = _.debounce(() => runInAction(() => this.__isReady = true), this.debounce)
         else
             this.__setReadyTrue = () => this.__isReady = true
 

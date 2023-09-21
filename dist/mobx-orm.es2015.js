@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.54
+   * mobx-orm.js v1.2.55
    * Released under the MIT license.
    */
 
@@ -819,7 +819,7 @@ class Input {
         this.__isReady = !this.options;
         // if debounce is on then we have to have debounced version of __setReadyTrue
         if (this.debounce)
-            this.__setReadyTrue = _.debounce(() => runInAction(() => this.__isReady = true));
+            this.__setReadyTrue = _.debounce(() => runInAction(() => this.__isReady = true), this.debounce);
         else
             this.__setReadyTrue = () => this.__isReady = true;
         makeObservable(this);
