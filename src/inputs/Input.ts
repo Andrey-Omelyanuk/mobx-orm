@@ -1,13 +1,15 @@
-import { action, makeObservable, observable, reaction } from 'mobx'
+import _ from 'lodash'
+import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
 import { Model, QueryX as Query } from '..'
 
 export interface InputConstructorArgs<T> {
-    value            ?: T,
-    options          ?: any,
-    required         ?: boolean,
-    disabled         ?: boolean,
-    syncURL          ?: string,
+    value            ?: T
+    options          ?: any
+    required         ?: boolean
+    disabled         ?: boolean
+    syncURL          ?: string
     syncLocalStorage ?: string
+    debounce         ?: number
     autoReset        ?: (input: Input<T>) => void
 }
 
@@ -18,11 +20,14 @@ export abstract class Input<T> {
     @observable          disabled            : boolean
                 readonly syncURL            ?: string
                 readonly syncLocalStorage   ?: string
+                readonly debounce           ?: number 
                 readonly autoReset          ?: (input: Input<T>) => void
+
 
     @observable isInit      : boolean
     @observable __isReady   : boolean
                 __disposers = [] 
+                __setReadyTrue: Function
     
     constructor (args?: InputConstructorArgs<T>) {
         // init all observables before use it in reaction
@@ -32,13 +37,16 @@ export abstract class Input<T> {
         this.disabled           = !!args?.disabled
         this.syncURL            = args?.syncURL
         this.syncLocalStorage   = args?.syncLocalStorage
+        this.debounce           = args?.debounce
         this.autoReset          = args?.autoReset
         this.isInit             = false
-        if (this.options) {
-            this.__isReady = false
-        } else {
-            this.__isReady = true
-        }
+        this.__isReady          = !this.options
+        // if debounce is on then we have to have debounced version of __setReadyTrue
+        if (this.debounce)
+            this.__setReadyTrue = _.debounce(() => runInAction(() => this.__isReady = true))
+        else
+            this.__setReadyTrue = () => this.__isReady = true
+
         makeObservable(this)
         // init reactions
         this.options          && this.__doOptions()
@@ -60,8 +68,11 @@ export abstract class Input<T> {
 
     @action set (value: T) {
         this.value = value
+        // if debounce is on then set __isReady to false and then to true after debounce
+        if (this.debounce) this.__isReady = false
+
         if (!this.required || !(this.required && value === undefined)) {
-            this.__isReady = true
+            this.__setReadyTrue()
         }
         if (!this.isInit && (!this.options || this.options?.isReady)) {
             this.isInit = true

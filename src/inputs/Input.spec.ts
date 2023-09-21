@@ -3,6 +3,8 @@ import { Model } from '../model'
 import { Input } from './Input'
 import { BooleanInput, NumberInput, StringInput, XAND, XEQ } from '..'
 
+jest.useFakeTimers()
+
 describe('Input', () => {
 
     class TestModel extends Model {}
@@ -72,6 +74,18 @@ describe('Input', () => {
             input.set('test')                                   ; expect(input.isReady).toBe(false)
             runInAction(() => options.__is_ready = true)        ; expect(input.isReady).toBe(false)
             input.set('test')                                   ; expect(input.isReady).toBe(true)
+        })
+        it('debounce input inpact to isReady', async () => {
+            const input = new TestInput({debounce: 100})        ; expect(input.isReady).toBe(true)
+            input.set('test')                                   ; expect(input.isReady).toBe(false)
+            input.set('test')                                   ; expect(input.isReady).toBe(false)
+            input.set('test')                                   ; expect(input.isReady).toBe(false)
+            // Fast-forward time
+            jest.runAllTimers()                                 ; expect(input.isReady).toBe(true)
+            input.set('test')                                   ; expect(input.isReady).toBe(false)
+            input.set('test')                                   ; expect(input.isReady).toBe(false)
+            // Fast-forward time
+            jest.runAllTimers()                                 ; expect(input.isReady).toBe(true)
         })
     })
 

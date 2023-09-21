@@ -19,6 +19,7 @@ interface InputConstructorArgs<T> {
     disabled?: boolean;
     syncURL?: string;
     syncLocalStorage?: string;
+    debounce?: number;
     autoReset?: (input: Input<T>) => void;
 }
 declare abstract class Input<T> {
@@ -28,10 +29,12 @@ declare abstract class Input<T> {
     disabled: boolean;
     readonly syncURL?: string;
     readonly syncLocalStorage?: string;
+    readonly debounce?: number;
     readonly autoReset?: (input: Input<T>) => void;
     isInit: boolean;
     __isReady: boolean;
     __disposers: any[];
+    __setReadyTrue: Function;
     constructor(args?: InputConstructorArgs<T>);
     get isReady(): boolean;
     set(value: T): void;

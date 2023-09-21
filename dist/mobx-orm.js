@@ -2,15 +2,19 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.53
+   * mobx-orm.js v1.2.54
    * Released under the MIT license.
    */
 
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('mobx')) :
-    typeof define === 'function' && define.amd ? define(['exports', 'mobx'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["mobx-orm"] = {}, global.mobx));
-})(this, (function (exports, mobx) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('mobx'), require('lodash')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'mobx', 'lodash'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["mobx-orm"] = {}, global.mobx, global._));
+})(this, (function (exports, mobx, _) { 'use strict';
+
+    function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+    var ___default = /*#__PURE__*/_interopDefaultLegacy(_);
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -773,6 +777,12 @@
                 writable: true,
                 value: void 0
             });
+            Object.defineProperty(this, "debounce", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
             Object.defineProperty(this, "autoReset", {
                 enumerable: true,
                 configurable: true,
@@ -797,6 +807,12 @@
                 writable: true,
                 value: []
             });
+            Object.defineProperty(this, "__setReadyTrue", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
             // init all observables before use it in reaction
             this.value = args === null || args === void 0 ? void 0 : args.value;
             this.options = args === null || args === void 0 ? void 0 : args.options;
@@ -804,14 +820,15 @@
             this.disabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
             this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
             this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
+            this.debounce = args === null || args === void 0 ? void 0 : args.debounce;
             this.autoReset = args === null || args === void 0 ? void 0 : args.autoReset;
             this.isInit = false;
-            if (this.options) {
-                this.__isReady = false;
-            }
-            else {
-                this.__isReady = true;
-            }
+            this.__isReady = !this.options;
+            // if debounce is on then we have to have debounced version of __setReadyTrue
+            if (this.debounce)
+                this.__setReadyTrue = ___default["default"].debounce(() => mobx.runInAction(() => this.__isReady = true));
+            else
+                this.__setReadyTrue = () => this.__isReady = true;
             mobx.makeObservable(this);
             // init reactions
             this.options && this.__doOptions();
@@ -830,8 +847,11 @@
         set(value) {
             var _a;
             this.value = value;
+            // if debounce is on then set __isReady to false and then to true after debounce
+            if (this.debounce)
+                this.__isReady = false;
             if (!this.required || !(this.required && value === undefined)) {
-                this.__isReady = true;
+                this.__setReadyTrue();
             }
             if (!this.isInit && (!this.options || ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady))) {
                 this.isInit = true;
