@@ -73,9 +73,8 @@ export abstract class Model {
             options?.omit,
         )
         const query = new QueryX<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
+        if (options?.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate)
         return query
     }
 
@@ -99,9 +98,8 @@ export abstract class Model {
             options?.omit,
         )
         const query = new QueryXRaw<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
+        if (options?.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate)
         return query
     }
 
@@ -126,9 +124,8 @@ export abstract class Model {
             options?.omit,
         )
         const query = new QueryXPage<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
+        if (options?.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate)
         return query
     }
 
@@ -153,9 +150,8 @@ export abstract class Model {
             options?.omit,
         )
         const query = new QueryXRawPage<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
+        if (options?.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate)
         return query
     }
 
@@ -180,9 +176,8 @@ export abstract class Model {
             options?.omit,
         )
         const query = new QueryXCacheSync<T>(this.__adapter as Adapter<T>, this.__cache, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
+        if (options?.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate)
         return query
     }
 
@@ -206,9 +201,8 @@ export abstract class Model {
             options?.omit,
         )
         const query = new QueryXStream<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
+        if (options?.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate)
         return query
     }
 
@@ -220,9 +214,8 @@ export abstract class Model {
     }): QueryXDistinct  {
         const selector = new SelectorX(options?.filter)
         const query = new QueryXDistinct(this.__adapter as Adapter<any>, selector, options.field)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
+        if (options?.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate)
         return query
     }
 

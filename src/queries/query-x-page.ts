@@ -34,7 +34,6 @@ export class QueryXPage<M extends Model> extends QueryX<M> {
 
     async __load() {
         return this.__wrap_controller(async () => {
-            console.log('[Debug MobX-ORM] QueryX - __load', this.__id)
             const [objs, total] = await Promise.all([
                 this.adapter.load(this.selector, this.__controller),
                 this.adapter.getTotalCount(this.selector.filter, this.__controller)
