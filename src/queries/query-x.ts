@@ -73,7 +73,7 @@ export class QueryX <M extends Model> {
         try {
             return func()
         } catch (e) {
-            if (e.name !== 'AbortError')  throw e
+            if (!(e.name === 'AbortError' || e.message === 'canceled')) throw e
         } 
     }
 

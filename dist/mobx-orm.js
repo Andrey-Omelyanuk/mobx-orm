@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.55
+   * mobx-orm.js v1.2.56
    * Released under the MIT license.
    */
 
@@ -1850,7 +1850,7 @@
                 return func();
             }
             catch (e) {
-                if (e.name !== 'AbortError')
+                if (!(e.name === 'AbortError' || e.message === 'canceled'))
                     throw e;
             }
         }
