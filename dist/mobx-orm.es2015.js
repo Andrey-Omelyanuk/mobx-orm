@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.56
+   * mobx-orm.js v1.2.57
    * Released under the MIT license.
    */
 
@@ -1840,10 +1840,10 @@ class QueryX {
         }
         this.__controller = new AbortController();
         try {
-            return func();
+            return await func();
         }
         catch (e) {
-            if (!(e.name === 'AbortError' || e.message === 'canceled'))
+            if (e.name !== 'AbortError' && e.message !== 'canceled')
                 throw e;
         }
     }
@@ -1873,7 +1873,7 @@ class QueryX {
         }
         catch (e) {
             runInAction(() => {
-                this.__error = e;
+                this.__error = e.message;
             });
         }
         finally {

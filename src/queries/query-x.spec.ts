@@ -1,11 +1,25 @@
 import { reaction, runInAction } from 'mobx'
-import { model, SelectorX as Selector, Model, LocalAdapter, ORDER_BY, ASC, DESC, XEQ, StringInput } from '../'
+import { model, SelectorX as Selector, Model, LocalAdapter, ORDER_BY, ASC, DESC, XEQ, StringInput, Adapter } from '../'
 import { QueryX, DISPOSER_AUTOUPDATE } from './query-x'
 
 describe('QueryX', () => {
 
     @model class A extends Model {}
     const adapter   : LocalAdapter<A> = new LocalAdapter(A)
+
+    class BaseTestAdapter extends Adapter<A> {
+        async __create(raw_data, controllerr) {}
+        async __update() {}
+        async __delete(obj_id, controller?) {}
+        async __action(obj_id, name, kwargs, controller?) { return }
+        async __find(selector, controller?) { return {} }
+        async __get(obj_id, controller?) { return {} }
+        async __load(selector, controller?) {
+            return [1,2,3]
+        }
+        async getTotalCount(where?, controller?): Promise<number> { return 0 }
+        async getDistinct(where, field, controller?) { return [] }
+    }
 
     afterEach(async () => {
         A.clearCache() 
@@ -62,6 +76,31 @@ describe('QueryX', () => {
         query.shadowLoad().finally(()=> {           expect(query.is_loading).toBe(false)
             done()
         });                                         expect(query.is_loading).toBe(false)
+    })
+
+    it('load - error', async () => {
+        class ErrorAdapter extends BaseTestAdapter {
+            async __load(selector, controller?) {
+                throw new Error('error')
+                return []
+            }
+        }
+        const query = new QueryX<A>(new ErrorAdapter(A))
+        await query.load()
+        expect(query.error).toBe('error')
+    })
+
+    it('load - canceled should be ignored', async () => {
+        class ErrorAdapter extends BaseTestAdapter {
+            async __load(selector, controller?) {
+                throw new Error('canceled')
+                return []
+            }
+        }
+        const query = new QueryX<A>(new ErrorAdapter(A))
+        await query.__load()
+        expect(query.error).toBe('')
+        expect(query.items.length).toBe(0)
     })
 
     it('autoupdate on/off', async () => {

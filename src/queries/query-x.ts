@@ -71,9 +71,9 @@ export class QueryX <M extends Model> {
         }
         this.__controller = new AbortController()
         try {
-            return func()
+            return await func()
         } catch (e) {
-            if (!(e.name === 'AbortError' || e.message === 'canceled')) throw e
+            if (e.name !== 'AbortError' && e.message !== 'canceled') throw e
         } 
     }
 
@@ -107,7 +107,7 @@ export class QueryX <M extends Model> {
         }
         catch(e) {
             runInAction(() => {
-                this.__error = e
+                this.__error = e.message
             })
         }
         finally {
