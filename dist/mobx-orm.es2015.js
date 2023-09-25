@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.57
+   * mobx-orm.js v1.2.58
    * Released under the MIT license.
    */
 
@@ -1850,6 +1850,7 @@ class QueryX {
     async __load() {
         return this.__wrap_controller(async () => {
             const objs = await this.adapter.load(this.selector, this.__controller);
+            this.__controller = undefined;
             runInAction(() => {
                 this.__items = objs;
             });
@@ -1862,7 +1863,13 @@ class QueryX {
             await this.shadowLoad();
         }
         finally {
-            runInAction(() => this.__is_loading = false);
+            runInAction(() => {
+                // the loading can be canceled by another load
+                // in this case we should not touch the __is_loading
+                if (!this.__controller) {
+                    this.__is_loading = false;
+                }
+            });
         }
     }
     // use it if nobody should know that the query data is updating
@@ -2274,14 +2281,14 @@ class Model {
         const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
         const query = new QueryX(this.__adapter, selector);
         if (options === null || options === void 0 ? void 0 : options.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate);
+            setTimeout(() => query.autoupdate = options.autoupdate, 100);
         return query;
     }
     static getQueryXRaw(options) {
         const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
         const query = new QueryXRaw(this.__adapter, selector);
         if (options === null || options === void 0 ? void 0 : options.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate);
+            setTimeout(() => query.autoupdate = options.autoupdate, 100);
         return query;
     }
     // TODO: need to refactor
@@ -2289,7 +2296,7 @@ class Model {
         const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
         const query = new QueryXPage(this.__adapter, selector);
         if (options === null || options === void 0 ? void 0 : options.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate);
+            setTimeout(() => query.autoupdate = options.autoupdate, 100);
         return query;
     }
     // TODO: need to refactor
@@ -2297,7 +2304,7 @@ class Model {
         const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
         const query = new QueryXRawPage(this.__adapter, selector);
         if (options === null || options === void 0 ? void 0 : options.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate);
+            setTimeout(() => query.autoupdate = options.autoupdate, 100);
         return query;
     }
     // TODO: need to refactor
@@ -2305,7 +2312,7 @@ class Model {
         const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
         const query = new QueryXCacheSync(this.__adapter, this.__cache, selector);
         if (options === null || options === void 0 ? void 0 : options.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate);
+            setTimeout(() => query.autoupdate = options.autoupdate, 100);
         return query;
     }
     // TODO: need to refactor
@@ -2313,7 +2320,7 @@ class Model {
         const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, 0, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
         const query = new QueryXStream(this.__adapter, selector);
         if (options === null || options === void 0 ? void 0 : options.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate);
+            setTimeout(() => query.autoupdate = options.autoupdate, 100);
         return query;
     }
     // TODO: need to refactor
@@ -2321,7 +2328,7 @@ class Model {
         const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter);
         const query = new QueryXDistinct(this.__adapter, selector, options.field);
         if (options === null || options === void 0 ? void 0 : options.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate);
+            setTimeout(() => query.autoupdate = options.autoupdate, 100);
         return query;
     }
     static getQuery(selector) {

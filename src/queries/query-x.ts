@@ -44,13 +44,13 @@ export class QueryX <M extends Model> {
     }
 
     // backward compatibility, remove it in the future
-    get filters() { return this.selector.filter }
-    get order_by() { return this.selector.order_by }
-    get offset() { return this.selector.offset }
-    get limit() { return this.selector.limit }
-    get fields() { return this.selector.fields }
-    get omit() { return this.selector.omit }
-    get relations() { return this.selector.relations }
+    get filters     () { return this.selector.filter }
+    get order_by    () { return this.selector.order_by }
+    get offset      () { return this.selector.offset }
+    get limit       () { return this.selector.limit }
+    get fields      () { return this.selector.fields }
+    get omit        () { return this.selector.omit }
+    get relations   () { return this.selector.relations }
 
     destroy() {
         this.__controller?.abort()
@@ -80,6 +80,7 @@ export class QueryX <M extends Model> {
     async __load() {
         return this.__wrap_controller(async () => {
             const objs = await this.adapter.load(this.selector, this.__controller)
+            this.__controller = undefined
             runInAction(() => {
                 this.__items = objs
             })
@@ -94,7 +95,13 @@ export class QueryX <M extends Model> {
             await this.shadowLoad()
         }
         finally {
-            runInAction(() => this.__is_loading = false)
+            runInAction(() => {
+                // the loading can be canceled by another load
+                // in this case we should not touch the __is_loading
+                if (!this.__controller) {
+                    this.__is_loading = false
+                }
+            })
         }
     }
 

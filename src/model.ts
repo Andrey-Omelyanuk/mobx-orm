@@ -74,7 +74,7 @@ export abstract class Model {
         )
         const query = new QueryX<T>(this.__adapter as Adapter<T>, selector)
         if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate, 100)
         return query
     }
 
@@ -99,7 +99,7 @@ export abstract class Model {
         )
         const query = new QueryXRaw<T>(this.__adapter as Adapter<T>, selector)
         if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate, 100)
         return query
     }
 
@@ -125,7 +125,7 @@ export abstract class Model {
         )
         const query = new QueryXPage<T>(this.__adapter as Adapter<T>, selector)
         if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate, 100)
         return query
     }
 
@@ -151,7 +151,7 @@ export abstract class Model {
         )
         const query = new QueryXRawPage<T>(this.__adapter as Adapter<T>, selector)
         if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate, 100)
         return query
     }
 
@@ -177,7 +177,7 @@ export abstract class Model {
         )
         const query = new QueryXCacheSync<T>(this.__adapter as Adapter<T>, this.__cache, selector)
         if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate, 100)
         return query
     }
 
@@ -202,7 +202,7 @@ export abstract class Model {
         )
         const query = new QueryXStream<T>(this.__adapter as Adapter<T>, selector)
         if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate, 100)
         return query
     }
 
@@ -215,7 +215,7 @@ export abstract class Model {
         const selector = new SelectorX(options?.filter)
         const query = new QueryXDistinct(this.__adapter as Adapter<any>, selector, options.field)
         if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate)
+            setTimeout(() => query.autoupdate = options.autoupdate, 100)
         return query
     }
 
