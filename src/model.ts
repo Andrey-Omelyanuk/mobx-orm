@@ -301,13 +301,12 @@ export abstract class Model {
     }
 
     get is_changed() : boolean {
-        let is_changed = false
         for(let field_name in this.model.__fields) {
             if (this[field_name] != this.__init_data[field_name]) {
-                is_changed = true
+                return true
             }
         }
-        return is_changed 
+        return false 
     }
 
     async action(name: string, kwargs: Object) { return await this.model.__adapter.action(this, name, kwargs) }

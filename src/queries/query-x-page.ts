@@ -9,10 +9,10 @@ export class QueryXPage<M extends Model> extends QueryX<M> {
 
     @action('MO: set page size') setPageSize(size: number) { this.selector.limit = size; this.selector.offset = 0 }
     @action('MO: set page')      setPage(n: number) { this.selector.offset = this.selector.limit * (n > 0 ? n-1 : 0) }
-    @action('MO: fisrt page')    goToFirstPage() { this.setPage(1) }
-    @action('MO: prev page')     goToPrevPage () { this.setPage(this.current_page - 1) }
-    @action('MO: next page')     goToNextPage () { this.setPage(this.current_page + 1) }
-    @action('MO: last page')     goToLastPage () { this.setPage(this.total_pages) }
+    goToFirstPage() { this.setPage(1) }
+    goToPrevPage () { this.setPage(this.current_page - 1) }
+    goToNextPage () { this.setPage(this.current_page + 1) }
+    goToLastPage () { this.setPage(this.total_pages) }
 
     get is_first_page() : boolean { return this.selector.offset === 0 }
     get is_last_page () : boolean { return this.selector.offset + this.selector.limit >= this.total }
