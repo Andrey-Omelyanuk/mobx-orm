@@ -1,8 +1,8 @@
 import { runInAction } from 'mobx'
 import { Model, RawObject, RawData } from '../model'
 import { Selector } from '../types'
-import { SelectorX } from '../selector'
 import { XFilter } from '../filters-x'
+import { QueryX } from '..'
 
 export abstract class  Adapter<M extends Model> {
 
@@ -11,11 +11,11 @@ export abstract class  Adapter<M extends Model> {
     abstract __delete(obj_id: number, controller?: AbortController): Promise<void>
     abstract __action(obj_id: number, name: string, kwargs: Object, controller?: AbortController) : Promise<any>
     abstract __get(obj_id: number, controller?: AbortController): Promise<object>
-    abstract __find(props: Selector | SelectorX, controller?: AbortController): Promise<object>
-    abstract __load(props: Selector | SelectorX, controller?: AbortController): Promise<RawObject[]>
+    abstract __find(props: Selector | QueryX<M>, controller?: AbortController): Promise<object>
+    abstract __load(props: Selector | QueryX<M>, controller?: AbortController): Promise<RawObject[]>
     abstract getTotalCount(where?, controller?: AbortController): Promise<number>
     abstract getDistinct(where: XFilter , field: string, controller?: AbortController): Promise<any[]>
-
+    abstract QueryURLSearchParams(query: QueryX<M>, prefix?: string): URLSearchParams
     readonly model: any
 
     constructor(model: any) {
@@ -75,7 +75,7 @@ export abstract class  Adapter<M extends Model> {
     }
 
     /* Returns ONE object */
-    async find(selector: Selector | SelectorX, controller?: AbortController): Promise<M> {
+    async find(selector: Selector | QueryX<M>, controller?: AbortController): Promise<M> {
         let raw_obj = await this.__find(selector)
         const obj = this.model.updateCache(raw_obj, controller)
         obj.refreshInitData()
@@ -83,7 +83,7 @@ export abstract class  Adapter<M extends Model> {
     }
 
     /* Returns MANY objects */
-    async load(selector?: Selector | SelectorX, controller?: AbortController):Promise<M[]> {
+    async load(selector?: Selector | QueryX<M>, controller?: AbortController):Promise<M[]> {
         let raw_objs = await this.__load(selector, controller)
         let objs: M[] = []
         // it should be happend in one big action

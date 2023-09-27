@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
 import { Model, QueryX as Query } from '..'
+import { config } from '../config'
 
 export interface InputConstructorArgs<T> {
     value            ?: T
@@ -145,8 +146,7 @@ export abstract class Input<T> {
                 } else {
                     searchParams.set(name, this.deserialize(value))
                 }
-                // update URL
-                window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`)
+                config.UPDATE_SEARCH_PARAMS(searchParams)
             },
             { fireImmediately: true },
         ))

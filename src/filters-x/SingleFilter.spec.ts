@@ -14,7 +14,7 @@ describe('SingleFilter', () => {
     }
 
     it('isReady', () => {
-        const options = TestModel.getQueryX()
+        const options = TestModel.getQueryX({})
         const value =  new NumberInput({value: 1, options})
         const filter = EQ('test', value)                    ; expect(filter.isReady).toBe(value.isReady)
         runInAction(() => options.need_to_update = false)   ; expect(filter.isReady).toBe(value.isReady)

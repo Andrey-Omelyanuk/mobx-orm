@@ -1,6 +1,4 @@
-import { reaction, runInAction } from 'mobx'
-import { model, SelectorX as Selector, Model, QueryX, Adapter, LocalAdapter, ORDER_BY, ASC, DESC, Filter, EQ } from '..'
-
+import { model, Model, LocalAdapter } from '..'
 
 describe('QueryXStream', () => {
 

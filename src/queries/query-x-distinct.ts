@@ -1,26 +1,20 @@
 import { runInAction } from 'mobx'
-import { QueryX } from './query-x'
-import { Adapter } from '../adapters'
-import { SelectorX as Selector } from '../selector' 
+import { QueryX, QueryXProps } from './query-x'
 
 export class QueryXDistinct extends QueryX<any> {
     readonly field: string
     
-    constructor(adapter: Adapter<any>, selector: Selector, field: string) {
-        super(adapter, selector)
+    constructor(field: string, props: QueryXProps<any>) {
+        super(props)
         this.field = field
     }
 
     async __load() {
-        if (this.__controller) this.__controller.abort()
-        this.__controller = new AbortController()
-        try {
-            const objs = await this.adapter.getDistinct(this.selector.filter, this.field, this.__controller)
+        return this.__wrap_controller(async () => {
+            const objs = await this.adapter.getDistinct(this.filter, this.field, this.__controller)
             runInAction(() => {
                 this.__items = objs
             })
-        } catch (e) {
-            if (e.name !== 'AbortError')  throw e
-        } 
+        })
     }
 }

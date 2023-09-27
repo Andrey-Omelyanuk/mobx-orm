@@ -1,5 +1,5 @@
 import { Selector } from '@/types';
-import { model, Model, RawObject, field, Adapter } from '../'
+import { model, Model, RawObject, field, Adapter, QueryX } from '../'
 import { EQ } from '../filters' 
 import { obj_a, obj_b } from '../test.utils' 
 
@@ -23,6 +23,7 @@ describe('Adapter', () => {
         }
         async getTotalCount(where?, controller?: AbortController): Promise<number> { return 0 }
         async getDistinct(where, field, controller?: AbortController): Promise<any[]> { return [] }
+        QueryURLSearchParams(query: QueryX<A>): URLSearchParams { return new URLSearchParams() }
     }
 
     let adapter: TestAdapter, cache: Map<number, A>, __load: any, __create: any, __update: any, __delete: any, __find: any

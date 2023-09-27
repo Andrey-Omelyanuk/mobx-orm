@@ -2,12 +2,15 @@ import { runInAction } from 'mobx'
 import { Model } from '../model'
 import { Input } from './Input'
 import { BooleanInput, NumberInput, StringInput, XAND, XEQ } from '..'
+import { BaseTestAdapter } from '../test.utils'
 
 jest.useFakeTimers()
 
 describe('Input', () => {
 
     class TestModel extends Model {}
+    TestModel.__adapter = new BaseTestAdapter(TestModel)
+
     class TestInput extends Input<string|null|undefined> {
         serialize(value?: string): string|null|undefined { return }
         deserialize(value?: string|null|undefined): string { return ''}
@@ -30,7 +33,7 @@ describe('Input', () => {
             expect(input.__disposers.length).toBe(0)
         })
         it('with value and options', async () => {
-            const options = TestModel.getQueryX()
+            const options = TestModel.getQueryX({})
             const input = new TestInput({value: 'test', options})
 
             expect(input.value).toBe('test')
@@ -40,7 +43,7 @@ describe('Input', () => {
             expect(input.__disposers.length).toBe(1)
         })
          it('with value and options is ready', async () => {
-            const options = TestModel.getQueryX()
+            const options = TestModel.getQueryX({})
             runInAction(() => options.__is_ready = true)
             const input = new TestInput({value: 'test', options})
 
@@ -57,13 +60,13 @@ describe('Input', () => {
             expect((new TestInput()).isReady).toBe(true)
         })
         it('with not ready options ', async () => {
-            const options = TestModel.getQueryX()
+            const options = TestModel.getQueryX({})
             const input = new TestInput({options})              ; expect(input.isReady).toBe(false)
             runInAction(() => options.__is_ready = true)        ; expect(input.isReady).toBe(false)
             input.set('test')                                   ; expect(input.isReady).toBe(true)
         })
         it('with ready options ', async () => {
-            const options = TestModel.getQueryX()
+            const options = TestModel.getQueryX({})
             runInAction(() => options.__is_ready = true)
 
             const input = new TestInput({options})              ; expect(input.isReady).toBe(false)
@@ -90,7 +93,7 @@ describe('Input', () => {
     })
 
     it('autoReset', async () => {
-        const options = TestModel.getQueryX()
+        const options = TestModel.getQueryX({})
         const input = new TestInput({
             value: 'one',
             options,

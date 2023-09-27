@@ -1,17 +1,16 @@
 import { action, computed, observe, reaction } from 'mobx'
 import { Adapter } from '../adapters'
-import { QueryX } from './query-x'
+import { QueryX, QueryXProps } from './query-x'
 import { Model } from '../model'
 import { SelectorX as Selector, ASC } from '../selector' 
 
 
 export class QueryXCacheSync <M extends Model> extends QueryX<M> {
 
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
-        super(adapter, selector)
-
+    constructor(cache: any, props: QueryXProps<M>) {
+        super(props)
         // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(base_cache, 
+        this.__disposers.push(observe(cache, 
             action('MO: Query - update from cache changes',
             (change: any) => {
                 if (change.type == 'add') {
@@ -34,7 +33,7 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
         ))
 
         // ch all exist objects of model 
-        for(let [id, obj] of base_cache) {
+        for(let [id, obj] of cache) {
             this.__watch_obj(obj)
         }
     }
@@ -43,7 +42,7 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
         if (this.__controller) this.__controller.abort()
         this.__controller = new AbortController()
         try {
-            await this.adapter.load(this.selector, this.__controller)
+            await this.adapter.load(this, this.__controller)
             // Query don't need to overide the __items,
             // query's items should be get only from the cache
         } catch (e) {
@@ -58,9 +57,9 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
     @computed
     get items() { 
         let __items = this.__items.map(x=>x) // copy __items (not deep)
-        if (this.selector.order_by?.size) {
+        if (this.order_by?.size) {
             let compare = (a, b) => {
-                for(const [key, value] of this.selector.order_by) {
+                for(const [key, value] of this.order_by) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
                         if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return -1
@@ -84,7 +83,7 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
     __watch_obj(obj) {
         if (this.__disposer_objects[obj.id]) this.__disposer_objects[obj.id]()
         this.__disposer_objects[obj.id] = reaction(
-            () =>  !this.selector.filter || this.selector.filter.isMatch(obj),
+            () =>  !this.filter || this.filter.isMatch(obj),
             action('MO: Query - obj was changed',
             (should: boolean) => {
                 let i = this.__items.indexOf(obj)

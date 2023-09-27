@@ -1,56 +1,101 @@
 import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
-import { waitIsFalse, waitIsTrue } from '../utils'
 import { Adapter } from '../adapters'
-import { SelectorX as Selector } from '../selector'
+import { config } from '../config'
 import { Model } from '../model'
+import { XFilter } from '../filters-x'
+import { waitIsFalse, waitIsTrue } from '../utils'
 
 export const DISPOSER_AUTOUPDATE = "__autoupdate"
 
-export class QueryX <M extends Model> {
-    @observable total         : number
-    @observable need_to_update: boolean = false // set to true when filters/order_by/page/page_size was changed and back to false after load
+export const ASC = true 
+export const DESC = false 
+export type ORDER_BY = Map<string, boolean>
 
-    get is_loading () { return this.__is_loading  }
-    get is_ready   () { return this.__is_ready    }
-    get error      () { return this.__error       }
-    // we going to migrate to JS style
-    get isLoading () { return this.__is_loading  }
-    get isReady   () { return this.__is_ready    }
-    
-    readonly selector: Selector
+export interface QueryXProps<M extends Model> {
+    adapter                     ?: Adapter<M>
+    //
+    filter                      ?: XFilter
+    order_by                    ?: ORDER_BY 
+    // pagination
+    offset                      ?: number
+    limit                       ?: number
+    // fields controll
+    relations                   ?: Array<string>
+    fields                      ?: Array<string>
+    omit                        ?: Array<string>
+    //
+    autoupdate                  ?: boolean
+    syncURLSearchParams         ?: boolean
+    syncURLSearchParamsPrefix   ?: string
+}
+
+export class QueryX <M extends Model> {
+
+    @observable filter      : XFilter 
+    @observable order_by    : ORDER_BY
+    @observable offset      : number
+    @observable limit       : number
+    readonly    relations   : Array<string>
+    readonly    fields      : Array<string>
+    readonly    omit        : Array<string>
+
+    readonly syncURLSearchParams         : boolean
+    readonly syncURLSearchParamsPrefix   : string
+
+    @observable total         : number
+    @observable need_to_update: boolean = false
+
     readonly adapter: Adapter<M>
     @observable __items: M[] = []
     @observable __is_loading  : boolean = false 
     @observable __is_ready    : boolean = false 
     @observable __error       : string = '' 
 
+    get is_loading  () { return this.__is_loading   }
+    get is_ready    () { return this.__is_ready     }
+    get error       () { return this.__error        }
+    get items       () { return this.__items        }
+    // backward compatibility, remove it in the future
+    get filters     () { return this.filter         }
+    // we going to migrate to JS style
+    get isLoading   () { return this.__is_loading   }
+    get isReady     () { return this.__is_ready     }
+    get orderBy     () { return this.order_by       }
+
     __controller        : AbortController
     __disposers         : (()=>void)[] = []
     __disposer_objects  : {[field: string]: ()=>void} = {}
 
-    constructor(adapter: Adapter<M>, selector?: Selector) {
-        this.adapter = adapter
-        this.selector = selector ? selector : new Selector()
+    constructor(props: QueryXProps<M>) {
+        const {
+            adapter, filter, order_by = new Map(), offset, limit,
+            relations = [], fields = [], omit = [],
+            autoupdate = false, syncURLSearchParams = false, syncURLSearchParamsPrefix = ''
+        } = props
+
+        this.adapter   = adapter
+        this.filter    = filter
+        this.order_by  = order_by
+        this.offset    = offset
+        this.limit     = limit
+        this.relations = relations
+        this.fields    = fields
+        this.omit      = omit
+        this.syncURLSearchParams = syncURLSearchParams
+        this.syncURLSearchParamsPrefix = syncURLSearchParamsPrefix
         makeObservable(this)
 
         this.__disposers.push(reaction(
-            () => this.selector.URLSearchParams.toString(),
+            () => this.adapter.QueryURLSearchParams(this).toString(),
             action('MO: Query Base - need to update', () => {
                 this.need_to_update = true
                 this.__is_ready = false
             }),
             { fireImmediately: true }
         ))
+        this.autoupdate = autoupdate
+        this.syncURLSearchParams && this.__syncURLSearchParams()
     }
-
-    // backward compatibility, remove it in the future
-    get filters     () { return this.selector.filter }
-    get order_by    () { return this.selector.order_by }
-    get offset      () { return this.selector.offset }
-    get limit       () { return this.selector.limit }
-    get fields      () { return this.selector.fields }
-    get omit        () { return this.selector.omit }
-    get relations   () { return this.selector.relations }
 
     destroy() {
         this.__controller?.abort()
@@ -63,7 +108,6 @@ export class QueryX <M extends Model> {
         } 
     }
 
-    get items() { return this.__items }
 
     async __wrap_controller(func: Function) {
         if (this.__controller) {
@@ -83,7 +127,7 @@ export class QueryX <M extends Model> {
 
     async __load() {
         return this.__wrap_controller(async () => {
-            const objs = await this.adapter.load(this.selector, this.__controller)
+            const objs = await this.adapter.load(this, this.__controller)
             runInAction(() => {
                 this.__items = objs
             })
@@ -137,13 +181,13 @@ export class QueryX <M extends Model> {
             // on 
             if (value) {
                 this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
-                    () => this.need_to_update && (this.selector.filter === undefined || this.selector.filter.isReady),
+                    () => this.need_to_update && (this.filter === undefined || this.filter.isReady),
                     (need_to_update) => {
                         if (need_to_update) {
                             this.load()
                         }
                     },
-                    { fireImmediately: true }
+                    { delay: config.AUTO_UPDATE_DELAY }
                 )
             }
             // off
@@ -152,6 +196,26 @@ export class QueryX <M extends Model> {
                 delete this.__disposer_objects[DISPOSER_AUTOUPDATE]
             }
         }
+    }
+
+    __syncURLSearchParams () {
+
+        // init filter from URL
+        // if (window.location.search) {
+        //     setQueryFromURI(query, window.location.search)
+        // }
+        // change URL when filter was changed
+        this.__disposers.push(
+            reaction(
+                // TODO: should we use toString() or not?
+                () => this.adapter.QueryURLSearchParams(this, this.syncURLSearchParamsPrefix),
+                (search_params) => {
+                    if (`?${search_params.toString()}` !== window.location.search && this.is_ready) {
+                        config.UPDATE_SEARCH_PARAMS(search_params)
+                    }
+                }
+            )
+        )
     }
 
     // use it if you need use promise instead of observe is_ready

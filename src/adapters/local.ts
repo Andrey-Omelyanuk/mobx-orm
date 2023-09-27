@@ -1,6 +1,7 @@
 import { Selector } from '@/types'
 import { Model, RawData, RawObject } from '../model'
 import { Adapter }  from './adapter'
+import { QueryX } from '..';
 
 /*
 You can use this adapter for mock data or for unit test
@@ -118,6 +119,8 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     async getDistinct(where, filed): Promise<any[]> {
         return []
     }
+
+    QueryURLSearchParams(query: QueryX<M>): URLSearchParams { return new URLSearchParams() }
 }
 
 

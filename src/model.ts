@@ -1,6 +1,6 @@
 import { action, intercept, makeObservable, observable, observe, runInAction, values } from 'mobx'
 import { Adapter } from './adapters'
-import { QueryXDistinct, Query, QueryPage, QueryX, QueryXPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage } from './queries'
+import { QueryXDistinct, Query, QueryPage, QueryX, QueryXPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage, QueryXProps } from './queries'
 import { Selector } from './types'
 import { SelectorX } from './selector'
 import { XFilter as Filter } from './filters-x'
@@ -52,171 +52,39 @@ export abstract class Model {
             this.__cache.delete(obj.id)
     }
 
-    // TODO: need to refactor
-    static getQueryX<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        offset?: number,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryX<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            options?.offset,
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryX<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate, 100)
-        return query
+    static getQueryX<M extends Model>(props: QueryXProps<M>): QueryX<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryX<M>(props)
     }
 
-    static getQueryXRaw<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        offset?: number,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryX<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            options?.offset,
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryXRaw<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate, 100)
-        return query
+    static getQueryXRaw<M extends Model>(props: QueryXProps<M>): QueryX<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXRaw<M>(props)
     }
 
-    // TODO: need to refactor
-    static getQueryXPage<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        offset?: number,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryXPage<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            options?.offset,
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryXPage<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate, 100)
-        return query
+    static getQueryXPage<M extends Model>(props: QueryXProps<M>): QueryXPage<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXPage<M>(props)
     }
 
-    // TODO: need to refactor
-    static getQueryXRawPage<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        offset?: number,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryXPage<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            options?.offset,
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryXRawPage<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate, 100)
-        return query
+    static getQueryXRawPage<M extends Model>(props: QueryXProps<M>): QueryXRawPage<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXRawPage<M>(props)
     }
 
-    // TODO: need to refactor
-    static getQueryXCacheSync<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        offset?: number,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryXCacheSync<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            options?.offset,
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryXCacheSync<T>(this.__adapter as Adapter<T>, this.__cache, selector)
-        if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate, 100)
-        return query
+    static getQueryXCacheSync<M extends Model>(props: QueryXProps<M>): QueryXCacheSync<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXCacheSync<M>(this.__cache, props)
     }
 
-    // TODO: need to refactor
-    static getQueryXStream<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryXStream<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            0, 
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryXStream<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate, 100)
-        return query
+    static getQueryXStream<M extends Model>(props: QueryXProps<M>): QueryXStream<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXStream<M>(props)
     }
 
-    // TODO: need to refactor
-    static getQueryXDistinct(options: {
-        field: string,
-        filter?: Filter,
-        autoupdate?: boolean,
-    }): QueryXDistinct  {
-        const selector = new SelectorX(options?.filter)
-        const query = new QueryXDistinct(this.__adapter as Adapter<any>, selector, options.field)
-        if (options?.autoupdate)
-            setTimeout(() => query.autoupdate = options.autoupdate, 100)
-        return query
+    static getQueryXDistinct<M extends Model>(field: string, props: QueryXProps<M>): QueryXDistinct {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXDistinct(field, props)
     }
 
     static getQuery(selector?: Selector): Query<Model>  {
