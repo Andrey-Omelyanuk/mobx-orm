@@ -24,6 +24,7 @@ interface InputConstructorArgs<T> {
 }
 declare abstract class Input<T> {
     value: T;
+    error: string;
     readonly options?: QueryX<Model>;
     required: boolean;
     disabled: boolean;

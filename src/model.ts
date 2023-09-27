@@ -1,4 +1,4 @@
-import { action, intercept, makeObservable, observable, observe, runInAction } from 'mobx'
+import { action, intercept, makeObservable, observable, observe, runInAction, values } from 'mobx'
 import { Adapter } from './adapters'
 import { QueryXDistinct, Query, QueryPage, QueryX, QueryXPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage } from './queries'
 import { Selector } from './types'

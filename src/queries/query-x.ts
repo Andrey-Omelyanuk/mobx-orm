@@ -70,17 +70,20 @@ export class QueryX <M extends Model> {
             this.__controller.abort()
         }
         this.__controller = new AbortController()
+        let response
         try {
-            return await func()
+            response = await func()
         } catch (e) {
             if (e.name !== 'AbortError' && e.message !== 'canceled') throw e
-        } 
+        } finally {
+            this.__controller = undefined
+        }
+        return response
     }
 
     async __load() {
         return this.__wrap_controller(async () => {
             const objs = await this.adapter.load(this.selector, this.__controller)
-            this.__controller = undefined
             runInAction(() => {
                 this.__items = objs
             })

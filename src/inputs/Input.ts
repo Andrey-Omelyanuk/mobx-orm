@@ -15,6 +15,7 @@ export interface InputConstructorArgs<T> {
 
 export abstract class Input<T> {
     @observable          value               : T
+    @observable          error               : string = ''
                 readonly options            ?: Query<Model> // should be a Query
     @observable          required            : boolean 
     @observable          disabled            : boolean

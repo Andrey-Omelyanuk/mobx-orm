@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.58
+   * mobx-orm.js v1.2.59
    * Released under the MIT license.
    */
 
@@ -740,6 +740,12 @@ class Input {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "error", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: ''
+        });
         Object.defineProperty(this, "options", {
             enumerable: true,
             configurable: true,
@@ -923,6 +929,10 @@ __decorate([
     observable,
     __metadata("design:type", Object)
 ], Input.prototype, "value", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", String)
+], Input.prototype, "error", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
@@ -1158,6 +1168,46 @@ const autoResetArrayToEmpty = (input) => {
     else
         input.set([]);
 };
+
+class Form {
+    constructor(inputs) {
+        Object.defineProperty(this, "inputs", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "isLoading", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+        });
+        Object.defineProperty(this, "error", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
+        this.inputs = inputs;
+    }
+    get isReady() {
+        return Object.values(this.inputs).every(input => input.isReady);
+    }
+    get isError() {
+        return this.error.length > 0 && Object.values(this.inputs).every(input => input.error);
+    }
+    async submit() { }
+    cancel() { }
+}
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Form.prototype, "isLoading", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Array)
+], Form.prototype, "error", void 0);
 
 class XSingleFilter extends XFilter {
     constructor(field, input) {
@@ -1839,18 +1889,22 @@ class QueryX {
             this.__controller.abort();
         }
         this.__controller = new AbortController();
+        let response;
         try {
-            return await func();
+            response = await func();
         }
         catch (e) {
             if (e.name !== 'AbortError' && e.message !== 'canceled')
                 throw e;
         }
+        finally {
+            this.__controller = undefined;
+        }
+        return response;
     }
     async __load() {
         return this.__wrap_controller(async () => {
             const objs = await this.adapter.load(this.selector, this.__controller);
-            this.__controller = undefined;
             runInAction(() => {
                 this.__items = objs;
             });
@@ -2005,30 +2059,6 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], QueryXPage.prototype, "setPage", null);
-__decorate([
-    action('MO: fisrt page'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], QueryXPage.prototype, "goToFirstPage", null);
-__decorate([
-    action('MO: prev page'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], QueryXPage.prototype, "goToPrevPage", null);
-__decorate([
-    action('MO: next page'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], QueryXPage.prototype, "goToNextPage", null);
-__decorate([
-    action('MO: last page'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], QueryXPage.prototype, "goToLastPage", null);
 
 class QueryXCacheSync extends QueryX {
     constructor(adapter, base_cache, selector) {
@@ -2392,13 +2422,12 @@ class Model {
         return raw_data;
     }
     get is_changed() {
-        let is_changed = false;
         for (let field_name in this.model.__fields) {
             if (this[field_name] != this.__init_data[field_name]) {
-                is_changed = true;
+                return true;
             }
         }
-        return is_changed;
+        return false;
     }
     async action(name, kwargs) { return await this.model.__adapter.action(this, name, kwargs); }
     async create() { return await this.model.__adapter.create(this); }
