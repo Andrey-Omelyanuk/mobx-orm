@@ -1,8 +1,11 @@
 import { runInAction } from 'mobx'
 import { Model } from '../model'
-import { Input } from './Input'
-import { BooleanInput, NumberInput, StringInput, XAND, XEQ } from '..'
+import { XAND, XEQ } from '../filters-x'
 import { BaseTestAdapter } from '../test.utils'
+import { Input } from './Input'
+import { NumberInput } from './NumberInput'
+import { BooleanInput } from './BooleanInput'
+import { StringInput } from './StringInput'
 
 jest.useFakeTimers()
 
@@ -111,9 +114,9 @@ describe('Input', () => {
     })
     it('autoReset 2', async () => {
         let test = 0
-        const inputA = new StringInput({ syncURL: 'inputA' })
+        const inputA = new StringInput({ syncURLSearchParams: 'inputA' })
         const inputB = new NumberInput({
-            syncURL: 'inputB',
+            syncURLSearchParams: 'inputB',
             options: TestModel.getQueryX<TestModel>({
                 filter:
                     XAND(

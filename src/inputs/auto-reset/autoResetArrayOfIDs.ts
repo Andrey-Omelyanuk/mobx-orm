@@ -1,4 +1,4 @@
-import { ArrayNumberInput } from '..'
+import { ArrayNumberInput } from '../ArrayNumberInput'
 
 export const autoResetArrayOfIDs = (input: ArrayNumberInput) => {
     if (!input.options) {

@@ -1,7 +1,7 @@
-import { Selector } from '@/types'
-import { Model, RawData, RawObject } from '../model'
+import { Selector, RawData, RawObject } from '../types'
+import { Model } from '../model'
+import { QueryX } from '../queries/query-x';
 import { Adapter }  from './adapter'
-import { QueryX } from '..';
 
 /*
 You can use this adapter for mock data or for unit test

@@ -1,8 +1,9 @@
 import { runInAction } from 'mobx'
-import { Model, QueryX as Query, StringInput, XEQ as EQ, NumberInput } from '..'
+import { Model, StringInput, XEQ as EQ, NumberInput, local } from '..'
 import { XSingleFilter as SingleFilter } from './SingleFilter'
 
 describe('SingleFilter', () => {
+    @local()
     class TestModel extends Model {}
     class TestSingleFilter extends SingleFilter {
         get URIField(): string {

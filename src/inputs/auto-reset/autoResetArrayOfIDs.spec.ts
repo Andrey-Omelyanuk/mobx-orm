@@ -1,5 +1,5 @@
 import { runInAction } from 'mobx'
-import { ArrayNumberInput } from '..'
+import { ArrayNumberInput } from '../ArrayNumberInput'
 import { autoResetArrayOfIDs } from './autoResetArrayOfIDs'
 
 describe('autoResetArrayOfIDs', () => {

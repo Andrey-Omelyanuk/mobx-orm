@@ -1,6 +1,6 @@
 import { runInAction } from 'mobx'
-import { Model, RawObject, RawData } from '../model'
-import { Selector } from '../types'
+import { Model } from '../model'
+import { Selector, RawObject, RawData } from '../types'
 import { XFilter } from '../filters-x'
 import { QueryX } from '..'
 

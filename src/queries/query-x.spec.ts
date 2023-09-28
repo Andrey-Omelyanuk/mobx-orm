@@ -1,13 +1,13 @@
 import { reaction, runInAction } from 'mobx'
-import { model, Model, LocalAdapter, DESC, XEQ, StringInput } from '../'
-import { QueryX, DISPOSER_AUTOUPDATE, ASC } from './query-x'
+import { model, Model, LocalAdapter, XEQ, StringInput } from '../'
+import { QueryX, DISPOSER_AUTOUPDATE, } from './query-x'
+import { DESC } from '../types'
 import { BaseTestAdapter } from '../test.utils'
 
 describe('QueryX', () => {
 
     @model class A extends Model {}
     const adapter: LocalAdapter<A> = new LocalAdapter(A)
-
 
     afterEach(async () => {
         A.clearCache() 
@@ -115,7 +115,7 @@ describe('QueryX', () => {
 
         await query.ready();        expect(query.need_to_update).toBe(false)
 
-        runInAction(() => query.order_by.set('name', DESC))
+        runInAction(() => query.order_by.value.set('name', DESC))
                                     expect(query.need_to_update).toBe(true)
     })
 })

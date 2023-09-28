@@ -1,9 +1,6 @@
 import { makeObservable, observable } from 'mobx'
 import { XFilter } from './filters-x'
-
-export const ASC = true 
-export const DESC = false 
-export type ORDER_BY = Map<string, boolean>
+import { ORDER_BY, ASC } from './types'
 
 export class SelectorX {
     @observable filter      ?: XFilter 

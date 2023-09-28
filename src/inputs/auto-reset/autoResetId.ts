@@ -1,4 +1,4 @@
-import { NumberInput } from '..'
+import { NumberInput } from '../NumberInput'
 
 export function autoResetId(input: NumberInput) {
     if (!input.options) {

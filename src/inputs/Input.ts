@@ -1,26 +1,27 @@
 import _ from 'lodash'
 import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
-import { Model, QueryX as Query } from '..'
 import { config } from '../config'
+import { Model } from '../model'
+import { QueryX } from '../queries/query-x'
 
 export interface InputConstructorArgs<T> {
-    value            ?: T
-    options          ?: any
-    required         ?: boolean
-    disabled         ?: boolean
-    syncURL          ?: string
-    syncLocalStorage ?: string
-    debounce         ?: number
-    autoReset        ?: (input: Input<T>) => void
+    value               ?: T
+    options             ?: any
+    required            ?: boolean
+    disabled            ?: boolean
+    syncURLSearchParams ?: string
+    syncLocalStorage    ?: string
+    debounce            ?: number
+    autoReset           ?: (input: Input<T>) => void
 }
 
 export abstract class Input<T> {
     @observable          value               : T
     @observable          error               : string = ''
-                readonly options            ?: Query<Model> // should be a Query
+                readonly options            ?: QueryX<Model> // should be a Query
     @observable          required            : boolean 
     @observable          disabled            : boolean
-                readonly syncURL            ?: string
+                readonly syncURLSearchParams?: string
                 readonly syncLocalStorage   ?: string
                 readonly debounce           ?: number 
                 readonly autoReset          ?: (input: Input<T>) => void
@@ -37,7 +38,7 @@ export abstract class Input<T> {
         this.options            = args?.options
         this.required           = !!args?.required
         this.disabled           = !!args?.disabled
-        this.syncURL            = args?.syncURL
+        this.syncURLSearchParams= args?.syncURLSearchParams
         this.syncLocalStorage   = args?.syncLocalStorage
         this.debounce           = args?.debounce
         this.autoReset          = args?.autoReset
@@ -51,10 +52,10 @@ export abstract class Input<T> {
 
         makeObservable(this)
         // init reactions
-        this.options          && this.__doOptions()
-        this.syncURL          && this.__doSyncURL()
-        this.syncLocalStorage && this.__doSyncLocalStorage()
-        this.autoReset        && this.__doAutoReset()
+        this.options                && this.__doOptions()
+        this.syncURLSearchParams    && this.__doSyncURLSearchParams()
+        this.syncLocalStorage       && this.__doSyncLocalStorage()
+        this.autoReset              && this.__doAutoReset()
     }
 
     get isReady () {
@@ -115,9 +116,9 @@ export abstract class Input<T> {
         ))
     }
 
-    __doSyncURL () {
+    __doSyncURLSearchParams () {
         // init from URL Search Params
-        const name = this.syncURL
+        const name = this.syncURLSearchParams
         const searchParams = new URLSearchParams(window.location.search)
         if (searchParams.has(name)) {
             this.set(this.serialize(searchParams.get(name)))

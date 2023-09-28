@@ -1,8 +1,7 @@
 import { action, computed, observe, reaction } from 'mobx'
-import { Adapter } from '../adapters'
 import { QueryX, QueryXProps } from './query-x'
 import { Model } from '../model'
-import { SelectorX as Selector, ASC } from '../selector' 
+import { ASC } from '../types'
 
 
 export class QueryXCacheSync <M extends Model> extends QueryX<M> {
@@ -18,7 +17,7 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
                 }
                 if (change.type == "delete") {
                     let id = change.name
-                    let obj  = change.oldValue
+                    let obj = change.oldValue
 
                     this.__disposer_objects[id]()
                     delete this.__disposer_objects[id]
@@ -57,9 +56,9 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
     @computed
     get items() { 
         let __items = this.__items.map(x=>x) // copy __items (not deep)
-        if (this.order_by?.size) {
+        if (this.order_by.value.size) {
             let compare = (a, b) => {
-                for(const [key, value] of this.order_by) {
+                for(const [key, value] of this.order_by.value) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
                         if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return -1

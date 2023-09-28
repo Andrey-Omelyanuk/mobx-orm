@@ -1,5 +1,11 @@
 import { Filter } from "./filters"
-import { ORDER_BY } from "./selector"
+
+export const ASC = true 
+export const DESC = false 
+export type ORDER_BY = Map<string, boolean>
+
+export type RawObject = any 
+export type RawData   = any 
 
 export interface Selector {
     filter      ?: Filter

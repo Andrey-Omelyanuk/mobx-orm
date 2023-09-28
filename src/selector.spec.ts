@@ -1,15 +1,16 @@
-import { SelectorX as Selector, ASC, DESC } from './selector'
+import { SelectorX  } from './selector'
+import { ASC, DESC } from './types'
 import { XAND as AND, XEQ as EQ } from './filters-x'
 import { NumberInput, StringInput } from './inputs'
 
 
 describe('Selector', () => {
     it('URLSearchParams empty', async () => {
-        let selector = new Selector()
+        let selector = new SelectorX()
         expect(selector.URLSearchParams.toString()).toBe('')
     })
     it('URLSearchParams', async () => {
-        let selector = new Selector(
+        let selector = new SelectorX(
             // filter
             AND(
                 EQ('test_number', new NumberInput({value: 0})),

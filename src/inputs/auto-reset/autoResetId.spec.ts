@@ -1,5 +1,5 @@
 import { runInAction } from 'mobx'
-import { NumberInput } from '..'
+import { NumberInput } from '../NumberInput'
 import { autoResetId } from './autoResetId'
 
 describe('autoResetId', () => {

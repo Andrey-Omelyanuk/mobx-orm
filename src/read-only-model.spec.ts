@@ -1,5 +1,5 @@
-import { model, ReadOnlyModel } from './'
-
+import { model } from './model'
+import { ReadOnlyModel } from './read-only-model'
 
 describe('Read Only Model', () => {
     @model class A extends ReadOnlyModel {}

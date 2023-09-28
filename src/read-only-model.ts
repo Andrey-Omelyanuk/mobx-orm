@@ -1,5 +1,4 @@
-import { Model } from './model'
-
+import { Model } from '..'
 
 export abstract class ReadOnlyModel extends Model {
     async create() { throw(`You cannot create the obj, ${this.model.name} is READ ONLY model`) }

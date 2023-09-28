@@ -2,13 +2,6 @@ import { action, intercept, makeObservable, observable, observe, runInAction, va
 import { Adapter } from './adapters'
 import { QueryXDistinct, Query, QueryPage, QueryX, QueryXPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage, QueryXProps } from './queries'
 import { Selector } from './types'
-import { SelectorX } from './selector'
-import { XFilter as Filter } from './filters-x'
-
-
-export type RawObject = any 
-export type RawData   = any 
-
 
 export abstract class Model {
     // this static properties will be copied to real model in the model decorator

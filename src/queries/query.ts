@@ -2,8 +2,7 @@ import { action, runInAction, computed, observe, reaction } from 'mobx'
 import { Model } from '../model'
 import { Adapter } from '../adapters'
 import { QueryBase } from './query-base'
-import { ASC } from '../selector'
-import { Selector } from '@/types'
+import { Selector, ASC } from '../types'
 
 // Depricated
 export class Query<M extends Model> extends QueryBase<M> {

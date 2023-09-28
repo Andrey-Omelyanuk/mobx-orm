@@ -1,7 +1,8 @@
-import { Model, model, field, QueryXCacheSync, LocalAdapter } from '..'
+import { Model, model, field, QueryXCacheSync, LocalAdapter, local } from '..'
 
 
 describe('QueryXCacheSync', () => {
+    @local()
     @model class A extends Model {
         @field   a !: number
         @field   b !: string

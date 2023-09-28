@@ -1,4 +1,4 @@
-import { action, autorun, makeObservable, observable } from 'mobx'
+import { makeObservable, observable } from 'mobx'
 import { XFilter } from './Filter'
 import { Input } from '../inputs'
 

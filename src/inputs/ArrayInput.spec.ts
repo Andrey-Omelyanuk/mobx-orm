@@ -12,14 +12,14 @@ describe('ArrayInput', () => {
 
     it('constructor - empty', async () => {
         expect(new TestClass())
-            .toMatchObject({value: [], options: undefined, syncURL: undefined})
+            .toMatchObject({value: [], options: undefined, syncURLSearchParams: undefined})
     })
     it('constructor - empty obj', async () => {
         expect(new TestClass({}))
-            .toMatchObject({value: [], options: undefined, syncURL: undefined})
+            .toMatchObject({value: [], options: undefined, syncURLSearchParams: undefined})
     })
     it('constructor', async () => {
-        expect(new TestClass({syncURL: 'test'}))
-            .toMatchObject({value: [], options: undefined, syncURL: 'test'})
+        expect(new TestClass({syncURLSearchParams: 'test'}))
+            .toMatchObject({value: [], options: undefined, syncURLSearchParams: 'test'})
     })
 })
