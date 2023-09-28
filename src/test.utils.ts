@@ -21,15 +21,4 @@ export class BaseTestAdapter extends Adapter<any> {
         }
         async getTotalCount(where?, controller?): Promise<number> { return 0 }
         async getDistinct(where, field, controller?) { return [] }
-
-        QueryURLSearchParams(query: QueryX<any>): URLSearchParams{
-            const searchParams = query.filter ? query.filter.URLSearchParams : new URLSearchParams()
-            if (query.order_by.value.size       ) searchParams.set('__order_by' , query.order_by.deserialize(query.order_by.value))
-            if (query.limit.value !== undefined ) searchParams.set('__limit'    , query.limit.deserialize(query.limit.value))
-            if (query.offset.value !== undefined) searchParams.set('__offset'   , query.offset.deserialize(query.offset.value))
-            if (query.relations.value.length    ) searchParams.set('__relations', query.relations.deserialize(query.relations.value))
-            if (query.fields.value.length       ) searchParams.set('__fields'   , query.fields.deserialize(query.fields.value))
-            if (query.omit.value.length         ) searchParams.set('__omit'     , query.omit.deserialize(query.omit.value))
-            return searchParams
-        }
     }

@@ -23,7 +23,6 @@ describe('Adapter', () => {
         }
         async getTotalCount(where?, controller?: AbortController): Promise<number> { return 0 }
         async getDistinct(where, field, controller?: AbortController): Promise<any[]> { return [] }
-        QueryURLSearchParams(query: QueryX<A>): URLSearchParams { return new URLSearchParams() }
     }
 
     let adapter: TestAdapter, cache: Map<number, A>, __load: any, __create: any, __update: any, __delete: any, __find: any

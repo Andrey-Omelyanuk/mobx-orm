@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.0
+   * mobx-orm.js v1.3.1
    * Released under the MIT license.
    */
 
@@ -1432,7 +1432,7 @@ class QueryX {
         this.syncURLSearchParams = syncURLSearchParams;
         this.syncURLSearchParamsPrefix = syncURLSearchParamsPrefix;
         makeObservable(this);
-        this.__disposers.push(reaction(() => this.adapter.QueryURLSearchParams(this).toString(), action('MO: Query Base - need to update', () => {
+        this.__disposers.push(reaction(() => this.URLSearchParams.toString(), action('MO: Query Base - need to update', () => {
             this.need_to_update = true;
             this.__is_ready = false;
         }), { fireImmediately: true }));
@@ -1541,6 +1541,22 @@ class QueryX {
                 delete this.__disposer_objects[DISPOSER_AUTOUPDATE];
             }
         }
+    }
+    get URLSearchParams() {
+        const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams();
+        if (this.order_by.value.size)
+            searchParams.set('__order_by', this.order_by.deserialize(this.order_by.value));
+        if (this.limit.value !== undefined)
+            searchParams.set('__limit', this.limit.deserialize(this.limit.value));
+        if (this.offset.value !== undefined)
+            searchParams.set('__offset', this.offset.deserialize(this.offset.value));
+        if (this.relations.value.length)
+            searchParams.set('__relations', this.relations.deserialize(this.relations.value));
+        if (this.fields.value.length)
+            searchParams.set('__fields', this.fields.deserialize(this.fields.value));
+        if (this.omit.value.length)
+            searchParams.set('__omit', this.omit.deserialize(this.omit.value));
+        return searchParams;
     }
 }
 __decorate([
@@ -2879,7 +2895,6 @@ class LocalAdapter extends Adapter {
     async getDistinct(where, filed) {
         return [];
     }
-    QueryURLSearchParams(query) { return new URLSearchParams(); }
 }
 // model decorator
 function local() {

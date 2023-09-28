@@ -4,7 +4,7 @@ import { config } from '../config'
 import { Model } from '../model'
 import { XFilter } from '../filters-x'
 import { waitIsFalse, waitIsTrue } from '../utils'
-import { ORDER_BY } from '../types'
+import { ASC, ORDER_BY } from '../types'
 import { OrderByInput } from '../inputs/OrderByInput'
 import { NumberInput } from '../inputs/NumberInput'
 import { ArrayStringInput } from '../inputs/ArrayStringInput'
@@ -86,7 +86,7 @@ export class QueryX <M extends Model> {
         makeObservable(this)
 
         this.__disposers.push(reaction(
-            () => this.adapter.QueryURLSearchParams(this).toString(),
+            () => this.URLSearchParams.toString(),
             action('MO: Query Base - need to update', () => {
                 this.need_to_update = true
                 this.__is_ready = false
@@ -196,6 +196,17 @@ export class QueryX <M extends Model> {
                 delete this.__disposer_objects[DISPOSER_AUTOUPDATE]
             }
         }
+    }
+
+    get URLSearchParams(): URLSearchParams{
+        const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
+        if (this.order_by.value.size       ) searchParams.set('__order_by' , this.order_by.deserialize(this.order_by.value))
+        if (this.limit.value !== undefined ) searchParams.set('__limit'    , this.limit.deserialize(this.limit.value))
+        if (this.offset.value !== undefined) searchParams.set('__offset'   , this.offset.deserialize(this.offset.value))
+        if (this.relations.value.length    ) searchParams.set('__relations', this.relations.deserialize(this.relations.value))
+        if (this.fields.value.length       ) searchParams.set('__fields'   , this.fields.deserialize(this.fields.value))
+        if (this.omit.value.length         ) searchParams.set('__omit'     , this.omit.deserialize(this.omit.value))
+        return searchParams
     }
 
     // use it if you need use promise instead of observe is_ready

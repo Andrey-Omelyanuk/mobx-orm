@@ -83,6 +83,7 @@ declare class QueryX<M extends Model> {
     shadowLoad(): Promise<void>;
     get autoupdate(): boolean;
     set autoupdate(value: boolean);
+    get URLSearchParams(): URLSearchParams;
     ready: () => Promise<Boolean>;
     loading: () => Promise<Boolean>;
 }
@@ -250,7 +251,6 @@ declare abstract class Adapter<M extends Model> {
     abstract __load(props: Selector | QueryX<M>, controller?: AbortController): Promise<RawObject[]>;
     abstract getTotalCount(where?: any, controller?: AbortController): Promise<number>;
     abstract getDistinct(where: XFilter, field: string, controller?: AbortController): Promise<any[]>;
-    abstract QueryURLSearchParams(query: QueryX<M>, prefix?: string): URLSearchParams;
     readonly model: any;
     constructor(model: any);
     action(obj: M, name: string, kwargs: Object, controller?: AbortController): Promise<any>;
@@ -281,7 +281,6 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     __load(selector?: Selector): Promise<RawObject[]>;
     getTotalCount(where?: any): Promise<number>;
     getDistinct(where: any, filed: any): Promise<any[]>;
-    QueryURLSearchParams(query: QueryX<M>): URLSearchParams;
 }
 declare function local(): (cls: any) => void;
 

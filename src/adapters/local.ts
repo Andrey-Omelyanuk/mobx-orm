@@ -119,8 +119,6 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     async getDistinct(where, filed): Promise<any[]> {
         return []
     }
-
-    QueryURLSearchParams(query: QueryX<M>): URLSearchParams { return new URLSearchParams() }
 }
 
 

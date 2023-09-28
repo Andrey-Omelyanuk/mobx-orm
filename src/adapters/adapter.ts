@@ -15,7 +15,6 @@ export abstract class  Adapter<M extends Model> {
     abstract __load(props: Selector | QueryX<M>, controller?: AbortController): Promise<RawObject[]>
     abstract getTotalCount(where?, controller?: AbortController): Promise<number>
     abstract getDistinct(where: XFilter , field: string, controller?: AbortController): Promise<any[]>
-    abstract QueryURLSearchParams(query: QueryX<M>, prefix?: string): URLSearchParams
     readonly model: any
 
     constructor(model: any) {
