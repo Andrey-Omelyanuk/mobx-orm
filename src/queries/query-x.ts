@@ -4,9 +4,10 @@ import { config } from '../config'
 import { Model } from '../model'
 import { XFilter } from '../filters-x'
 import { waitIsFalse, waitIsTrue } from '../utils'
-import { NumberInput, ORDER_BY } from '..'
-import { OrderByInput } from '../inputs'
-import { ArrayStringInput } from 'dist/mobx-orm'
+import { ORDER_BY } from '../types'
+import { OrderByInput } from '../inputs/OrderByInput'
+import { NumberInput } from '../inputs/NumberInput'
+import { ArrayStringInput } from '../inputs/ArrayStringInput'
 
 export const DISPOSER_AUTOUPDATE = "__autoupdate"
 
@@ -74,9 +75,9 @@ export class QueryX <M extends Model> {
 
         this.adapter   = adapter
         this.filter    = filter
-        this.order_by  = new OrderByInput({value: order_by}) 
-        this.offset    = new NumberInput({value: offset}) 
-        this.limit     = new NumberInput({value: limit}) 
+        this.order_by  = new OrderByInput({value: order_by, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined}) 
+        this.offset    = new NumberInput({value: offset, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__offset` : undefined}) 
+        this.limit     = new NumberInput({value: limit, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__limit` : undefined  }) 
         this.relations = new ArrayStringInput({value: relations})
         this.fields    = new ArrayStringInput({value: fields})
         this.omit      = new ArrayStringInput({value: omit})
@@ -196,71 +197,6 @@ export class QueryX <M extends Model> {
             }
         }
     }
-
-
-    // __doSyncURLSearchParams () {
-    //     // init from URL Search Params
-    //     const name = this.syncURLSearchParams
-    //     const searchParams = new URLSearchParams(window.location.search)
-    //     if (searchParams.has(name)) {
-    //         this.set(this.serialize(searchParams.get(name)))
-    //     }
-        
-    //     // watch for URL changes and update Input
-    //     function updataInputFromURL() {
-    //         const searchParams = new URLSearchParams(window.location.search)
-    //         if (searchParams.has(name)) {
-    //             const value = this.serialize(searchParams.get(name))
-    //             if (this.value !== value) {
-    //                 this.set(value)
-    //             }
-    //         }
-    //     }
-    //     window.addEventListener('popstate', updataInputFromURL.bind(this))
-    //     this.__disposers.push(() => window.removeEventListener('popstate', updataInputFromURL))
-
-    //     // watch for Input changes and update URL
-    //     this.__disposers.push(reaction(
-    //         () => this.value,
-    //         (value: any) => {
-    //             const searchParams = new URLSearchParams(window.location.search)
-    //             if ((value === '' || value === undefined || (Array.isArray(value) && !value.length))) {
-    //                 searchParams.delete(name)
-    //             } else {
-    //                 searchParams.set(name, this.deserialize(value))
-    //             }
-    //             config.UPDATE_SEARCH_PARAMS(searchParams)
-    //         },
-    //         { fireImmediately: true },
-    //     ))
-    // }
-    // __syncURLSearchParams () {
-    //     // TODO: 
-    //     // init filter from URL
-    //     // if (window.location.search) {
-    //     //     setQueryFromURI(query, window.location.search)
-    //     // }
-    //     // change URL when filter was changed
-    //     this.__disposers.push(
-    //         reaction(
-    //             // TODO: should we use toString() or not?
-    //             () => this.adapter.QueryURLSearchParams(this, this.syncURLSearchParamsPrefix),
-    //             (search_params) => {
-    //                 // TODO: should sync only limit, offset and order_by (no filter!)
-    //                 // const searchParams = new URLSearchParams(window.location.search)
-    //                 // if ((value === '' || value === undefined || (Array.isArray(value) && !value.length))) {
-    //                 //     searchParams.delete(name)
-    //                 // } else {
-    //                 //     searchParams.set(name, this.deserialize(value))
-    //                 // }
-    //                 let searchParams = new URLSearchParams(window.location.search)
-    //                 if (`?${search_params.toString()}` !== window.location.search && this.is_ready) {
-    //                     config.UPDATE_SEARCH_PARAMS(search_params)
-    //                 }
-    //             }
-    //         )
-    //     )
-    // }
 
     // use it if you need use promise instead of observe is_ready
     ready = async () => waitIsTrue(this, '__is_ready')

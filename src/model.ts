@@ -1,6 +1,9 @@
 import { action, intercept, makeObservable, observable, observe, runInAction, values } from 'mobx'
 import { Adapter } from './adapters'
-import { QueryXDistinct, Query, QueryPage, QueryX, QueryXPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage, QueryXProps } from './queries'
+import { Query, QueryPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage, QueryXProps } from './queries'
+import { QueryX} from './queries/query-x'
+import { QueryXPage } from './queries/query-x-page'
+import { QueryXDistinct } from './queries/query-x-distinct'
 import { Selector } from './types'
 
 export abstract class Model {

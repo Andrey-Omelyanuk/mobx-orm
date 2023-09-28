@@ -24,7 +24,8 @@ export class OrderByInput extends Input<ORDER_BY> {
             for (const [key, val] of value) {
                 if (result) result += ','
                 if (val === DESC) result += '-'
-                result += key
+                const field = key.replace(/\./g, '__')
+                result += field 
             }
             return result ? result : undefined
         }

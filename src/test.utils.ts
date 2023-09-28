@@ -24,19 +24,12 @@ export class BaseTestAdapter extends Adapter<any> {
 
         QueryURLSearchParams(query: QueryX<any>): URLSearchParams{
             const searchParams = query.filter ? query.filter.URLSearchParams : new URLSearchParams()
-            const order_by = []
-            if (query.order_by.value.size) 
-                for (const field of query.order_by.value.keys()) {
-                    const value = query.order_by.value.get(field)
-                    const _field = field.replace(/\./g, '__')
-                    order_by.push(value === ASC ? `${_field}` : `-${_field}`)
-                }
-            if (order_by.length             ) searchParams.set('__order_by' , order_by.join())
-            if (query.limit.value !== undefined   ) searchParams.set('__limit'    , query.limit.value as any)
-            if (query.offset.value !== undefined  ) searchParams.set('__offset'   , query.offset.value as any)
-            if (query.relations.value.length     ) searchParams.set('__relations', query.relations.value as any)
-            if (query.fields.value.length        ) searchParams.set('__fields'   , query.fields.value as any)
-            if (query.omit.value.length          ) searchParams.set('__omit'     , query.omit.value as any)
+            if (query.order_by.value.size       ) searchParams.set('__order_by' , query.order_by.deserialize(query.order_by.value))
+            if (query.limit.value !== undefined ) searchParams.set('__limit'    , query.limit.deserialize(query.limit.value))
+            if (query.offset.value !== undefined) searchParams.set('__offset'   , query.offset.deserialize(query.offset.value))
+            if (query.relations.value.length    ) searchParams.set('__relations', query.relations.deserialize(query.relations.value))
+            if (query.fields.value.length       ) searchParams.set('__fields'   , query.fields.deserialize(query.fields.value))
+            if (query.omit.value.length         ) searchParams.set('__omit'     , query.omit.deserialize(query.omit.value))
             return searchParams
         }
     }
