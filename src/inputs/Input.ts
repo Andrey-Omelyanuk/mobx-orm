@@ -140,7 +140,8 @@ export abstract class Input<T> {
 
         // watch for Input changes and update URL
         this.__disposers.push(reaction(
-            () => this.value,
+            // I cannot use this.value because it can be a Map
+            () => this.deserialize(this.value),
             (value: any) => {
                 const searchParams = new URLSearchParams(window.location.search)
                 const _value = this.deserialize(value)

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.7
+   * mobx-orm.js v1.3.8
    * Released under the MIT license.
    */
 
@@ -1121,7 +1121,9 @@ class Input {
         window.addEventListener('popstate', updataInputFromURL.bind(this));
         this.__disposers.push(() => window.removeEventListener('popstate', updataInputFromURL));
         // watch for Input changes and update URL
-        this.__disposers.push(reaction(() => this.value, (value) => {
+        this.__disposers.push(reaction(
+        // I cannot use this.value because it can be a Map
+        () => this.deserialize(this.value), (value) => {
             const searchParams = new URLSearchParams(window.location.search);
             const _value = this.deserialize(value);
             if (_value === '' || _value === undefined) {
