@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.6
+   * mobx-orm.js v1.3.7
    * Released under the MIT license.
    */
 
@@ -1124,7 +1124,7 @@ class Input {
         this.__disposers.push(reaction(() => this.value, (value) => {
             const searchParams = new URLSearchParams(window.location.search);
             const _value = this.deserialize(value);
-            if (value === '' || value === undefined) {
+            if (_value === '' || _value === undefined) {
                 searchParams.delete(name);
             }
             else if (searchParams.get(name) !== _value) {

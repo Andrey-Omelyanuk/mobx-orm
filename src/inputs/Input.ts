@@ -144,7 +144,7 @@ export abstract class Input<T> {
             (value: any) => {
                 const searchParams = new URLSearchParams(window.location.search)
                 const _value = this.deserialize(value)
-                if (value === '' || value === undefined) { 
+                if (_value === '' || _value === undefined) { 
                     searchParams.delete(name)
                 } else if (searchParams.get(name) !== _value) {
                     searchParams.set(name, _value)
