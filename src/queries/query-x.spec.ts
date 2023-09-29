@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { reaction, runInAction } from 'mobx'
 import { model, Model, LocalAdapter, XEQ, StringInput } from '../'
 import { QueryX, DISPOSER_AUTOUPDATE, } from './query-x'
@@ -14,31 +15,80 @@ describe('QueryX', () => {
         jest.clearAllMocks()
     })
 
-    it('constructor: default', async ()=> {
-        const query = new QueryX<A>({adapter})
-        expect(query).toMatchObject({
-            items: [],
-            total: undefined,
-            adapter: adapter,
-            need_to_update: true,
-            is_loading: false,
-            is_ready: false,
-            error: '',
+    describe('Constructor', () => {
+        it('default', async ()=> {
+            const query = new QueryX<A>({})
+            expect(query).toMatchObject({
+                items: [],
+                limit: undefined,
+                offset: undefined,
+                total: undefined,
+                adapter: undefined,
+                relations: [],
+                fields: [],
+                omit: [],
+                need_to_update: true,
+                is_loading: false,
+                is_ready: false,
+                error: '',
+                syncURLSearchParams: false,
+                syncURLSearchParamsPrefix: '',
+            })
+            expect(_.isEqual(query.order_by, new Map())).toBe(true)
+            expect(query.__disposers.length).toBe(1)
         })
-        expect(query.__disposers.length).toBe(1)
-    })
-    it('constructor: with selector', async ()=> {
-        const query = new QueryX<A>({adapter})
-        expect(query).toMatchObject({
-            items: [],
-            total: undefined,
-            adapter: adapter,
-            need_to_update: true,
-            is_loading: false,
-            is_ready: false,
-            error: '',
+        it('some values', async ()=> {
+            const query = new QueryX<A>({
+                adapter,
+                order_by    : new Map([['asc', DESC]]),
+                offset      : 100,
+                limit       : 500,
+                relations   : ['rel_a', 'rel_b'],
+                fields      : ['field_a', 'field_b'],
+                omit        : ['omit_a', 'omit_b'],
+                syncURLSearchParams: true,
+                syncURLSearchParamsPrefix: 'test',
+            })
+            expect(query).toMatchObject({
+                items: [],
+                limit: 500,
+                offset: 100,
+                total: undefined,
+                adapter,
+                relations: ['rel_a', 'rel_b'],
+                fields: ['field_a', 'field_b'],
+                omit: ['omit_a', 'omit_b'],
+                need_to_update: true,
+                is_loading: false,
+                is_ready: false,
+                error: '',
+                syncURLSearchParams: true,
+                syncURLSearchParamsPrefix: 'test',
+            })
+            expect(_.isEqual(query.order_by, new Map([['asc', DESC]]))).toBe(true)
+            expect(query.__disposers.length).toBe(1)
         })
-        expect(query.__disposers.length).toBe(1)
+        it('some values', async ()=> {
+            const query = new QueryX<A>({
+                adapter,
+                order_by    : undefined,
+                syncURLSearchParams: true,
+            })
+            expect(query).toMatchObject({
+                items: [],
+                limit: undefined,
+                offset: undefined,
+                total: undefined,
+                adapter,
+                need_to_update: true,
+                is_loading: false,
+                is_ready: false,
+                error: '',
+                syncURLSearchParams: true,
+            })
+            expect(_.isEqual(query.order_by, new Map())).toBe(true)
+            expect(query.__disposers.length).toBe(1)
+        })
     })
 
     it('destroy', async ()=> {

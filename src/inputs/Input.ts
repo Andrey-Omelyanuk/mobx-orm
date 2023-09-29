@@ -143,10 +143,11 @@ export abstract class Input<T> {
             () => this.value,
             (value: any) => {
                 const searchParams = new URLSearchParams(window.location.search)
-                if ((value === '' || value === undefined || (Array.isArray(value) && !value.length))) {
+                const _value = this.deserialize(value)
+                if (value === '' || value === undefined) { 
                     searchParams.delete(name)
-                } else {
-                    searchParams.set(name, this.deserialize(value))
+                } else if (searchParams.get(name) !== _value) {
+                    searchParams.set(name, _value)
                 }
                 config.UPDATE_SEARCH_PARAMS(searchParams)
             },
