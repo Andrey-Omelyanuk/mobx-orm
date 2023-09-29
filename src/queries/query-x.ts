@@ -4,7 +4,7 @@ import { config } from '../config'
 import { Model } from '../model'
 import { XFilter } from '../filters-x'
 import { waitIsFalse, waitIsTrue } from '../utils'
-import { ASC, ORDER_BY } from '../types'
+import { ASC, ORDER_BY, Selector } from '../types'
 import { OrderByInput } from '../inputs/OrderByInput'
 import { NumberInput } from '../inputs/NumberInput'
 import { ArrayStringInput } from '../inputs/ArrayStringInput'
@@ -61,7 +61,7 @@ export class QueryX <M extends Model> {
     // we going to migrate to JS style
     get isLoading   () { return this.__is_loading   }
     get isReady     () { return this.__is_ready     }
-    get orderBy     () { return this.order_by       }
+    get orderBy     () { return this.order_by.value } // deprecated?
 
     __controller        : AbortController
     __disposers         : (()=>void)[] = []
@@ -109,7 +109,6 @@ export class QueryX <M extends Model> {
             delete this.__disposer_objects[__id]
         } 
     }
-
 
     async __wrap_controller(func: Function) {
         if (this.__controller) {

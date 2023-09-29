@@ -70,7 +70,7 @@ declare class QueryX<M extends Model> {
     get filters(): XFilter;
     get isLoading(): boolean;
     get isReady(): boolean;
-    get orderBy(): OrderByInput;
+    get orderBy(): ORDER_BY;
     __controller: AbortController;
     __disposers: (() => void)[];
     __disposer_objects: {

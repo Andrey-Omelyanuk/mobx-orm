@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.2
+   * mobx-orm.js v1.3.3
    * Released under the MIT license.
    */
 
@@ -1450,7 +1450,7 @@ class QueryX {
     // we going to migrate to JS style
     get isLoading() { return this.__is_loading; }
     get isReady() { return this.__is_ready; }
-    get orderBy() { return this.order_by; }
+    get orderBy() { return this.order_by.value; } // deprecated?
     destroy() {
         var _a;
         (_a = this.__controller) === null || _a === void 0 ? void 0 : _a.abort();
