@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.3
+   * mobx-orm.js v1.3.4
    * Released under the MIT license.
    */
 
@@ -1298,37 +1298,37 @@ class QueryX {
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "order_by", {
+        Object.defineProperty(this, "input_order_by", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "offset", {
+        Object.defineProperty(this, "input_offset", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "limit", {
+        Object.defineProperty(this, "input_limit", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "relations", {
+        Object.defineProperty(this, "input_relations", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "fields", {
+        Object.defineProperty(this, "input_fields", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "omit", {
+        Object.defineProperty(this, "input_omit", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -1425,12 +1425,12 @@ class QueryX {
             syncURLSearchParams = syncURL;
         this.adapter = adapter;
         this.filter = filter;
-        this.order_by = new OrderByInput({ value: order_by, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined });
-        this.offset = new NumberInput({ value: offset, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__offset` : undefined });
-        this.limit = new NumberInput({ value: limit, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__limit` : undefined });
-        this.relations = new ArrayStringInput({ value: relations });
-        this.fields = new ArrayStringInput({ value: fields });
-        this.omit = new ArrayStringInput({ value: omit });
+        this.input_order_by = new OrderByInput({ value: order_by, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined });
+        this.input_offset = new NumberInput({ value: offset, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__offset` : undefined });
+        this.input_limit = new NumberInput({ value: limit, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__limit` : undefined });
+        this.input_relations = new ArrayStringInput({ value: relations });
+        this.input_fields = new ArrayStringInput({ value: fields });
+        this.input_omit = new ArrayStringInput({ value: omit });
         this.syncURLSearchParams = syncURLSearchParams;
         this.syncURLSearchParamsPrefix = syncURLSearchParamsPrefix;
         makeObservable(this);
@@ -1441,6 +1441,18 @@ class QueryX {
         this.autoupdate = autoupdate;
         // this.syncURLSearchParams && this.__doSyncURLSearchParams()
     }
+    get orderBy() { return this.input_order_by.value; } // for js style
+    get order_by() { return this.input_order_by.value; }
+    get offset() { return this.input_offset.value; }
+    get limit() { return this.input_limit.value; }
+    get relations() { return this.input_relations.value; }
+    get fields() { return this.input_fields.value; }
+    get omit() { return this.input_omit.value; }
+    set offset(value) { this.input_offset.set(value); }
+    set limit(value) { this.input_limit.set(value); }
+    set relations(value) { this.input_relations.set(value); }
+    set fields(value) { this.input_fields.set(value); }
+    set omit(value) { this.input_omit.set(value); }
     get is_loading() { return this.__is_loading; }
     get is_ready() { return this.__is_ready; }
     get error() { return this.__error; }
@@ -1450,7 +1462,6 @@ class QueryX {
     // we going to migrate to JS style
     get isLoading() { return this.__is_loading; }
     get isReady() { return this.__is_ready; }
-    get orderBy() { return this.order_by.value; } // deprecated?
     destroy() {
         var _a;
         (_a = this.__controller) === null || _a === void 0 ? void 0 : _a.abort();
@@ -1546,18 +1557,18 @@ class QueryX {
     }
     get URLSearchParams() {
         const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams();
-        if (this.order_by.value.size)
-            searchParams.set('__order_by', this.order_by.deserialize(this.order_by.value));
-        if (this.limit.value !== undefined)
-            searchParams.set('__limit', this.limit.deserialize(this.limit.value));
-        if (this.offset.value !== undefined)
-            searchParams.set('__offset', this.offset.deserialize(this.offset.value));
-        if (this.relations.value.length)
-            searchParams.set('__relations', this.relations.deserialize(this.relations.value));
-        if (this.fields.value.length)
-            searchParams.set('__fields', this.fields.deserialize(this.fields.value));
-        if (this.omit.value.length)
-            searchParams.set('__omit', this.omit.deserialize(this.omit.value));
+        if (this.order_by.size)
+            searchParams.set('__order_by', this.input_order_by.deserialize(this.order_by));
+        if (this.limit !== undefined)
+            searchParams.set('__limit', this.input_limit.deserialize(this.limit));
+        if (this.offset !== undefined)
+            searchParams.set('__offset', this.input_offset.deserialize(this.offset));
+        if (this.relations.length)
+            searchParams.set('__relations', this.input_relations.deserialize(this.relations));
+        if (this.fields.length)
+            searchParams.set('__fields', this.input_fields.deserialize(this.fields));
+        if (this.omit.length)
+            searchParams.set('__omit', this.input_omit.deserialize(this.omit));
         return searchParams;
     }
 }
@@ -1599,28 +1610,28 @@ __decorate([
 ], QueryX.prototype, "shadowLoad", null);
 
 class QueryXPage extends QueryX {
-    setPageSize(size) { this.limit.set(size); this.offset.set(0); }
-    setPage(n) { this.offset.set(this.limit.value * (n > 0 ? n - 1 : 0)); }
+    setPageSize(size) { this.limit = size; this.offset = 0; }
+    setPage(n) { this.offset = this.limit * (n > 0 ? n - 1 : 0); }
     goToFirstPage() { this.setPage(1); }
     goToPrevPage() { this.setPage(this.current_page - 1); }
     goToNextPage() { this.setPage(this.current_page + 1); }
     goToLastPage() { this.setPage(this.total_pages); }
-    get is_first_page() { return this.offset.value === 0; }
-    get is_last_page() { return this.offset.value + this.limit.value >= this.total; }
-    get current_page() { return this.offset.value / this.limit.value + 1; }
-    get total_pages() { return this.total ? Math.ceil(this.total / this.limit.value) : 1; }
+    get is_first_page() { return this.offset === 0; }
+    get is_last_page() { return this.offset + this.limit >= this.total; }
+    get current_page() { return this.offset / this.limit + 1; }
+    get total_pages() { return this.total ? Math.ceil(this.total / this.limit) : 1; }
     // we going to migrate to JS style
-    get isFirstPage() { return this.offset.value === 0; }
-    get isLastPage() { return this.offset.value + this.limit.value >= this.total; }
-    get currentPage() { return this.offset.value / this.limit.value + 1; }
-    get totalPages() { return this.total ? Math.ceil(this.total / this.limit.value) : 1; }
+    get isFirstPage() { return this.offset === 0; }
+    get isLastPage() { return this.offset + this.limit >= this.total; }
+    get currentPage() { return this.offset / this.limit + 1; }
+    get totalPages() { return this.total ? Math.ceil(this.total / this.limit) : 1; }
     constructor(props) {
         super(props);
         runInAction(() => {
             if (this.offset === undefined)
-                this.offset.set(0);
+                this.offset = 0;
             if (this.limit === undefined)
-                this.limit.set(config.DEFAULT_PAGE_SIZE);
+                this.limit = config.DEFAULT_PAGE_SIZE;
         });
     }
     async __load() {
@@ -1694,9 +1705,9 @@ class QueryXCacheSync extends QueryX {
     }
     get items() {
         let __items = this.__items.map(x => x); // copy __items (not deep)
-        if (this.order_by.value.size) {
+        if (this.order_by.size) {
             let compare = (a, b) => {
-                for (const [key, value] of this.order_by.value) {
+                for (const [key, value] of this.order_by) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
                             return 1;
@@ -1748,16 +1759,16 @@ __decorate([
 
 class QueryXStream extends QueryX {
     // you can reset all and start from beginning
-    goToFirstPage() { this.__items = []; this.offset.set(0); }
+    goToFirstPage() { this.__items = []; this.offset = 0; }
     // you can scroll only forward
-    goToNextPage() { this.offset.set(this.offset.value + this.limit.value); }
+    goToNextPage() { this.offset = this.offset + this.limit; }
     constructor(props) {
         super(props);
         runInAction(() => {
             if (this.offset === undefined)
-                this.offset.set(0);
+                this.offset = 0;
             if (this.limit === undefined)
-                this.limit.set(config.DEFAULT_PAGE_SIZE);
+                this.limit = config.DEFAULT_PAGE_SIZE;
         });
     }
     async __load() {
@@ -1770,7 +1781,7 @@ class QueryXStream extends QueryX {
                 this.__items.push(...objs);
                 // total is not make sense for infinity queries
                 // total = 1 show that last page is reached
-                if (objs.length < this.limit.value)
+                if (objs.length < this.limit)
                     this.total = 1;
             });
         }

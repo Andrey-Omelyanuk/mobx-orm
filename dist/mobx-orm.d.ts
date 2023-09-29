@@ -48,12 +48,24 @@ interface QueryXProps<M extends Model> {
 }
 declare class QueryX<M extends Model> {
     readonly filter: XFilter;
-    readonly order_by: OrderByInput;
-    readonly offset: NumberInput;
-    readonly limit: NumberInput;
-    readonly relations: ArrayStringInput;
-    readonly fields: ArrayStringInput;
-    readonly omit: ArrayStringInput;
+    readonly input_order_by: OrderByInput;
+    readonly input_offset: NumberInput;
+    readonly input_limit: NumberInput;
+    readonly input_relations: ArrayStringInput;
+    readonly input_fields: ArrayStringInput;
+    readonly input_omit: ArrayStringInput;
+    get orderBy(): ORDER_BY;
+    get order_by(): ORDER_BY;
+    get offset(): number;
+    get limit(): number;
+    get relations(): string[];
+    get fields(): string[];
+    get omit(): string[];
+    set offset(value: number);
+    set limit(value: number);
+    set relations(value: string[]);
+    set fields(value: string[]);
+    set omit(value: string[]);
     readonly syncURLSearchParams: boolean;
     readonly syncURLSearchParamsPrefix: string;
     total: number;
@@ -70,7 +82,6 @@ declare class QueryX<M extends Model> {
     get filters(): XFilter;
     get isLoading(): boolean;
     get isReady(): boolean;
-    get orderBy(): ORDER_BY;
     __controller: AbortController;
     __disposers: (() => void)[];
     __disposer_objects: {

@@ -4,7 +4,7 @@ import { config } from '../config'
 import { Model } from '../model'
 import { XFilter } from '../filters-x'
 import { waitIsFalse, waitIsTrue } from '../utils'
-import { ASC, ORDER_BY, Selector } from '../types'
+import { ORDER_BY } from '../types'
 import { OrderByInput } from '../inputs/OrderByInput'
 import { NumberInput } from '../inputs/NumberInput'
 import { ArrayStringInput } from '../inputs/ArrayStringInput'
@@ -32,13 +32,27 @@ export interface QueryXProps<M extends Model> {
 
 export class QueryX <M extends Model> {
 
-    readonly    filter      : XFilter 
-    readonly    order_by    : OrderByInput
-    readonly    offset      : NumberInput 
-    readonly    limit       : NumberInput 
-    readonly    relations   : ArrayStringInput
-    readonly    fields      : ArrayStringInput 
-    readonly    omit        : ArrayStringInput 
+    readonly    filter          : XFilter 
+    readonly    input_order_by  : OrderByInput
+    readonly    input_offset    : NumberInput 
+    readonly    input_limit     : NumberInput 
+    readonly    input_relations : ArrayStringInput
+    readonly    input_fields    : ArrayStringInput 
+    readonly    input_omit      : ArrayStringInput 
+
+    get orderBy     () { return this.input_order_by.value } // for js style
+    get order_by    () { return this.input_order_by.value }
+    get offset      () { return this.input_offset.value }
+    get limit       () { return this.input_limit.value }
+    get relations   () { return this.input_relations.value }
+    get fields      () { return this.input_fields.value }
+    get omit        () { return this.input_omit.value }
+
+    set offset      (value: number)   { this.input_offset.set(value) }
+    set limit       (value: number)   { this.input_limit.set(value) }
+    set relations   (value: string[]) { this.input_relations.set(value) }
+    set fields      (value: string[]) { this.input_fields.set(value) }
+    set omit        (value: string[]) { this.input_omit.set(value) }
 
     readonly syncURLSearchParams         : boolean
     readonly syncURLSearchParamsPrefix   : string
@@ -61,7 +75,6 @@ export class QueryX <M extends Model> {
     // we going to migrate to JS style
     get isLoading   () { return this.__is_loading   }
     get isReady     () { return this.__is_ready     }
-    get orderBy     () { return this.order_by.value } // deprecated?
 
     __controller        : AbortController
     __disposers         : (()=>void)[] = []
@@ -77,12 +90,12 @@ export class QueryX <M extends Model> {
 
         this.adapter   = adapter
         this.filter    = filter
-        this.order_by  = new OrderByInput({value: order_by, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined}) 
-        this.offset    = new NumberInput({value: offset, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__offset` : undefined}) 
-        this.limit     = new NumberInput({value: limit, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__limit` : undefined  }) 
-        this.relations = new ArrayStringInput({value: relations})
-        this.fields    = new ArrayStringInput({value: fields})
-        this.omit      = new ArrayStringInput({value: omit})
+        this.input_order_by  = new OrderByInput({value: order_by, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined}) 
+        this.input_offset    = new NumberInput({value: offset, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__offset` : undefined}) 
+        this.input_limit     = new NumberInput({value: limit, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__limit` : undefined  }) 
+        this.input_relations = new ArrayStringInput({value: relations})
+        this.input_fields    = new ArrayStringInput({value: fields})
+        this.input_omit      = new ArrayStringInput({value: omit})
         this.syncURLSearchParams = syncURLSearchParams
         this.syncURLSearchParamsPrefix = syncURLSearchParamsPrefix
         makeObservable(this)
@@ -201,12 +214,12 @@ export class QueryX <M extends Model> {
 
     get URLSearchParams(): URLSearchParams{
         const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
-        if (this.order_by.value.size       ) searchParams.set('__order_by' , this.order_by.deserialize(this.order_by.value))
-        if (this.limit.value !== undefined ) searchParams.set('__limit'    , this.limit.deserialize(this.limit.value))
-        if (this.offset.value !== undefined) searchParams.set('__offset'   , this.offset.deserialize(this.offset.value))
-        if (this.relations.value.length    ) searchParams.set('__relations', this.relations.deserialize(this.relations.value))
-        if (this.fields.value.length       ) searchParams.set('__fields'   , this.fields.deserialize(this.fields.value))
-        if (this.omit.value.length         ) searchParams.set('__omit'     , this.omit.deserialize(this.omit.value))
+        if (this.order_by.size       ) searchParams.set('__order_by' , this.input_order_by.deserialize(this.order_by))
+        if (this.limit !== undefined ) searchParams.set('__limit'    , this.input_limit.deserialize(this.limit))
+        if (this.offset !== undefined) searchParams.set('__offset'   , this.input_offset.deserialize(this.offset))
+        if (this.relations.length    ) searchParams.set('__relations', this.input_relations.deserialize(this.relations))
+        if (this.fields.length       ) searchParams.set('__fields'   , this.input_fields.deserialize(this.fields))
+        if (this.omit.length         ) searchParams.set('__omit'     , this.input_omit.deserialize(this.omit))
         return searchParams
     }
 

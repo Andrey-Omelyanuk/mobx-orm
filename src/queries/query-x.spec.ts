@@ -115,7 +115,7 @@ describe('QueryX', () => {
 
         await query.ready();        expect(query.need_to_update).toBe(false)
 
-        runInAction(() => query.order_by.value.set('name', DESC))
+        runInAction(() => query.order_by.set('name', DESC))
                                     expect(query.need_to_update).toBe(true)
     })
 })

@@ -56,9 +56,9 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
     @computed
     get items() { 
         let __items = this.__items.map(x=>x) // copy __items (not deep)
-        if (this.order_by.value.size) {
+        if (this.order_by.size) {
             let compare = (a, b) => {
-                for(const [key, value] of this.order_by.value) {
+                for(const [key, value] of this.order_by) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
                         if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return -1
