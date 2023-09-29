@@ -25,6 +25,7 @@ export interface QueryXProps<M extends Model> {
     omit                        ?: Array<string>
     //
     autoupdate                  ?: boolean
+    syncURL                     ?: boolean // deprecated
     syncURLSearchParams         ?: boolean
     syncURLSearchParamsPrefix   ?: string
 }
@@ -67,11 +68,12 @@ export class QueryX <M extends Model> {
     __disposer_objects  : {[field: string]: ()=>void} = {}
 
     constructor(props: QueryXProps<M>) {
-        const {
+        let {
             adapter, filter, order_by = new Map(), offset, limit,
             relations = [], fields = [], omit = [],
-            autoupdate = false, syncURLSearchParams = false, syncURLSearchParamsPrefix = ''
+            autoupdate = false, syncURL, syncURLSearchParams = false, syncURLSearchParamsPrefix = ''
         } = props
+        if (syncURL) syncURLSearchParams = syncURL
 
         this.adapter   = adapter
         this.filter    = filter

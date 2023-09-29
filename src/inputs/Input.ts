@@ -9,6 +9,7 @@ export interface InputConstructorArgs<T> {
     options             ?: any
     required            ?: boolean
     disabled            ?: boolean
+    syncURL             ?: string // deprecated
     syncURLSearchParams ?: string
     syncLocalStorage    ?: string
     debounce            ?: number
@@ -38,7 +39,7 @@ export abstract class Input<T> {
         this.options            = args?.options
         this.required           = !!args?.required
         this.disabled           = !!args?.disabled
-        this.syncURLSearchParams= args?.syncURLSearchParams
+        this.syncURLSearchParams= args?.syncURL || args?.syncURLSearchParams
         this.syncLocalStorage   = args?.syncLocalStorage
         this.debounce           = args?.debounce
         this.autoReset          = args?.autoReset
