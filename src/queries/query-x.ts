@@ -201,7 +201,7 @@ export class QueryX <M extends Model> {
                             this.load()
                         }
                     },
-                    { delay: config.AUTO_UPDATE_DELAY }
+                    { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY }
                 )
             }
             // off
