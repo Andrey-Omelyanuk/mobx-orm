@@ -42,6 +42,7 @@ interface QueryXProps<M extends Model> {
     fields?: Array<string>;
     omit?: Array<string>;
     autoupdate?: boolean;
+    syncURL?: boolean;
     syncURLSearchParams?: boolean;
     syncURLSearchParamsPrefix?: string;
 }
@@ -93,6 +94,7 @@ interface InputConstructorArgs<T> {
     options?: any;
     required?: boolean;
     disabled?: boolean;
+    syncURL?: string;
     syncURLSearchParams?: string;
     syncLocalStorage?: string;
     debounce?: number;

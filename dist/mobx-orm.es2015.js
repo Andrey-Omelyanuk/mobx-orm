@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.1
+   * mobx-orm.js v1.3.2
    * Released under the MIT license.
    */
 
@@ -1041,7 +1041,7 @@ class Input {
         this.options = args === null || args === void 0 ? void 0 : args.options;
         this.required = !!(args === null || args === void 0 ? void 0 : args.required);
         this.disabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
-        this.syncURLSearchParams = args === null || args === void 0 ? void 0 : args.syncURLSearchParams;
+        this.syncURLSearchParams = (args === null || args === void 0 ? void 0 : args.syncURL) || (args === null || args === void 0 ? void 0 : args.syncURLSearchParams);
         this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
         this.debounce = args === null || args === void 0 ? void 0 : args.debounce;
         this.autoReset = args === null || args === void 0 ? void 0 : args.autoReset;
@@ -1420,7 +1420,9 @@ class QueryX {
             writable: true,
             value: async () => waitIsFalse(this, '__is_loading')
         });
-        const { adapter, filter, order_by = new Map(), offset, limit, relations = [], fields = [], omit = [], autoupdate = false, syncURLSearchParams = false, syncURLSearchParamsPrefix = '' } = props;
+        let { adapter, filter, order_by = new Map(), offset, limit, relations = [], fields = [], omit = [], autoupdate = false, syncURL, syncURLSearchParams = false, syncURLSearchParamsPrefix = '' } = props;
+        if (syncURL)
+            syncURLSearchParams = syncURL;
         this.adapter = adapter;
         this.filter = filter;
         this.order_by = new OrderByInput({ value: order_by, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined });
