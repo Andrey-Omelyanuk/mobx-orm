@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.8
+   * mobx-orm.js v1.3.9
    * Released under the MIT license.
    */
 
@@ -1123,9 +1123,9 @@ class Input {
         // watch for Input changes and update URL
         this.__disposers.push(reaction(
         // I cannot use this.value because it can be a Map
-        () => this.deserialize(this.value), (value) => {
+        () => this.deserialize(this.value), () => {
             const searchParams = new URLSearchParams(window.location.search);
-            const _value = this.deserialize(value);
+            const _value = this.deserialize(this.value);
             if (_value === '' || _value === undefined) {
                 searchParams.delete(name);
             }

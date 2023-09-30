@@ -142,9 +142,9 @@ export abstract class Input<T> {
         this.__disposers.push(reaction(
             // I cannot use this.value because it can be a Map
             () => this.deserialize(this.value),
-            (value: any) => {
+            () => {
                 const searchParams = new URLSearchParams(window.location.search)
-                const _value = this.deserialize(value)
+                const _value = this.deserialize(this.value)
                 if (_value === '' || _value === undefined) { 
                     searchParams.delete(name)
                 } else if (searchParams.get(name) !== _value) {
