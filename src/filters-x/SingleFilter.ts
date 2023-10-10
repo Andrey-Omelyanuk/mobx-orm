@@ -1,27 +1,27 @@
-import { action, autorun, makeObservable, observable } from 'mobx'
+import { makeObservable, observable } from 'mobx'
 import { XFilter } from './Filter'
 import { Input } from '../inputs'
 
 export abstract class XSingleFilter extends XFilter {
     readonly    field       : string
-    @observable value       : Input<any> 
+    @observable input       : Input<any> 
     __disposers             : (()=>void)[] = []
 
-    constructor(field: string, value: Input<any>) {
+    constructor(field: string, input: Input<any>) {
         super()
         this.field = field
-        this.value = value
+        this.input = input 
         makeObservable(this)
     }
 
     get isReady(): boolean {
-        return this.value.isReady
+        return this.input.isReady
     }
 
     get URLSearchParams(): URLSearchParams{
         let search_params = new URLSearchParams()
-        let value = this.value.deserialize(this.value.value) 
-        value !== undefined && search_params.set(this.URIField, value)
+        let value = this.input.deserialize(this.input.value) 
+        !this.input.disabled && value !== undefined && search_params.set(this.URIField, value)
         return search_params
     }
 
@@ -31,10 +31,10 @@ export abstract class XSingleFilter extends XFilter {
 
     isMatch(obj: any): boolean {
         // it's always match if value of filter is undefined
-        if (this.value === undefined)
+        if (this.input === undefined || this.input.disabled)
             return true
 
-        return match(obj, this.field, this.value.value, this.operator)
+        return match(obj, this.field, this.input.value, this.operator)
     }
 }
 

@@ -1,5 +1,6 @@
-import { Selector } from '@/types'
-import { Model, RawData, RawObject } from '../model'
+import { Selector, RawData, RawObject } from '../types'
+import { Model } from '../model'
+import { QueryX } from '../queries/query-x';
 import { Adapter }  from './adapter'
 
 /*
@@ -113,6 +114,10 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
 
     async getTotalCount(where?): Promise<number> {
         return Object.values(local_store[this.store_name]).length
+    }
+
+    async getDistinct(where, filed): Promise<any[]> {
+        return []
     }
 }
 

@@ -2,15 +2,31 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.2.22
+   * mobx-orm.js v1.3.9
    * Released under the MIT license.
    */
 
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('mobx')) :
-    typeof define === 'function' && define.amd ? define(['exports', 'mobx'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["mobx-orm"] = {}, global.mobx));
-})(this, (function (exports, mobx) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('mobx'), require('lodash')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'mobx', 'lodash'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["mobx-orm"] = {}, global.mobx, global._));
+})(this, (function (exports, mobx, _) { 'use strict';
+
+    function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+    var ___default = /*#__PURE__*/_interopDefaultLegacy(_);
+
+    const ASC = true;
+    const DESC = false;
+
+    // Global config of Mobx-ORM
+    const config = {
+        DEFAULT_PAGE_SIZE: 50,
+        AUTO_UPDATE_DELAY: 100,
+        UPDATE_SEARCH_PARAMS: (search_params) => {
+            window.history.pushState(null, '', `${window.location.pathname}?${search_params.toString()}`);
+        }
+    };
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -732,606 +748,6 @@
         __metadata("design:returntype", Promise)
     ], QueryBase.prototype, "load", null);
 
-    class XFilter {
-    }
-
-    class Input {
-        constructor(args) {
-            var _a;
-            Object.defineProperty(this, "value", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "isReady", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "options", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); // should be a Query
-            Object.defineProperty(this, "syncURL", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "__disposers", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            });
-            this.value = args === null || args === void 0 ? void 0 : args.value;
-            this.options = args === null || args === void 0 ? void 0 : args.options;
-            this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
-            this.isReady = !((_a = this.options) === null || _a === void 0 ? void 0 : _a.need_to_update);
-            mobx.makeObservable(this);
-            if (this.options) {
-                this.__disposers.push(mobx.reaction(() => this.options.need_to_update, (needToReset) => {
-                    if (needToReset) {
-                        this.isReady = false;
-                    }
-                }));
-            }
-            this.syncURL !== undefined && this.__disposers.push(this.__doSyncURL());
-            (args === null || args === void 0 ? void 0 : args.autoReset) && this.options && this.__disposers.push(mobx.reaction(() => this.options.is_ready, (is_ready) => is_ready && args.autoReset(this), { fireImmediately: true }));
-        }
-        set(value) {
-            this.value = value;
-            if (this.options && !this.options.need_to_update) {
-                this.isReady = true;
-            }
-        }
-        destroy() {
-            this.__disposers.forEach(disposer => disposer());
-        }
-        toString() {
-            return this.deserialize(this.value);
-        }
-        __doSyncURL() {
-            // init from URL Search Params
-            const name = this.syncURL;
-            const searchParams = new URLSearchParams(window.location.search);
-            if (searchParams.has(name)) {
-                this.set(this.serialize(searchParams.get(name)));
-            }
-            // watch for changes and update URL
-            return mobx.reaction(() => this.value, (value) => {
-                const searchParams = new URLSearchParams(window.location.search);
-                if ((value === '' || value === undefined || (Array.isArray(value) && !value.length))) {
-                    searchParams.delete(name);
-                }
-                else {
-                    searchParams.set(name, this.deserialize(this.value));
-                }
-                // update URL
-                window.history.pushState(null, '', `${window.location.pathname}?${searchParams.toString()}`);
-            }, { fireImmediately: true });
-        }
-    }
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Object)
-    ], Input.prototype, "value", void 0);
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Boolean)
-    ], Input.prototype, "isReady", void 0);
-    __decorate([
-        mobx.action,
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object]),
-        __metadata("design:returntype", void 0)
-    ], Input.prototype, "set", null);
-
-    class StringInput extends Input {
-        serialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === 'null')
-                return null;
-            if (value === null)
-                return null;
-            return value;
-        }
-        deserialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === null)
-                return 'null';
-            return value;
-        }
-    }
-
-    class NumberInput extends Input {
-        serialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === 'null')
-                return null;
-            if (value === null)
-                return null;
-            let result = parseInt(value);
-            if (isNaN(result))
-                result = undefined;
-            return result;
-        }
-        deserialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === null)
-                return 'null';
-            return '' + value;
-        }
-    }
-
-    class BooleanInput extends Input {
-        serialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === 'null')
-                return null;
-            return value === 'true' ? true : value === 'false' ? false : undefined;
-        }
-        deserialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === null)
-                return 'null';
-            return !!value ? 'true' : 'false';
-        }
-    }
-
-    class DateInput extends Input {
-        serialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === 'null')
-                return null;
-            return new Date(value);
-        }
-        deserialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === null)
-                return 'null';
-            return value instanceof Date ? value.toISOString().split('T')[0] : "";
-        }
-    }
-
-    class DateTimeInput extends Input {
-        serialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === 'null')
-                return null;
-            return new Date(value);
-        }
-        deserialize(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === null)
-                return 'null';
-            return value instanceof Date ? value.toISOString() : "";
-        }
-    }
-
-    class ArrayInput extends Input {
-        constructor(args) {
-            if (args === undefined || args.value === undefined)
-                args = Object.assign(Object.assign({}, args), { value: [] });
-            super(args);
-        }
-    }
-
-    class ArrayStringInput extends ArrayInput {
-        serialize(value) {
-            let result = [];
-            if (value) {
-                let converter = new StringInput();
-                for (const i of value.split(',')) {
-                    let tmp = converter.serialize(i);
-                    if (tmp !== undefined) {
-                        result.push(tmp);
-                    }
-                }
-            }
-            return result;
-        }
-        deserialize(value) {
-            let result = [];
-            if (value) {
-                for (const i of value) {
-                    let converter = new StringInput();
-                    let v = converter.deserialize(i);
-                    if (v !== undefined) {
-                        result.push(v);
-                    }
-                }
-            }
-            return result.length ? result.join(',') : undefined;
-        }
-    }
-
-    class ArrayNumberInput extends ArrayInput {
-        serialize(value) {
-            let result = [];
-            if (value) {
-                let converter = new NumberInput();
-                for (const i of value.split(',')) {
-                    let tmp = converter.serialize(i);
-                    if (tmp !== undefined) {
-                        result.push(tmp);
-                    }
-                }
-            }
-            return result;
-        }
-        deserialize(value) {
-            let result = [];
-            if (value) {
-                for (const i of value) {
-                    let converter = new NumberInput();
-                    let v = converter.deserialize(i);
-                    if (v !== undefined) {
-                        result.push(v);
-                    }
-                }
-            }
-            return result.length ? result.join(',') : undefined;
-        }
-    }
-
-    class XSingleFilter extends XFilter {
-        constructor(field, value) {
-            super();
-            Object.defineProperty(this, "field", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "value", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "__disposers", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            });
-            this.field = field;
-            this.value = value;
-            mobx.makeObservable(this);
-        }
-        get isReady() {
-            return this.value.isReady;
-        }
-        get URLSearchParams() {
-            let search_params = new URLSearchParams();
-            let value = this.value.deserialize(this.value.value);
-            value !== undefined && search_params.set(this.URIField, value);
-            return search_params;
-        }
-        isMatch(obj) {
-            // it's always match if value of filter is undefined
-            if (this.value === undefined)
-                return true;
-            return match(obj, this.field, this.value.value, this.operator);
-        }
-    }
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Input)
-    ], XSingleFilter.prototype, "value", void 0);
-    function match(obj, field_name, filter_value, operator) {
-        let field_names = field_name.split('__');
-        let current_field_name = field_names[0];
-        let current_value = obj[current_field_name];
-        if (field_names.length === 1)
-            return operator(current_value, filter_value);
-        else if (field_names.length > 1) {
-            let next_field_name = field_name.substring(field_names[0].length + 2);
-            // we have object relation
-            if (typeof current_value === 'object' && current_value !== null) {
-                if (Array.isArray(current_value)) {
-                    let result = false;
-                    for (const item of current_value) {
-                        result = match(item, next_field_name, filter_value, operator);
-                        if (result)
-                            return result;
-                    }
-                }
-                else {
-                    return match(current_value, next_field_name, filter_value, operator);
-                }
-            }
-        }
-        return false;
-    }
-
-    class XComboFilter extends XFilter {
-        constructor(filters) {
-            super();
-            Object.defineProperty(this, "filters", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            this.filters = filters;
-        }
-        get isReady() {
-            for (let filter of this.filters) {
-                if (!filter.isReady)
-                    return false;
-            }
-            return true;
-        }
-        get URLSearchParams() {
-            let search_params = new URLSearchParams();
-            for (let filter of this.filters) {
-                filter.URLSearchParams.forEach((value, key) => search_params.set(key, value));
-            }
-            return search_params;
-        }
-    }
-
-    class XEQ_Filter extends XSingleFilter {
-        get URIField() {
-            return `${this.field}`;
-        }
-        operator(value_a, value_b) {
-            return value_a === value_b;
-        }
-    }
-    // EQV is a verbose version of EQ
-    class XEQV_Filter extends XEQ_Filter {
-        get URIField() {
-            return `${this.field}__eq`;
-        }
-    }
-    function XEQ(field, value) {
-        return new XEQ_Filter(field, value);
-    }
-    function XEQV(field, value) {
-        return new XEQV_Filter(field, value);
-    }
-
-    class XNOT_EQ_Filter extends XSingleFilter {
-        get URIField() {
-            return `${this.field}__not_eq`;
-        }
-        operator(value_a, value_b) {
-            return value_a !== value_b;
-        }
-    }
-    function XNOT_EQ(field, value) {
-        return new XNOT_EQ_Filter(field, value);
-    }
-
-    class XGT_Filter extends XSingleFilter {
-        get URIField() {
-            return `${this.field}__gt`;
-        }
-        operator(value_a, value_b) {
-            return value_a > value_b;
-        }
-    }
-    function XGT(field, value) {
-        return new XGT_Filter(field, value);
-    }
-
-    class XGTE_Filter extends XSingleFilter {
-        get URIField() {
-            return `${this.field}__gte`;
-        }
-        operator(value_a, value_b) {
-            return value_a >= value_b;
-        }
-    }
-    function XGTE(field, value) {
-        return new XGTE_Filter(field, value);
-    }
-
-    class XLT_Filter extends XSingleFilter {
-        get URIField() {
-            return `${this.field}__lt`;
-        }
-        operator(value_a, value_b) {
-            return value_a < value_b;
-        }
-    }
-    function XLT(field, value) {
-        return new XLT_Filter(field, value);
-    }
-
-    class XLTE_Filter extends XSingleFilter {
-        get URIField() {
-            return `${this.field}__lte`;
-        }
-        operator(value_a, value_b) {
-            return value_a <= value_b;
-        }
-    }
-    function XLTE(field, value) {
-        return new XLTE_Filter(field, value);
-    }
-
-    class XIN_Filter extends XSingleFilter {
-        get URIField() {
-            return `${this.field}__in`;
-        }
-        operator(value_a, value_b) {
-            // it's always match if value of filter is empty []
-            if (value_b.length === 0)
-                return true;
-            for (let v of value_b) {
-                if (v === value_a)
-                    return true;
-            }
-            return false;
-        }
-    }
-    function XIN(field, value) {
-        return new XIN_Filter(field, value);
-    }
-
-    class XLIKE_Filter extends XSingleFilter {
-        get URIField() {
-            return `${this.field}__contains`;
-        }
-        operator(current_value, filter_value) {
-            return current_value.includes(filter_value);
-        }
-    }
-    function XLIKE(field, value) {
-        return new XLIKE_Filter(field, value);
-    }
-
-    class XILIKE_Filter extends XSingleFilter {
-        get URIField() {
-            return `${this.field}__icontains`;
-        }
-        operator(current_value, filter_value) {
-            return current_value.toLowerCase().includes(filter_value.toLowerCase());
-        }
-    }
-    function XILIKE(field, value) {
-        return new XILIKE_Filter(field, value);
-    }
-
-    class XAND_Filter extends XComboFilter {
-        isMatch(obj) {
-            for (let filter of this.filters) {
-                if (!filter.isMatch(obj)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-    function XAND(...filters) { return new XAND_Filter(filters); }
-
-    const ASC = true;
-    const DESC = false;
-    class SelectorX {
-        constructor(filter, order_by, offset, limit, relations, fields, omit) {
-            Object.defineProperty(this, "filter", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "order_by", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "offset", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "limit", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "relations", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "fields", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "omit", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            this.filter = filter;
-            this.order_by = order_by ? order_by : new Map();
-            this.offset = offset;
-            this.limit = limit;
-            this.relations = relations;
-            this.fields = fields;
-            this.omit = omit;
-            mobx.makeObservable(this);
-        }
-        get URLSearchParams() {
-            var _a, _b, _c, _d;
-            const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams();
-            const order_by = [];
-            if ((_a = this.order_by) === null || _a === void 0 ? void 0 : _a.size)
-                for (const field of this.order_by.keys()) {
-                    const value = this.order_by.get(field);
-                    const _field = field.replace(/\./g, '__');
-                    order_by.push(value === ASC ? `${_field}` : `-${_field}`);
-                }
-            if (order_by.length)
-                searchParams.set('__order_by', order_by.join());
-            if (this.limit !== undefined)
-                searchParams.set('__limit', this.limit);
-            if (this.offset !== undefined)
-                searchParams.set('__offset', this.offset);
-            if ((_b = this.relations) === null || _b === void 0 ? void 0 : _b.length)
-                searchParams.set('__relations', this.relations);
-            if ((_c = this.fields) === null || _c === void 0 ? void 0 : _c.length)
-                searchParams.set('__fields', this.fields);
-            if ((_d = this.omit) === null || _d === void 0 ? void 0 : _d.length)
-                searchParams.set('__omit', this.omit);
-            return searchParams;
-        }
-    }
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", XFilter)
-    ], SelectorX.prototype, "filter", void 0);
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Object)
-    ], SelectorX.prototype, "order_by", void 0);
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Number)
-    ], SelectorX.prototype, "offset", void 0);
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Number)
-    ], SelectorX.prototype, "limit", void 0);
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Array)
-    ], SelectorX.prototype, "relations", void 0);
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Array)
-    ], SelectorX.prototype, "fields", void 0);
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Array)
-    ], SelectorX.prototype, "omit", void 0);
-
     // Depricated
     class Query extends QueryBase {
         constructor(adapter, base_cache, selector) {
@@ -1547,9 +963,399 @@
         });
     }
 
+    class Input {
+        constructor(args) {
+            Object.defineProperty(this, "value", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "error", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: ''
+            });
+            Object.defineProperty(this, "options", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            }); // should be a Query
+            Object.defineProperty(this, "required", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "disabled", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "syncURLSearchParams", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "syncLocalStorage", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "debounce", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "autoReset", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "isInit", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "__isReady", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "__disposers", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: []
+            });
+            Object.defineProperty(this, "__setReadyTrue", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            // init all observables before use it in reaction
+            this.value = args === null || args === void 0 ? void 0 : args.value;
+            this.options = args === null || args === void 0 ? void 0 : args.options;
+            this.required = !!(args === null || args === void 0 ? void 0 : args.required);
+            this.disabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
+            this.syncURLSearchParams = (args === null || args === void 0 ? void 0 : args.syncURL) || (args === null || args === void 0 ? void 0 : args.syncURLSearchParams);
+            this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
+            this.debounce = args === null || args === void 0 ? void 0 : args.debounce;
+            this.autoReset = args === null || args === void 0 ? void 0 : args.autoReset;
+            this.isInit = false;
+            this.__isReady = !this.options;
+            // if debounce is on then we have to have debounced version of __setReadyTrue
+            if (this.debounce)
+                this.__setReadyTrue = ___default["default"].debounce(() => mobx.runInAction(() => this.__isReady = true), this.debounce);
+            else
+                this.__setReadyTrue = () => this.__isReady = true;
+            mobx.makeObservable(this);
+            // init reactions
+            this.options && this.__doOptions();
+            this.syncURLSearchParams && this.__doSyncURLSearchParams();
+            this.syncLocalStorage && this.__doSyncLocalStorage();
+            this.autoReset && this.__doAutoReset();
+        }
+        get isReady() {
+            return this.disabled
+                || (this.__isReady
+                    && (this.options === undefined
+                        // if not required and value is undefined or empty array - it is ready
+                        || (!this.required && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)))
+                        || this.options.isReady));
+        }
+        set(value) {
+            var _a;
+            this.value = value;
+            // if debounce is on then set __isReady to false and then to true after debounce
+            if (this.debounce)
+                this.__isReady = false;
+            if (!this.required || !(this.required && value === undefined)) {
+                this.__setReadyTrue();
+            }
+            if (!this.isInit && (!this.options || ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady))) {
+                this.isInit = true;
+            }
+        }
+        destroy() {
+            var _a;
+            this.__disposers.forEach(disposer => disposer());
+            (_a = this.options) === null || _a === void 0 ? void 0 : _a.destroy();
+        }
+        toString() {
+            return this.deserialize(this.value);
+        }
+        // Any changes in options should reset __isReady
+        __doOptions() {
+            this.__disposers.push(mobx.reaction(() => this.options.is_ready, () => {
+                this.__isReady = false;
+            }));
+        }
+        __doAutoReset() {
+            this.__disposers.push(mobx.reaction(() => this.options.is_ready && !this.disabled, (is_ready) => {
+                if (is_ready) {
+                    this.autoReset(this);
+                }
+            }, { fireImmediately: true }));
+        }
+        __doSyncURLSearchParams() {
+            // init from URL Search Params
+            const name = this.syncURLSearchParams;
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.has(name)) {
+                this.set(this.serialize(searchParams.get(name)));
+            }
+            // watch for URL changes and update Input
+            function updataInputFromURL() {
+                const searchParams = new URLSearchParams(window.location.search);
+                if (searchParams.has(name)) {
+                    const value = this.serialize(searchParams.get(name));
+                    if (this.value !== value) {
+                        this.set(value);
+                    }
+                }
+            }
+            window.addEventListener('popstate', updataInputFromURL.bind(this));
+            this.__disposers.push(() => window.removeEventListener('popstate', updataInputFromURL));
+            // watch for Input changes and update URL
+            this.__disposers.push(mobx.reaction(
+            // I cannot use this.value because it can be a Map
+            () => this.deserialize(this.value), () => {
+                const searchParams = new URLSearchParams(window.location.search);
+                const _value = this.deserialize(this.value);
+                if (_value === '' || _value === undefined) {
+                    searchParams.delete(name);
+                }
+                else if (searchParams.get(name) !== _value) {
+                    searchParams.set(name, _value);
+                }
+                config.UPDATE_SEARCH_PARAMS(searchParams);
+            }, { fireImmediately: true }));
+        }
+        __doSyncLocalStorage() {
+            const name = this.syncLocalStorage;
+            const value = this.serialize(localStorage.getItem(name));
+            if (this.value !== value) {
+                this.set(value);
+            }
+            this.__disposers.push(mobx.reaction(() => this.value, (value) => {
+                if (value !== undefined) {
+                    localStorage.setItem(name, this.deserialize(value));
+                }
+                else {
+                    localStorage.removeItem(name);
+                }
+            }, { fireImmediately: true }));
+        }
+    }
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Object)
+    ], Input.prototype, "value", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", String)
+    ], Input.prototype, "error", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], Input.prototype, "required", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], Input.prototype, "disabled", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], Input.prototype, "isInit", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], Input.prototype, "__isReady", void 0);
+    __decorate([
+        mobx.action,
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object]),
+        __metadata("design:returntype", void 0)
+    ], Input.prototype, "set", null);
+
+    class OrderByInput extends Input {
+        serialize(value) {
+            let result = new Map();
+            if (value) {
+                for (const item of value.split(',')) {
+                    if (item[0] === '-') {
+                        result.set(item.slice(1), DESC);
+                    }
+                    else {
+                        result.set(item, ASC);
+                    }
+                }
+            }
+            return result;
+        }
+        deserialize(value) {
+            if (value) {
+                let result = '';
+                for (const [key, val] of value) {
+                    if (result)
+                        result += ',';
+                    if (val === DESC)
+                        result += '-';
+                    const field = key.replace(/\./g, '__');
+                    result += field;
+                }
+                return result ? result : undefined;
+            }
+            return undefined;
+        }
+    }
+
+    class NumberInput extends Input {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            if (value === null)
+                return undefined;
+            let result = parseInt(value);
+            if (isNaN(result))
+                result = undefined;
+            return result;
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return '' + value;
+        }
+    }
+
+    class ArrayInput extends Input {
+        constructor(args) {
+            if (args === undefined || args.value === undefined)
+                args = Object.assign(Object.assign({}, args), { value: [] });
+            super(args);
+        }
+    }
+
+    class StringInput extends Input {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            if (value === null)
+                return undefined;
+            return value;
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value;
+        }
+    }
+
+    class ArrayStringInput extends ArrayInput {
+        serialize(value) {
+            let result = [];
+            if (value) {
+                let converter = new StringInput();
+                for (const i of value.split(',')) {
+                    let tmp = converter.serialize(i);
+                    if (tmp !== undefined) {
+                        result.push(tmp);
+                    }
+                }
+            }
+            return result;
+        }
+        deserialize(value) {
+            let result = [];
+            if (value) {
+                for (const i of value) {
+                    let converter = new StringInput();
+                    let v = converter.deserialize(i);
+                    if (v !== undefined) {
+                        result.push(v);
+                    }
+                }
+            }
+            return result.length ? result.join(',') : undefined;
+        }
+    }
+
     const DISPOSER_AUTOUPDATE = "__autoupdate";
     class QueryX {
-        constructor(adapter, selector) {
+        constructor(props) {
+            Object.defineProperty(this, "filter", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "input_order_by", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "input_offset", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "input_limit", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "input_relations", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "input_fields", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "input_omit", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "syncURLSearchParams", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "syncURLSearchParamsPrefix", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
             Object.defineProperty(this, "total", {
                 enumerable: true,
                 configurable: true,
@@ -1561,12 +1367,6 @@
                 configurable: true,
                 writable: true,
                 value: false
-            }); // set to true when filters/order_by/page/page_size was changed and back to false after load
-            Object.defineProperty(this, "selector", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
             });
             Object.defineProperty(this, "adapter", {
                 enumerable: true,
@@ -1598,6 +1398,12 @@
                 writable: true,
                 value: ''
             });
+            Object.defineProperty(this, "__controller", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
             Object.defineProperty(this, "__disposers", {
                 enumerable: true,
                 configurable: true,
@@ -1624,26 +1430,51 @@
                 writable: true,
                 value: async () => waitIsFalse(this, '__is_loading')
             });
+            let { adapter, filter, order_by = new Map(), offset, limit, relations = [], fields = [], omit = [], autoupdate = false, syncURL, syncURLSearchParams = false, syncURLSearchParamsPrefix = '' } = props;
+            if (syncURL)
+                syncURLSearchParams = syncURL;
             this.adapter = adapter;
-            this.selector = selector ? selector : new SelectorX();
+            this.filter = filter;
+            this.input_order_by = new OrderByInput({ value: order_by, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined });
+            this.input_offset = new NumberInput({ value: offset, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__offset` : undefined });
+            this.input_limit = new NumberInput({ value: limit, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__limit` : undefined });
+            this.input_relations = new ArrayStringInput({ value: relations });
+            this.input_fields = new ArrayStringInput({ value: fields });
+            this.input_omit = new ArrayStringInput({ value: omit });
+            this.syncURLSearchParams = syncURLSearchParams;
+            this.syncURLSearchParamsPrefix = syncURLSearchParamsPrefix;
             mobx.makeObservable(this);
-            this.__disposers.push(mobx.reaction(() => this.selector.URLSearchParams.toString(), mobx.action('MO: Query Base - need to update', () => this.need_to_update = true), { fireImmediately: true }));
+            this.__disposers.push(mobx.reaction(() => this.URLSearchParams.toString(), mobx.action('MO: Query Base - need to update', () => {
+                this.need_to_update = true;
+                this.__is_ready = false;
+            }), { fireImmediately: true }));
+            this.autoupdate = autoupdate;
+            // this.syncURLSearchParams && this.__doSyncURLSearchParams()
         }
+        get orderBy() { return this.input_order_by.value; } // for js style
+        get order_by() { return this.input_order_by.value; }
+        get offset() { return this.input_offset.value; }
+        get limit() { return this.input_limit.value; }
+        get relations() { return this.input_relations.value; }
+        get fields() { return this.input_fields.value; }
+        get omit() { return this.input_omit.value; }
+        set offset(value) { this.input_offset.set(value); }
+        set limit(value) { this.input_limit.set(value); }
+        set relations(value) { this.input_relations.set(value); }
+        set fields(value) { this.input_fields.set(value); }
+        set omit(value) { this.input_omit.set(value); }
         get is_loading() { return this.__is_loading; }
         get is_ready() { return this.__is_ready; }
         get error() { return this.__error; }
+        get items() { return this.__items; }
+        // backward compatibility, remove it in the future
+        get filters() { return this.filter; }
         // we going to migrate to JS style
         get isLoading() { return this.__is_loading; }
         get isReady() { return this.__is_ready; }
-        // backward compatibility, remove it in the future
-        get filters() { return this.selector.filter; }
-        get order_by() { return this.selector.order_by; }
-        get offset() { return this.selector.offset; }
-        get limit() { return this.selector.limit; }
-        get fields() { return this.selector.fields; }
-        get omit() { return this.selector.omit; }
-        get relations() { return this.selector.relations; }
         destroy() {
+            var _a;
+            (_a = this.__controller) === null || _a === void 0 ? void 0 : _a.abort();
             while (this.__disposers.length) {
                 this.__disposers.pop()();
             }
@@ -1652,15 +1483,31 @@
                 delete this.__disposer_objects[__id];
             }
         }
-        get items() { return this.__items; }
+        async __wrap_controller(func) {
+            if (this.__controller) {
+                this.__controller.abort();
+            }
+            this.__controller = new AbortController();
+            let response;
+            try {
+                response = await func();
+            }
+            catch (e) {
+                if (e.name !== 'AbortError' && e.message !== 'canceled')
+                    throw e;
+            }
+            finally {
+                this.__controller = undefined;
+            }
+            return response;
+        }
         async __load() {
-            const objs = await this.adapter.load(this.selector);
-            mobx.runInAction(() => {
-                this.__items = objs;
+            return this.__wrap_controller(async () => {
+                const objs = await this.adapter.load(this, this.__controller);
+                mobx.runInAction(() => {
+                    this.__items = objs;
+                });
             });
-            // we have to wait the next tick
-            // mobx should finished recalculation (object relations, computed fields, etc.)
-            await new Promise(resolve => setTimeout(resolve));
         }
         // use it if everybody should know that the query data is updating
         async load() {
@@ -1669,7 +1516,13 @@
                 await this.shadowLoad();
             }
             finally {
-                mobx.runInAction(() => this.__is_loading = false);
+                mobx.runInAction(() => {
+                    // the loading can be canceled by another load
+                    // in this case we should not touch the __is_loading
+                    if (!this.__controller) {
+                        this.__is_loading = false;
+                    }
+                });
             }
         }
         // use it if nobody should know that the query data is updating
@@ -1680,7 +1533,7 @@
             }
             catch (e) {
                 mobx.runInAction(() => {
-                    this.__error = e;
+                    this.__error = e.message;
                 });
             }
             finally {
@@ -1699,10 +1552,11 @@
             if (value !== this.autoupdate) {
                 // on 
                 if (value) {
-                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = mobx.reaction(() => this.need_to_update && (this.selector.filter === undefined || this.selector.filter.isReady), (need_to_update) => {
-                        if (need_to_update)
+                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = mobx.reaction(() => this.need_to_update && (this.filter === undefined || this.filter.isReady), (need_to_update) => {
+                        if (need_to_update) {
                             this.load();
-                    }, { fireImmediately: true });
+                        }
+                    }, { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY });
                 }
                 // off
                 else {
@@ -1710,6 +1564,22 @@
                     delete this.__disposer_objects[DISPOSER_AUTOUPDATE];
                 }
             }
+        }
+        get URLSearchParams() {
+            const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams();
+            if (this.order_by.size)
+                searchParams.set('__order_by', this.input_order_by.deserialize(this.order_by));
+            if (this.limit !== undefined)
+                searchParams.set('__limit', this.input_limit.deserialize(this.limit));
+            if (this.offset !== undefined)
+                searchParams.set('__offset', this.input_offset.deserialize(this.offset));
+            if (this.relations.length)
+                searchParams.set('__relations', this.input_relations.deserialize(this.relations));
+            if (this.fields.length)
+                searchParams.set('__fields', this.input_fields.deserialize(this.fields));
+            if (this.omit.length)
+                searchParams.set('__omit', this.input_omit.deserialize(this.omit));
+            return searchParams;
         }
     }
     __decorate([
@@ -1749,46 +1619,42 @@
         __metadata("design:returntype", Promise)
     ], QueryX.prototype, "shadowLoad", null);
 
-    // Global config of Mobx-ORM
-    const config = {
-        DEFAULT_PAGE_SIZE: 50
-    };
-
     class QueryXPage extends QueryX {
-        setPageSize(size) { this.selector.limit = size; this.selector.offset = 0; }
-        setPage(n) { this.selector.offset = this.selector.limit * (n > 0 ? n - 1 : 0); }
+        setPageSize(size) { this.limit = size; this.offset = 0; }
+        setPage(n) { this.offset = this.limit * (n > 0 ? n - 1 : 0); }
         goToFirstPage() { this.setPage(1); }
         goToPrevPage() { this.setPage(this.current_page - 1); }
         goToNextPage() { this.setPage(this.current_page + 1); }
         goToLastPage() { this.setPage(this.total_pages); }
-        get is_first_page() { return this.selector.offset === 0; }
-        get is_last_page() { return this.selector.offset + this.selector.limit >= this.total; }
-        get current_page() { return this.selector.offset / this.selector.limit + 1; }
-        get total_pages() { return this.total ? Math.ceil(this.total / this.selector.limit) : 1; }
+        get is_first_page() { return this.offset === 0; }
+        get is_last_page() { return this.offset + this.limit >= this.total; }
+        get current_page() { return this.offset / this.limit + 1; }
+        get total_pages() { return this.total ? Math.ceil(this.total / this.limit) : 1; }
         // we going to migrate to JS style
-        get isFirstPage() { return this.selector.offset === 0; }
-        get isLastPage() { return this.selector.offset + this.selector.limit >= this.total; }
-        get currentPage() { return this.selector.offset / this.selector.limit + 1; }
-        get totalPages() { return this.total ? Math.ceil(this.total / this.selector.limit) : 1; }
-        constructor(adapter, selector) {
-            super(adapter, selector);
+        get isFirstPage() { return this.offset === 0; }
+        get isLastPage() { return this.offset + this.limit >= this.total; }
+        get currentPage() { return this.offset / this.limit + 1; }
+        get totalPages() { return this.total ? Math.ceil(this.total / this.limit) : 1; }
+        constructor(props) {
+            super(props);
             mobx.runInAction(() => {
-                if (this.selector.offset === undefined)
-                    this.selector.offset = 0;
-                if (this.selector.limit === undefined)
-                    this.selector.limit = config.DEFAULT_PAGE_SIZE;
+                if (this.offset === undefined)
+                    this.offset = 0;
+                if (this.limit === undefined)
+                    this.limit = config.DEFAULT_PAGE_SIZE;
             });
         }
         async __load() {
-            const objs = await this.adapter.load(this.selector);
-            const total = await this.adapter.getTotalCount(this.selector.filter);
-            mobx.runInAction(() => {
-                this.__items = objs;
-                this.total = total;
+            return this.__wrap_controller(async () => {
+                const [objs, total] = await Promise.all([
+                    this.adapter.load(this, this.__controller),
+                    this.adapter.getTotalCount(this.filter, this.__controller)
+                ]);
+                mobx.runInAction(() => {
+                    this.__items = objs;
+                    this.total = total;
+                });
             });
-            // we have to wait the next tick
-            // mobx should finished recalculation (object relations, computed fields, etc.)
-            await new Promise(resolve => setTimeout(resolve));
         }
     }
     __decorate([
@@ -1803,36 +1669,12 @@
         __metadata("design:paramtypes", [Number]),
         __metadata("design:returntype", void 0)
     ], QueryXPage.prototype, "setPage", null);
-    __decorate([
-        mobx.action('MO: fisrt page'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", []),
-        __metadata("design:returntype", void 0)
-    ], QueryXPage.prototype, "goToFirstPage", null);
-    __decorate([
-        mobx.action('MO: prev page'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", []),
-        __metadata("design:returntype", void 0)
-    ], QueryXPage.prototype, "goToPrevPage", null);
-    __decorate([
-        mobx.action('MO: next page'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", []),
-        __metadata("design:returntype", void 0)
-    ], QueryXPage.prototype, "goToNextPage", null);
-    __decorate([
-        mobx.action('MO: last page'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", []),
-        __metadata("design:returntype", void 0)
-    ], QueryXPage.prototype, "goToLastPage", null);
 
     class QueryXCacheSync extends QueryX {
-        constructor(adapter, base_cache, selector) {
-            super(adapter, selector);
+        constructor(cache, props) {
+            super(props);
             // watch the cache for changes, and update items if needed
-            this.__disposers.push(mobx.observe(base_cache, mobx.action('MO: Query - update from cache changes', (change) => {
+            this.__disposers.push(mobx.observe(cache, mobx.action('MO: Query - update from cache changes', (change) => {
                 if (change.type == 'add') {
                     this.__watch_obj(change.newValue);
                 }
@@ -1849,24 +1691,33 @@
                 }
             })));
             // ch all exist objects of model 
-            for (let [id, obj] of base_cache) {
+            for (let [id, obj] of cache) {
                 this.__watch_obj(obj);
             }
         }
         async __load() {
-            // Query don't need to overide the __items,
-            // query's items should be get only from the cache
-            await this.adapter.load(this.selector);
+            if (this.__controller)
+                this.__controller.abort();
+            this.__controller = new AbortController();
+            try {
+                await this.adapter.load(this, this.__controller);
+                // Query don't need to overide the __items,
+                // query's items should be get only from the cache
+            }
+            catch (e) {
+                if (e.name !== 'AbortError')
+                    throw e;
+            }
             // we have to wait the next tick
             // mobx should finished recalculation for model-objects
-            await new Promise(resolve => setTimeout(resolve));
+            await Promise.resolve();
+            // await new Promise(resolve => setTimeout(resolve))
         }
         get items() {
-            var _a;
             let __items = this.__items.map(x => x); // copy __items (not deep)
-            if ((_a = this.selector.order_by) === null || _a === void 0 ? void 0 : _a.size) {
+            if (this.order_by.size) {
                 let compare = (a, b) => {
-                    for (const [key, value] of this.selector.order_by) {
+                    for (const [key, value] of this.order_by) {
                         if (value === ASC) {
                             if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
                                 return 1;
@@ -1897,7 +1748,7 @@
         __watch_obj(obj) {
             if (this.__disposer_objects[obj.id])
                 this.__disposer_objects[obj.id]();
-            this.__disposer_objects[obj.id] = mobx.reaction(() => !this.selector.filter || this.selector.filter.isMatch(obj), mobx.action('MO: Query - obj was changed', (should) => {
+            this.__disposer_objects[obj.id] = mobx.reaction(() => !this.filter || this.filter.isMatch(obj), mobx.action('MO: Query - obj was changed', (should) => {
                 let i = this.__items.indexOf(obj);
                 // should be in the items and it is not in the items? add it to the items
                 if (should && i == -1)
@@ -1918,30 +1769,36 @@
 
     class QueryXStream extends QueryX {
         // you can reset all and start from beginning
-        goToFirstPage() { this.__items = []; this.selector.offset = 0; }
+        goToFirstPage() { this.__items = []; this.offset = 0; }
         // you can scroll only forward
-        goToNextPage() { this.selector.offset = this.selector.offset + this.selector.limit; }
-        constructor(adapter, selector) {
-            super(adapter, selector);
+        goToNextPage() { this.offset = this.offset + this.limit; }
+        constructor(props) {
+            super(props);
             mobx.runInAction(() => {
-                if (this.selector.offset === undefined)
-                    this.selector.offset = 0;
-                if (this.selector.limit === undefined)
-                    this.selector.limit = config.DEFAULT_PAGE_SIZE;
+                if (this.offset === undefined)
+                    this.offset = 0;
+                if (this.limit === undefined)
+                    this.limit = config.DEFAULT_PAGE_SIZE;
             });
         }
         async __load() {
-            const objs = await this.adapter.load(this.selector);
-            mobx.runInAction(() => {
-                this.__items.push(...objs);
-                // total is not make sense for infinity queries
-                // total = 1 show that last page is reached
-                if (objs.length < this.selector.limit)
-                    this.total = 1;
-            });
-            // we have to wait the next tick
-            // mobx should finished recalculation for model-objects
-            await new Promise(resolve => setTimeout(resolve));
+            if (this.__controller)
+                this.__controller.abort();
+            this.__controller = new AbortController();
+            try {
+                const objs = await this.adapter.load(this, this.__controller);
+                mobx.runInAction(() => {
+                    this.__items.push(...objs);
+                    // total is not make sense for infinity queries
+                    // total = 1 show that last page is reached
+                    if (objs.length < this.limit)
+                        this.total = 1;
+                });
+            }
+            catch (e) {
+                if (e.name !== 'AbortError')
+                    throw e;
+            }
         }
     }
     __decorate([
@@ -1956,6 +1813,54 @@
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", void 0)
     ], QueryXStream.prototype, "goToNextPage", null);
+
+    class QueryXRaw extends QueryX {
+        async __load() {
+            return this.__wrap_controller(async () => {
+                // get only raw objects from adapter
+                const objs = await this.adapter.__load(this, this.__controller);
+                mobx.runInAction(() => {
+                    this.__items = objs;
+                });
+            });
+        }
+    }
+
+    // TODO: fix types
+    class QueryXRawPage extends QueryXPage {
+        async __load() {
+            return this.__wrap_controller(async () => {
+                // get only raw objects from adapter
+                const objs = await this.adapter.__load(this);
+                const total = await this.adapter.getTotalCount(this.filter);
+                mobx.runInAction(() => {
+                    this.__items = objs;
+                    this.total = total;
+                });
+            });
+        }
+    }
+
+    class QueryXDistinct extends QueryX {
+        constructor(field, props) {
+            super(props);
+            Object.defineProperty(this, "field", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.field = field;
+        }
+        async __load() {
+            return this.__wrap_controller(async () => {
+                const objs = await this.adapter.getDistinct(this.filter, this.field, this.__controller);
+                mobx.runInAction(() => {
+                    this.__items = objs;
+                });
+            });
+        }
+    }
 
     class Model {
         constructor(...args) {
@@ -1998,41 +1903,33 @@
             if (this.__cache.has(obj.id))
                 this.__cache.delete(obj.id);
         }
-        // TODO: need to refactor
-        static getQueryX(options) {
-            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
-            const query = new QueryX(this.__adapter, selector);
-            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
-                mobx.runInAction(() => query.autoupdate = options.autoupdate);
-            }
-            return query;
+        static getQueryX(props) {
+            props.adapter = this.__adapter;
+            return new QueryX(props);
         }
-        // TODO: need to refactor
-        static getQueryXPage(options) {
-            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
-            const query = new QueryXPage(this.__adapter, selector);
-            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
-                mobx.runInAction(() => query.autoupdate = options.autoupdate);
-            }
-            return query;
+        static getQueryXRaw(props) {
+            props.adapter = this.__adapter;
+            return new QueryXRaw(props);
         }
-        // TODO: need to refactor
-        static getQueryXCacheSync(options) {
-            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, options === null || options === void 0 ? void 0 : options.offset, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
-            const query = new QueryXCacheSync(this.__adapter, this.__cache, selector);
-            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
-                mobx.runInAction(() => query.autoupdate = options.autoupdate);
-            }
-            return query;
+        static getQueryXPage(props) {
+            props.adapter = this.__adapter;
+            return new QueryXPage(props);
         }
-        // TODO: need to refactor
-        static getQueryXStream(options) {
-            const selector = new SelectorX(options === null || options === void 0 ? void 0 : options.filter, options === null || options === void 0 ? void 0 : options.order_by, 0, options === null || options === void 0 ? void 0 : options.limit, options === null || options === void 0 ? void 0 : options.relations, options === null || options === void 0 ? void 0 : options.fields, options === null || options === void 0 ? void 0 : options.omit);
-            const query = new QueryXStream(this.__adapter, selector);
-            if (options === null || options === void 0 ? void 0 : options.autoupdate) {
-                mobx.runInAction(() => query.autoupdate = options.autoupdate);
-            }
-            return query;
+        static getQueryXRawPage(props) {
+            props.adapter = this.__adapter;
+            return new QueryXRawPage(props);
+        }
+        static getQueryXCacheSync(props) {
+            props.adapter = this.__adapter;
+            return new QueryXCacheSync(this.__cache, props);
+        }
+        static getQueryXStream(props) {
+            props.adapter = this.__adapter;
+            return new QueryXStream(props);
+        }
+        static getQueryXDistinct(field, props) {
+            props.adapter = this.__adapter;
+            return new QueryXDistinct(field, props);
         }
         static getQuery(selector) {
             return new Query(this.__adapter, this.__cache, selector);
@@ -2095,13 +1992,12 @@
             return raw_data;
         }
         get is_changed() {
-            let is_changed = false;
             for (let field_name in this.model.__fields) {
                 if (this[field_name] != this.__init_data[field_name]) {
-                    is_changed = true;
+                    return true;
                 }
             }
-            return is_changed;
+            return false;
         }
         async action(name, kwargs) { return await this.model.__adapter.action(this, name, kwargs); }
         async create() { return await this.model.__adapter.create(this); }
@@ -2421,6 +2317,418 @@
         };
     }
 
+    class XFilter {
+    }
+
+    class BooleanInput extends Input {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            if (value === null)
+                return undefined;
+            return value === 'true' ? true : value === 'false' ? false : undefined;
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return !!value ? 'true' : 'false';
+        }
+    }
+
+    class DateInput extends Input {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            return new Date(value);
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value instanceof Date ? value.toISOString().split('T')[0] : "";
+        }
+    }
+
+    class DateTimeInput extends Input {
+        serialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            return new Date(value);
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value instanceof Date ? value.toISOString() : "";
+        }
+    }
+
+    class ArrayNumberInput extends ArrayInput {
+        serialize(value) {
+            let result = [];
+            if (value) {
+                let converter = new NumberInput();
+                for (const i of value.split(',')) {
+                    let tmp = converter.serialize(i);
+                    if (tmp !== undefined) {
+                        result.push(tmp);
+                    }
+                }
+            }
+            return result;
+        }
+        deserialize(value) {
+            let result = [];
+            if (value) {
+                for (const i of value) {
+                    let converter = new NumberInput();
+                    let v = converter.deserialize(i);
+                    if (v !== undefined) {
+                        result.push(v);
+                    }
+                }
+            }
+            return result.length ? result.join(',') : undefined;
+        }
+    }
+
+    function autoResetId(input) {
+        var _a;
+        if (!input.options) {
+            console.warn('Input with autoResetId has no options', input);
+            return;
+        }
+        // if value still in options, do nothing
+        for (const item of input.options.items) {
+            if (item.id === input.value) {
+                input.set(input.value); // we need to set value to trigger reaction
+                return;
+            }
+        }
+        // otherwise set first available id or undefined
+        input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
+    }
+
+    const autoResetArrayOfIDs = (input) => {
+        if (!input.options) {
+            console.warn('Input with autoResetArrayOfIDs has no options', input);
+            return;
+        }
+        // if one of values not in options, reset the input 
+        for (const id of input.value) {
+            let found = false;
+            for (const item of input.options.items) {
+                if (item.id === id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                input.set([]);
+                return;
+            }
+        }
+        input.set(input.value);
+    };
+
+    const autoResetDefault = (input) => {
+        if (!input.options)
+            input.set(input.value);
+        else
+            input.set(undefined);
+    };
+
+    const autoResetArrayToEmpty = (input) => {
+        if (!input.options)
+            input.set(input.value);
+        else
+            input.set([]);
+    };
+
+    class Form {
+        constructor(inputs) {
+            Object.defineProperty(this, "inputs", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "isLoading", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: false
+            });
+            Object.defineProperty(this, "error", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: []
+            });
+            this.inputs = inputs;
+        }
+        get isReady() {
+            return Object.values(this.inputs).every(input => input.isReady);
+        }
+        get isError() {
+            return this.error.length > 0 && Object.values(this.inputs).every(input => input.error);
+        }
+        async submit() { }
+        cancel() { }
+    }
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], Form.prototype, "isLoading", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Array)
+    ], Form.prototype, "error", void 0);
+
+    class XSingleFilter extends XFilter {
+        constructor(field, input) {
+            super();
+            Object.defineProperty(this, "field", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "input", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "__disposers", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: []
+            });
+            this.field = field;
+            this.input = input;
+            mobx.makeObservable(this);
+        }
+        get isReady() {
+            return this.input.isReady;
+        }
+        get URLSearchParams() {
+            let search_params = new URLSearchParams();
+            let value = this.input.deserialize(this.input.value);
+            !this.input.disabled && value !== undefined && search_params.set(this.URIField, value);
+            return search_params;
+        }
+        isMatch(obj) {
+            // it's always match if value of filter is undefined
+            if (this.input === undefined || this.input.disabled)
+                return true;
+            return match(obj, this.field, this.input.value, this.operator);
+        }
+    }
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Input)
+    ], XSingleFilter.prototype, "input", void 0);
+    function match(obj, field_name, filter_value, operator) {
+        let field_names = field_name.split('__');
+        let current_field_name = field_names[0];
+        let current_value = obj[current_field_name];
+        if (field_names.length === 1)
+            return operator(current_value, filter_value);
+        else if (field_names.length > 1) {
+            let next_field_name = field_name.substring(field_names[0].length + 2);
+            // we have object relation
+            if (typeof current_value === 'object' && current_value !== null) {
+                if (Array.isArray(current_value)) {
+                    let result = false;
+                    for (const item of current_value) {
+                        result = match(item, next_field_name, filter_value, operator);
+                        if (result)
+                            return result;
+                    }
+                }
+                else {
+                    return match(current_value, next_field_name, filter_value, operator);
+                }
+            }
+        }
+        return false;
+    }
+
+    class XComboFilter extends XFilter {
+        constructor(filters) {
+            super();
+            Object.defineProperty(this, "filters", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.filters = filters;
+        }
+        get isReady() {
+            for (let filter of this.filters) {
+                if (!filter.isReady)
+                    return false;
+            }
+            return true;
+        }
+        get URLSearchParams() {
+            let search_params = new URLSearchParams();
+            for (let filter of this.filters) {
+                filter.URLSearchParams.forEach((value, key) => search_params.set(key, value));
+            }
+            return search_params;
+        }
+    }
+
+    class XEQ_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}`;
+        }
+        operator(value_a, value_b) {
+            return value_a === value_b;
+        }
+    }
+    // EQV is a verbose version of EQ
+    class XEQV_Filter extends XEQ_Filter {
+        get URIField() {
+            return `${this.field}__eq`;
+        }
+    }
+    function XEQ(field, value) {
+        return new XEQ_Filter(field, value);
+    }
+    function XEQV(field, value) {
+        return new XEQV_Filter(field, value);
+    }
+
+    class XNOT_EQ_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__not_eq`;
+        }
+        operator(value_a, value_b) {
+            return value_a !== value_b;
+        }
+    }
+    function XNOT_EQ(field, value) {
+        return new XNOT_EQ_Filter(field, value);
+    }
+
+    class XGT_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__gt`;
+        }
+        operator(value_a, value_b) {
+            return value_a > value_b;
+        }
+    }
+    function XGT(field, value) {
+        return new XGT_Filter(field, value);
+    }
+
+    class XGTE_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__gte`;
+        }
+        operator(value_a, value_b) {
+            return value_a >= value_b;
+        }
+    }
+    function XGTE(field, value) {
+        return new XGTE_Filter(field, value);
+    }
+
+    class XLT_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__lt`;
+        }
+        operator(value_a, value_b) {
+            return value_a < value_b;
+        }
+    }
+    function XLT(field, value) {
+        return new XLT_Filter(field, value);
+    }
+
+    class XLTE_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__lte`;
+        }
+        operator(value_a, value_b) {
+            return value_a <= value_b;
+        }
+    }
+    function XLTE(field, value) {
+        return new XLTE_Filter(field, value);
+    }
+
+    class XIN_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__in`;
+        }
+        operator(value_a, value_b) {
+            // it's always match if value of filter is empty []
+            if (value_b.length === 0)
+                return true;
+            for (let v of value_b) {
+                if (v === value_a)
+                    return true;
+            }
+            return false;
+        }
+    }
+    function XIN(field, value) {
+        return new XIN_Filter(field, value);
+    }
+
+    class XLIKE_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__contains`;
+        }
+        operator(current_value, filter_value) {
+            return current_value.includes(filter_value);
+        }
+    }
+    function XLIKE(field, value) {
+        return new XLIKE_Filter(field, value);
+    }
+
+    class XILIKE_Filter extends XSingleFilter {
+        get URIField() {
+            return `${this.field}__icontains`;
+        }
+        operator(current_value, filter_value) {
+            return current_value.toLowerCase().includes(filter_value.toLowerCase());
+        }
+    }
+    function XILIKE(field, value) {
+        return new XILIKE_Filter(field, value);
+    }
+
+    class XAND_Filter extends XComboFilter {
+        isMatch(obj) {
+            for (let filter of this.filters) {
+                if (!filter.isMatch(obj)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    function XAND(...filters) { return new XAND_Filter(filters); }
+
     class Adapter {
         constructor(model) {
             Object.defineProperty(this, "model", {
@@ -2431,63 +2739,66 @@
             });
             this.model = model;
         }
-        async action(obj, name, kwargs) {
-            return await this.model.__adapter.__action(obj.id, name, kwargs);
+        async action(obj, name, kwargs, controller) {
+            return await this.model.__adapter.__action(obj.id, name, kwargs, controller);
         }
-        async create(obj) {
+        async create(obj, controller) {
+            var _a;
             try {
-                let raw_obj = await this.__create(obj.raw_data);
+                let raw_obj = await this.__create(obj.raw_data, controller);
                 obj.updateFromRaw(raw_obj);
                 obj.refreshInitData(); // backend can return default values and they should be in __init_data
                 obj.setError(undefined);
             }
             catch (e) {
-                obj.setError(e.response.data);
+                obj.setError((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
                 throw e;
             }
             return obj;
         }
-        async update(obj) {
+        async update(obj, controller) {
+            var _a;
             try {
-                let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data);
+                let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data, controller);
                 obj.updateFromRaw(raw_obj);
                 obj.refreshInitData();
                 obj.setError(undefined);
             }
             catch (e) {
-                obj.setError(e.response.data);
+                obj.setError((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
                 throw e;
             }
             return obj;
         }
-        async delete(obj) {
+        async delete(obj, controller) {
+            var _a;
             try {
-                await this.__delete(obj.id);
+                await this.__delete(obj.id, controller);
                 mobx.runInAction(() => obj.id = undefined);
                 obj.setError(undefined);
             }
             catch (e) {
-                obj.setError(e.response.data);
+                obj.setError((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
                 throw e;
             }
             return obj;
         }
-        async get(obj_id) {
+        async get(obj_id, controller) {
             let raw_obj = await this.__get(obj_id);
-            const obj = this.model.updateCache(raw_obj);
+            const obj = this.model.updateCache(raw_obj, controller);
             obj.refreshInitData();
             return obj;
         }
         /* Returns ONE object */
-        async find(selector) {
+        async find(selector, controller) {
             let raw_obj = await this.__find(selector);
-            const obj = this.model.updateCache(raw_obj);
+            const obj = this.model.updateCache(raw_obj, controller);
             obj.refreshInitData();
             return obj;
         }
         /* Returns MANY objects */
-        async load(selector) {
-            let raw_objs = await this.__load(selector);
+        async load(selector, controller) {
+            let raw_objs = await this.__load(selector, controller);
             let objs = [];
             // it should be happend in one big action
             mobx.runInAction(() => {
@@ -2604,6 +2915,9 @@
         async getTotalCount(where) {
             return Object.values(local_store[this.store_name]).length;
         }
+        async getDistinct(where, filed) {
+            return [];
+        }
     }
     // model decorator
     function local() {
@@ -2651,15 +2965,18 @@
     exports.NOT_EQ = NOT_EQ;
     exports.NOT_EQ_Filter = NOT_EQ_Filter;
     exports.NumberInput = NumberInput;
+    exports.OrderByInput = OrderByInput;
     exports.Query = Query;
     exports.QueryBase = QueryBase;
     exports.QueryPage = QueryPage;
     exports.QueryX = QueryX;
     exports.QueryXCacheSync = QueryXCacheSync;
+    exports.QueryXDistinct = QueryXDistinct;
     exports.QueryXPage = QueryXPage;
+    exports.QueryXRaw = QueryXRaw;
+    exports.QueryXRawPage = QueryXRawPage;
     exports.QueryXStream = QueryXStream;
     exports.ReadOnlyModel = ReadOnlyModel;
-    exports.SelectorX = SelectorX;
     exports.SingleFilter = SingleFilter;
     exports.StringInput = StringInput;
     exports.XAND = XAND;
@@ -2687,6 +3004,11 @@
     exports.XNOT_EQ = XNOT_EQ;
     exports.XNOT_EQ_Filter = XNOT_EQ_Filter;
     exports.XSingleFilter = XSingleFilter;
+    exports.autoResetArrayOfIDs = autoResetArrayOfIDs;
+    exports.autoResetArrayToEmpty = autoResetArrayToEmpty;
+    exports.autoResetDefault = autoResetDefault;
+    exports.autoResetId = autoResetId;
+    exports.config = config;
     exports.field = field;
     exports.field_field = field_field;
     exports.foreign = foreign;

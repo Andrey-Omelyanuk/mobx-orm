@@ -12,36 +12,135 @@ declare abstract class XFilter {
     abstract get isReady(): boolean;
 }
 
-interface InputConstructorArgs<T> {
-    value?: T;
-    options?: any;
-    syncURL?: string;
-    syncLocalStorage?: string;
-    autoReset?: (input: Input<T>) => void;
-}
-declare abstract class Input<T> {
-    readonly value: T;
-    isReady: boolean;
-    readonly options: Query<Model>;
-    readonly syncURL?: string;
-    __disposers: any[];
-    constructor(args?: InputConstructorArgs<T>);
-    set(value: T): void;
-    destroy(): void;
-    abstract serialize(value?: string): T;
-    abstract deserialize(value: T): string;
-    toString(): string;
-    __doSyncURL(): () => void;
-}
-
-declare class StringInput extends Input<string | null | undefined> {
-    serialize(value?: string): string | null | undefined;
-    deserialize(value: string | null | undefined): string;
+declare class OrderByInput extends Input<ORDER_BY> {
+    serialize(value?: string): ORDER_BY;
+    deserialize(value: ORDER_BY): string | undefined;
 }
 
 declare class NumberInput extends Input<number | null | undefined> {
     serialize(value?: string): number | null | undefined;
     deserialize(value: number | null | undefined): string;
+}
+
+declare abstract class ArrayInput<T> extends Input<T> {
+    constructor(args?: InputConstructorArgs<T>);
+}
+
+declare class ArrayStringInput extends ArrayInput<string[]> {
+    serialize(value?: string): string[];
+    deserialize(value: string[]): string;
+}
+
+declare const DISPOSER_AUTOUPDATE = "__autoupdate";
+interface QueryXProps<M extends Model> {
+    adapter?: Adapter<M>;
+    filter?: XFilter;
+    order_by?: ORDER_BY;
+    offset?: number;
+    limit?: number;
+    relations?: Array<string>;
+    fields?: Array<string>;
+    omit?: Array<string>;
+    autoupdate?: boolean;
+    syncURL?: boolean;
+    syncURLSearchParams?: boolean;
+    syncURLSearchParamsPrefix?: string;
+}
+declare class QueryX<M extends Model> {
+    readonly filter: XFilter;
+    readonly input_order_by: OrderByInput;
+    readonly input_offset: NumberInput;
+    readonly input_limit: NumberInput;
+    readonly input_relations: ArrayStringInput;
+    readonly input_fields: ArrayStringInput;
+    readonly input_omit: ArrayStringInput;
+    get orderBy(): ORDER_BY;
+    get order_by(): ORDER_BY;
+    get offset(): number;
+    get limit(): number;
+    get relations(): string[];
+    get fields(): string[];
+    get omit(): string[];
+    set offset(value: number);
+    set limit(value: number);
+    set relations(value: string[]);
+    set fields(value: string[]);
+    set omit(value: string[]);
+    readonly syncURLSearchParams: boolean;
+    readonly syncURLSearchParamsPrefix: string;
+    total: number;
+    need_to_update: boolean;
+    readonly adapter: Adapter<M>;
+    __items: M[];
+    __is_loading: boolean;
+    __is_ready: boolean;
+    __error: string;
+    get is_loading(): boolean;
+    get is_ready(): boolean;
+    get error(): string;
+    get items(): M[];
+    get filters(): XFilter;
+    get isLoading(): boolean;
+    get isReady(): boolean;
+    __controller: AbortController;
+    __disposers: (() => void)[];
+    __disposer_objects: {
+        [field: string]: () => void;
+    };
+    constructor(props: QueryXProps<M>);
+    destroy(): void;
+    __wrap_controller(func: Function): Promise<any>;
+    __load(): Promise<any>;
+    load(): Promise<void>;
+    shadowLoad(): Promise<void>;
+    get autoupdate(): boolean;
+    set autoupdate(value: boolean);
+    get URLSearchParams(): URLSearchParams;
+    ready: () => Promise<Boolean>;
+    loading: () => Promise<Boolean>;
+}
+
+interface InputConstructorArgs<T> {
+    value?: T;
+    options?: any;
+    required?: boolean;
+    disabled?: boolean;
+    syncURL?: string;
+    syncURLSearchParams?: string;
+    syncLocalStorage?: string;
+    debounce?: number;
+    autoReset?: (input: Input<T>) => void;
+}
+declare abstract class Input<T> {
+    value: T;
+    error: string;
+    readonly options?: QueryX<Model>;
+    required: boolean;
+    disabled: boolean;
+    readonly syncURLSearchParams?: string;
+    readonly syncLocalStorage?: string;
+    readonly debounce?: number;
+    readonly autoReset?: (input: Input<T>) => void;
+    isInit: boolean;
+    __isReady: boolean;
+    __disposers: any[];
+    __setReadyTrue: Function;
+    constructor(args?: InputConstructorArgs<T>);
+    get isReady(): boolean;
+    set(value: T): void;
+    destroy(): void;
+    abstract serialize(value?: string): T;
+    abstract deserialize(value: T): string;
+    toString(): string;
+    __doOptions(): void;
+    __doAutoReset(): void;
+    __doSyncURLSearchParams(): void;
+    __doSyncLocalStorage(): void;
+}
+
+declare class StringInput extends Input<string | null | undefined> {
+    serialize(value?: string): string | null | undefined;
+    deserialize(value: string | null | undefined): string;
 }
 
 declare class BooleanInput extends Input<boolean | null | undefined> {
@@ -59,25 +158,24 @@ declare class DateTimeInput extends Input<Date | null | undefined> {
     deserialize(value: Date | null | undefined): string;
 }
 
-declare abstract class ArrayInput<T> extends Input<T> {
-    constructor(args?: InputConstructorArgs<T>);
-}
-
-declare class ArrayStringInput extends ArrayInput<string[]> {
-    serialize(value?: string): string[];
-    deserialize(value: string[]): string;
-}
-
 declare class ArrayNumberInput extends ArrayInput<number[]> {
     serialize(value?: string): number[];
     deserialize(value: number[]): string;
 }
 
+declare function autoResetId(input: NumberInput): void;
+
+declare const autoResetArrayOfIDs: (input: ArrayNumberInput) => void;
+
+declare const autoResetDefault: (input: any) => void;
+
+declare const autoResetArrayToEmpty: (input: any) => void;
+
 declare abstract class XSingleFilter extends XFilter {
     readonly field: string;
-    value: Input<any>;
+    input: Input<any>;
     __disposers: (() => void)[];
-    constructor(field: string, value: Input<any>);
+    constructor(field: string, input: Input<any>);
     get isReady(): boolean;
     get URLSearchParams(): URLSearchParams;
     abstract get URIField(): string;
@@ -156,20 +254,48 @@ declare class XAND_Filter extends XComboFilter {
 }
 declare function XAND(...filters: XFilter[]): XFilter;
 
-declare const ASC = true;
-declare const DESC = false;
-declare type ORDER_BY = Map<string, boolean>;
-declare class SelectorX {
-    filter?: XFilter;
-    order_by?: ORDER_BY;
-    offset?: number;
-    limit?: number;
-    relations?: Array<string>;
-    fields?: Array<string>;
-    omit?: Array<string>;
-    constructor(filter?: XFilter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]);
-    get URLSearchParams(): URLSearchParams;
+declare abstract class Adapter<M extends Model> {
+    abstract __create(raw_data: RawData, controller?: AbortController): Promise<RawObject>;
+    abstract __update(obj_id: number, only_changed_raw_data: RawData, controller?: AbortController): Promise<RawObject>;
+    abstract __delete(obj_id: number, controller?: AbortController): Promise<void>;
+    abstract __action(obj_id: number, name: string, kwargs: Object, controller?: AbortController): Promise<any>;
+    abstract __get(obj_id: number, controller?: AbortController): Promise<object>;
+    abstract __find(props: Selector | QueryX<M>, controller?: AbortController): Promise<object>;
+    abstract __load(props: Selector | QueryX<M>, controller?: AbortController): Promise<RawObject[]>;
+    abstract getTotalCount(where?: any, controller?: AbortController): Promise<number>;
+    abstract getDistinct(where: XFilter, field: string, controller?: AbortController): Promise<any[]>;
+    readonly model: any;
+    constructor(model: any);
+    action(obj: M, name: string, kwargs: Object, controller?: AbortController): Promise<any>;
+    create(obj: M, controller?: AbortController): Promise<M>;
+    update(obj: M, controller?: AbortController): Promise<M>;
+    delete(obj: M, controller?: AbortController): Promise<M>;
+    get(obj_id: number, controller?: AbortController): Promise<M>;
+    find(selector: Selector | QueryX<M>, controller?: AbortController): Promise<M>;
+    load(selector?: Selector | QueryX<M>, controller?: AbortController): Promise<M[]>;
 }
+
+declare let local_store: {
+    string?: {
+        number: Model;
+    };
+};
+declare class LocalAdapter<M extends Model> extends Adapter<M> {
+    readonly store_name: string;
+    delay: number;
+    init_local_data(data: RawObject[]): void;
+    constructor(model: any, store_name?: string);
+    __action(obj_id: number, name: string, kwargs: Object): Promise<any>;
+    __create(raw_data: RawData): Promise<RawObject>;
+    __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
+    __delete(obj_id: number): Promise<void>;
+    __find(selector: Selector): Promise<RawObject>;
+    __get(obj_id: number): Promise<RawObject>;
+    __load(selector?: Selector): Promise<RawObject[]>;
+    getTotalCount(where?: any): Promise<number>;
+    getDistinct(where: any, filed: any): Promise<any[]>;
+}
+declare function local(): (cls: any) => void;
 
 declare abstract class QueryBase<M extends Model> {
     filters: Filter;
@@ -194,7 +320,7 @@ declare abstract class QueryBase<M extends Model> {
     __disposer_objects: {
         [field: string]: () => void;
     };
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector$1);
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector);
     destroy(): void;
     abstract get items(): any;
     abstract __load(objs: M[]): any;
@@ -202,13 +328,13 @@ declare abstract class QueryBase<M extends Model> {
     load(): Promise<void>;
     get autoupdate(): boolean;
     set autoupdate(value: boolean);
-    get selector(): Selector$1;
+    get selector(): Selector;
     ready(): Promise<Boolean>;
     loading(): Promise<Boolean>;
 }
 
 declare class Query<M extends Model> extends QueryBase<M> {
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector$1);
+    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector);
     shadowLoad(): Promise<void>;
     get items(): M[];
     __load(objs: M[]): void;
@@ -232,44 +358,6 @@ declare class QueryPage<M extends Model> extends QueryBase<M> {
     shadowLoad(): Promise<void>;
 }
 
-declare const DISPOSER_AUTOUPDATE = "__autoupdate";
-declare class QueryX<M extends Model> {
-    total: number;
-    need_to_update: boolean;
-    get is_loading(): boolean;
-    get is_ready(): boolean;
-    get error(): string;
-    get isLoading(): boolean;
-    get isReady(): boolean;
-    readonly selector: SelectorX;
-    readonly adapter: Adapter<M>;
-    __items: M[];
-    __is_loading: boolean;
-    __is_ready: boolean;
-    __error: string;
-    __disposers: (() => void)[];
-    __disposer_objects: {
-        [field: string]: () => void;
-    };
-    constructor(adapter: Adapter<M>, selector?: SelectorX);
-    get filters(): XFilter;
-    get order_by(): ORDER_BY;
-    get offset(): number;
-    get limit(): number;
-    get fields(): string[];
-    get omit(): string[];
-    get relations(): string[];
-    destroy(): void;
-    get items(): M[];
-    __load(): Promise<void>;
-    load(): Promise<void>;
-    shadowLoad(): Promise<void>;
-    get autoupdate(): boolean;
-    set autoupdate(value: boolean);
-    ready: () => Promise<Boolean>;
-    loading: () => Promise<Boolean>;
-}
-
 declare class QueryXPage<M extends Model> extends QueryX<M> {
     setPageSize(size: number): void;
     setPage(n: number): void;
@@ -285,12 +373,12 @@ declare class QueryXPage<M extends Model> extends QueryX<M> {
     get isLastPage(): boolean;
     get currentPage(): number;
     get totalPages(): number;
-    constructor(adapter: Adapter<M>, selector?: SelectorX);
-    __load(): Promise<void>;
+    constructor(props: QueryXProps<M>);
+    __load(): Promise<any>;
 }
 
 declare class QueryXCacheSync<M extends Model> extends QueryX<M> {
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: SelectorX);
+    constructor(cache: any, props: QueryXProps<M>);
     __load(): Promise<void>;
     get items(): M[];
     __watch_obj(obj: any): void;
@@ -299,9 +387,79 @@ declare class QueryXCacheSync<M extends Model> extends QueryX<M> {
 declare class QueryXStream<M extends Model> extends QueryX<M> {
     goToFirstPage(): void;
     goToNextPage(): void;
-    constructor(adapter: Adapter<M>, selector?: SelectorX);
+    constructor(props: QueryXProps<M>);
     __load(): Promise<void>;
 }
+
+declare class QueryXRaw<M extends Model> extends QueryX<M> {
+    __load(): Promise<any>;
+}
+
+declare class QueryXRawPage<M extends Model> extends QueryXPage<M> {
+    __load(): Promise<any>;
+}
+
+declare class QueryXDistinct extends QueryX<any> {
+    readonly field: string;
+    constructor(field: string, props: QueryXProps<any>);
+    __load(): Promise<any>;
+}
+
+declare abstract class Model {
+    static __adapter: Adapter<Model>;
+    static __cache: Map<number, Model>;
+    static __fields: {
+        [field_name: string]: {
+            decorator: (obj: Model, field_name: string) => void;
+            settings: any;
+            serialize: any;
+            deserialize: any;
+        };
+    };
+    static __relations: {
+        [field_name: string]: {
+            decorator: (obj: Model, field_name: string) => void;
+            settings: any;
+        };
+    };
+    static inject(obj: Model): void;
+    static eject(obj: Model): void;
+    static getQueryX<M extends Model>(props: QueryXProps<M>): QueryX<M>;
+    static getQueryXRaw<M extends Model>(props: QueryXProps<M>): QueryX<M>;
+    static getQueryXPage<M extends Model>(props: QueryXProps<M>): QueryXPage<M>;
+    static getQueryXRawPage<M extends Model>(props: QueryXProps<M>): QueryXRawPage<M>;
+    static getQueryXCacheSync<M extends Model>(props: QueryXProps<M>): QueryXCacheSync<M>;
+    static getQueryXStream<M extends Model>(props: QueryXProps<M>): QueryXStream<M>;
+    static getQueryXDistinct<M extends Model>(field: string, props: QueryXProps<M>): QueryXDistinct;
+    static getQuery(selector?: Selector): Query<Model>;
+    static getQueryPage(selector?: Selector): QueryPage<Model>;
+    static get(id: number): Model;
+    static findById(id: number): Promise<Model>;
+    static find(selector: Selector): Promise<Model>;
+    static updateCache(raw_obj: any): Model;
+    static clearCache(): void;
+    id: number | undefined;
+    __init_data: any;
+    __errors: any;
+    __disposers: Map<any, any>;
+    constructor(...args: any[]);
+    get model(): any;
+    get raw_data(): any;
+    get raw_obj(): any;
+    get only_changed_raw_data(): any;
+    get is_changed(): boolean;
+    action(name: string, kwargs: Object): Promise<any>;
+    create(): Promise<any>;
+    update(): Promise<any>;
+    delete(): Promise<any>;
+    save(): Promise<any>;
+    refresh(): Promise<any>;
+    setError(error: any): void;
+    refreshInitData(): void;
+    cancelLocalChanges(): void;
+    updateFromRaw(raw_obj: any): void;
+}
+declare function model(constructor: any): any;
 
 declare enum ValueType {
     STRING = 0,
@@ -411,146 +569,26 @@ declare class AND_Filter extends ComboFilter {
 }
 declare function AND(...filters: Filter[]): Filter;
 
+declare const ASC = true;
+declare const DESC = false;
+declare type ORDER_BY = Map<string, boolean>;
+declare type RawObject = any;
+declare type RawData = any;
 interface Selector {
     filter?: Filter;
     order_by?: ORDER_BY;
+    offset?: number;
+    limit?: number;
     relations?: Array<string>;
     fields?: Array<string>;
     omit?: Array<string>;
-    offset?: number;
-    limit?: number;
 }
 
-declare abstract class Adapter<M extends Model> {
-    abstract __create(raw_data: RawData): Promise<RawObject>;
-    abstract __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
-    abstract __delete(obj_id: number): Promise<void>;
-    abstract __action(obj_id: number, name: string, kwargs: Object): Promise<any>;
-    abstract __get(obj_id: number): Promise<object>;
-    abstract __find(props: Selector | SelectorX): Promise<object>;
-    abstract __load(props: Selector | SelectorX): Promise<RawObject[]>;
-    abstract getTotalCount(where?: any): Promise<number>;
-    readonly model: any;
-    constructor(model: any);
-    action(obj: M, name: string, kwargs: Object): Promise<any>;
-    create(obj: M): Promise<M>;
-    update(obj: M): Promise<M>;
-    delete(obj: M): Promise<M>;
-    get(obj_id: number): Promise<M>;
-    find(selector: Selector | SelectorX): Promise<M>;
-    load(selector?: Selector | SelectorX): Promise<M[]>;
-}
-
-declare let local_store: {
-    string?: {
-        number: Model;
-    };
+declare const config: {
+    DEFAULT_PAGE_SIZE: number;
+    AUTO_UPDATE_DELAY: number;
+    UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
 };
-declare class LocalAdapter<M extends Model> extends Adapter<M> {
-    readonly store_name: string;
-    delay: number;
-    init_local_data(data: RawObject[]): void;
-    constructor(model: any, store_name?: string);
-    __action(obj_id: number, name: string, kwargs: Object): Promise<any>;
-    __create(raw_data: RawData): Promise<RawObject>;
-    __update(obj_id: number, only_changed_raw_data: RawData): Promise<RawObject>;
-    __delete(obj_id: number): Promise<void>;
-    __find(selector: Selector$1): Promise<RawObject>;
-    __get(obj_id: number): Promise<RawObject>;
-    __load(selector?: Selector$1): Promise<RawObject[]>;
-    getTotalCount(where?: any): Promise<number>;
-}
-declare function local(): (cls: any) => void;
-
-declare type RawObject = any;
-declare type RawData = any;
-declare abstract class Model {
-    static __adapter: Adapter<Model>;
-    static __cache: Map<number, Model>;
-    static __fields: {
-        [field_name: string]: {
-            decorator: (obj: Model, field_name: string) => void;
-            settings: any;
-            serialize: any;
-            deserialize: any;
-        };
-    };
-    static __relations: {
-        [field_name: string]: {
-            decorator: (obj: Model, field_name: string) => void;
-            settings: any;
-        };
-    };
-    static inject(obj: Model): void;
-    static eject(obj: Model): void;
-    static getQueryX<T extends Model>(options?: {
-        filter?: XFilter;
-        order_by?: Map<string, boolean>;
-        offset?: number;
-        limit?: number;
-        relations?: Array<string>;
-        fields?: Array<string>;
-        omit?: Array<string>;
-        autoupdate?: boolean;
-    }): QueryX<T>;
-    static getQueryXPage<T extends Model>(options?: {
-        filter?: XFilter;
-        order_by?: Map<string, boolean>;
-        offset?: number;
-        limit?: number;
-        relations?: Array<string>;
-        fields?: Array<string>;
-        omit?: Array<string>;
-        autoupdate?: boolean;
-    }): QueryXPage<T>;
-    static getQueryXCacheSync<T extends Model>(options?: {
-        filter?: XFilter;
-        order_by?: Map<string, boolean>;
-        offset?: number;
-        limit?: number;
-        relations?: Array<string>;
-        fields?: Array<string>;
-        omit?: Array<string>;
-        autoupdate?: boolean;
-    }): QueryXCacheSync<T>;
-    static getQueryXStream<T extends Model>(options?: {
-        filter?: XFilter;
-        order_by?: Map<string, boolean>;
-        limit?: number;
-        relations?: Array<string>;
-        fields?: Array<string>;
-        omit?: Array<string>;
-        autoupdate?: boolean;
-    }): QueryXStream<T>;
-    static getQuery(selector?: Selector): Query<Model>;
-    static getQueryPage(selector?: Selector): QueryPage<Model>;
-    static get(id: number): Model;
-    static findById(id: number): Promise<Model>;
-    static find(selector: Selector): Promise<Model>;
-    static updateCache(raw_obj: any): Model;
-    static clearCache(): void;
-    id: number | undefined;
-    __init_data: any;
-    __errors: any;
-    __disposers: Map<any, any>;
-    constructor(...args: any[]);
-    get model(): any;
-    get raw_data(): any;
-    get raw_obj(): any;
-    get only_changed_raw_data(): any;
-    get is_changed(): boolean;
-    action(name: string, kwargs: Object): Promise<any>;
-    create(): Promise<any>;
-    update(): Promise<any>;
-    delete(): Promise<any>;
-    save(): Promise<any>;
-    refresh(): Promise<any>;
-    setError(error: any): void;
-    refreshInitData(): void;
-    cancelLocalChanges(): void;
-    updateFromRaw(raw_obj: any): void;
-}
-declare function model(constructor: any): any;
 
 declare abstract class ReadOnlyModel extends Model {
     create(): Promise<void>;
@@ -571,4 +609,4 @@ declare function many(remote_model: any, remote_foreign_id_name?: string): (cls:
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SelectorX, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXProps, QueryXRaw, QueryXRawPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, config, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };

@@ -2,8 +2,7 @@ import { action, autorun, makeObservable, observable, reaction, runInAction } fr
 import { Adapter } from '../adapters'
 import { Model } from '../model'
 import { Filter } from '../filters'
-import { Selector } from "@/types"
-import { ORDER_BY } from "../selector"
+import { Selector, ORDER_BY } from "../types"
 
 // Depricated
 export abstract class QueryBase<M extends Model> {

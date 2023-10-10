@@ -1,14 +1,10 @@
-import { action, intercept, makeObservable, observable, observe, runInAction } from 'mobx'
+import { action, intercept, makeObservable, observable, observe, runInAction, values } from 'mobx'
 import { Adapter } from './adapters'
-import { Query, QueryPage, QueryX, QueryXPage, QueryXStream, QueryXCacheSync } from './queries'
+import { Query, QueryPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage, QueryXProps } from './queries'
+import { QueryX} from './queries/query-x'
+import { QueryXPage } from './queries/query-x-page'
+import { QueryXDistinct } from './queries/query-x-distinct'
 import { Selector } from './types'
-import { SelectorX } from './selector'
-import { XFilter as Filter } from './filters-x'
-
-
-export type RawObject = any 
-export type RawData   = any 
-
 
 export abstract class Model {
     // this static properties will be copied to real model in the model decorator
@@ -52,110 +48,39 @@ export abstract class Model {
             this.__cache.delete(obj.id)
     }
 
-    // TODO: need to refactor
-    static getQueryX<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        offset?: number,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryX<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            options?.offset,
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryX<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
-        return query
-    }
-    // TODO: need to refactor
-    static getQueryXPage<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        offset?: number,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryXPage<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            options?.offset,
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryXPage<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
-        return query
+    static getQueryX<M extends Model>(props: QueryXProps<M>): QueryX<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryX<M>(props)
     }
 
-    // TODO: need to refactor
-    static getQueryXCacheSync<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        offset?: number,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryXCacheSync<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            options?.offset,
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryXCacheSync<T>(this.__adapter as Adapter<T>, this.__cache, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
-        return query
+    static getQueryXRaw<M extends Model>(props: QueryXProps<M>): QueryX<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXRaw<M>(props)
     }
 
-    // TODO: need to refactor
-    static getQueryXStream<T extends Model>(options?: {
-        filter?: Filter,
-        order_by?: Map<string, boolean>,
-        limit?: number,
-        relations?: Array<string>,
-        fields?: Array<string>,
-        omit?: Array<string>,
-        autoupdate?: boolean,
-    }): QueryXStream<T>  {
-        const selector = new SelectorX(
-            options?.filter,
-            options?.order_by,
-            0, 
-            options?.limit,
-            options?.relations,
-            options?.fields,
-            options?.omit,
-        )
-        const query = new QueryXStream<T>(this.__adapter as Adapter<T>, selector)
-        if (options?.autoupdate) {
-            runInAction(() => query.autoupdate = options.autoupdate)
-        }
-        return query
+    static getQueryXPage<M extends Model>(props: QueryXProps<M>): QueryXPage<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXPage<M>(props)
+    }
+
+    static getQueryXRawPage<M extends Model>(props: QueryXProps<M>): QueryXRawPage<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXRawPage<M>(props)
+    }
+
+    static getQueryXCacheSync<M extends Model>(props: QueryXProps<M>): QueryXCacheSync<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXCacheSync<M>(this.__cache, props)
+    }
+
+    static getQueryXStream<M extends Model>(props: QueryXProps<M>): QueryXStream<M> {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXStream<M>(props)
+    }
+
+    static getQueryXDistinct<M extends Model>(field: string, props: QueryXProps<M>): QueryXDistinct {
+        props.adapter = this.__adapter as Adapter<M>
+        return new QueryXDistinct(field, props)
     }
 
     static getQuery(selector?: Selector): Query<Model>  {
@@ -240,13 +165,12 @@ export abstract class Model {
     }
 
     get is_changed() : boolean {
-        let is_changed = false
         for(let field_name in this.model.__fields) {
             if (this[field_name] != this.__init_data[field_name]) {
-                is_changed = true
+                return true
             }
         }
-        return is_changed 
+        return false 
     }
 
     async action(name: string, kwargs: Object) { return await this.model.__adapter.action(this, name, kwargs) }

@@ -1,8 +1,9 @@
 import { runInAction } from 'mobx'
-import { Model, QueryX as Query, StringInput, XEQ as EQ, NumberInput } from '..'
+import { Model, StringInput, XEQ as EQ, NumberInput, local } from '..'
 import { XSingleFilter as SingleFilter } from './SingleFilter'
 
 describe('SingleFilter', () => {
+    @local()
     class TestModel extends Model {}
     class TestSingleFilter extends SingleFilter {
         get URIField(): string {
@@ -14,7 +15,7 @@ describe('SingleFilter', () => {
     }
 
     it('isReady', () => {
-        const options = TestModel.getQueryX()
+        const options = TestModel.getQueryX({})
         const value =  new NumberInput({value: 1, options})
         const filter = EQ('test', value)                    ; expect(filter.isReady).toBe(value.isReady)
         runInAction(() => options.need_to_update = false)   ; expect(filter.isReady).toBe(value.isReady)

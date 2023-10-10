@@ -1,9 +1,6 @@
 import { makeObservable, observable } from 'mobx'
 import { XFilter } from './filters-x'
-
-export const ASC = true 
-export const DESC = false 
-export type ORDER_BY = Map<string, boolean>
+import { ORDER_BY, ASC } from './types'
 
 export class SelectorX {
     @observable filter      ?: XFilter 
@@ -14,7 +11,15 @@ export class SelectorX {
     @observable fields      ?: Array<string>
     @observable omit        ?: Array<string>
 
-    constructor(filter?: XFilter, order_by?: ORDER_BY, offset?: number, limit?: number, relations?: string[], fields?: string[], omit?: string[]) {
+    constructor(
+        filter      ?: XFilter,
+        order_by    ?: ORDER_BY,
+        offset      ?: number,
+        limit       ?: number,
+        relations   ?: string[],
+        fields      ?: string[],
+        omit        ?: string[],
+        ) {
         this.filter    = filter
         this.order_by  = order_by ? order_by : new Map()
         this.offset    = offset
