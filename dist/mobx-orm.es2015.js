@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.9
+   * mobx-orm.js v1.3.10
    * Released under the MIT license.
    */
 
@@ -1863,6 +1863,7 @@ class Model {
             writable: true,
             value: undefined
         });
+        // TODO: should it be observable?
         Object.defineProperty(this, "__init_data", {
             enumerable: true,
             configurable: true,
@@ -2366,6 +2367,35 @@ class DateTimeInput extends Input {
     }
 }
 
+class EnumInput extends Input {
+    constructor(args) {
+        super(args);
+        Object.defineProperty(this, "enum", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.enum = args.enum;
+    }
+    serialize(value) {
+        if (value === 'null')
+            return null;
+        if (value === undefined)
+            return undefined;
+        if (value === null)
+            return null;
+        return Object.values(this.enum).find(v => v == value);
+    }
+    deserialize(value) {
+        if (value === undefined)
+            return undefined;
+        if (value === null)
+            return 'null';
+        return value.toString();
+    }
+}
+
 class ArrayNumberInput extends ArrayInput {
     serialize(value) {
         let result = [];
@@ -2449,7 +2479,7 @@ const autoResetArrayToEmpty = (input) => {
 };
 
 class Form {
-    constructor(inputs) {
+    constructor(inputs, submit, cancel) {
         Object.defineProperty(this, "inputs", {
             enumerable: true,
             configurable: true,
@@ -2468,7 +2498,21 @@ class Form {
             writable: true,
             value: []
         });
+        Object.defineProperty(this, "__submit", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "__cancel", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         this.inputs = inputs;
+        this.__submit = submit;
+        this.__cancel = cancel;
     }
     get isReady() {
         return Object.values(this.inputs).every(input => input.isReady);
@@ -2476,8 +2520,23 @@ class Form {
     get isError() {
         return this.error.length > 0 && Object.values(this.inputs).every(input => input.error);
     }
-    async submit() { }
-    cancel() { }
+    async submit() {
+        if (!this.isReady) {
+            throw new Error('Form is not ready to submit');
+        }
+        this.isLoading = true;
+        this.error = [];
+        try {
+            await this.__submit();
+        }
+        catch (err) {
+            this.error = [err.message];
+        }
+        this.isLoading = false;
+    }
+    cancel() {
+        this.__cancel();
+    }
 }
 __decorate([
     observable,
@@ -2920,5 +2979,5 @@ function local() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, Filter, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, ReadOnlyModel, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, config, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, ReadOnlyModel, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, config, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

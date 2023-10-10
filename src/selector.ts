@@ -2,6 +2,9 @@ import { makeObservable, observable } from 'mobx'
 import { XFilter } from './filters-x'
 import { ORDER_BY, ASC } from './types'
 
+/**
+ * @deprecated
+ */
 export class SelectorX {
     @observable filter      ?: XFilter 
     @observable order_by    ?: ORDER_BY 
