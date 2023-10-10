@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.10
+   * mobx-orm.js v1.3.11
    * Released under the MIT license.
    */
 
@@ -1905,32 +1905,25 @@
                 this.__cache.delete(obj.id);
         }
         static getQueryX(props) {
-            props.adapter = this.__adapter;
-            return new QueryX(props);
+            return new QueryX(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
         }
         static getQueryXRaw(props) {
-            props.adapter = this.__adapter;
-            return new QueryXRaw(props);
+            return new QueryXRaw(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
         }
         static getQueryXPage(props) {
-            props.adapter = this.__adapter;
-            return new QueryXPage(props);
+            return new QueryXPage(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
         }
         static getQueryXRawPage(props) {
-            props.adapter = this.__adapter;
-            return new QueryXRawPage(props);
+            return new QueryXRawPage(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
         }
         static getQueryXCacheSync(props) {
-            props.adapter = this.__adapter;
-            return new QueryXCacheSync(this.__cache, props);
+            return new QueryXCacheSync(this.__cache, Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
         }
         static getQueryXStream(props) {
-            props.adapter = this.__adapter;
-            return new QueryXStream(props);
+            return new QueryXStream(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
         }
         static getQueryXDistinct(field, props) {
-            props.adapter = this.__adapter;
-            return new QueryXDistinct(field, props);
+            return new QueryXDistinct(field, Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
         }
         static getQuery(selector) {
             return new Query(this.__adapter, this.__cache, selector);
@@ -1959,7 +1952,7 @@
             return obj;
         }
         static clearCache() {
-            // id = undefined is equal to remove obj from cache 
+            // id = undefined is equal to remove obj from cache
             for (let obj of this.__cache.values()) {
                 obj.id = undefined;
             }
@@ -2028,7 +2021,7 @@
             if (this.id === undefined && raw_obj.id !== undefined) {
                 this.id = raw_obj.id;
             }
-            // update the fields if the raw data is exist and it is different 
+            // update the fields if the raw data is exist and it is different
             for (let field_name in this.model.__fields) {
                 if (raw_obj[field_name] !== undefined && raw_obj[field_name] !== this[field_name]) {
                     this[field_name] = raw_obj[field_name];
@@ -2047,7 +2040,7 @@
                             settings.remote_model.updateCache(i);
                         }
                     }
-                    // one 
+                    // one
                     else {
                         settings.remote_model.updateCache(raw_obj[relation]);
                     }
