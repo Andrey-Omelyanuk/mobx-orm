@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.9
+   * mobx-orm.js v1.3.10
    * Released under the MIT license.
    */
 
@@ -1870,6 +1870,7 @@
                 writable: true,
                 value: undefined
             });
+            // TODO: should it be observable?
             Object.defineProperty(this, "__init_data", {
                 enumerable: true,
                 configurable: true,
@@ -2373,6 +2374,35 @@
         }
     }
 
+    class EnumInput extends Input {
+        constructor(args) {
+            super(args);
+            Object.defineProperty(this, "enum", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.enum = args.enum;
+        }
+        serialize(value) {
+            if (value === 'null')
+                return null;
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return null;
+            return Object.values(this.enum).find(v => v == value);
+        }
+        deserialize(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value.toString();
+        }
+    }
+
     class ArrayNumberInput extends ArrayInput {
         serialize(value) {
             let result = [];
@@ -2456,7 +2486,7 @@
     };
 
     class Form {
-        constructor(inputs) {
+        constructor(inputs, submit, cancel) {
             Object.defineProperty(this, "inputs", {
                 enumerable: true,
                 configurable: true,
@@ -2475,7 +2505,21 @@
                 writable: true,
                 value: []
             });
+            Object.defineProperty(this, "__submit", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "__cancel", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
             this.inputs = inputs;
+            this.__submit = submit;
+            this.__cancel = cancel;
         }
         get isReady() {
             return Object.values(this.inputs).every(input => input.isReady);
@@ -2483,8 +2527,23 @@
         get isError() {
             return this.error.length > 0 && Object.values(this.inputs).every(input => input.error);
         }
-        async submit() { }
-        cancel() { }
+        async submit() {
+            if (!this.isReady) {
+                throw new Error('Form is not ready to submit');
+            }
+            this.isLoading = true;
+            this.error = [];
+            try {
+                await this.__submit();
+            }
+            catch (err) {
+                this.error = [err.message];
+            }
+            this.isLoading = false;
+        }
+        cancel() {
+            this.__cancel();
+        }
     }
     __decorate([
         mobx.observable,
@@ -2944,7 +3003,9 @@
     exports.EQV = EQV;
     exports.EQV_Filter = EQV_Filter;
     exports.EQ_Filter = EQ_Filter;
+    exports.EnumInput = EnumInput;
     exports.Filter = Filter;
+    exports.Form = Form;
     exports.GT = GT;
     exports.GTE = GTE;
     exports.GTE_Filter = GTE_Filter;
