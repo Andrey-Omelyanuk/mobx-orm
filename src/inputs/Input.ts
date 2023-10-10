@@ -98,7 +98,7 @@ export abstract class Input<T> {
     // Any changes in options should reset __isReady
     __doOptions () {
         this.__disposers.push(reaction(
-            () => this.options.is_ready,
+            () => this.options.isReady,
             () => {
                 this.__isReady = false
             } 
