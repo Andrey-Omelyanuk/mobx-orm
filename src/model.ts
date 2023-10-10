@@ -126,6 +126,7 @@ export abstract class Model {
 
     @observable id: number|undefined = undefined
 
+    // TODO: should it be observable?
     @observable __init_data: any   
     @observable __errors: any   
     __disposers = new Map()

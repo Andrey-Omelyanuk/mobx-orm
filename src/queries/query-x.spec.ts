@@ -5,6 +5,13 @@ import { QueryX, DISPOSER_AUTOUPDATE, } from './query-x'
 import { DESC } from '../types'
 import { BaseTestAdapter } from '../test.utils'
 
+// TODO: order of tests is equal to order of functions in the file
+// TODO: one property = one test  
+// TODO: one function/method = one describe
+// TODO: the last test should be e2e and demonstrate the work of the query with the model 
+// i.e. example of using
+// add it to the readme
+
 describe('QueryX', () => {
 
     @model class A extends Model {}
