@@ -3,6 +3,7 @@ import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
 import { config } from '../config'
 import { Model } from '../model'
 import { QueryX } from '../queries/query-x'
+import { AutoReset } from './auto-reset/AutoReset'
 
 export interface InputConstructorArgs<T> {
     value               ?: T
@@ -13,12 +14,13 @@ export interface InputConstructorArgs<T> {
     syncURLSearchParams ?: string
     syncLocalStorage    ?: string
     debounce            ?: number
-    autoReset           ?: (input: Input<T>) => void
+    autoReset           ?: (input: Input<T>) => void // deprecated use autoResetClass instead
+    autoResetClass      ?: new (input: Input<T>) => AutoReset<Input<T>> 
 }
 
 export abstract class Input<T> {
     @observable          value               : T
-    @observable          error               : string = ''
+    @observable          errors              : string[] = []
                 readonly options            ?: QueryX<Model> // should be a Query
     @observable          required            : boolean 
     @observable          disabled            : boolean
@@ -26,7 +28,7 @@ export abstract class Input<T> {
                 readonly syncLocalStorage   ?: string
                 readonly debounce           ?: number 
                 readonly autoReset          ?: (input: Input<T>) => void
-
+                readonly autoResetObj       ?:  AutoReset<Input<T>>
 
     @observable isInit      : boolean
     @observable __isReady   : boolean
@@ -56,7 +58,11 @@ export abstract class Input<T> {
         this.options                && this.__doOptions()
         this.syncURLSearchParams    && this.__doSyncURLSearchParams()
         this.syncLocalStorage       && this.__doSyncLocalStorage()
-        this.autoReset              && this.__doAutoReset()
+        if (args?.autoResetClass) {
+            this.autoResetObj = new args.autoResetClass(this)
+        } else if (this.autoReset) {
+            this.__doAutoReset()
+        }
     }
 
     get isReady () {
@@ -68,6 +74,10 @@ export abstract class Input<T> {
                 ||   this.options.isReady
             )
         )
+    }
+
+    get isError () {
+        return this.errors.length > 0
     }
 
     @action set (value: T) {
@@ -86,6 +96,7 @@ export abstract class Input<T> {
     destroy () {
         this.__disposers.forEach(disposer => disposer())
         this.options?.destroy()
+        this.autoResetObj?.destroy()
     }
 
     abstract serialize  (value?: string) : T        // convert string to value

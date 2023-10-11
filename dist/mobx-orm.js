@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.11
+   * mobx-orm.js v1.3.12
    * Released under the MIT license.
    */
 
@@ -25,7 +25,8 @@
         AUTO_UPDATE_DELAY: 100,
         UPDATE_SEARCH_PARAMS: (search_params) => {
             window.history.pushState(null, '', `${window.location.pathname}?${search_params.toString()}`);
-        }
+        },
+        NON_FIELD_ERRORS_KEY: 'non_field_errors',
     };
 
     /******************************************************************************
@@ -971,11 +972,11 @@
                 writable: true,
                 value: void 0
             });
-            Object.defineProperty(this, "error", {
+            Object.defineProperty(this, "errors", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
-                value: ''
+                value: []
             });
             Object.defineProperty(this, "options", {
                 enumerable: true,
@@ -1014,6 +1015,12 @@
                 value: void 0
             });
             Object.defineProperty(this, "autoReset", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "autoResetObj", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
@@ -1064,7 +1071,12 @@
             this.options && this.__doOptions();
             this.syncURLSearchParams && this.__doSyncURLSearchParams();
             this.syncLocalStorage && this.__doSyncLocalStorage();
-            this.autoReset && this.__doAutoReset();
+            if (args === null || args === void 0 ? void 0 : args.autoResetClass) {
+                this.autoResetObj = new args.autoResetClass(this);
+            }
+            else if (this.autoReset) {
+                this.__doAutoReset();
+            }
         }
         get isReady() {
             return this.disabled
@@ -1073,6 +1085,9 @@
                         // if not required and value is undefined or empty array - it is ready
                         || (!this.required && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)))
                         || this.options.isReady));
+        }
+        get isError() {
+            return this.errors.length > 0;
         }
         set(value) {
             var _a;
@@ -1088,16 +1103,17 @@
             }
         }
         destroy() {
-            var _a;
+            var _a, _b;
             this.__disposers.forEach(disposer => disposer());
             (_a = this.options) === null || _a === void 0 ? void 0 : _a.destroy();
+            (_b = this.autoResetObj) === null || _b === void 0 ? void 0 : _b.destroy();
         }
         toString() {
             return this.deserialize(this.value);
         }
         // Any changes in options should reset __isReady
         __doOptions() {
-            this.__disposers.push(mobx.reaction(() => this.options.is_ready, () => {
+            this.__disposers.push(mobx.reaction(() => this.options.isReady, () => {
                 this.__isReady = false;
             }));
         }
@@ -1164,8 +1180,8 @@
     ], Input.prototype, "value", void 0);
     __decorate([
         mobx.observable,
-        __metadata("design:type", String)
-    ], Input.prototype, "error", void 0);
+        __metadata("design:type", Array)
+    ], Input.prototype, "errors", void 0);
     __decorate([
         mobx.observable,
         __metadata("design:type", Boolean)
@@ -1882,7 +1898,7 @@
                 configurable: true,
                 writable: true,
                 value: void 0
-            });
+            }); // depricated, use errors in the form and inputs
             Object.defineProperty(this, "__disposers", {
                 enumerable: true,
                 configurable: true,
@@ -2000,6 +2016,9 @@
         async save() { return this.id === undefined ? this.create() : this.update(); }
         // update the object from the server
         async refresh() { return await this.model.__adapter.get(this.id); }
+        /**
+         * @deprecated use errors in the form and inputs
+         */
         setError(error) {
             this.__errors = error;
         }
@@ -2377,6 +2396,7 @@
                 value: void 0
             });
             this.enum = args.enum;
+            // TODO: convert enum to query? and use it as usual options?
         }
         serialize(value) {
             if (value === 'null')
@@ -2464,13 +2484,6 @@
         input.set(input.value);
     };
 
-    const autoResetDefault = (input) => {
-        if (!input.options)
-            input.set(input.value);
-        else
-            input.set(undefined);
-    };
-
     const autoResetArrayToEmpty = (input) => {
         if (!input.options)
             input.set(input.value);
@@ -2492,7 +2505,7 @@
                 writable: true,
                 value: false
             });
-            Object.defineProperty(this, "error", {
+            Object.defineProperty(this, "errors", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
@@ -2518,19 +2531,27 @@
             return Object.values(this.inputs).every(input => input.isReady);
         }
         get isError() {
-            return this.error.length > 0 && Object.values(this.inputs).every(input => input.error);
+            return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError);
         }
         async submit() {
             if (!this.isReady) {
-                throw new Error('Form is not ready to submit');
+                // just ignore
+                return;
             }
             this.isLoading = true;
-            this.error = [];
+            this.errors = [];
             try {
                 await this.__submit();
             }
             catch (err) {
-                this.error = [err.message];
+                for (const key in err.message) {
+                    if (key === config.NON_FIELD_ERRORS_KEY) {
+                        this.errors = err.message[key];
+                    }
+                    else {
+                        this.inputs[key].errors = err.message[key];
+                    }
+                }
             }
             this.isLoading = false;
         }
@@ -2545,7 +2566,7 @@
     __decorate([
         mobx.observable,
         __metadata("design:type", Array)
-    ], Form.prototype, "error", void 0);
+    ], Form.prototype, "errors", void 0);
 
     class XSingleFilter extends XFilter {
         constructor(field, input) {
@@ -3060,7 +3081,6 @@
     exports.XSingleFilter = XSingleFilter;
     exports.autoResetArrayOfIDs = autoResetArrayOfIDs;
     exports.autoResetArrayToEmpty = autoResetArrayToEmpty;
-    exports.autoResetDefault = autoResetDefault;
     exports.autoResetId = autoResetId;
     exports.config = config;
     exports.field = field;

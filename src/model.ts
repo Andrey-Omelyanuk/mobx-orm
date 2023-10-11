@@ -121,7 +121,7 @@ export abstract class Model {
 
     // TODO: should it be observable?
     @observable __init_data: any   
-    @observable __errors: any
+    @observable __errors: any // depricated, use errors in the form and inputs
     __disposers = new Map()
 
     constructor (...args) { }
@@ -175,6 +175,9 @@ export abstract class Model {
     // update the object from the server
     async refresh() { return await this.model.__adapter.get(this.id) }
 
+    /**
+     * @deprecated use errors in the form and inputs
+     */
     @action
     setError(error: any) {
         this.__errors = error

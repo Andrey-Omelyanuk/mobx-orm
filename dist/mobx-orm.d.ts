@@ -100,6 +100,14 @@ declare class QueryX<M extends Model> {
     loading: () => Promise<Boolean>;
 }
 
+declare abstract class AutoReset<T extends Input<any>> {
+    input: T;
+    __disposers: any[];
+    constructor(input: T);
+    destroy(): void;
+    abstract do(): void;
+}
+
 interface InputConstructorArgs<T> {
     value?: T;
     options?: any;
@@ -110,10 +118,11 @@ interface InputConstructorArgs<T> {
     syncLocalStorage?: string;
     debounce?: number;
     autoReset?: (input: Input<T>) => void;
+    autoResetClass?: new (input: Input<T>) => AutoReset<Input<T>>;
 }
 declare abstract class Input<T> {
     value: T;
-    error: string;
+    errors: string[];
     readonly options?: QueryX<Model>;
     required: boolean;
     disabled: boolean;
@@ -121,12 +130,14 @@ declare abstract class Input<T> {
     readonly syncLocalStorage?: string;
     readonly debounce?: number;
     readonly autoReset?: (input: Input<T>) => void;
+    readonly autoResetObj?: AutoReset<Input<T>>;
     isInit: boolean;
     __isReady: boolean;
     __disposers: any[];
     __setReadyTrue: Function;
     constructor(args?: InputConstructorArgs<T>);
     get isReady(): boolean;
+    get isError(): boolean;
     set(value: T): void;
     destroy(): void;
     abstract serialize(value?: string): T;
@@ -176,20 +187,18 @@ declare function autoResetId(input: NumberInput): void;
 
 declare const autoResetArrayOfIDs: (input: ArrayNumberInput) => void;
 
-declare const autoResetDefault: (input: any) => void;
-
 declare const autoResetArrayToEmpty: (input: any) => void;
 
 declare class Form {
-    inputs: {
-        string: Input<any>;
+    readonly inputs: {
+        [key: string]: Input<any>;
     };
     isLoading: boolean;
-    error: string[];
+    errors: string[];
     private __submit;
     private __cancel;
     constructor(inputs: {
-        string: Input<any>;
+        [key: string]: Input<any>;
     }, submit: () => Promise<void>, cancel: () => void);
     get isReady(): boolean;
     get isError(): boolean;
@@ -480,6 +489,9 @@ declare abstract class Model {
     delete(): Promise<any>;
     save(): Promise<any>;
     refresh(): Promise<any>;
+    /**
+     * @deprecated use errors in the form and inputs
+     */
     setError(error: any): void;
     refreshInitData(): void;
     cancelLocalChanges(): void;
@@ -614,6 +626,7 @@ declare const config: {
     DEFAULT_PAGE_SIZE: number;
     AUTO_UPDATE_DELAY: number;
     UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
+    NON_FIELD_ERRORS_KEY: string;
 };
 
 declare abstract class ReadOnlyModel extends Model {
@@ -635,4 +648,4 @@ declare function many(remote_model: any, remote_foreign_id_name?: string): (cls:
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXProps, QueryXRaw, QueryXRawPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, config, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXProps, QueryXRaw, QueryXRawPage, QueryXStream, RawData, RawObject, ReadOnlyModel, Selector, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, match, model, one, waitIsFalse, waitIsTrue };

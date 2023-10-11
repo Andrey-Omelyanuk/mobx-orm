@@ -6,6 +6,7 @@ export class EnumInput<EnumType extends Object, EnumValue extends EnumType[keyof
     constructor(args: InputConstructorArgs<EnumValue> & { enum : EnumType } ) {
         super(args)
         this.enum = args.enum
+        // TODO: convert enum to query? and use it as usual options?
     }
 
     serialize(value?: string): EnumValue|null|undefined {

@@ -3,7 +3,7 @@ import { Input } from '../Input'
 
 export const ERROR_MESSAGE_NO_OPTIONS = 'Input has no options. Remove autoReset or add options to the input.'
 
-/*
+/*  TODO:
         AlwaysUndefinedAutoReset
         FirstAvaibleAutoReset
         TrueAutoReset
@@ -53,6 +53,9 @@ export const ERROR_MESSAGE_NO_OPTIONS = 'Input has no options. Remove autoReset 
         ArrayEnumDefaultAutoReset
 */
 
+/*
+ * AutoReset is a tool that help to reset a value of Input when it needs to be reset. 
+ */
 export abstract class AutoReset<T extends Input<any>> {
     input: T
     __disposers = []

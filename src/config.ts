@@ -4,5 +4,6 @@ export const config = {
     AUTO_UPDATE_DELAY   : 100,  // ms
     UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => {
         window.history.pushState(null, '', `${window.location.pathname}?${search_params.toString()}`)
-    }
+    },
+    NON_FIELD_ERRORS_KEY: 'non_field_errors',
 }

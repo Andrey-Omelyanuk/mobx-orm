@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.11
+   * mobx-orm.js v1.3.12
    * Released under the MIT license.
    */
 
@@ -18,7 +18,8 @@ const config = {
     AUTO_UPDATE_DELAY: 100,
     UPDATE_SEARCH_PARAMS: (search_params) => {
         window.history.pushState(null, '', `${window.location.pathname}?${search_params.toString()}`);
-    }
+    },
+    NON_FIELD_ERRORS_KEY: 'non_field_errors',
 };
 
 /******************************************************************************
@@ -964,11 +965,11 @@ class Input {
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "error", {
+        Object.defineProperty(this, "errors", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: ''
+            value: []
         });
         Object.defineProperty(this, "options", {
             enumerable: true,
@@ -1007,6 +1008,12 @@ class Input {
             value: void 0
         });
         Object.defineProperty(this, "autoReset", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "autoResetObj", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -1057,7 +1064,12 @@ class Input {
         this.options && this.__doOptions();
         this.syncURLSearchParams && this.__doSyncURLSearchParams();
         this.syncLocalStorage && this.__doSyncLocalStorage();
-        this.autoReset && this.__doAutoReset();
+        if (args === null || args === void 0 ? void 0 : args.autoResetClass) {
+            this.autoResetObj = new args.autoResetClass(this);
+        }
+        else if (this.autoReset) {
+            this.__doAutoReset();
+        }
     }
     get isReady() {
         return this.disabled
@@ -1066,6 +1078,9 @@ class Input {
                     // if not required and value is undefined or empty array - it is ready
                     || (!this.required && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)))
                     || this.options.isReady));
+    }
+    get isError() {
+        return this.errors.length > 0;
     }
     set(value) {
         var _a;
@@ -1081,16 +1096,17 @@ class Input {
         }
     }
     destroy() {
-        var _a;
+        var _a, _b;
         this.__disposers.forEach(disposer => disposer());
         (_a = this.options) === null || _a === void 0 ? void 0 : _a.destroy();
+        (_b = this.autoResetObj) === null || _b === void 0 ? void 0 : _b.destroy();
     }
     toString() {
         return this.deserialize(this.value);
     }
     // Any changes in options should reset __isReady
     __doOptions() {
-        this.__disposers.push(reaction(() => this.options.is_ready, () => {
+        this.__disposers.push(reaction(() => this.options.isReady, () => {
             this.__isReady = false;
         }));
     }
@@ -1157,8 +1173,8 @@ __decorate([
 ], Input.prototype, "value", void 0);
 __decorate([
     observable,
-    __metadata("design:type", String)
-], Input.prototype, "error", void 0);
+    __metadata("design:type", Array)
+], Input.prototype, "errors", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
@@ -1875,7 +1891,7 @@ class Model {
             configurable: true,
             writable: true,
             value: void 0
-        });
+        }); // depricated, use errors in the form and inputs
         Object.defineProperty(this, "__disposers", {
             enumerable: true,
             configurable: true,
@@ -1993,6 +2009,9 @@ class Model {
     async save() { return this.id === undefined ? this.create() : this.update(); }
     // update the object from the server
     async refresh() { return await this.model.__adapter.get(this.id); }
+    /**
+     * @deprecated use errors in the form and inputs
+     */
     setError(error) {
         this.__errors = error;
     }
@@ -2370,6 +2389,7 @@ class EnumInput extends Input {
             value: void 0
         });
         this.enum = args.enum;
+        // TODO: convert enum to query? and use it as usual options?
     }
     serialize(value) {
         if (value === 'null')
@@ -2457,13 +2477,6 @@ const autoResetArrayOfIDs = (input) => {
     input.set(input.value);
 };
 
-const autoResetDefault = (input) => {
-    if (!input.options)
-        input.set(input.value);
-    else
-        input.set(undefined);
-};
-
 const autoResetArrayToEmpty = (input) => {
     if (!input.options)
         input.set(input.value);
@@ -2485,7 +2498,7 @@ class Form {
             writable: true,
             value: false
         });
-        Object.defineProperty(this, "error", {
+        Object.defineProperty(this, "errors", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -2511,19 +2524,27 @@ class Form {
         return Object.values(this.inputs).every(input => input.isReady);
     }
     get isError() {
-        return this.error.length > 0 && Object.values(this.inputs).every(input => input.error);
+        return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError);
     }
     async submit() {
         if (!this.isReady) {
-            throw new Error('Form is not ready to submit');
+            // just ignore
+            return;
         }
         this.isLoading = true;
-        this.error = [];
+        this.errors = [];
         try {
             await this.__submit();
         }
         catch (err) {
-            this.error = [err.message];
+            for (const key in err.message) {
+                if (key === config.NON_FIELD_ERRORS_KEY) {
+                    this.errors = err.message[key];
+                }
+                else {
+                    this.inputs[key].errors = err.message[key];
+                }
+            }
         }
         this.isLoading = false;
     }
@@ -2538,7 +2559,7 @@ __decorate([
 __decorate([
     observable,
     __metadata("design:type", Array)
-], Form.prototype, "error", void 0);
+], Form.prototype, "errors", void 0);
 
 class XSingleFilter extends XFilter {
     constructor(field, input) {
@@ -2972,5 +2993,5 @@ function local() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, ReadOnlyModel, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetDefault, autoResetId, config, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, ReadOnlyModel, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

@@ -1,16 +1,17 @@
 import { observable } from 'mobx'
 import { Input } from '../inputs/Input'
+import { config } from '..'
+
 
 export class Form {
-    inputs: { string: Input<any> }
-
-    @observable isLoading: boolean = false
-    @observable error: string[] = []
+    readonly    inputs      : { [key: string]: Input<any> }
+    @observable isLoading   : boolean = false
+    @observable errors      : string[] = []
 
     private __submit: () => Promise<void>
     private __cancel: () => void
 
-    constructor(inputs: { string: Input<any> }, submit: () => Promise<void>, cancel: () => void) {
+    constructor(inputs: { [key: string]: Input<any> }, submit: () => Promise<void>, cancel: () => void) {
         this.inputs = inputs
         this.__submit = submit
         this.__cancel = cancel
@@ -21,21 +22,28 @@ export class Form {
     }
 
     get isError(): boolean {
-        return this.error.length > 0 && Object.values(this.inputs).every(input => input.error)
+        return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError)
     }
 
     async submit() {
         if (!this.isReady) {
-            throw new Error('Form is not ready to submit')
+            // just ignore
+            return
         }
 
         this.isLoading = true
-        this.error = []
+        this.errors = []
 
         try {
             await this.__submit()
         } catch (err) {
-            this.error = [err.message]
+            for (const key in err.message) {
+                if (key === config.NON_FIELD_ERRORS_KEY) {
+                    this.errors = err.message[key]
+                } else {
+                    this.inputs[key].errors = err.message[key]
+                }
+            }
         }
 
         this.isLoading = false
