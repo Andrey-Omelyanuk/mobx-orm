@@ -12,6 +12,8 @@ import { BaseTestAdapter } from '../test.utils'
 // i.e. example of using
 // add it to the readme
 
+jest.useFakeTimers()
+
 describe('QueryX', () => {
 
     @model class A extends Model {}
@@ -145,10 +147,11 @@ describe('QueryX', () => {
         expect(query.items.length).toBe(0)
     })
 
-    it('autoupdate on/off', async () => {
+    it('autoupdate on/off', () => {
         const query = new QueryX<A>({adapter});     expect(query.autoupdate).toBe(false)
                                                     expect(query.__disposer_objects[DISPOSER_AUTOUPDATE]).toBe(undefined)
-        query.autoupdate = true;                    expect(query.autoupdate).toBe(true)
+        query.autoupdate = true;                    
+        jest.runAllTimers();                        expect(query.autoupdate).toBe(true)
                                                     expect(query.__disposer_objects[DISPOSER_AUTOUPDATE]).not.toBe(undefined)                     
         query.autoupdate = false;                   expect(query.autoupdate).toBe(false)
                                                     expect(query.__disposer_objects[DISPOSER_AUTOUPDATE]).toBe(undefined)                     
@@ -159,9 +162,10 @@ describe('QueryX', () => {
         const options = new QueryX<A>({adapter})
         const value   = new StringInput({value: 'test', options})
         const filter  = XEQ('name', value)
-        const query = new QueryX<A>({adapter, filter})
+        const query   = new QueryX<A>({adapter, filter})
 
-        query.autoupdate = true;    expect(query.filters.isReady).toBe(false)
+        query.autoupdate = true;   
+        jest.runAllTimers();        expect(query.filters.isReady).toBe(false)
                                     expect(query.need_to_update).toBe(true)
 
         await options.load();       expect(query.filters.isReady).toBe(false)

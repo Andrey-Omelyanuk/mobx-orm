@@ -194,15 +194,17 @@ export class QueryX <M extends Model> {
         if (value !== this.autoupdate) {
             // on 
             if (value) {
-                this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
-                    () => this.need_to_update && (this.filter === undefined || this.filter.isReady),
-                    (need_to_update) => {
-                        if (need_to_update) {
-                            this.load()
-                        }
-                    },
-                    { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY }
-                )
+                setTimeout(() => {
+                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
+                        () => this.need_to_update && (this.filter === undefined || this.filter.isReady),
+                        (need_to_update) => {
+                            if (need_to_update) {
+                                this.load()
+                            }
+                        },
+                        { fireImmediately: true }
+                    )
+                }, config.AUTO_UPDATE_DELAY)
             }
             // off
             else {
