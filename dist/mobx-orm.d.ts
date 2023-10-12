@@ -70,6 +70,7 @@ declare class QueryX<M extends Model> {
     readonly syncURLSearchParamsPrefix: string;
     total: number;
     need_to_update: boolean;
+    timestamp: number;
     readonly adapter: Adapter<M>;
     __items: M[];
     __is_loading: boolean;

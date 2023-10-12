@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.13
+   * mobx-orm.js v1.3.14
    * Released under the MIT license.
    */
 
@@ -1377,6 +1377,12 @@ class QueryX {
             writable: true,
             value: false
         });
+        Object.defineProperty(this, "timestamp", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "adapter", {
             enumerable: true,
             configurable: true,
@@ -1547,8 +1553,11 @@ class QueryX {
         }
         finally {
             runInAction(() => {
-                if (!this.__is_ready)
+                // TODO: timestamp, aviod to trigger react hooks twise
+                if (!this.__is_ready) {
                     this.__is_ready = true;
+                    this.timestamp = Date.now();
+                }
                 if (this.need_to_update)
                     this.need_to_update = false;
             });
@@ -1562,7 +1571,9 @@ class QueryX {
             // on 
             if (value) {
                 setTimeout(() => {
-                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(() => this.need_to_update && (this.filter === undefined || this.filter.isReady), (need_to_update) => {
+                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
+                    // NOTE: don't need to check pagination and order because they are always ready 
+                    () => this.need_to_update && (this.filter === undefined || this.filter.isReady), (need_to_update) => {
                         if (need_to_update) {
                             this.load();
                         }
@@ -1601,6 +1612,10 @@ __decorate([
     observable,
     __metadata("design:type", Boolean)
 ], QueryX.prototype, "need_to_update", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Number)
+], QueryX.prototype, "timestamp", void 0);
 __decorate([
     observable,
     __metadata("design:type", Array)

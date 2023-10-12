@@ -59,6 +59,7 @@ export class QueryX <M extends Model> {
 
     @observable total         : number
     @observable need_to_update: boolean = false
+    @observable timestamp     : number
 
     readonly adapter: Adapter<M>
     @observable __items: M[] = []
@@ -180,7 +181,11 @@ export class QueryX <M extends Model> {
         }
         finally {
             runInAction(() => {
-                if (!this.__is_ready) this.__is_ready = true
+                // TODO: timestamp, aviod to trigger react hooks twise
+                if (!this.__is_ready) {
+                    this.__is_ready = true
+                    this.timestamp = Date.now() 
+                }
                 if (this.need_to_update) this.need_to_update = false 
             })
         }
@@ -196,6 +201,7 @@ export class QueryX <M extends Model> {
             if (value) {
                 setTimeout(() => {
                     this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
+                        // NOTE: don't need to check pagination and order because they are always ready 
                         () => this.need_to_update && (this.filter === undefined || this.filter.isReady),
                         (need_to_update) => {
                             if (need_to_update) {
