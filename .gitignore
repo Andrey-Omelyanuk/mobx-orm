@@ -6,3 +6,5 @@ npm-debug.log
 debug.log
 yarn-error.log
 coverage
+
+dist/
