@@ -14,7 +14,7 @@ build:
 	docker build -t mobx-orm .
 
 dev:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn dev 
+	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn dev"
 
 # chrome://inspect/#devices
 debug:
@@ -23,10 +23,10 @@ debug:
 		node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/*.spec.ts'
 
 test:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn test
+	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn test"
 
 test-e2e:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm yarn install && yarn build && yarn e2e 
+	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn build && yarn e2e"
 
 stop:
 	docker compose down
