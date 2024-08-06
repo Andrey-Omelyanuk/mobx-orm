@@ -13,8 +13,12 @@ help:
 build:
 	docker build -t mobx-orm .
 
+
 dev:
 	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn dev"
+
+stop:
+	docker compose down
 
 # chrome://inspect/#devices
 debug:
@@ -28,5 +32,5 @@ test:
 test-e2e:
 	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn build && yarn e2e"
 
-stop:
-	docker compose down
+release:
+	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn build"

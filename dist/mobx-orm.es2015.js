@@ -16,10 +16,16 @@ const DESC = false;
 const config = {
     DEFAULT_PAGE_SIZE: 50,
     AUTO_UPDATE_DELAY: 100,
+    NON_FIELD_ERRORS_KEY: 'non_field_errors',
+    // NOTE: React router manage URL by own way. 
+    // change UPDATE_SEARCH_PARAMS and WATCTH_URL_CHANGES in this case
     UPDATE_SEARCH_PARAMS: (search_params) => {
         window.history.pushState(null, '', `${window.location.pathname}?${search_params.toString()}`);
     },
-    NON_FIELD_ERRORS_KEY: 'non_field_errors',
+    WATCTH_URL_CHANGES: (callback) => {
+        window.addEventListener('popstate', callback);
+        return () => { window.removeEventListener('popstate', callback); };
+    },
 };
 
 /******************************************************************************
@@ -1134,8 +1140,7 @@ class Input {
                 }
             }
         }
-        window.addEventListener('popstate', updataInputFromURL.bind(this));
-        this.__disposers.push(() => window.removeEventListener('popstate', updataInputFromURL));
+        this.__disposers.push(() => config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)));
         // watch for Input changes and update URL
         this.__disposers.push(reaction(
         // I cannot use this.value because it can be a Map

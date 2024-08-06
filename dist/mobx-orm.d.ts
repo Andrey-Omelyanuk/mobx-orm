@@ -626,8 +626,9 @@ interface Selector {
 declare const config: {
     DEFAULT_PAGE_SIZE: number;
     AUTO_UPDATE_DELAY: number;
-    UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
     NON_FIELD_ERRORS_KEY: string;
+    UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
+    WATCTH_URL_CHANGES: (callback: any) => () => void;
 };
 
 declare abstract class ReadOnlyModel extends Model {
