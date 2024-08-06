@@ -1139,6 +1139,9 @@ class Input {
                     this.set(value);
                 }
             }
+            else if (this.value !== undefined) {
+                this.set(undefined);
+            }
         }
         this.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)));
         // watch for Input changes and update URL
