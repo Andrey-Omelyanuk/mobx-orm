@@ -146,8 +146,8 @@ export abstract class Input<T> {
                 }
             }
         }
-        window.addEventListener('popstate', updataInputFromURL.bind(this))
-        this.__disposers.push(() => window.removeEventListener('popstate', updataInputFromURL))
+
+        this.__disposers.push(() => config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)))
 
         // watch for Input changes and update URL
         this.__disposers.push(reaction(

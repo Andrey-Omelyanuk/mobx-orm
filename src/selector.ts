@@ -32,7 +32,10 @@ export class SelectorX {
         this.omit      = omit
         makeObservable(this)
     }
-
+    /**
+     * @deprecated
+     * Only Adapter should decide how to build url, selector is just a data structure
+     */
     get URLSearchParams(): URLSearchParams{
         const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
         const order_by = []
