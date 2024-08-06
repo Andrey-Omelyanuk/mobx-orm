@@ -1147,7 +1147,7 @@
                     }
                 }
             }
-            this.__disposers.push(() => config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)));
+            this.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)));
             // watch for Input changes and update URL
             this.__disposers.push(mobx.reaction(
             // I cannot use this.value because it can be a Map

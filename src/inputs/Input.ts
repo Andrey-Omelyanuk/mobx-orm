@@ -146,8 +146,7 @@ export abstract class Input<T> {
                 }
             }
         }
-
-        this.__disposers.push(() => config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)))
+        this.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)))
 
         // watch for Input changes and update URL
         this.__disposers.push(reaction(
