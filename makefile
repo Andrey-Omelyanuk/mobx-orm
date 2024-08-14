@@ -3,16 +3,16 @@ mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 help:
-	@echo "build            : " 
-	@echo "dev				: " 
-	@echo "debug            : " 
-	@echo "test        		: " 
-	@echo "test-e2e       	: "  
+	@echo "build            : Build the docker image." 
+	@echo "dev              : " 
 	@echo "stop             : " 
+	@echo "debug            : " 
+	@echo "test             : Run the tests." 
+	@echo "test-e2e         : Run the e2e tests."  
+	@echo "release          : Build the lib release." 
 
 build:
 	docker build -t mobx-orm .
-
 
 dev:
 	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn dev"

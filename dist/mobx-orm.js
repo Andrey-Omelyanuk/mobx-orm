@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.14
+   * mobx-orm.js v1.3.18
    * Released under the MIT license.
    */
 
@@ -2063,6 +2063,13 @@
         }
         updateFromRaw(raw_obj) {
             if (this.id === undefined && raw_obj.id !== undefined) {
+                // Note: object with equal id can be already in the cache (race condition)
+                // I have got the object from websocket before the response from the server
+                // Solution: remove the object (that came from websocket) from the cache
+                let exist_obj = this.model.__cache.get(raw_obj.id);
+                if (exist_obj) {
+                    exist_obj.id = undefined;
+                }
                 this.id = raw_obj.id;
             }
             // update the fields if the raw data is exist and it is different
