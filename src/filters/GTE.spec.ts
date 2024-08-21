@@ -1,5 +1,6 @@
 import { NumberInput } from '../inputs'
-import { XGTE as GTE } from './GTE'
+import { GTE } from './GTE'
+
 
 describe('GTE', () => {
     const filter = GTE('field', new NumberInput({value: 1}))

@@ -26,7 +26,7 @@ describe('AutoReset', () => {
     })
 
     it('input with options', async () => {
-        const query = TestModel.getQueryX({})
+        const query = TestModel.getQuery({})
         const input = new NumberInput({
             value: 2,
             options: query
@@ -42,7 +42,7 @@ describe('AutoReset', () => {
     })
 
     it('disabled input with options', async () => {
-        const query = TestModel.getQueryX({})
+        const query = TestModel.getQuery({})
         const input = new NumberInput({
             value: 2,
             options: query,

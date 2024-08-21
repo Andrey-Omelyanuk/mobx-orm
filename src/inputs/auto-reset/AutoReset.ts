@@ -56,7 +56,7 @@ export const ERROR_MESSAGE_NO_OPTIONS = 'Input has no options. Remove autoReset 
 /*
  * AutoReset is a tool that help to reset a value of Input when it needs to be reset. 
  */
-export abstract class AutoReset<T extends Input<any>> {
+export abstract class AutoReset<T extends Input<any, any>> {
     input: T
     __disposers = []
 

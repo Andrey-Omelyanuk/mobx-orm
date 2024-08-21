@@ -17,7 +17,7 @@ describe('autoResetArrayOfIDs', () => {
             options: {
                 items: [{ id: 1 }, { id: 2 }, { id: 3 }],
                 isReady: true,
-            }
+            } as any
         })
         runInAction(() => input.__isReady = false)
         autoResetArrayOfIDs(input)
@@ -30,7 +30,7 @@ describe('autoResetArrayOfIDs', () => {
             options: {
                 items: [{ id: 1 }, { id: 2 }, { id: 3 }],
                 isReady: true,
-            }
+            } as any
         })
         runInAction(() => input.__isReady = false)
         autoResetArrayOfIDs(input)
@@ -43,7 +43,7 @@ describe('autoResetArrayOfIDs', () => {
             options: {
                 items: [],
                 isReady: true,
-            }
+            } as any
         })
         runInAction(() => input.__isReady = false)
         autoResetArrayOfIDs(input)

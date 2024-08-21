@@ -22,7 +22,7 @@ export function one(remote_model: any, remote_foreign_id_name?: string) {
         } 
         const disposer_name = `MO: One - update - ${model.name}.${field_name}` 
 
-        observe(remote_model.__cache, (change: any) => {
+        observe(remote_model.repository.cache.store, (change: any) => {
             let remote_obj
             switch (change.type) {
                 case 'add':
@@ -30,7 +30,7 @@ export function one(remote_model: any, remote_foreign_id_name?: string) {
                     remote_obj.__disposers.set(disposer_name, reaction(
                         () => { return { 
                             id: remote_obj[remote_foreign_id_name],
-                            obj: model.__cache.get(remote_obj[remote_foreign_id_name])}
+                            obj: model.repository.cache.get(remote_obj[remote_foreign_id_name])}
                         },
                         action(disposer_name, (_new: any, _old: any) => {
                             if (_old?.obj) _old.obj[field_name] = _new.id ? undefined : null
@@ -45,7 +45,7 @@ export function one(remote_model: any, remote_foreign_id_name?: string) {
                         remote_obj.__disposers.get(disposer_name)()
                         remote_obj.__disposers.delete(disposer_name)
                     }
-                    let obj =  model.__cache.get(remote_obj[remote_foreign_id_name])
+                    let obj =  model.repository.cache.get(remote_obj[remote_foreign_id_name])
                     if (obj) 
                         runInAction(() => { obj[field_name] = undefined })
                     break

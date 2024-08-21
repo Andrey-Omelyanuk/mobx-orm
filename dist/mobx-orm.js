@@ -1245,7 +1245,7 @@
         }
     }
 
-    class NumberInput extends Input {
+    class NumberBaseInput extends Input {
         serialize(value) {
             if (value === undefined)
                 return undefined;
@@ -1265,6 +1265,8 @@
                 return 'null';
             return '' + value;
         }
+    }
+    class NumberInput extends NumberBaseInput {
     }
 
     class ArrayInput extends Input {
@@ -2170,31 +2172,38 @@
             };
             c.__proto__ = original;
             let obj = new c();
-            let model = obj.model;
-            mobx.makeObservable(obj);
-            // id field reactions
-            obj.__disposers.set('before changes', mobx.intercept(obj, 'id', (change) => {
-                if (change.newValue !== undefined && obj.id !== undefined)
-                    throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`);
-                if (obj.id !== undefined && change.newValue === undefined)
-                    obj.model.eject(obj);
-                return change;
-            }));
-            obj.__disposers.set('after changes', mobx.observe(obj, 'id', (change) => {
-                if (obj.id !== undefined)
-                    obj.model.inject(obj);
-            }));
-            // apply fields decorators
-            for (let field_name in model.__fields) {
-                model.__fields[field_name].decorator(obj, field_name);
+            // if second arg is true, then it is raw data, don't make it observable
+            if (!args[1]) {
+                mobx.makeObservable(obj);
+                // id field reactions
+                obj.__disposers.set('before changes', mobx.intercept(obj, 'id', (change) => {
+                    if (change.newValue !== undefined && obj.id !== undefined)
+                        throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`);
+                    if (obj.id !== undefined && change.newValue === undefined)
+                        obj.model.eject(obj);
+                    return change;
+                }));
+                obj.__disposers.set('after changes', mobx.observe(obj, 'id', (change) => {
+                    if (obj.id !== undefined)
+                        obj.model.inject(obj);
+                }));
+                // apply fields decorators
+                for (let field_name in obj.model.__fields) {
+                    obj.model.__fields[field_name].decorator(obj, field_name);
+                }
+                // apply __relations decorators
+                for (let field_name in obj.model.__relations) {
+                    obj.model.__relations[field_name].decorator(obj, field_name);
+                }
+                if (args[0])
+                    obj.updateFromRaw(args[0]);
+                obj.refreshInitData();
             }
-            // apply __relations decorators
-            for (let field_name in model.__relations) {
-                model.__relations[field_name].decorator(obj, field_name);
+            else {
+                for (let field in args[0]) {
+                    obj[field] = args[0][field];
+                }
             }
-            if (args[0])
-                obj.updateFromRaw(args[0]);
-            obj.refreshInitData();
             return obj;
         };
         f.__proto__ = original;
@@ -3071,6 +3080,7 @@
     exports.Model = Model;
     exports.NOT_EQ = NOT_EQ;
     exports.NOT_EQ_Filter = NOT_EQ_Filter;
+    exports.NumberBaseInput = NumberBaseInput;
     exports.NumberInput = NumberInput;
     exports.OrderByInput = OrderByInput;
     exports.Query = Query;

@@ -1,15 +1,14 @@
 import { action, computed, observe, reaction } from 'mobx'
-import { QueryX, QueryXProps } from './query-x'
+import { Query, QueryProps, ASC } from './query'
 import { Model } from '../model'
-import { ASC } from '../types'
 
 
-export class QueryXCacheSync <M extends Model> extends QueryX<M> {
+export class QueryCacheSync <M extends Model> extends Query<M> {
 
-    constructor(cache: any, props: QueryXProps<M>) {
+    constructor(props: QueryProps<M>) {
         super(props)
         // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(cache, 
+        this.__disposers.push(observe(props.repository.cache.store, 
             action('MO: Query - update from cache changes',
             (change: any) => {
                 if (change.type == 'add') {
@@ -32,7 +31,7 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
         ))
 
         // ch all exist objects of model 
-        for(let [id, obj] of cache) {
+        for(let [id, obj] of props.repository.cache.store) {
             this.__watch_obj(obj)
         }
     }
@@ -41,7 +40,7 @@ export class QueryXCacheSync <M extends Model> extends QueryX<M> {
         if (this.__controller) this.__controller.abort()
         this.__controller = new AbortController()
         try {
-            await this.adapter.load(this, this.__controller)
+            await this.repository.load(this, this.__controller)
             // Query don't need to overide the __items,
             // query's items should be get only from the cache
         } catch (e) {

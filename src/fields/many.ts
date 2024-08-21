@@ -22,13 +22,13 @@ export function many(remote_model: any, remote_foreign_id_name?: string) {
         const disposer_name = `MO: Many - update - ${model.name}.${field_name}`
         
         // watch for remote object in the cache 
-        observe(remote_model.__cache, (remote_change: any) => {
+        observe(remote_model.repository.cache.store, (remote_change: any) => {
             let remote_obj
             switch (remote_change.type) {
                 case 'add':
                     remote_obj = remote_change.newValue
                     remote_obj.__disposers.set(disposer_name , reaction(
-                        () => model.__cache.get(remote_obj[remote_foreign_id_name]),
+                        () => model.repository.cache.get(remote_obj[remote_foreign_id_name]),
                         action(disposer_name, (_new, _old) => {
                             if (_old) {
                                 const i = _old[field_name].indexOf(remote_obj)
@@ -50,7 +50,7 @@ export function many(remote_model: any, remote_foreign_id_name?: string) {
                         remote_obj.__disposers.get(disposer_name)()
                         remote_obj.__disposers.delete(disposer_name)
                     }
-                    let obj =  model.__cache.get(remote_obj[remote_foreign_id_name])
+                    let obj =  model.repository.cache.get(remote_obj[remote_foreign_id_name])
                     if (obj) {
                         const i = obj[field_name].indexOf(remote_obj)
                         if (i > -1)

@@ -1,6 +1,7 @@
+import { Model } from '../model'
 import { Input } from './Input'
 
-export class NumberInput extends Input<number|null|undefined> {
+export class NumberBaseInput<M extends Model> extends Input<number|null|undefined, M> {
     serialize(value?: string): number|null|undefined {
         if (value === undefined) return undefined
         if (value === 'null')    return null
@@ -16,3 +17,5 @@ export class NumberInput extends Input<number|null|undefined> {
         return ''+value
     }
 }
+
+export class NumberInput extends NumberBaseInput<any> {} 

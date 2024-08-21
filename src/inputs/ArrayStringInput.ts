@@ -1,7 +1,7 @@
 import { ArrayInput } from './ArrayInput'
 import { StringInput } from './StringInput'
 
-export class ArrayStringInput extends ArrayInput<string[]> {
+export class ArrayStringInput extends ArrayInput<string[], any> {
 
     serialize(value?: string) : string[] {
         let result = [] 

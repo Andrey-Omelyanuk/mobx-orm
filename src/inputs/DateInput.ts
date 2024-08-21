@@ -1,6 +1,6 @@
 import { Input } from './Input'
 
-export class DateInput extends Input<Date|null|undefined> {
+export class DateInput extends Input<Date|null|undefined, any> {
     serialize(value?: string): Date {
         if (value === undefined) return undefined
         if (value === 'null')    return null

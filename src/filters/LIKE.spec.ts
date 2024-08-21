@@ -1,5 +1,6 @@
 import { NumberInput } from '../inputs'
-import { XLIKE as LIKE } from './LIKE'
+import { LIKE } from './LIKE'
+
 
 describe('LIKE', () => {
     const filter = LIKE('field', new NumberInput({value: 1}))

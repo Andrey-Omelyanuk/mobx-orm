@@ -1,9 +1,9 @@
 import { Input, InputConstructorArgs } from './Input'
 
-export class EnumInput<EnumType extends Object, EnumValue extends EnumType[keyof EnumType]> extends Input<EnumValue|null|undefined> {
+export class EnumInput<EnumType extends Object, EnumValue extends EnumType[keyof EnumType]> extends Input<EnumValue|null|undefined, any> {
     private enum: EnumType
 
-    constructor(args: InputConstructorArgs<EnumValue> & { enum : EnumType } ) {
+    constructor(args: InputConstructorArgs<EnumValue, any> & { enum : EnumType } ) {
         super(args)
         this.enum = args.enum
         // TODO: convert enum to query? and use it as usual options?

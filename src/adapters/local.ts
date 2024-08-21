@@ -1,29 +1,26 @@
-import { Selector, RawData, RawObject } from '../types'
 import { Model } from '../model'
-import { QueryX } from '../queries/query-x';
-import { Adapter }  from './adapter'
+import { Query } from '../queries'
+import { Cache } from '../cache'
+import { Repository }  from '../repository'
+import { Filter } from '../filters'
+import { Adapter } from './adapter'
 
 /*
 You can use this adapter for mock data or for unit test
 */
 
-
-export let local_store: {string?: {number: Model}} = {}
-
-
 function timeout(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+export let local_store: {string?: {any: Model}} = {}
 
-export class LocalAdapter<M extends Model> extends Adapter<M> {
+export class LocalAdapter<M extends Model> implements Adapter<M> {
 
-    readonly store_name: string
+    readonly    store_name  : string
+                delay       : number  // delays for simulate real usage, use it only for tests
 
-    // delays for simulate real usage, use it only for tests
-    delay: number 
-
-    init_local_data(data: RawObject[]) {
+    init_local_data(data: any[]) {
         let objs = {} 
         for(let obj of data) {
             objs[obj.id] = obj
@@ -31,16 +28,15 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         local_store[this.store_name] = objs
     }
 
-    constructor(model: any, store_name?: string) {
-        super(model)
-        this.store_name = store_name ? store_name : model.__proto__.name
+    constructor(store_name: string) {
+        this.store_name = store_name
         local_store[this.store_name] = {}
     }
 
-    async __action(obj_id: number, name: string, kwargs: Object) : Promise<any> {
+    async action(obj_id: number, name: string, kwargs: Object) : Promise<any> {
     }
 
-    async __create(raw_data: RawData) : Promise<RawObject> {
+    async create(raw_data: any) : Promise<any> {
         if (this.delay) await timeout(this.delay) 
 
         // calculate and set new ID
@@ -51,10 +47,16 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         let max = Math.max.apply(null, ids)
         raw_data.id = max + 1
         local_store[this.store_name][raw_data.id] = raw_data
-        return raw_data as RawObject 
+        return raw_data
     }
 
-    async __update(obj_id: number, only_changed_raw_data: RawData) : Promise<RawObject> {
+    async get(obj_id: any) : Promise<any> {
+        if (this.delay) await timeout(this.delay) 
+        let raw_obj = Object.values(local_store[this.store_name])[0]
+        return raw_obj
+    }
+
+    async update(obj_id: number, only_changed_raw_data: any) : Promise<any> {
         if (this.delay) await timeout(this.delay) 
         let raw_obj = local_store[this.store_name][obj_id] 
         for(let field of Object.keys(only_changed_raw_data)) {
@@ -63,31 +65,24 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         return raw_obj 
     }
 
-    async __delete(obj_id: number) : Promise<void> {
+    async delete(obj_id: number) : Promise<void> {
         if (this.delay) await timeout(this.delay) 
         delete local_store[this.store_name][obj_id]
     }
 
-    async __find(selector: Selector) : Promise<RawObject> {
+    async find(query: Query<M>) : Promise<any> {
         if (this.delay) await timeout(this.delay) 
         let raw_obj = Object.values(local_store[this.store_name])[0]
         return raw_obj
     }
 
-    async __get(obj_id: number) : Promise<RawObject> {
-        if (this.delay) await timeout(this.delay) 
-        let raw_obj = Object.values(local_store[this.store_name])[0]
-        return raw_obj
-    }
-
-    async __load (selector?: Selector) : Promise<RawObject[]> {
-        const {filter, order_by, limit, offset} = selector || {}
+    async load (query: Query<M>) : Promise<any[]> {
+        const {filter, order_by, limit, offset} = query|| {}
         if (this.delay) await timeout(this.delay) 
         let raw_objs = []
 
         if (filter) {
             for(let raw_obj of Object.values(local_store[this.store_name])) {
-
             }
         }
         else {
@@ -99,7 +94,6 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
             raw_objs = raw_objs.sort((obj_a, obj_b) => {
                 let res
                 for(let sort_by_field of order_by) {
-
                 }
                 return 0
             })
@@ -112,11 +106,11 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         return raw_objs 
     }
 
-    async getTotalCount(where?): Promise<number> {
+    async getTotalCount(filter: Filter): Promise<number> {
         return Object.values(local_store[this.store_name]).length
     }
 
-    async getDistinct(where, filed): Promise<any[]> {
+    async getDistinct(filter, filed): Promise<any[]> {
         return []
     }
 }
@@ -125,7 +119,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
 // model decorator
 export function local() {
     return (cls: any) => {
-        let adapter = new LocalAdapter(cls)
-        cls.__proto__.__adapter = adapter 
+        let repository = new Repository(cls, new LocalAdapter(cls)) 
+        cls.__proto__.repository = repository
     }
 }

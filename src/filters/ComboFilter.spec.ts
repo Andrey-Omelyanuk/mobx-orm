@@ -1,26 +1,25 @@
-import { Filter, EQ, ComboFilter } from '../'
+import { Model, Query, StringInput } from '..'
+import { EQ } from './EQ'
+import { ComboFilter } from './ComboFilter'
 
 
-describe('Combo Filter', () => {
+describe('ComboFilter', () => {
 
-    class FilterClass extends ComboFilter {
+    class TestModel extends Model {}
+    class TestComboFilter extends ComboFilter {
         isMatch(obj: any) : boolean {
-            for(let filter of this.filters) {
-                if (!filter.isMatch(obj)) {
-                    return false
-                }
-            }
             return true 
         }
     }
 
-    function F(...filters: Filter[]) : ComboFilter {
-        return new FilterClass(filters)
-    }
-
-    it('...', () => {
-        expect(F(                      )).toMatchObject({filters: []})
-        expect(F(EQ('A', 1), EQ('B', 2))).toMatchObject({filters: [{field: 'A', value: 1}, {field: 'B', value: 2}]})
+    it('isReady', () => {
+        expect(new TestComboFilter([]).isReady).toBe(true)
+        // const filter = new TestComboFilter([
+        //     EQ('test', new StringValue('test', new Query(TestModel.__adapter)))
+        // ])
+        // expect(filter.isReady).toBe(false) 
     })
-
+    it('URLSearchParams', () => {
+        // TODO: implement
+    })
 })

@@ -1,5 +1,5 @@
-import { reaction } from "mobx"
-import { SingleFilter, ValueType } from "./SingleFilter"
+import { Input } from '../inputs'
+import { SingleFilter } from "./SingleFilter"
 
 
 export class NOT_EQ_Filter extends SingleFilter {
@@ -12,14 +12,8 @@ export class NOT_EQ_Filter extends SingleFilter {
         return value_a !== value_b
         
     }
-
-    alias(alias_field: any): SingleFilter {
-        const alias_filter = NOT_EQ(alias_field, this.value, this.value_type) 
-        reaction(() => this.value, (value) => { alias_filter.value = value }, { fireImmediately: true })
-        return alias_filter
-    }
 }
 
-export function NOT_EQ(field: string, value?: any, value_type?: ValueType) : SingleFilter {
-    return new NOT_EQ_Filter(field, value, value_type)
+export function NOT_EQ(field: string, value: Input<any, any>) : SingleFilter {
+    return new NOT_EQ_Filter(field, value)
 }

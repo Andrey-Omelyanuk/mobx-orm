@@ -1,8 +1,10 @@
+import { local } from './adapters'
 import { model } from './model'
 import { ReadOnlyModel } from './read-only-model'
 
+
 describe('Read Only Model', () => {
-    @model class A extends ReadOnlyModel {}
+    @local() @model class A extends ReadOnlyModel {}
     it('create', (done) => {
         let a = new A()
         a.create().catch((e) => {

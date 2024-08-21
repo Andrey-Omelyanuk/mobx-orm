@@ -1,15 +1,13 @@
 import { action, intercept, makeObservable, observable, observe, runInAction, values } from 'mobx'
 import { Adapter } from './adapters'
-import { Query, QueryPage, QueryXStream, QueryXCacheSync, QueryXRaw, QueryXRawPage, QueryXProps } from './queries'
-import { QueryX} from './queries/query-x'
-import { QueryXPage } from './queries/query-x-page'
-import { QueryXDistinct } from './queries/query-x-distinct'
-import { Selector } from './types'
+import { Query, QueryPage, QueryStream, QueryCacheSync, QueryRaw, QueryRawPage, QueryProps } from './queries'
+import { Cache } from './cache'
+import { Repository } from './repository'
+
 
 export abstract class Model {
-    // this static properties will be copied to real model in the model decorator
-    static __adapter  : Adapter<Model>
-    static __cache    : Map<number, Model>
+    static readonly repository  : Repository<Model>
+
     // - fields
     // - relations (not exist on outside)
     static __fields       : {
@@ -30,101 +28,70 @@ export abstract class Model {
         }
     }
 
-    // add obj to the cache
-    @action('MO: model - inject')
-    static inject(obj: Model) {
-        if (obj.id === undefined)
-            throw new Error(`Object should have id!`)
-        if (this.__cache.has(obj.id)) {
-            throw new Error(`Object with id ${obj.id} already exist in the cache of model: "${this.prototype.constructor.name}")`)
-        }
-        this.__cache.set(obj.id, obj)
+    static getQuery(props: QueryProps<Model>): Query<Model> {
+        return new Query({...props, repository: this.repository })
     }
 
-    // remove obj from the cache
-    @action('MO: model - eject')
-    static eject(obj: Model) {
-        if (this.__cache.has(obj.id))
-            this.__cache.delete(obj.id)
+    static getQueryRaw(props: QueryProps<Model>): QueryRaw<Model> {
+        return new QueryRaw({...props, repository: this.repository })
     }
 
-    static getQueryX<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryX<Instance> {
-        return new QueryX({...props, adapter: this.__adapter as Adapter<Instance>})
+    // static getQueryXPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXPage<Instance>  {
+    //     return new QueryXPage({...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+
+    // static getQueryXRawPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXRawPage<Instance> {
+    //     return new QueryXRawPage({...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+
+    // static getQueryXCacheSync<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXCacheSync<Instance> {
+    //     return new QueryXCacheSync(this.__cache, {...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+
+    // static getQueryXStream<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXStream<Instance> {
+    //     return new QueryXStream({...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+
+    // static getQueryXDistinct<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, field: string, props: QueryXProps<Instance>): QueryXDistinct {
+    //     return new QueryXDistinct(field, {...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+
+    // static getQuery(selector?: Selector): Query<Model>  {
+    //     return new Query<Model>(this.__adapter, this.__cache, selector)
+    // }
+
+    // static getQueryPage(selector?: Selector): QueryPage<Model> {
+    //     return new QueryPage(this.__adapter, this.__cache, selector)
+    // }
+
+    static get(id: any) {
+        return this.repository.cache.get(id)
     }
 
-    static getQueryXRaw<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryX<Instance> {
-        return new QueryXRaw({...props, adapter: this.__adapter as Adapter<Instance>})
+    static async findById(id: any) : Promise<Model> {
+        return this.repository.get(id)
     }
 
-    static getQueryXPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXPage<Instance>  {
-        return new QueryXPage({...props, adapter: this.__adapter as Adapter<Instance>})
+    static async find(query: Query<Model>) : Promise<Model> {
+        return this.repository.find(query)
     }
 
-    static getQueryXRawPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXRawPage<Instance> {
-        return new QueryXRawPage({...props, adapter: this.__adapter as Adapter<Instance>})
-    }
-
-    static getQueryXCacheSync<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXCacheSync<Instance> {
-        return new QueryXCacheSync(this.__cache, {...props, adapter: this.__adapter as Adapter<Instance>})
-    }
-
-    static getQueryXStream<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXStream<Instance> {
-        return new QueryXStream({...props, adapter: this.__adapter as Adapter<Instance>})
-    }
-
-    static getQueryXDistinct<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, field: string, props: QueryXProps<Instance>): QueryXDistinct {
-        return new QueryXDistinct(field, {...props, adapter: this.__adapter as Adapter<Instance>})
-    }
-
-    static getQuery(selector?: Selector): Query<Model>  {
-        return new Query<Model>(this.__adapter, this.__cache, selector)
-    }
-
-    static getQueryPage(selector?: Selector): QueryPage<Model> {
-        return new QueryPage(this.__adapter, this.__cache, selector)
-    }
-
-    static get(id: number) {
-        return this.__cache.get(id)
-    }
-
-    static async findById(id: number) : Promise<Model> {
-        return this.__adapter.get(id)
-    }
-
-    static async find(selector: Selector) : Promise<Model> {
-        return this.__adapter.find(selector)
-    }
-
-    @action('MO: model - update the cache from raw')
-    static updateCache(raw_obj): Model {
-        let obj: Model
-        if (this.__cache.has(raw_obj.id)) {
-            obj = this.__cache.get(raw_obj.id)
-            obj.updateFromRaw(raw_obj)
-        }
-        else {
-            obj = new (<any>this)(raw_obj)
-        }
-        return obj
-    }
-
-    @action('MO: model - clear the cache')
-    static clearCache() {
-        // id = undefined is equal to remove obj from cache
-        for (let obj of this.__cache.values()) {
-            obj.id = undefined
-        }
-    }
-
-    @observable id: number|undefined = undefined
-
+    @observable id: any|undefined = undefined
     // TODO: should it be observable?
     @observable __init_data: any   
-    @observable __errors: any // depricated, use errors in the form and inputs
     __disposers = new Map()
 
-    constructor (...args) { }
+    constructor (...args) {}
+
+    @action('model - destroy')
+    destroy() {
+        while(this.__disposers.size) {
+            this.__disposers.forEach((disposer, key) => {
+                disposer()
+                this.__disposers.delete(key)
+            })
+        }
+    }
 
     get model() : any {
         return (<any>this.constructor).__proto__
@@ -167,21 +134,13 @@ export abstract class Model {
         return false
     }
 
-    async action(name: string, kwargs: Object) { return await this.model.__adapter.action(this, name, kwargs) }
-    async create() { return await this.model.__adapter.create(this) }
-    async update() { return await this.model.__adapter.update(this) }
-    async delete() { return await this.model.__adapter.delete(this) }
+    async action(name: string, kwargs: Object) { return await this.model.repository.action(this, name, kwargs) }
+    async create() { return await this.model.repository.create(this) }
+    async update() { return await this.model.repository.update(this) }
+    async delete() { return await this.model.repository.delete(this) }
     async save  () { return this.id === undefined ? this.create() : this.update() }
     // update the object from the server
-    async refresh() { return await this.model.__adapter.get(this.id) }
-
-    /**
-     * @deprecated use errors in the form and inputs
-     */
-    @action
-    setError(error: any) {
-        this.__errors = error
-    }
+    async refresh() { return await this.model.repository.get(this.id) }
 
     @action('MO: obj - refresh init data')
     refreshInitData() {
@@ -202,11 +161,11 @@ export abstract class Model {
 
     @action('MO: obj - update from raw')
     updateFromRaw(raw_obj) {
-        if (this.id === undefined && raw_obj.id !== undefined) {
+        if (this.id === undefined && raw_obj.id !== undefined && this.model.repository) {
             // Note: object with equal id can be already in the cache (race condition)
             // I have got the object from websocket before the response from the server
             // Solution: remove the object (that came from websocket) from the cache
-            let exist_obj = this.model.__cache.get(raw_obj.id)
+            let exist_obj = this.model.repository.cache.get(raw_obj.id)
             if (exist_obj) {
                 exist_obj.id = undefined
             }
@@ -222,65 +181,59 @@ export abstract class Model {
         for(let relation in this.model.__relations) {
             const settings = this.model.__relations[relation].settings
             if (settings.foreign_model && raw_obj[relation]) {
-                settings.foreign_model.updateCache(raw_obj[relation])
+                settings.foreign_model.repository.cache.update(raw_obj[relation])
                 this[settings.foreign_id_name] = raw_obj[relation].id
             }
             else if (settings.remote_model && raw_obj[relation]) {
                 // many
                 if (Array.isArray(raw_obj[relation])) {
                     for(const i of raw_obj[relation]) {
-                        settings.remote_model.updateCache(i)
+                        settings.remote_model.repository.cache.update(i)
                     }
                 }
                 // one
                 else {
-                    settings.remote_model.updateCache(raw_obj[relation])
+                    settings.remote_model.repository.cache.update(raw_obj[relation])
                 }
             }
         }
     }
 }
 
-
 // Decorator
 export function model(constructor) {
     var original = constructor
-
-    original.__cache = observable(new Map())
 
     // the new constructor
     let f : any = function (...args) {
         let c : any = class extends original { constructor (...args) { super(...args) } }
             c.__proto__ = original
 
-        let obj   = new c()
-        let model = obj.model
+        let obj = new c()
         makeObservable(obj)
-
         // id field reactions
         obj.__disposers.set('before changes',
             intercept(obj, 'id', (change) => {
                 if (change.newValue !== undefined && obj.id !== undefined)
                     throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`)
                 if (obj.id !== undefined && change.newValue === undefined)
-                    obj.model.eject(obj)
+                    obj.model.repository.cache.eject(obj)
                 return change
             }))
         obj.__disposers.set('after changes',
             observe(obj, 'id', (change) => {
                 if (obj.id !== undefined)
-                    obj.model.inject(obj)
+                    obj.model.repository.cache.inject(obj)
             }))
 
         // apply fields decorators
-        for (let field_name in model.__fields) {
-            model.__fields[field_name].decorator(obj, field_name)
+        for (let field_name in obj.model.__fields) {
+            obj.model.__fields[field_name].decorator(obj, field_name)
         }
         // apply __relations decorators
-        for (let field_name in model.__relations) {
-            model.__relations[field_name].decorator(obj, field_name)
+        for (let field_name in obj.model.__relations) {
+            obj.model.__relations[field_name].decorator(obj, field_name)
         }
-
         if (args[0]) obj.updateFromRaw(args[0])
         obj.refreshInitData()
         return obj

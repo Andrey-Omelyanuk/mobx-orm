@@ -1238,7 +1238,7 @@ class OrderByInput extends Input {
     }
 }
 
-class NumberInput extends Input {
+class NumberBaseInput extends Input {
     serialize(value) {
         if (value === undefined)
             return undefined;
@@ -1258,6 +1258,8 @@ class NumberInput extends Input {
             return 'null';
         return '' + value;
     }
+}
+class NumberInput extends NumberBaseInput {
 }
 
 class ArrayInput extends Input {
@@ -2163,31 +2165,38 @@ function model(constructor) {
         };
         c.__proto__ = original;
         let obj = new c();
-        let model = obj.model;
-        makeObservable(obj);
-        // id field reactions
-        obj.__disposers.set('before changes', intercept(obj, 'id', (change) => {
-            if (change.newValue !== undefined && obj.id !== undefined)
-                throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`);
-            if (obj.id !== undefined && change.newValue === undefined)
-                obj.model.eject(obj);
-            return change;
-        }));
-        obj.__disposers.set('after changes', observe(obj, 'id', (change) => {
-            if (obj.id !== undefined)
-                obj.model.inject(obj);
-        }));
-        // apply fields decorators
-        for (let field_name in model.__fields) {
-            model.__fields[field_name].decorator(obj, field_name);
+        // if second arg is true, then it is raw data, don't make it observable
+        if (!args[1]) {
+            makeObservable(obj);
+            // id field reactions
+            obj.__disposers.set('before changes', intercept(obj, 'id', (change) => {
+                if (change.newValue !== undefined && obj.id !== undefined)
+                    throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`);
+                if (obj.id !== undefined && change.newValue === undefined)
+                    obj.model.eject(obj);
+                return change;
+            }));
+            obj.__disposers.set('after changes', observe(obj, 'id', (change) => {
+                if (obj.id !== undefined)
+                    obj.model.inject(obj);
+            }));
+            // apply fields decorators
+            for (let field_name in obj.model.__fields) {
+                obj.model.__fields[field_name].decorator(obj, field_name);
+            }
+            // apply __relations decorators
+            for (let field_name in obj.model.__relations) {
+                obj.model.__relations[field_name].decorator(obj, field_name);
+            }
+            if (args[0])
+                obj.updateFromRaw(args[0]);
+            obj.refreshInitData();
         }
-        // apply __relations decorators
-        for (let field_name in model.__relations) {
-            model.__relations[field_name].decorator(obj, field_name);
+        else {
+            for (let field in args[0]) {
+                obj[field] = args[0][field];
+            }
         }
-        if (args[0])
-            obj.updateFromRaw(args[0]);
-        obj.refreshInitData();
         return obj;
     };
     f.__proto__ = original;
@@ -3025,5 +3034,5 @@ function local() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, ReadOnlyModel, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberBaseInput, NumberInput, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, ReadOnlyModel, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

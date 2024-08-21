@@ -1,32 +1,31 @@
-import { Model, model, field, foreign, one, many } from './'
+import { Model, model, field, foreign, one, many, local } from './'
 
 
 describe('Model Instance', () => {
 
-    describe('constructor()', () => {
+    describe('constructor', () => {
         it('empty', () => {
-            @model class A extends Model { @field a }     
-                                                ; expect(A.__cache.size).toBe(0)
-            let a = new A()                     ; expect(A.__cache.size).toBe(0)
+            @local() @model class A extends Model { @field a }     
+                                                ; expect(A.repository.cache.store.size).toBe(0)
+            let a = new A()                     ; expect(A.repository.cache.store.size).toBe(0)
                                                 ; expect(a).toMatchObject({__init_data: {a: undefined}, id: undefined, a :undefined })
         })
         it('only id', () => {
-            @model class A extends Model { @field a }     
-                                                ; expect(A.__cache.size).toBe(0)
-            let a = new A({id: 1})              ; expect(A.__cache.size).toBe(1)
-                                                  expect(A.__cache.get(a.id)).toBe(a)
+            @local() @model class A extends Model { @field a }     
+                                                ; expect(A.repository.cache.store.size).toBe(0)
+            let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
+                                                  expect(A.repository.cache.get(a.id)).toBe(a)
                                                 ; expect(a).toMatchObject({__init_data: {a: undefined}, id: 1, a: undefined})
         })
         it('id + value', () => {
-            @model class A extends Model { @field a }     
-                                                ; expect(A.__cache.size).toBe(0)
-            let a = new A({id: 1, a: 2})        ; expect(A.__cache.size).toBe(1)
-                                                  expect(A.__cache.get(a.id)).toBe(a)
+            @local() @model class A extends Model { @field a }     
+                                                ; expect(A.repository.cache.store.size).toBe(0)
+            let a = new A({id: 1, a: 2})        ; expect(A.repository.cache.store.size).toBe(1)
+                                                  expect(A.repository.cache.get(a.id)).toBe(a)
                                                 ; expect(a).toMatchObject({__init_data: {a: 2}, id: 1, a: 2})
         })
-
         it('default property', () => {
-            @model class A extends Model {
+            @local() @model class A extends Model {
                 @field a : number = 1 
                 @field b : number 
             }
@@ -35,12 +34,12 @@ describe('Model Instance', () => {
     })
 
     it('model', () => {
-        @model class A extends Model { }     
+        @local() @model class A extends Model { }     
         let a = new A()                         ; expect(a.model).toBe((<any>a.constructor).__proto__)
     })
 
     it('raw_data', () => {
-        @model class A extends Model {
+        @local() @model class A extends Model {
             @field a : number
             @field b : number 
         }
@@ -48,7 +47,7 @@ describe('Model Instance', () => {
     })
 
     it('raw_obj', () => {
-        @model class A extends Model {
+        @local() @model class A extends Model {
             @field a : number
             @field b : number 
                    c : number   // should not to be in raw_obj
@@ -59,7 +58,7 @@ describe('Model Instance', () => {
     })
 
     it('only_changed_raw_data', () => {
-        @model class A extends Model {
+        @local() @model class A extends Model {
             @field a : number
             @field b : number 
                    c : number   // should be ignored because it isn't a field
@@ -72,6 +71,7 @@ describe('Model Instance', () => {
     })
 
     it('is_changed', () => {
+        @local()
         @model class A extends Model {
             @field a : number
             @field b : number 
@@ -101,7 +101,7 @@ describe('Model Instance', () => {
 
     describe('updateFromRaw', () => {
         it('empty raw_obj', () => {
-            @model class A extends Model {
+            @local() @model class A extends Model {
                 @field a : number
                 @field b : number 
             }
@@ -111,7 +111,7 @@ describe('Model Instance', () => {
         })
 
         it('raw_obj with data only (no id)', () => {
-            @model class A extends Model {
+            @local() @model class A extends Model {
                 @field a : number
                 @field b : number 
             }
@@ -120,7 +120,7 @@ describe('Model Instance', () => {
             a.updateFromRaw(raw_obj)    ; expect(a).toMatchObject({a: 2, b: 2})
         })
         it('raw_obj with id+data ', () => {
-            @model class A extends Model {
+            @local() @model class A extends Model {
                 @field a : number
                 @field b : number 
             }
@@ -130,7 +130,7 @@ describe('Model Instance', () => {
         })
 
         it('raw_obj with id+data  (obj has no id)', () => {
-            @model class A extends Model {
+            @local() @model class A extends Model {
                 @field a : number
                 @field b : number 
             }
@@ -140,7 +140,7 @@ describe('Model Instance', () => {
         })
 
         it('raw_obj with id+data  (raw_obj has wrong id)', () => {
-            @model class A extends Model {
+            @local() @model class A extends Model {
                 @field a : number
                 @field b : number 
             }
@@ -150,9 +150,9 @@ describe('Model Instance', () => {
         })
 
         it('raw_obj with foreign relations', () => {
-            @model class C extends Model { @field x : string }
-            @model class B extends Model { @field x : string }
-            @model class A extends Model {
+            @local() @model class C extends Model { @field x : string }
+            @local() @model class B extends Model { @field x : string }
+            @local() @model class A extends Model {
                 @field a    : number
                 @field b_id : number 
                 @field c_id : number 
@@ -168,8 +168,8 @@ describe('Model Instance', () => {
         })
 
         it('raw_obj with many relations', () => {
-            @model class A extends Model { bs: B[] }
-            @model class B extends Model { @field a_id: number; @field x: string }
+            @local() @model class A extends Model { bs: B[] }
+            @local() @model class B extends Model { @field a_id: number; @field x: string }
             many(B)(A, 'bs')
             let a = new A({})   
             a.updateFromRaw({ id: 1, bs: [
@@ -188,8 +188,8 @@ describe('Model Instance', () => {
         })
 
         it('raw_obj with one relations', () => {
-            @model class A extends Model { b: B }
-            @model class B extends Model { @field a_id: number; @field x: string }
+            @local() @model class A extends Model { b: B }
+            @local() @model class B extends Model { @field a_id: number; @field x: string }
             one(B)(A, 'b')
             let a = new A({})   
 
@@ -200,36 +200,39 @@ describe('Model Instance', () => {
 
     describe('id', () => {
         it('set in constructor', () => {
-            @model class A extends Model {}     ; expect(A.__cache.size).toBe(0)
-            let a = new A({id: 1})              ; expect(A.__cache.size).toBe(1)
-                                                  expect(A.__cache.get(a.id)).toBe(a)
+            @local() @model class A extends Model {}     
+                                                  expect(A.repository.cache.store.size).toBe(0)
+            let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
+                                                  expect(A.repository.cache.get(a.id)).toBe(a)
                                                   expect(a.__disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: 1})
         })
         it('set later', () => {
-            @model class A extends Model {}     
-            let a = new A()                     ; expect(A.__cache.size).toBe(0)
+            @local() @model class A extends Model {}     
+            let a = new A()                     ; expect(A.repository.cache.store.size).toBe(0)
                                                   expect(a.__disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: undefined})
-            a.id = 1                            ; expect(A.__cache.size).toBe(1)
-                                                  expect(A.__cache.get(a.id)).toBe(a)
+            a.id = 1                            ; expect(A.repository.cache.store.size).toBe(1)
+                                                  expect(A.repository.cache.get(a.id)).toBe(a)
         })
         it('edit', () => {
-            @model class A extends Model {}     ; expect(A.__cache.size).toBe(0)
-            let a = new A({id: 1})              ; expect(A.__cache.size).toBe(1)
-                                                  expect(A.__cache.get(a.id)).toBe(a)
+            @local()
+            @model class A extends Model {}     ; expect(A.repository.cache.store.size).toBe(0)
+            let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
+                                                  expect(A.repository.cache.get(a.id)).toBe(a)
                                                   expect(a.__disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: 1})
             expect(() => a.id = 2)
                 .toThrow(new Error(`You cannot change id field: 1 to 2`))
         })
         it('edit to undefined', () => {
-            @model class A extends Model {}     ; expect(A.__cache.size).toBe(0)
-            let a = new A({id: 1})              ; expect(A.__cache.size).toBe(1)
-                                                  expect(A.__cache.get(a.id)).toBe(a)
+            @local()
+            @model class A extends Model {}     ; expect(A.repository.cache.store.size).toBe(0)
+            let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
+                                                  expect(A.repository.cache.get(a.id)).toBe(a)
                                                   expect(a.__disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: 1})
-            a.id = undefined                    ; expect(A.__cache.size).toBe(0)
+            a.id = undefined                    ; expect(A.repository.cache.store.size).toBe(0)
         })
     }) 
 })

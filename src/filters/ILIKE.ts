@@ -1,5 +1,5 @@
-import { reaction } from "mobx"
-import { SingleFilter, ValueType } from "./SingleFilter"
+import { Input } from '../inputs'
+import { SingleFilter } from "./SingleFilter"
 
 
 export class ILIKE_Filter extends SingleFilter {
@@ -11,14 +11,8 @@ export class ILIKE_Filter extends SingleFilter {
     operator(current_value: any, filter_value: any): boolean {
         return current_value.toLowerCase().includes(filter_value.toLowerCase()) 
     }
-
-    alias(alias_field: any): SingleFilter {
-        const alias_filter = ILIKE(alias_field, this.value, this.value_type) 
-        reaction(() => this.value, (value) => { alias_filter.set(value) }, { fireImmediately: true })
-        return alias_filter
-    }
 }
 
-export function ILIKE(field: string, value?: any, value_type?: ValueType) : SingleFilter {
-    return new ILIKE_Filter(field, value, value_type)
+export function ILIKE(field: string, value: Input<any, any>) : SingleFilter {
+    return new ILIKE_Filter(field, value)
 }

@@ -1,4 +1,4 @@
-import { Model, model, field, QueryXCacheSync, LocalAdapter, local } from '..'
+import { Model, model, field, QueryCacheSync, LocalAdapter, local } from '..'
 
 
 describe('QueryXCacheSync', () => {
@@ -9,15 +9,14 @@ describe('QueryXCacheSync', () => {
         @field   c !: boolean
     }
 
-    const adapter   : LocalAdapter<A> = (<any>A).__adapter
-    const cache     : Map<string, A>  = (<any>A).__cache
 
     it('constructor: default', () => {
-        const query = new QueryXCacheSync<A>(cache, {adapter})
+        // TODO: fix repository type
+        const query = new QueryCacheSync<A>({repository: A.repository as any})
         expect(query).toMatchObject({
             items: [],
             total: undefined,
-            adapter: adapter,
+            repository: A.repository,
             need_to_update: true,
             is_loading: false,
             is_ready: false,
@@ -27,11 +26,11 @@ describe('QueryXCacheSync', () => {
     })
     
     it('constructor: with selector', async ()=> {
-        const query = new QueryXCacheSync<A>(cache, {adapter})
+        const query = new QueryCacheSync<A>({repository: A.repository as any})
         expect(query).toMatchObject({
             items: [],
             total: undefined,
-            adapter: adapter,
+            repository: A.repository,
             need_to_update: true,
             is_loading: false,
             is_ready: false,

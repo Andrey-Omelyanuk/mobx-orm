@@ -1,5 +1,6 @@
 import { NumberInput } from '../inputs'
-import { XILIKE as ILIKE } from './ILIKE'
+import { ILIKE } from './ILIKE'
+
 
 describe('ILIKE', () => {
     const filter = ILIKE('field', new NumberInput({value: 1}))

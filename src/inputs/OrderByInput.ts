@@ -1,7 +1,7 @@
-import { ASC, DESC, ORDER_BY } from '../types'
+import { ASC, DESC, ORDER_BY } from '../queries'
 import { Input } from './Input'
 
-export class OrderByInput extends Input<ORDER_BY> {
+export class OrderByInput extends Input<ORDER_BY, any> {
 
     serialize(value?: string) : ORDER_BY {
         let result: ORDER_BY = new Map()

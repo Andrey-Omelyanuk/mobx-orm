@@ -2,40 +2,40 @@ import _ from 'lodash'
 import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
 import { config } from '../config'
 import { Model } from '../model'
-import { QueryX } from '../queries/query-x'
+import { Query } from '../queries'
 import { AutoReset } from './auto-reset/AutoReset'
 
-export interface InputConstructorArgs<T> {
+export interface InputConstructorArgs<T, M extends Model> {
     value               ?: T
-    options             ?: any
+    options             ?: Query<M>
     required            ?: boolean
     disabled            ?: boolean
-    syncURL             ?: string // deprecated
+    syncURL             ?: string
     syncURLSearchParams ?: string
     syncLocalStorage    ?: string
     debounce            ?: number
-    autoReset           ?: (input: Input<T>) => void // deprecated use autoResetClass instead
-    autoResetClass      ?: new (input: Input<T>) => AutoReset<Input<T>> 
+    autoReset           ?: (input: Input<T, M>) => void // deprecated use autoResetClass instead
+    autoResetClass      ?: new (input: Input<T, M>) => AutoReset<Input<T, M>> 
 }
 
-export abstract class Input<T> {
+export abstract class Input<T, M extends Model> {
     @observable          value               : T
     @observable          errors              : string[] = []
-                readonly options            ?: QueryX<Model> // should be a Query
+                readonly options            ?: Query<M> // should be a Query
     @observable          required            : boolean 
     @observable          disabled            : boolean
                 readonly syncURLSearchParams?: string
                 readonly syncLocalStorage   ?: string
                 readonly debounce           ?: number 
-                readonly autoReset          ?: (input: Input<T>) => void
-                readonly autoResetObj       ?:  AutoReset<Input<T>>
+                readonly autoReset          ?: (input: Input<T, M>) => void
+                readonly autoResetObj       ?:  AutoReset<Input<T, M>>
 
     @observable isInit      : boolean
     @observable __isReady   : boolean
                 __disposers = [] 
                 __setReadyTrue: Function
     
-    constructor (args?: InputConstructorArgs<T>) {
+    constructor (args?: InputConstructorArgs<T, M>) {
         // init all observables before use it in reaction
         this.value              = args?.value
         this.options            = args?.options

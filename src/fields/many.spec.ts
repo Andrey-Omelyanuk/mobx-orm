@@ -1,4 +1,5 @@
 import { runInAction } from 'mobx'
+import { local } from '../adapters'
 import { Model, model, field, many } from '../'
 
 
@@ -7,8 +8,8 @@ describe('Field: Many', () => {
     describe('Declaration', () => {
 
         it('declare', async () => {
-            @model class A extends Model {        bs  : B[]    }
-            @model class B extends Model { @field a_id: number }
+            @local() @model class A extends Model {        bs  : B[]    }
+            @local() @model class B extends Model { @field a_id: number }
             many(B, 'a_id')(A, 'bs')
             expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
             expect(A.__relations['bs'].settings.remote_model).toBe(B)
@@ -16,8 +17,8 @@ describe('Field: Many', () => {
         })
 
         it('declare (auto detect)', async () => {
-            @model class A extends Model {        bs  : B[]    }
-            @model class B extends Model { @field a_id: number }
+            @local() @model class A extends Model {        bs  : B[]    }
+            @local() @model class B extends Model { @field a_id: number }
             many(B)(A, 'bs')
             expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
             expect(A.__relations['bs'].settings.remote_model).toBe(B)
@@ -25,11 +26,11 @@ describe('Field: Many', () => {
         })
 
         it('cross declare', async () => {
-            @model class A extends Model {
+            @local() @model class A extends Model {
                 @field  b_id : number
                         bs   : B[]
             }
-            @model class B extends Model {
+            @local() @model class B extends Model {
                 @field  a_id : number
                         as   : A[]
             }
@@ -46,13 +47,13 @@ describe('Field: Many', () => {
     })
 
     describe('Usage', () => {
-        @model class A extends Model {        bs   : B[]    }
-        @model class B extends Model { @field a_id : number }
+        @local() @model class A extends Model {        bs   : B[]    }
+        @local() @model class B extends Model { @field a_id : number }
         many(B)(A, 'bs')
 
         beforeEach(() => {
-            A.clearCache()
-            B.clearCache()
+            A.repository.cache.clear()
+            B.repository.cache.clear()
         })
 
         it('should be [] by default', async () => {
@@ -114,11 +115,11 @@ describe('Field: Many', () => {
     })
 
     it('e2e', async () => {
-        @model class Program extends Model {
+        @local() @model class Program extends Model {
             @field name	: string
                    sets : ProgramSet []
         }
-        @model class ProgramSet extends Model {
+        @local() @model class ProgramSet extends Model {
             @field  order       : number
             @field  program_id  : number
         }

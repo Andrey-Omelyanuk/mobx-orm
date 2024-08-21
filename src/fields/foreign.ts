@@ -14,7 +14,7 @@ function field_foreign(obj, field_name) {
         () => {
             if (obj[foreign_id_name] === undefined) return undefined
             if (obj[foreign_id_name] === null) return null 
-            return foreign_model.__cache.get(obj[foreign_id_name])
+            return foreign_model.repository.cache.get(obj[foreign_id_name])
         },
         // update foreign field
         action('MO: Foreign - update',

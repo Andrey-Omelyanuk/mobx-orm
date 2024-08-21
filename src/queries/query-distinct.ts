@@ -1,17 +1,17 @@
 import { runInAction } from 'mobx'
-import { QueryX, QueryXProps } from './query-x'
+import { Query, QueryProps } from './query'
 
-export class QueryXDistinct extends QueryX<any> {
+export class QueryDistinct extends Query<any> {
     readonly field: string
     
-    constructor(field: string, props: QueryXProps<any>) {
+    constructor(field: string, props: QueryProps<any>) {
         super(props)
         this.field = field
     }
 
     async __load() {
         return this.__wrap_controller(async () => {
-            const objs = await this.adapter.getDistinct(this.filter, this.field, this.__controller)
+            const objs = await this.repository.getDistinct(this.filter, this.field, this.__controller)
             runInAction(() => {
                 this.__items = objs
             })

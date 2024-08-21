@@ -1,278 +1,40 @@
-import { reaction, runInAction } from "mobx"
-import { match, SingleFilter, ValueType } from "../"
+import { runInAction } from 'mobx'
+import { Model, StringInput, NumberInput, local } from '..'
+import { SingleFilter } from './SingleFilter'
+import { EQ } from './EQ'
 
 
 describe('SingleFilter', () => {
-
-    class FilterClass extends SingleFilter {
-        get URIField(): string { return `field` }
+    @local()
+    class TestModel extends Model {}
+    class TestSingleFilter extends SingleFilter {
+        get URIField(): string {
+            return `${this.field}` 
+        }
         operator(value_a: any, value_b: any): boolean {
-            return true 
-        }
-
-        alias(alias_field: any): SingleFilter {
-            const alias_filter =  new FilterClass(alias_field, this.value, this.value_type) 
-            reaction(() => this.value, (value) => { alias_filter.value = value }, { fireImmediately: true })
-            return alias_filter
+            return value_a === value_b
         }
     }
 
-
-    function F(field: string, value?: any, value_type?: ValueType) : SingleFilter {
-        return new FilterClass(field, value, value_type)
-    }
-
-    it('Value is observable', () => {
-        let count = 0
-        let filter = F('A', 'x')
-        reaction(()=> filter.value, () => { count = count + 1 }); expect(count).toBe(0)
-        runInAction(() => { filter.value = 2 })                 ; expect(count).toBe(1)
+    it('isReady', () => {
+        const options = TestModel.getQuery({})
+        const value =  new NumberInput({value: 1, options})
+        const filter = EQ('test', value)                    ; expect(filter.isReady).toBe(value.isReady)
+        runInAction(() => options.need_to_update = false)   ; expect(filter.isReady).toBe(value.isReady)
+        value.set(2)                                        ; expect(filter.isReady).toBe(value.isReady)
     })
 
-    describe('Constructor', () => {
-        describe('Type: Default', () => {
-            it('A = undefined'  , ()=>{ expect(F('A'       )).toMatchObject({field: 'A', value: undefined, value_type: ValueType.STRING})})
-            it('A = null'       , ()=>{ expect(F('A',  null)).toMatchObject({field: 'A', value:      null, value_type: ValueType.STRING})})
-            it('A = "10"'       , ()=>{ expect(F('A',  '10')).toMatchObject({field: 'A', value:      '10', value_type: ValueType.STRING})})
-            it('A = 10'         , ()=>{ expect(F('A',   10 )).toMatchObject({field: 'A', value:       10 , value_type: ValueType.NUMBER})})
-            it('A = true'       , ()=>{ expect(F('A', true )).toMatchObject({field: 'A', value:      true, value_type: ValueType.BOOL})})
-            it('A = false'      , ()=>{ expect(F('A', false)).toMatchObject({field: 'A', value:     false, value_type: ValueType.BOOL})})
-        })
-        describe('Type: String', () => {
-            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.STRING)).toMatchObject({field: 'A', value: undefined, value_type: ValueType.STRING})})
-            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.STRING)).toMatchObject({field: 'A', value:      null, value_type: ValueType.STRING})})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.STRING)).toMatchObject({field: 'A', value:      '10', value_type: ValueType.STRING})})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.STRING)).toMatchObject({field: 'A', value:       10 , value_type: ValueType.STRING})})
-            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.STRING)).toMatchObject({field: 'A', value:      true, value_type: ValueType.STRING})})
-            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.STRING)).toMatchObject({field: 'A', value:     false, value_type: ValueType.STRING})})
-        })
-        describe('Type: Number', () => {
-            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.NUMBER)).toMatchObject({field: 'A', value: undefined, value_type: ValueType.NUMBER})})
-            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.NUMBER)).toMatchObject({field: 'A', value:      null, value_type: ValueType.NUMBER})})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.NUMBER)).toMatchObject({field: 'A', value:      '10', value_type: ValueType.NUMBER})})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.NUMBER)).toMatchObject({field: 'A', value:       10 , value_type: ValueType.NUMBER})})
-            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.NUMBER)).toMatchObject({field: 'A', value:      true, value_type: ValueType.NUMBER})})
-            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.NUMBER)).toMatchObject({field: 'A', value:     false, value_type: ValueType.NUMBER})})
-        })
-        describe('Type: Bool', () => {
-            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.BOOL)).toMatchObject({field: 'A', value: undefined, value_type: ValueType.BOOL})})
-            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.BOOL)).toMatchObject({field: 'A', value:      null, value_type: ValueType.BOOL})})
-            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.BOOL)).toMatchObject({field: 'A', value:      true, value_type: ValueType.BOOL})})
-            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.BOOL)).toMatchObject({field: 'A', value:     false, value_type: ValueType.BOOL})})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.BOOL)).toMatchObject({field: 'A', value:      '10', value_type: ValueType.BOOL})})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.BOOL)).toMatchObject({field: 'A', value:       10 , value_type: ValueType.BOOL})})
-        })
-        describe('Type: Date', () => {
-            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.DATE)).toMatchObject({field: 'A', value: undefined, value_type: ValueType.DATE})})
-            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.DATE)).toMatchObject({field: 'A', value:      null, value_type: ValueType.DATE})})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.DATE)).toMatchObject({field: 'A', value:      '10', value_type: ValueType.DATE})})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.DATE)).toMatchObject({field: 'A', value:       10 , value_type: ValueType.DATE})})
-            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.DATE)).toMatchObject({field: 'A', value:      true, value_type: ValueType.DATE})})
-            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.DATE)).toMatchObject({field: 'A', value:     false, value_type: ValueType.DATE})})
-        })
+    it('URLSearchParams', () => {
+        expect(EQ('test', new NumberInput({value: 1})).URLSearchParams.toString()).toBe('test=1')
+        expect(EQ('test', new NumberInput({value: null})).URLSearchParams.toString()).toBe('test=null')
+        expect(EQ('test', new NumberInput()).URLSearchParams.toString()).toBe('')
+
+        expect(EQ('test', new StringInput({value: 'abc'})).URLSearchParams.toString()).toBe('test=abc')
+        expect(EQ('test', new StringInput({value: null})).URLSearchParams.toString()).toBe('test=null')
+        expect(EQ('test', new StringInput()).URLSearchParams.toString()).toBe('')
     })
 
-    describe('URISearchParams', () => {
-        describe('Type: String', () => {
-            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.STRING).URLSearchParams.toString()).toBe('')})
-            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.STRING).URLSearchParams.toString()).toBe('field=null')})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.STRING).URLSearchParams.toString()).toBe('field=10')})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.STRING).URLSearchParams.toString()).toBe('field=10')})
-            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.STRING).URLSearchParams.toString()).toBe('field=true')})
-            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.STRING).URLSearchParams.toString()).toBe('field=false')})
-        })
-        describe('Type: Number', () => {
-            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.NUMBER).URLSearchParams.toString()).toBe('')})
-            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.NUMBER).URLSearchParams.toString()).toBe('field=null')})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.NUMBER).URLSearchParams.toString()).toBe('field=10')})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.NUMBER).URLSearchParams.toString()).toBe('field=10')})
-            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.NUMBER).URLSearchParams.toString()).toBe('')})
-            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.NUMBER).URLSearchParams.toString()).toBe('')})
-        })
-        describe('Type: Bool', () => {
-            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.BOOL).URLSearchParams.toString()).toBe('')})
-            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.BOOL).URLSearchParams.toString()).toBe('field=null')})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.BOOL).URLSearchParams.toString()).toBe('field=true')})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.BOOL).URLSearchParams.toString()).toBe('field=true')})
-            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.BOOL).URLSearchParams.toString()).toBe('field=true')})
-            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.BOOL).URLSearchParams.toString()).toBe('field=false')})
-        })
-        describe('Type: Date', () => {
-            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.DATE).URLSearchParams.toString()).toBe('')})
-            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.DATE).URLSearchParams.toString()).toBe('field=null')})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.DATE).URLSearchParams.toString()).toBe('field=')})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.DATE).URLSearchParams.toString()).toBe('field=')})
-            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.DATE).URLSearchParams.toString()).toBe('field=')})
-            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.DATE).URLSearchParams.toString()).toBe('field=')})
-            it('A = 2023-04-15'              , ()=>{ expect(F('A', new Date('2023-04-15')              , ValueType.DATE).URLSearchParams.toString()).toBe('field=2023-04-15')})
-            it('A = 2023-04-15T00:00:00.000Z', ()=>{ expect(F('A', new Date('2023-04-15T00:00:00.000Z'), ValueType.DATE).URLSearchParams.toString()).toBe('field=2023-04-15')})
-        })
-        describe('Type: DateTime', () => {
-            it('A = undefined'  , ()=>{ expect(F('A', undefined, ValueType.DATETIME).URLSearchParams.toString()).toBe('')})
-            it('A = null'       , ()=>{ expect(F('A',      null, ValueType.DATETIME).URLSearchParams.toString()).toBe('field=null')})
-            it('A = "10"'       , ()=>{ expect(F('A',      '10', ValueType.DATETIME).URLSearchParams.toString()).toBe('field=')})
-            it('A = 10'         , ()=>{ expect(F('A',       10 , ValueType.DATETIME).URLSearchParams.toString()).toBe('field=')})
-            it('A = true'       , ()=>{ expect(F('A',      true, ValueType.DATETIME).URLSearchParams.toString()).toBe('field=')})
-            it('A = false'      , ()=>{ expect(F('A',     false, ValueType.DATETIME).URLSearchParams.toString()).toBe('field=')})
-            it('A = 2023-04-15'              , ()=>{ expect(F('A', new Date('2023-04-15')              , ValueType.DATETIME).URLSearchParams.toString()).toBe('field=2023-04-15T00%3A00%3A00.000Z')})
-            it('A = 2023-04-15T00:00:00.000Z', ()=>{ expect(F('A', new Date('2023-04-15T00:00:00.000Z'), ValueType.DATETIME).URLSearchParams.toString()).toBe('field=2023-04-15T00%3A00%3A00.000Z')})
-        })
-    })
-
-    describe('setFromURI', () => {
-        describe('Type: String', () => {
-            let f
-            beforeEach(() => { f = F('A', undefined, ValueType.STRING) })
-            it(''           , () => { f.setFromURI(''           ); expect(f).toMatchObject({field: 'A', value: undefined}) })
-            it('xxx=xxx'    , () => { f.setFromURI('xxx=xxx'    ); expect(f).toMatchObject({field: 'A', value: undefined}) })
-            it('field=null' , () => { f.setFromURI('field=null' ); expect(f).toMatchObject({field: 'A', value: null}) })
-            it('field=10'   , () => { f.setFromURI('field=10'   ); expect(f).toMatchObject({field: 'A', value: '10'}) })
-            it('field=text' , () => { f.setFromURI('field=text' ); expect(f).toMatchObject({field: 'A', value: 'text'}) })
-            it('field=true' , () => { f.setFromURI('field=true' ); expect(f).toMatchObject({field: 'A', value: 'true'}) })
-            it('field=false', () => { f.setFromURI('field=false'); expect(f).toMatchObject({field: 'A', value: 'false'}) })
-        })
-        describe('Type: Number', () => {
-            let f
-            beforeEach(() => { f = F('A', undefined, ValueType.NUMBER) })
-            it(''           , () => { f.setFromURI(''           ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            it('xxx=xxx'    , () => { f.setFromURI('xxx=xxx'    ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            it('field=null' , () => { f.setFromURI('field=null' ); expect(f).toMatchObject({field: 'A', value: null})})
-            it('field=10'   , () => { f.setFromURI('field=10'   ); expect(f).toMatchObject({field: 'A', value: 10})})
-            it('field=text' , () => { f.setFromURI('field=text' ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            it('field=true' , () => { f.setFromURI('field=true' ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            it('field=false', () => { f.setFromURI('field=false'); expect(f).toMatchObject({field: 'A', value: undefined})})
-        })
-        describe('Type: Boolean', () => {
-            let f
-            beforeEach(() => { f = F('A', undefined, ValueType.BOOL) })
-            it(''           , () => { f.setFromURI(''           ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            it('xxx=xxx'    , () => { f.setFromURI('xxx=xxx'    ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            it('field=null' , () => { f.setFromURI('field=null' ); expect(f).toMatchObject({field: 'A', value: null})})
-            it('field=10'   , () => { f.setFromURI('field=10'   ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            it('field=text' , () => { f.setFromURI('field=text' ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            it('field=true' , () => { f.setFromURI('field=true' ); expect(f).toMatchObject({field: 'A', value: true})})
-            it('field=false', () => { f.setFromURI('field=false'); expect(f).toMatchObject({field: 'A', value: false})})
-        })
-        describe('Type: Date', () => {
-            let f
-            beforeEach(() => { f = F('A', undefined, ValueType.DATE) })
-            it(''           , () => { f.setFromURI(''           ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            // it('xxx=xxx'    , () => { f.setFromURI('xxx=xxx'    ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            // it('field=null' , () => { f.setFromURI('field=null' ); expect(f).toMatchObject({field: 'A', value: null})})
-            // it('field=10'   , () => { f.setFromURI('field=10'   ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            // it('field=text' , () => { f.setFromURI('field=text' ); expect(f).toMatchObject({field: 'A', value: undefined})})
-            // it('field=true' , () => { f.setFromURI('field=true' ); expect(f).toMatchObject({field: 'A', value: true})})
-            // it('field=false', () => { f.setFromURI('field=false'); expect(f).toMatchObject({field: 'A', value: false})})
-            it('field=2023-04-15'               , () => { f.setFromURI('field=2023-04-15');                   expect(f).toMatchObject({field: 'A', value: new Date('2023-04-15')})})
-            it('field=2023-04-15T00:00:00.000Z' , () => { f.setFromURI('field=2023-04-15T00%3A00%3A00.000Z'); expect(f).toMatchObject({field: 'A', value: new Date('2023-04-15T00:00:00.000Z')})})
-        })
-    })
-
-    describe('Serializer', () => {
-        describe('Type: String', () => {
-            let f = F('', 'x', ValueType.STRING)
-            it('undefined'  , ()=>{ f.serialize(undefined ); expect(f.value).toBe(undefined)})
-            it('null'       , ()=>{ f.serialize('null'    ); expect(f.value).toBe(null)})
-            it('10'         , ()=>{ f.serialize('10'      ); expect(f.value).toBe('10')})
-            it('text'       , ()=>{ f.serialize('text'    ); expect(f.value).toBe('text')})
-            it('true'       , ()=>{ f.serialize('true'    ); expect(f.value).toBe('true')})
-            it('false'      , ()=>{ f.serialize('false'   ); expect(f.value).toBe('false')})
-        })
-        describe('Type: Number', () => {
-            let f = F('', 'x', ValueType.NUMBER)
-            it('undefined'  , ()=>{ f.serialize(undefined ); expect(f.value).toBe(undefined)})
-            it('null'       , ()=>{ f.serialize('null'    ); expect(f.value).toBe(null)})
-            it('10'         , ()=>{ f.serialize('10'      ); expect(f.value).toBe(10)})
-            it('text'       , ()=>{ f.serialize('text'    ); expect(f.value).toBe(undefined)})
-            it('true'       , ()=>{ f.serialize('true'    ); expect(f.value).toBe(undefined)})
-            it('false'      , ()=>{ f.serialize('false'   ); expect(f.value).toBe(undefined)})
-        })
-        describe('Type: Bool', () => {
-            let f = F('', 'x', ValueType.BOOL)
-            it('undefined'  , ()=>{ f.serialize(undefined ); expect(f.value).toBe(undefined)})
-            it('null'       , ()=>{ f.serialize('null'    ); expect(f.value).toBe(null)})
-            it('10'         , ()=>{ f.serialize('10'      ); expect(f.value).toBe(undefined)})
-            it('text'       , ()=>{ f.serialize('text'    ); expect(f.value).toBe(undefined)})
-            it('true'       , ()=>{ f.serialize('true'    ); expect(f.value).toBe(true)})
-            it('false'      , ()=>{ f.serialize('false'   ); expect(f.value).toBe(false)})
-        })
-    })
-
-    describe('Deserializer', () => {
-        describe('Type: String', () => {
-            it('undefined'  , ()=>{ expect(F('', undefined , ValueType.STRING).deserialize()).toBe(undefined)})
-            it('null'       , ()=>{ expect(F('', null      , ValueType.STRING).deserialize()).toBe('null')})
-            it('10'         , ()=>{ expect(F('', 10        , ValueType.STRING).deserialize()).toBe('10')})
-            it('text'       , ()=>{ expect(F('', 'text'    , ValueType.STRING).deserialize()).toBe('text')})
-            it('true'       , ()=>{ expect(F('', true      , ValueType.STRING).deserialize()).toBe('true')})
-            it('false'      , ()=>{ expect(F('', false     , ValueType.STRING).deserialize()).toBe('false')})
-        })
-        describe('Type: Number', () => {
-            it('undefined'  , ()=>{ expect(F('', undefined , ValueType.NUMBER).deserialize()).toBe(undefined)})
-            it('null'       , ()=>{ expect(F('', null      , ValueType.NUMBER).deserialize()).toBe('null')})
-            it('10'         , ()=>{ expect(F('', 10        , ValueType.NUMBER).deserialize()).toBe('10')})
-            it('"10"'       , ()=>{ expect(F('', "10"      , ValueType.NUMBER).deserialize()).toBe('10')})
-            it('text'       , ()=>{ expect(F('', 'text'    , ValueType.NUMBER).deserialize()).toBe(undefined)})
-            it('true'       , ()=>{ expect(F('', true      , ValueType.NUMBER).deserialize()).toBe(undefined)})
-            it('false'      , ()=>{ expect(F('', false     , ValueType.NUMBER).deserialize()).toBe(undefined)})
-        })
-        describe('Type: Bool', () => {
-            it('undefined'  , ()=>{ expect(F('', undefined , ValueType.BOOL).deserialize()).toBe(undefined)})
-            it('null'       , ()=>{ expect(F('', null      , ValueType.BOOL).deserialize()).toBe('null')})
-            it('10'         , ()=>{ expect(F('', 10        , ValueType.BOOL).deserialize()).toBe('true')})
-            it('text'       , ()=>{ expect(F('', 'text'    , ValueType.BOOL).deserialize()).toBe('true')})
-            it('true'       , ()=>{ expect(F('', true      , ValueType.BOOL).deserialize()).toBe('true')})
-            it('false'      , ()=>{ expect(F('', false     , ValueType.BOOL).deserialize()).toBe('false')})
-        })
-    })
-
-    describe('isMatch', () => {
-        describe('it is always match if the value of filter is undefined', () => {
-            it('undefined === undefined', ()=>{ expect(F('a').isMatch({        })).toBe(true)})
-            it('undefined === null '    , ()=>{ expect(F('a').isMatch({a:  null})).toBe(true)})
-            it('undefined === "10"'     , ()=>{ expect(F('a').isMatch({a:  '10'})).toBe(true)})
-            it('undefined === 10'       , ()=>{ expect(F('a').isMatch({a:    10})).toBe(true)})
-            it('undefined === true'     , ()=>{ expect(F('a').isMatch({a:  true})).toBe(true)})
-            it('undefined === false'    , ()=>{ expect(F('a').isMatch({a: false})).toBe(true)})
-        })
-    })
-
-    describe('match', () => {
-        let o, v1 = []
-        let tests = [
-            [{       }, 'A', 1,     ],
-            [{A: null}, 'A', 1, null],
-            [{A:    1}, 'A', 1,    1],
-            [{A:   v1}, 'A', 1,   v1],
-
-            [{          }, 'A__B', 0,     ],
-            [{A:    null}, 'A__B', 0,     ],
-            [{A:      1 }, 'A__B', 0,     ],
-            [{A: {     }}, 'A__B', 1,     ],
-            [{A: {B:  1}}, 'A__B', 1,    1],
-            [{A: {B: v1}}, 'A__B', 1,   v1],
-
-            [{        }         , 'A__B__C', 0,   ],
-            [{A: null }         , 'A__B__C', 0,   ],
-            [{A:    1 }         , 'A__B__C', 0,   ],
-            [{A: {      }}      , 'A__B__C', 0,   ],
-            [{A: {B:  1 }}      , 'A__B__C', 0,   ],
-            [{A: {B: v1 }}      , 'A__B__C', 0,   ],
-            [{A: {B: {C:  1 }}} , 'A__B__C', 1,  1],
-            [{A: {B: {C: v1 }}} , 'A__B__C', 1, v1],
-        ]
-        beforeEach(() => { o = jest.fn((a, b) => true) })
-
-        for (const test of tests) {
-            let [obj, field, count_call, r] = test
-            it(`${field}, ${JSON.stringify(obj)} === ${JSON.stringify(r)}`, () => {
-                match(obj, field as string, 0, o)
-                expect(o.mock.calls.length).toBe(count_call)
-                for (let i = 0; i < (count_call as number); i++) {
-                    expect(o.mock.calls[0][0]).toBe(r)
-                    expect(o.mock.calls[0][1]).toBe(0)
-                }
-            })
-        }
+    it('isMatch', () => {
+        // TODO: implement
     })
 })

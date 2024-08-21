@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { OrderByInput } from './OrderByInput'
-import { ASC, DESC } from '../types'
+import { ASC, DESC } from '../queries'
 
 describe('OrderByInput', () => {
     let value = new OrderByInput()

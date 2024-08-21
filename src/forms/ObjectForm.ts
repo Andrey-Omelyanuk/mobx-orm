@@ -3,7 +3,7 @@ import { Input } from '../inputs/Input'
 import { Form } from './Form'
 
 export class ObjectForm extends Form {
-    constructor(obj: Model, inputs: {string: Input<any>}) {
+    constructor(obj: Model, inputs: {string: Input<any, any>}) {
         super(
             inputs,
             // TODO: add check input names with obj fields

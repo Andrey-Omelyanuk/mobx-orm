@@ -1,105 +1,240 @@
-import { action, runInAction, computed, observe, reaction } from 'mobx'
+import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
+import { Repository } from '../repository'
+import { config } from '../config'
 import { Model } from '../model'
-import { Adapter } from '../adapters'
-import { QueryBase } from './query-base'
-import { Selector, ASC } from '../types'
+import { Filter } from '../filters'
+import { waitIsFalse, waitIsTrue } from '../utils'
+import { OrderByInput, NumberInput } from '../inputs'
+import { ArrayStringInput } from '../inputs/ArrayStringInput'
 
-// Depricated
-export class Query<M extends Model> extends QueryBase<M> {
+export const DISPOSER_AUTOUPDATE = "__autoupdate"
 
-    constructor(adapter: Adapter<M>, base_cache: any, selector?: Selector) {
-        super(adapter, base_cache, selector)
+export const ASC = true 
+export const DESC = false 
+export type ORDER_BY = Map<string, boolean>
 
-        // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(this.__base_cache, 
-            action('MO: Query - update from cache changes',
-            (change: any) => {
-                if (change.type == 'add') {
-                    this.__watch_obj(change.newValue)
-                }
-                if (change.type == "delete") {
-                    let id = change.name
-                    let obj  = change.oldValue
+export interface QueryProps<M extends Model> {
+    repository                  ?: Repository<M>
+    //
+    filter                      ?: Filter
+    order_by                    ?: ORDER_BY
+    // pagination
+    offset                      ?: number
+    limit                       ?: number
+    // fields controll
+    relations                   ?: Array<string>
+    fields                      ?: Array<string>
+    omit                        ?: Array<string>
+    //
+    autoupdate                  ?: boolean
+    syncURL                     ?: boolean // deprecated
+    syncURLSearchParams         ?: boolean
+    syncURLSearchParamsPrefix   ?: string
+}
 
-                    this.__disposer_objects[id]()
-                    delete this.__disposer_objects[id]
+export class Query <M extends Model> {
 
-                    let i = this.__items.indexOf(obj)
-                    if (i != -1)
-                        this.__items.splice(i, 1)
+    readonly    filter          : Filter
+    readonly    input_order_by  : OrderByInput
+    readonly    input_offset    : NumberInput 
+    readonly    input_limit     : NumberInput 
+    readonly    input_relations : ArrayStringInput
+    readonly    input_fields    : ArrayStringInput 
+    readonly    input_omit      : ArrayStringInput 
+
+    get orderBy     () { return this.input_order_by.value } // for js style
+    get order_by    () { return this.input_order_by.value }
+    get offset      () { return this.input_offset.value }
+    get limit       () { return this.input_limit.value }
+    get relations   () { return this.input_relations.value }
+    get fields      () { return this.input_fields.value }
+    get omit        () { return this.input_omit.value }
+
+    set offset      (value: number)   { this.input_offset.set(value) }
+    set limit       (value: number)   { this.input_limit.set(value) }
+    set relations   (value: string[]) { this.input_relations.set(value) }
+    set fields      (value: string[]) { this.input_fields.set(value) }
+    set omit        (value: string[]) { this.input_omit.set(value) }
+
+    readonly syncURLSearchParams         : boolean
+    readonly syncURLSearchParamsPrefix   : string
+
+    @observable total         : number
+    @observable need_to_update: boolean = false
+    @observable timestamp     : number
+
+    readonly repository: Repository<M>
+    @observable __items: M[] = []
+    @observable __is_loading  : boolean = false 
+    @observable __is_ready    : boolean = false 
+    @observable __error       : string = '' 
+
+    get is_loading  () { return this.__is_loading   }
+    get is_ready    () { return this.__is_ready     }
+    get error       () { return this.__error        }
+    get items       () { return this.__items        }
+    // backward compatibility, remove it in the future
+    get filters     () { return this.filter         }
+    // we going to migrate to JS style
+    get isLoading   () { return this.__is_loading   }
+    get isReady     () { return this.__is_ready     }
+
+    __controller        : AbortController
+    __disposers         : (()=>void)[] = []
+    __disposer_objects  : {[field: string]: ()=>void} = {}
+
+    constructor(props: QueryProps<M>) {
+        let {
+            repository, filter, order_by = new Map(), offset, limit,
+            relations = [], fields = [], omit = [],
+            autoupdate = false, syncURL, syncURLSearchParams = false, syncURLSearchParamsPrefix = ''
+        } = props
+        if (syncURL) syncURLSearchParams = syncURL
+
+        this.repository      = repository 
+        this.filter          = filter
+        this.input_order_by  = new OrderByInput({value: order_by, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined}) 
+        this.input_offset    = new NumberInput({value: offset, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__offset` : undefined}) 
+        this.input_limit     = new NumberInput({value: limit, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__limit` : undefined  }) 
+        this.input_relations = new ArrayStringInput({value: relations})
+        this.input_fields    = new ArrayStringInput({value: fields})
+        this.input_omit      = new ArrayStringInput({value: omit})
+        this.syncURLSearchParams = syncURLSearchParams
+        this.syncURLSearchParamsPrefix = syncURLSearchParamsPrefix
+        makeObservable(this)
+
+        this.__disposers.push(reaction(
+            () => this.URLSearchParams.toString(),
+            action('MO: Query Base - need to update', () => {
+                this.need_to_update = true
+                this.__is_ready = false
+            }),
+            { fireImmediately: true }
+        ))
+        this.autoupdate = autoupdate
+        // this.syncURLSearchParams && this.__doSyncURLSearchParams()
+    }
+
+    destroy() {
+        this.__controller?.abort()
+        while(this.__disposers.length) {
+            this.__disposers.pop()()
+        }
+        for(let __id in this.__disposer_objects) {
+            this.__disposer_objects[__id]()
+            delete this.__disposer_objects[__id]
+        } 
+    }
+
+    async __wrap_controller(func: Function) {
+        if (this.__controller) {
+            this.__controller.abort()
+        }
+        this.__controller = new AbortController()
+        let response
+        try {
+            response = await func()
+        } catch (e) {
+            if (e.name !== 'AbortError' && e.message !== 'canceled') throw e
+        } finally {
+            this.__controller = undefined
+        }
+        return response
+    }
+
+    async __load() {
+        return this.__wrap_controller(async () => {
+            const objs = await this.repository.load(this, this.__controller)
+            runInAction(() => {
+                this.__items = objs
+            })
+        })
+    }
+
+    // use it if everybody should know that the query data is updating
+    @action('MO: Query Base - load')
+    async load() {
+        this.__is_loading = true
+        try {
+            await this.shadowLoad()
+        }
+        finally {
+            runInAction(() => {
+                // the loading can be canceled by another load
+                // in this case we should not touch the __is_loading
+                if (!this.__controller) {
+                    this.__is_loading = false
                 }
             })
-        ))
-
-        // ch all exist objects of model 
-        for(let [id, obj] of this.__base_cache) {
-            this.__watch_obj(obj)
         }
     }
 
+    // use it if nobody should know that the query data is updating
+    // for example you need to update the current data on the page and you don't want to show a spinner
     @action('MO: Query Base - shadow load')
     async shadowLoad() {
         try {
-            let objs = await this.__adapter.load(this.selector)
-            this.__load(objs)
-            // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
-            await new Promise(resolve => setTimeout(resolve))
-            runInAction(() => {
-                this.__is_ready = true
-                this.need_to_update = false 
-            })
+            await this.__load()
         }
         catch(e) {
-            // 'MO: Query Base - shadow load - error',
-            runInAction( () => this.__error = e)
-            throw e
+            runInAction(() => {
+                this.__error = e.message
+            })
         }
-    }
-
-    @computed
-    get items() { 
-        let __items = this.__items.map(x=>x) // copy __items (not deep)
-        if (this.order_by.size) {
-            let compare = (a, b) => {
-                for(const [key, value] of this.order_by) {
-                    if (value === ASC) {
-                        if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
-                        if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return -1
-                        if (a[key] < b[key]) return -1
-                        if (a[key] > b[key]) return  1
-                    }
-                    else {
-                        if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return -1
-                        if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return  1
-                        if (a[key] < b[key]) return  1
-                        if (a[key] > b[key]) return -1
-                    }
+        finally {
+            runInAction(() => {
+                // TODO: timestamp, aviod to trigger react hooks twise
+                if (!this.__is_ready) {
+                    this.__is_ready = true
+                    this.timestamp = Date.now() 
                 }
-                return 0
-            }
-            __items.sort(compare)
+                if (this.need_to_update) this.need_to_update = false 
+            })
         }
-        return __items 
     }
 
-    __load(objs: M[]) {
-        // Query don't need to overide the items, query's items should be get only from the cache
-        // Query page have to use it only 
+    get autoupdate() {
+        return !! this.__disposer_objects[DISPOSER_AUTOUPDATE]
     }
 
-    __watch_obj(obj) {
-        if (this.__disposer_objects[obj.id]) this.__disposer_objects[obj.id]()
-        this.__disposer_objects[obj.id] = reaction(
-            () =>  !this.filters || this.filters.isMatch(obj),
-            action('MO: Query - obj was changed',
-            (should: boolean) => {
-                let i = this.__items.indexOf(obj)
-                // should be in the items and it is not in the items? add it to the items
-                if ( should && i == -1) this.__items.push(obj)
-                // should not be in the items and it is in the items? remove it from the items
-                if (!should && i != -1) this.__items.splice(i, 1)
-            }),
-            { fireImmediately: true }
-        )
+    set autoupdate(value: boolean) {
+        if (value !== this.autoupdate) {
+            // on 
+            if (value) {
+                setTimeout(() => {
+                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
+                        // NOTE: don't need to check pagination and order because they are always ready 
+                        () => this.need_to_update && (this.filter === undefined || this.filter.isReady),
+                        (need_to_update) => {
+                            if (need_to_update) {
+                                this.load()
+                            }
+                        },
+                        { fireImmediately: true }
+                    )
+                }, config.AUTO_UPDATE_DELAY)
+            }
+            // off
+            else {
+                this.__disposer_objects[DISPOSER_AUTOUPDATE]()
+                delete this.__disposer_objects[DISPOSER_AUTOUPDATE]
+            }
+        }
     }
+
+    get URLSearchParams(): URLSearchParams{
+        const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
+        if (this.order_by.size       ) searchParams.set('__order_by' , this.input_order_by.deserialize(this.order_by))
+        if (this.limit !== undefined ) searchParams.set('__limit'    , this.input_limit.deserialize(this.limit))
+        if (this.offset !== undefined) searchParams.set('__offset'   , this.input_offset.deserialize(this.offset))
+        if (this.relations.length    ) searchParams.set('__relations', this.input_relations.deserialize(this.relations))
+        if (this.fields.length       ) searchParams.set('__fields'   , this.input_fields.deserialize(this.fields))
+        if (this.omit.length         ) searchParams.set('__omit'     , this.input_omit.deserialize(this.omit))
+        return searchParams
+    }
+
+    // use it if you need use promise instead of observe is_ready
+    ready = async () => waitIsTrue(this, '__is_ready')
+    // use it if you need use promise instead of observe is_loading
+    loading = async () => waitIsFalse(this, '__is_loading')
 }

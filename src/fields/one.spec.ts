@@ -1,3 +1,4 @@
+import { local } from '../adapters'
 import { runInAction } from 'mobx'
 import { Model, model, field, one } from '../'
 
@@ -7,8 +8,8 @@ describe('Field: One', () => {
     describe('Declaration', () => {
 
         it('declare', async () => {
-            @model class A extends Model {         b    : B      }
-            @model class B extends Model { @field  a_id : number }
+            @local() @model class A extends Model {         b    : B      }
+            @local() @model class B extends Model { @field  a_id : number }
             one(B, 'a_id')(A, 'b')
             expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()
             expect(A.__relations['b'].settings.remote_model).toBe(B)
@@ -16,8 +17,8 @@ describe('Field: One', () => {
         })
 
         it('declare (auto detect)', async () => {
-            @model class A extends Model {         b       : B      }
-            @model class B extends Model { @field  a_id    : number }
+            @local() @model class A extends Model {         b       : B      }
+            @local() @model class B extends Model { @field  a_id    : number }
             one(B)(A, 'b')
             expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()
             expect(A.__relations['b'].settings.remote_model).toBe(B)
@@ -25,11 +26,11 @@ describe('Field: One', () => {
         })
 
         it('cross declare', async () => {
-            @model class A extends Model {
+            @local() @model class A extends Model {
                 @field  b_id    : number
                         b_one   : B
             }
-            @model class B extends Model {
+            @local() @model class B extends Model {
                 @field  a_id    : number
                         a_one   : A
             }
@@ -45,13 +46,13 @@ describe('Field: One', () => {
     })
 
     describe('Usage', () => {
-        @model class A extends Model {         b    : B }
-        @model class B extends Model { @field  a_id : number }
+        @local() @model class A extends Model {         b    : B }
+        @local() @model class B extends Model { @field  a_id : number }
         one(B)(A, 'b')
 
         beforeEach(() => {
-            A.clearCache() 
-            B.clearCache() 
+            A.repository.cache.clear() 
+            B.repository.cache.clear() 
         })
 
         it('remote obj create before', async () => {

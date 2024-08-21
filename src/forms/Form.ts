@@ -4,14 +4,14 @@ import { config } from '..'
 
 
 export class Form {
-    readonly    inputs      : { [key: string]: Input<any> }
+    readonly    inputs      : { [key: string]: Input<any, any> }
     @observable isLoading   : boolean = false
     @observable errors      : string[] = []
 
     private __submit: () => Promise<void>
     private __cancel: () => void
 
-    constructor(inputs: { [key: string]: Input<any> }, submit: () => Promise<void>, cancel: () => void) {
+    constructor(inputs: { [key: string]: Input<any, any> }, submit: () => Promise<void>, cancel: () => void) {
         this.inputs = inputs
         this.__submit = submit
         this.__cancel = cancel

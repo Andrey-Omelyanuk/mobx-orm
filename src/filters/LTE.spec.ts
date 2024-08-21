@@ -1,19 +1,20 @@
 import { NumberInput } from '../inputs'
-import { XLT as LT } from './LT'
+import { LTE } from './LTE'
 
-describe('LT', () => {
-    const filter = LT('field', new NumberInput({value: 1}))
+
+describe('LTE', () => {
+    const filter = LTE('field', new NumberInput({value: 1}))
 
     it('URIField', async () => {
-        expect(filter.URIField).toBe('field__lt')
+        expect(filter.URIField).toBe('field__lte')
     })
 
     it('operator', async () => {
         expect(filter.operator(1, 2)).toBe(true)
         expect(filter.operator(2, 1)).toBe(false)
-        expect(filter.operator(1, 1)).toBe(false)
+        expect(filter.operator(1, 1)).toBe(true)
         expect(filter.operator('a', 'b')).toBe(true)
         expect(filter.operator('b', 'a')).toBe(false)
-        expect(filter.operator('a', 'a')).toBe(false)
+        expect(filter.operator('a', 'a')).toBe(true)
     })
 })

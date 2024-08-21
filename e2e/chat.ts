@@ -48,9 +48,9 @@ describe('e2e: Chat.', () => {
         let userA = new User({first_name: 'A', last_name: 'X'}); await userA.save()
         let userB = new User({first_name: 'B', last_name: 'X'}); await userB.save()
 
-        expect(User.__cache.size).toBe(2)
-        expect(Channel.__cache.size).toBe(2)
-        expect(Message.__cache.size).toBe(0)
+        expect(User.repository.cache.store.size).toBe(2)
+        expect(Channel.repository.cache.store.size).toBe(2)
+        expect(Message.repository.cache.store.size).toBe(0)
     })
 
     it('Send messages', async ()=> {

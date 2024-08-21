@@ -1,47 +1,8 @@
-import { reaction } from "mobx"
-import { SingleFilter, ValueType } from "./SingleFilter"
+import { Input } from '../inputs'
+import { SingleFilter } from "./SingleFilter"
 
 
 export class IN_Filter extends SingleFilter {
-
-    constructor(field: string, value?: any, value_type?: ValueType) {
-        if (value === undefined) {
-            value = []
-        }
-        super(field, value, value_type)
-    }
-
-    alias(alias_field: any): SingleFilter {
-        const alias_filter = IN(alias_field, this.value, this.value_type) 
-        reaction(() => this.value, (value) => { alias_filter.value = value }, { fireImmediately: true })
-        return alias_filter
-    }
-
-    serialize(value: string|undefined) : void {
-        if (value === undefined) {
-            this.value = [] 
-            return
-        }
-        let result = [] 
-        for (const i of value.split(',')) {
-            super.serialize(i)
-            if (this.value !== undefined) {
-                result.push(this.value)
-            }
-        }
-        this.value = result 
-    }
-
-    deserialize() : string {
-        let result = [] 
-        for (const i of this.value) {
-            let v = super.deserialize(i) 
-            if (v !== undefined) {
-                result.push(v)
-            }
-        }
-        return result.length ? result.join(',') : undefined
-    }
 
     get URIField(): string {
         return `${this.field}__in`
@@ -56,9 +17,8 @@ export class IN_Filter extends SingleFilter {
         }
         return false
     }
-
 }
 
-export function IN(field: string, value?: any[], value_type?: ValueType) : SingleFilter { 
-    return new IN_Filter(field, value, value_type)
+export function IN(field: string, value: Input<any, any>) : SingleFilter { 
+    return new IN_Filter(field, value)
 }

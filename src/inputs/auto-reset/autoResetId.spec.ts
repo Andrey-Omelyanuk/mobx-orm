@@ -17,7 +17,7 @@ describe('autoResetId', () => {
             options: {
                 items: [{ id: 1 }, { id: 2 }, { id: 3 }],
                 isReady: true,
-            }
+            } as any 
         })
         runInAction(() => input.__isReady = false)
         autoResetId(input)
@@ -30,7 +30,7 @@ describe('autoResetId', () => {
             options: {
                 items: [{ id: 1 }, { id: 2 }, { id: 3 }],
                 isReady: true,
-            }
+            } as any
         })
         runInAction(() => input.__isReady = false)
         autoResetId(input)
@@ -43,7 +43,7 @@ describe('autoResetId', () => {
             options: {
                 items: [],
                 isReady: true,
-            }
+            } as any
         })
         runInAction(() => input.__isReady = false)
         autoResetId(input)
@@ -56,7 +56,7 @@ describe('autoResetId', () => {
             options: {
                 items: [],
                 isReady: true,
-            },
+            } as any,
             required: true,
         })
         runInAction(() => input.__isReady = false)

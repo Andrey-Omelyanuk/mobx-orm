@@ -1,7 +1,7 @@
 import { ArrayInput } from './ArrayInput' 
 
 describe('ArrayInput', () => {
-    class TestClass extends ArrayInput<string[]> {
+    class TestClass extends ArrayInput<string[], any> {
         constructor(args?: any) {
             super(args)
         }

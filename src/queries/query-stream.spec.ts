@@ -1,12 +1,12 @@
-import { model, Model, LocalAdapter } from '..'
+import { model, Model, local } from '..'
 
 describe('QueryXStream', () => {
 
+    @local()
     @model class A extends Model {}
-    const adapter   : LocalAdapter<A> = new LocalAdapter(A)
 
     afterEach(async () => {
-        A.clearCache() 
+        A.repository.cache.clear() 
         jest.clearAllMocks()
     })
 

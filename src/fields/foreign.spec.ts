@@ -1,5 +1,5 @@
 import { runInAction } from 'mobx'
-import { Model, model, field, foreign } from '../'
+import { Model, model, field, foreign, local } from '../'
 
 
 describe('Field: foreign', () => {
@@ -27,11 +27,11 @@ describe('Field: foreign', () => {
         })
 
         it('cross declare', async () => {
-            @model class A extends Model {
+            @local() @model class A extends Model {
                 @field  b_id: number
                         b   : B
             }
-            @model class B extends Model {
+            @local() @model class B extends Model {
                 @field      a_id: number
                 @foreign(A) a   : A 
             }
@@ -46,15 +46,15 @@ describe('Field: foreign', () => {
     })
 
     describe('Usage', () => {
-        @model class A extends Model {}
-        @model class B extends Model {
+        @local() @model class A extends Model {}
+        @local() @model class B extends Model {
             @field      a_id: number
             @foreign(A) a   : A 
         }
 
         beforeEach(() => {
-            A.clearCache() 
-            B.clearCache() 
+            A.repository.cache.clear() 
+            B.repository.cache.clear() 
         })
 
         it('foreign obj create before', async () => {
