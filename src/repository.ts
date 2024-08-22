@@ -92,3 +92,12 @@ export class  Repository<M extends Model> {
         return await this.adapter.getDistinct(filter, field, controller)
     }
 }
+
+
+// Model.repository is readonly, use decorator to customize repository 
+export function repository(adapter: any, cache?: any) {
+    return (cls: any) => {
+        let repository = new Repository(cls, adapter, cache) 
+        cls.__proto__.repository = repository
+    }
+}

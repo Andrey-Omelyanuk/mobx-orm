@@ -8,7 +8,7 @@ describe('AutoReset', () => {
 
     @model class TestModel extends Model {}
 
-    class AutoResetTest extends AutoReset<NumberInput> {
+    class AutoResetTest extends AutoReset<NumberInput<any>> {
         do() { this.input.set(this.input.value)  }
     }
     AutoResetTest.prototype.do = jest.fn(AutoResetTest.prototype.do)
@@ -31,7 +31,7 @@ describe('AutoReset', () => {
             value: 2,
             options: query
         })
-        runInAction(() => input.options.__is_ready = true)
+        runInAction(() => (input.options as any).__is_ready = true)
         expect(query.isReady).toBe(true)
         expect(input).toMatchObject({ value: 2, isReady: false, disabled: false })
 
@@ -48,7 +48,7 @@ describe('AutoReset', () => {
             options: query,
             disabled: true,
         })
-        runInAction(() => input.options.__is_ready = true)
+        runInAction(() => (input.options as any).__is_ready = true)
         expect(query.isReady).toBe(true)
         expect(input).toMatchObject({ value: 2, isReady: true, disabled: true })
 

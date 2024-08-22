@@ -1,20 +1,22 @@
 import { ArrayStringInput } from './ArrayStringInput' 
 
+
 describe('ArrayStringInput', () => {
-    let value = new ArrayStringInput()
+    let i = new ArrayStringInput()
 
     describe('serialize', () => {
-        it('"a"'      , async () => { expect(value.serialize('a'      )).toMatchObject(['a',])})
-        it('"a,b,2"'  , async () => { expect(value.serialize('a,b,2'  )).toMatchObject(['a','b','2',])})
-        it('"test"'   , async () => { expect(value.serialize('test'   )).toMatchObject(['test'])})
-        it('"null"'   , async () => { expect(value.serialize('null'   )).toMatchObject([null,]) })
-        it('undefined', async () => { expect(value.serialize(undefined)).toMatchObject([]) })
-        it('null'     , async () => { expect(value.serialize(null     )).toMatchObject([]) })
+        it('"a"'      , async () => { i.serialize('a'      ); expect(i.value).toMatchObject(['a',])})
+        it('"a,b,2"'  , async () => { i.serialize('a,b,2'  ); expect(i.value).toMatchObject(['a','b','2',])})
+        it('"test"'   , async () => { i.serialize('test'   ); expect(i.value).toMatchObject(['test'])})
+        it('"null"'   , async () => { i.serialize('null'   ); expect(i.value).toMatchObject([null,]) })
+        it('undefined', async () => { i.serialize(undefined); expect(i.value).toMatchObject([]) })
+        it('null'     , async () => { i.serialize(null     ); expect(i.value).toMatchObject([]) })
     })
+
     describe('deserialize', () => {
-        it('[a]'      , async () => { expect(value.deserialize(['a',]       )).toBe('a') })
-        it('[a,b,2]'  , async () => { expect(value.deserialize(['a','b','2'])).toBe('a,b,2') })
-        it('undefined', async () => { expect(value.deserialize(undefined    )).toBe(undefined) })
-        it('null'     , async () => { expect(value.deserialize(null         )).toBe(undefined) })
+        it('[a]'      , async () => { i.set(['a',])         ; expect(i.deserialize()).toBe('a') })
+        it('[a,b,2]'  , async () => { i.set(['a','b','2'])  ; expect(i.deserialize()).toBe('a,b,2') })
+        it('undefined', async () => { i.set(undefined)      ; expect(i.deserialize()).toBe(undefined) })
+        it('null'     , async () => { i.set(null)           ; expect(i.deserialize()).toBe(undefined) })
     })
 })

@@ -5,8 +5,8 @@ describe('ArrayInput', () => {
         constructor(args?: any) {
             super(args)
         }
-        serialize(value?: string) : string[] { return []}
-        deserialize(value: string[]) : string { return ''}
+        serialize(value?: string) { return []}
+        deserialize() : string { return ''}
     }
     let value = new TestClass()
 

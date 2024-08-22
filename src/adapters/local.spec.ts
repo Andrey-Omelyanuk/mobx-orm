@@ -1,13 +1,11 @@
-import { model, Model, Query, field, LocalAdapter, local, local_store } from '../'
-import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
+import { model, Model, LocalAdapter, local, local_store } from '../'
+import { data_set  } from '../test.utils' 
 
 
 describe('LocalAdapter', () => {
 
-    @local()
-    @model class A extends Model {}
+    @local() @model class A extends Model {}
     const adapter = A.repository.adapter as LocalAdapter<A> 
-
 
     afterEach(async () => {
         local_store['A'] = {} // clean the store
@@ -20,8 +18,7 @@ describe('LocalAdapter', () => {
         })
 
         it('decorate the model', async ()=> {
-            @local()
-            @model class A2 extends Model {}
+            @local() @model class A2 extends Model {}
             expect((A2.repository.adapter as LocalAdapter<A2>).store_name).toBe('A2')
         })
     })
@@ -31,7 +28,7 @@ describe('LocalAdapter', () => {
         expect(await adapter.create({a: 2})).toStrictEqual({id: 2, a: 2})
         expect(await adapter.create({a: 3})).toStrictEqual({id: 3, a: 3})
         expect(await adapter.create({a: 4})).toStrictEqual({id: 4, a: 4})
-        expect(local_store['C']).toEqual({
+        expect(local_store['A']).toEqual({
             1: {id: 1, a: 1},
             2: {id: 2, a: 2},
             3: {id: 3, a: 3},

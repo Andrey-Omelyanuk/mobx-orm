@@ -6,19 +6,18 @@ export class EnumInput<EnumType extends Object, EnumValue extends EnumType[keyof
     constructor(args: InputConstructorArgs<EnumValue, any> & { enum : EnumType } ) {
         super(args)
         this.enum = args.enum
-        // TODO: convert enum to query? and use it as usual options?
     }
 
-    serialize(value?: string): EnumValue|null|undefined {
-        if (value === 'null')    return null
-        if (value === undefined) return undefined
-        if (value === null)      return null
-        return Object.values(this.enum).find(v => v == value) as EnumValue
+    serialize(value?: string) {
+        if (value === 'null')    this.set(null)
+        if (value === undefined) this.set(undefined)
+        if (value === null)      this.set(null)
+        else this.set(Object.values(this.enum).find(v => v == value) as EnumValue)
     }
 
-    deserialize(value: EnumValue|null|undefined): string {
-        if (value === undefined) return undefined
-        if (value === null) return 'null'
-        return value.toString()
+    deserialize(): string {
+        if (this.value === undefined) return undefined
+        if (this.value === null) return 'null'
+        return this.value.toString()
     }
 }

@@ -1,15 +1,18 @@
 import { Input } from './Input'
 
+
 export class StringInput extends Input<string|null|undefined, any> {
-    serialize(value?: string): string|null|undefined {
-        if (value === undefined) return undefined
-        if (value === 'null')    return null
-        if (value === null)      return undefined
-        return value
+
+    serialize(value: string) {
+        if (value === undefined) this.set(undefined)
+        if (value === 'null')    this.set(null)
+        if (value === null)      this.set(undefined)
+        else this.set(value)
     }
-    deserialize(value: string|null|undefined): string {
-        if (value === undefined) return undefined
-        if (value === null) return 'null'
-        return value
+
+    deserialize(): string {
+        if (this.value === undefined) return undefined
+        if (this.value === null) return 'null'
+        return this.value
     }
 } 

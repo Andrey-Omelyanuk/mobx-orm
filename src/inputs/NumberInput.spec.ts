@@ -1,18 +1,20 @@
 import { NumberInput } from './NumberInput'
 
+
 describe('NumberInput', () => {
-    let value = new NumberInput()
+    let i = new NumberInput()
+
     describe('serialize', () => {
-        it('"0"'      , async () => { expect(value.serialize('0'      )).toBe(0) })
-        it('"test"'   , async () => { expect(value.serialize('test'   )).toBe(undefined) })
-        it('"null"'   , async () => { expect(value.serialize('null'   )).toBe(null) })
-        it('undefined', async () => { expect(value.serialize(undefined)).toBe(undefined) })
-        it('null'     , async () => { expect(value.serialize(null     )).toBe(undefined) })
+        it('"0"'      , async () => { i.serialize('0'      ); expect(i.value).toBe(0) })
+        it('"test"'   , async () => { i.serialize('test'   ); expect(i.value).toBe(undefined) })
+        it('"null"'   , async () => { i.serialize('null'   ); expect(i.value).toBe(null) })
+        it('undefined', async () => { i.serialize(undefined); expect(i.value).toBe(undefined) })
+        it('null'     , async () => { i.serialize(null     ); expect(i.value).toBe(undefined) })
     })
 
     describe('deserialize', () => {
-        it('"0"'      , async () => { expect(value.deserialize(0        )).toBe('0') })
-        it('undefined', async () => { expect(value.deserialize(undefined)).toBe(undefined) })
-        it('null'     , async () => { expect(value.deserialize(null     )).toBe('null') })
+        it('"0"'      , async () => { i.set(0)          ; expect(i.deserialize()).toBe('0') })
+        it('undefined', async () => { i.set(undefined)  ; expect(i.deserialize()).toBe(undefined) })
+        it('null'     , async () => { i.set(null)       ; expect(i.deserialize()).toBe('null') })
     })
 })

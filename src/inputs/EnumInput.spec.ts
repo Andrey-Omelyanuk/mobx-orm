@@ -1,24 +1,26 @@
 import { EnumInput } from './EnumInput'
 
+
 describe('EnumInput', () => {
+
     enum Enum {
         A = 'a',
         B = 1,
     }
-
-    let value = new EnumInput({enum: Enum})
+    let i = new EnumInput({enum: Enum})
 
     describe('serialize', () => {
-        it('"a"'      , async () => { expect(value.serialize('a'      )).toBe(Enum.A)})
-        it('"1"'      , async () => { expect(value.serialize('1'      )).toBe(Enum.B)})
-        it('"bad"'    , async () => { expect(value.serialize('bad'    )).toBe(undefined)})
-        it('undefined', async () => { expect(value.serialize(undefined)).toBe(undefined) })
-        it('null'     , async () => { expect(value.serialize(null     )).toBe(null) })
+        it('"a"'      , async () => { i.serialize('a'      ); expect(i.value).toBe(Enum.A)})
+        it('"1"'      , async () => { i.serialize('1'      ); expect(i.value).toBe(Enum.B)})
+        it('"bad"'    , async () => { i.serialize('bad'    ); expect(i.value).toBe(undefined)})
+        it('undefined', async () => { i.serialize(undefined); expect(i.value).toBe(undefined) })
+        it('null'     , async () => { i.serialize(null     ); expect(i.value).toBe(null) })
     })
+
     describe('deserialize', () => {
-        it('Enum.A'   , async () => { expect(value.deserialize(Enum.A       )).toBe('a') })
-        it('Enum.B'   , async () => { expect(value.deserialize(Enum.B       )).toBe('1') })
-        it('undefined', async () => { expect(value.deserialize(undefined    )).toBe(undefined) })
-        it('null'     , async () => { expect(value.deserialize(null         )).toBe('null') })
+        it('Enum.A'   , async () => { i.set(Enum.A)     ; expect(i.deserialize()).toBe('a') })
+        it('Enum.B'   , async () => { i.set(Enum.B)     ; expect(i.deserialize()).toBe('1') })
+        it('undefined', async () => { i.set(undefined)  ; expect(i.deserialize()).toBe(undefined) })
+        it('null'     , async () => { i.set(null)       ; expect(i.deserialize()).toBe('null') })
     })
 })

@@ -1,9 +1,10 @@
 import { ArrayInput } from './ArrayInput'
 import { StringInput } from './StringInput'
 
+
 export class ArrayStringInput extends ArrayInput<string[], any> {
 
-    serialize(value?: string) : string[] {
+    serialize(value?: string) {
         let result = [] 
         if (value) {
             let converter = new StringInput()
@@ -14,15 +15,15 @@ export class ArrayStringInput extends ArrayInput<string[], any> {
                 }
             }
         }
-        return result
+        this.set(result)
     }
 
-    deserialize(value: string[]) : string {
+    deserialize() : string {
         let result = [] 
-        if (value) {
-            for (const i of value) {
-                let converter = new StringInput()
-                let v = converter.deserialize(i) 
+        if (this.value) {
+            for (const i of this.value) {
+                let converter = new StringInput({value: i})
+                let v = converter.deserialize() 
                 if (v !== undefined) {
                     result.push(v)
                 }

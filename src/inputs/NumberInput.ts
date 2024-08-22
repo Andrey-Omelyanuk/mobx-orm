@@ -1,21 +1,23 @@
 import { Model } from '../model'
 import { Input } from './Input'
 
-export class NumberBaseInput<M extends Model> extends Input<number|null|undefined, M> {
-    serialize(value?: string): number|null|undefined {
-        if (value === undefined) return undefined
-        if (value === 'null')    return null
-        if (value === null)      return undefined 
-        let result = parseInt(value)
-        if (isNaN(result)) result = undefined
-        return result
+
+export class NumberInput<M extends Model> extends Input<number|null|undefined, M> {
+
+    serialize(value: string) {
+        if (value === undefined) this.set(undefined)
+        if (value === 'null')    this.set(null)
+        if (value === null)      this.set(undefined)
+        else {
+            let result = parseInt(value)
+            if (isNaN(result)) result = undefined
+            this.set(result)
+        }
     }
 
-    deserialize(value: number|null|undefined): string {
-        if (value === undefined) return undefined
-        if (value === null) return 'null'
-        return ''+value
+    deserialize(): string {
+        if (this.value === undefined) return undefined
+        if (this.value === null) return 'null'
+        return ''+this.value
     }
 }
-
-export class NumberInput extends NumberBaseInput<any> {} 

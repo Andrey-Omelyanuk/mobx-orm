@@ -93,15 +93,15 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         if (order_by) {
             raw_objs = raw_objs.sort((obj_a, obj_b) => {
                 let res
-                for(let sort_by_field of order_by) {
+                for(let sort_by_field of order_by.value) {
                 }
                 return 0
             })
         }
 
         // page
-        if (limit !== undefined && offset !== undefined) {
-            raw_objs = raw_objs.slice(offset, offset+limit)
+        if (limit.value !== undefined && offset.value !== undefined) {
+            raw_objs = raw_objs.slice(offset.value, offset.value+limit.value)
         }
         return raw_objs 
     }
@@ -113,13 +113,17 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
     async getDistinct(filter, filed): Promise<any[]> {
         return []
     }
+
+    getURLSearchParams(query: Query<M>): URLSearchParams {
+        return new URLSearchParams()
+    }
 }
 
 
 // model decorator
 export function local() {
     return (cls: any) => {
-        let repository = new Repository(cls, new LocalAdapter(cls)) 
+        let repository = new Repository(cls, new LocalAdapter(cls.name)) 
         cls.__proto__.repository = repository
     }
 }

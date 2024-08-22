@@ -99,11 +99,11 @@ export abstract class Input<T, M extends Model> {
         this.autoResetObj?.destroy()
     }
 
-    abstract serialize  (value?: string) : T        // convert string to value
-    abstract deserialize(value : T     ) : string   // convert value to string
+    abstract serialize  (value : string) : void     // convert string to value
+    abstract deserialize()               : string   // convert value to string
 
     toString () { // sinonim for deserialize
-        return this.deserialize(this.value) 
+        return this.deserialize() 
     }
 
     // Any changes in options should reset __isReady
@@ -133,16 +133,17 @@ export abstract class Input<T, M extends Model> {
         const name = this.syncURLSearchParams
         const searchParams = new URLSearchParams(window.location.search)
         if (searchParams.has(name)) {
-            this.set(this.serialize(searchParams.get(name)))
+            this.serialize(searchParams.get(name))
         }
         
         // watch for URL changes and update Input
         function updataInputFromURL() {
             const searchParams = new URLSearchParams(window.location.search)
             if (searchParams.has(name)) {
-                const value = this.serialize(searchParams.get(name))
-                if (this.value !== value) {
-                    this.set(value)
+                const raw_value = searchParams.get(name)
+                const exist_raw_value = this.deserialize() 
+                if (raw_value !== exist_raw_value) {
+                    this.serialize(raw_value)
                 }
             }
             else if (this.value !== undefined) {
@@ -154,10 +155,10 @@ export abstract class Input<T, M extends Model> {
         // watch for Input changes and update URL
         this.__disposers.push(reaction(
             // I cannot use this.value because it can be a Map
-            () => this.deserialize(this.value),
+            () => this.deserialize(),
             () => {
                 const searchParams = new URLSearchParams(window.location.search)
-                const _value = this.deserialize(this.value)
+                const _value = this.deserialize()
                 if (_value === '' || _value === undefined) { 
                     searchParams.delete(name)
                 } else if (searchParams.get(name) !== _value) {
@@ -171,15 +172,16 @@ export abstract class Input<T, M extends Model> {
 
     __doSyncLocalStorage () {
         const name = this.syncLocalStorage
-        const value = this.serialize(localStorage.getItem(name))
-        if (this.value !== value) {
-            this.set(value)
+        const raw_value = localStorage.getItem(name)
+        const exist_raw_value = this.deserialize() 
+        if (exist_raw_value !== raw_value) {
+            this.serialize(raw_value)
         }
         this.__disposers.push(reaction(
             () => this.value,
             (value) => {
                 if (value !== undefined) {
-                    localStorage.setItem(name, this.deserialize(value))
+                    localStorage.setItem(name, this.deserialize())
                 } else {
                     localStorage.removeItem(name)
                 }

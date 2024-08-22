@@ -1,16 +1,18 @@
 import { Input } from "./Input"
 
+
 export class BooleanInput extends Input<boolean|null|undefined, any> {
-    serialize(value?: string): boolean|null|undefined {
-        if (value === undefined) return undefined
-        if (value === 'null')    return null
-        if (value === null)      return undefined
-        return value === 'true' ? true : value === 'false' ? false : undefined
+
+    serialize(value?: string) {
+        if (value === undefined) this.set(undefined)
+        if (value === 'null')    this.set(null)
+        if (value === null)      this.set(undefined)
+        else this.set(value === 'true' ? true : value === 'false' ? false : undefined)
     }
 
-    deserialize(value: boolean|null|undefined): string {
-        if (value === undefined) return undefined
-        if (value === null) return 'null'
-        return !!value ? 'true' : 'false' 
+    deserialize(): string {
+        if (this.value === undefined) return undefined
+        if (this.value === null) return 'null'
+        return !!this.value ? 'true' : 'false' 
     }
 }

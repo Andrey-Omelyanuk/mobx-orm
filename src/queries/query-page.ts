@@ -5,28 +5,28 @@ import { Model } from '../model'
 
 export class QueryPage<M extends Model> extends Query<M> {
 
-    @action('MO: set page size') setPageSize(size: number) { this.limit = size; this.offset = 0 }
-    @action('MO: set page')      setPage(n: number) { this.offset = this.limit * (n > 0 ? n-1 : 0) }
+    @action('MO: set page size') setPageSize(size: number) { this.limit.set(size); this.offset.set(0) }
+    @action('MO: set page')      setPage(n: number) { this.offset.set(this.limit.value * (n > 0 ? n-1 : 0)) }
     goToFirstPage() { this.setPage(1) }
     goToPrevPage () { this.setPage(this.current_page - 1) }
     goToNextPage () { this.setPage(this.current_page + 1) }
     goToLastPage () { this.setPage(this.total_pages) }
 
-    get is_first_page() : boolean { return this.offset === 0 }
-    get is_last_page () : boolean { return this.offset + this.limit >= this.total }
-    get current_page()  : number  { return this.offset / this.limit + 1 }
-    get total_pages()   : number  { return this.total ? Math.ceil(this.total / this.limit) : 1 }
+    get is_first_page() : boolean { return this.offset.value === 0 }
+    get is_last_page () : boolean { return this.offset.value + this.limit.value >= this.total }
+    get current_page()  : number  { return this.offset.value / this.limit.value + 1 }
+    get total_pages()   : number  { return this.total ? Math.ceil(this.total / this.limit.value) : 1 }
     // we going to migrate to JS style
-    get isFirstPage() : boolean { return this.offset === 0 }
-    get isLastPage () : boolean { return this.offset + this.limit >= this.total }
-    get currentPage() : number  { return this.offset / this.limit + 1 }
-    get totalPages()  : number  { return this.total ? Math.ceil(this.total / this.limit) : 1 }
+    get isFirstPage() : boolean { return this.offset.value === 0 }
+    get isLastPage () : boolean { return this.offset.value + this.limit.value >= this.total }
+    get currentPage() : number  { return this.offset.value / this.limit.value + 1 }
+    get totalPages()  : number  { return this.total ? Math.ceil(this.total / this.limit.value) : 1 }
 
     constructor(props: QueryProps<M>) {
         super(props)
         runInAction(() => {
-            if (this.offset === undefined) this.offset = 0
-            if (this.limit  === undefined) this.limit = config.DEFAULT_PAGE_SIZE
+            if (this.offset === undefined) this.offset.set(0)
+            if (this.limit  === undefined) this.limit.set(config.DEFAULT_PAGE_SIZE)
         })
     }
 

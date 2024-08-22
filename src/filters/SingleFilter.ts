@@ -21,7 +21,7 @@ export abstract class SingleFilter extends Filter {
 
     get URLSearchParams(): URLSearchParams{
         let search_params = new URLSearchParams()
-        let value = this.input.deserialize(this.input.value) 
+        let value = this.input.deserialize() 
         !this.input.disabled && value !== undefined && search_params.set(this.URIField, value)
         return search_params
     }

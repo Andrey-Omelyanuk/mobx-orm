@@ -1,7 +1,5 @@
 import { action, intercept, makeObservable, observable, observe, runInAction, values } from 'mobx'
-import { Adapter } from './adapters'
 import { Query, QueryPage, QueryStream, QueryCacheSync, QueryRaw, QueryRawPage, QueryProps } from './queries'
-import { Cache } from './cache'
 import { Repository } from './repository'
 
 

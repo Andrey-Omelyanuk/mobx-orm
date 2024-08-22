@@ -1,6 +1,6 @@
 import { NumberInput } from '../NumberInput'
 
-export function autoResetId(input: NumberInput) {
+export function autoResetId(input: NumberInput<any>) {
     if (!input.options) {
         console.warn('Input with autoResetId has no options', input)
         return 

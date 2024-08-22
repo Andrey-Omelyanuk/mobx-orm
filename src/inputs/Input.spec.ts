@@ -1,7 +1,6 @@
 import { runInAction } from 'mobx'
 import { Model } from '../model'
 import { AND, EQ } from '../filters'
-import { BaseTestAdapter } from '../test.utils'
 import { Input } from './Input'
 import { NumberInput } from './NumberInput'
 import { BooleanInput } from './BooleanInput'
@@ -12,11 +11,11 @@ jest.useFakeTimers()
 describe('Input', () => {
 
     class TestModel extends Model { }
-
     class TestInput extends Input<string | null | undefined, any> {
-        serialize(value?: string): string | null | undefined { return }
-        deserialize(value?: string | null | undefined): string { return '' }
+        serialize(value: string) { }
+        deserialize(): string { return '' }
     }
+
     describe('constructor', () => {
         it('no value and options', async () => {
             const input = new TestInput()
@@ -46,7 +45,7 @@ describe('Input', () => {
         })
         it('with value and options is ready', async () => {
             const options = TestModel.getQuery({})
-            runInAction(() => options.__is_ready = true)
+            runInAction(() => (options as any).__is_ready = true)
             const input = new TestInput({ value: 'test', options })
 
             expect(input.value).toBe('test')
@@ -64,20 +63,20 @@ describe('Input', () => {
         it('with not ready options ', async () => {
             const options = TestModel.getQuery({})
             const input = new TestInput({ options }); expect(input.isReady).toBe(false)
-            runInAction(() => options.__is_ready = true); expect(input.isReady).toBe(false)
+            runInAction(() => (options as any).__is_ready = true); expect(input.isReady).toBe(false)
             input.set('test'); expect(input.isReady).toBe(true)
         })
         it('with ready options ', async () => {
             const options = TestModel.getQuery({})
-            runInAction(() => options.__is_ready = true)
+            runInAction(() => (options as any).__is_ready = true)
 
             const input = new TestInput({ options })        ; expect(input.isReady).toBe(false)
             input.set('test')                               ; expect(input.isReady).toBe(true)
-            runInAction(() => options.__is_ready = false)   ; expect(input.isReady).toBe(false)
+            runInAction(() => (options as any).__is_ready = false)   ; expect(input.isReady).toBe(false)
             input.set('test')                               ; expect(input.isReady).toBe(false)
-            runInAction(() => options.__is_ready = false)   ; expect(input.isReady).toBe(false)
+            runInAction(() => (options as any).__is_ready = false)   ; expect(input.isReady).toBe(false)
             input.set('test')                               ; expect(input.isReady).toBe(false)
-            runInAction(() => options.__is_ready = true)    ; expect(input.isReady).toBe(false)
+            runInAction(() => (options as any).__is_ready = true)    ; expect(input.isReady).toBe(false)
             input.set('test')                               ; expect(input.isReady).toBe(true)
         })
         it('debounce input inpact to isReady', async () => {
@@ -104,12 +103,12 @@ describe('Input', () => {
         expect(input.__disposers.length).toBe(2)
         expect(input.options.is_ready).toBe(false)
         expect(input.value).toBe('one')
-        runInAction(() => options.__is_ready = true); expect(input.value).toBe('two')
-        runInAction(() => options.__is_ready = false); expect(input.value).toBe('two')
+        runInAction(() => (options as any).__is_ready = true); expect(input.value).toBe('two')
+        runInAction(() => (options as any).__is_ready = false); expect(input.value).toBe('two')
         input.set('three'); expect(input.value).toBe('three')
-        runInAction(() => options.__is_ready = true); expect(input.value).toBe('two')
+        runInAction(() => (options as any).__is_ready = true); expect(input.value).toBe('two')
         input.set('three'); expect(input.value).toBe('three')
-        runInAction(() => options.__is_ready = true); expect(input.value).toBe('three')
+        runInAction(() => (options as any).__is_ready = true); expect(input.value).toBe('three')
     })
     it('autoReset 2', async () => {
         let test = 0
@@ -130,7 +129,7 @@ describe('Input', () => {
         expect(inputA.isReady).toBe(true)
         expect(inputB.options.isReady).toBe(false)
         expect(inputB.isReady).toBe(false)
-        runInAction(() => inputB.options.__is_ready = true)
+        runInAction(() => (inputB.options as any).__is_ready = true)
         expect(test).toBe(1)
         expect(inputA.isReady).toBe(true)
         expect(inputB.options.isReady).toBe(true)
@@ -145,7 +144,7 @@ describe('Input', () => {
         expect(inputA.isReady).toBe(true)
         expect(inputB.options.isReady).toBe(false)
         expect(inputB.isReady).toBe(false)
-        runInAction(() => inputB.options.__is_ready = true)
+        runInAction(() => (inputB.options as any).__is_ready = true)
         expect(test).toBe(2)
         expect(inputA.isReady).toBe(true)
         expect(inputB.options.isReady).toBe(true)

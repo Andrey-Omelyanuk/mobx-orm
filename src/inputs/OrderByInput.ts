@@ -1,9 +1,10 @@
 import { ASC, DESC, ORDER_BY } from '../queries'
 import { Input } from './Input'
 
+
 export class OrderByInput extends Input<ORDER_BY, any> {
 
-    serialize(value?: string) : ORDER_BY {
+    serialize(value: string) {
         let result: ORDER_BY = new Map()
         if (value) {
             for (const item of value.split(',')) {
@@ -15,13 +16,13 @@ export class OrderByInput extends Input<ORDER_BY, any> {
                 }
             }
         }
-        return result
+        this.value = result
     }
 
-    deserialize(value: ORDER_BY) : string | undefined {
-        if (value) {
+    deserialize() : string | undefined {
+        if (this.value) {
             let result = ''
-            for (const [key, val] of value) {
+            for (const [key, val] of this.value) {
                 if (result) result += ','
                 if (val === DESC) result += '-'
                 const field = key.replace(/\./g, '__')

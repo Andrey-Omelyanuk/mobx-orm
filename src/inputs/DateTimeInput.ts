@@ -1,15 +1,17 @@
 import { Input } from "./Input"
 
+
 export class DateTimeInput extends Input<Date|null|undefined, any> {
-    serialize(value?: string): Date|null|undefined {
-        if (value === undefined) return undefined
-        if (value === 'null')    return null
-        return new Date(value) 
+
+    serialize(value?: string) {
+        if (value === undefined) this.set(undefined)
+        if (value === 'null')    this.set(null)
+        else this.set(new Date(value))
     }
 
-    deserialize(value: Date|null|undefined): string {
-        if (value === undefined) return undefined
-        if (value === null) return 'null'
-        return value instanceof Date ? (value as Date).toISOString() : ""
+    deserialize(): string {
+        if (this.value === undefined) return undefined
+        if (this.value === null) return 'null'
+        return this.value instanceof Date ? (this.value as Date).toISOString() : ""
     }
 }
