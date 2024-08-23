@@ -1,6 +1,6 @@
 import { makeObservable, observable } from 'mobx'
 import { Filter } from './Filter'
-import { Input } from '../inputs'
+import { Input } from '../inputs/Input'
 
 
 export abstract class SingleFilter extends Filter {

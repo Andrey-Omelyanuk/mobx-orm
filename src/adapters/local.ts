@@ -1,8 +1,7 @@
 import { Model } from '../model'
-import { Query } from '../queries'
-import { Cache } from '../cache'
+import { Query } from '../queries/query'
 import { Repository }  from '../repository'
-import { Filter } from '../filters'
+import { Filter } from '../filters/Filter'
 import { Adapter } from './adapter'
 
 /*
@@ -77,11 +76,10 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
     }
 
     async load (query: Query<M>) : Promise<any[]> {
-        const {filter, order_by, limit, offset} = query|| {}
         if (this.delay) await timeout(this.delay) 
         let raw_objs = []
 
-        if (filter) {
+        if (query.filter) {
             for(let raw_obj of Object.values(local_store[this.store_name])) {
             }
         }
@@ -90,18 +88,18 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         }
 
         // order_by (sort)
-        if (order_by) {
+        if (query.order_by.value) {
             raw_objs = raw_objs.sort((obj_a, obj_b) => {
                 let res
-                for(let sort_by_field of order_by.value) {
+                for(let sort_by_field of query.order_by.value) {
                 }
                 return 0
             })
         }
 
         // page
-        if (limit.value !== undefined && offset.value !== undefined) {
-            raw_objs = raw_objs.slice(offset.value, offset.value+limit.value)
+        if (query.limit.value !== undefined && query.offset.value !== undefined) {
+            raw_objs = raw_objs.slice(query.offset.value, query.offset.value+query.limit.value)
         }
         return raw_objs 
     }

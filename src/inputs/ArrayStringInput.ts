@@ -4,14 +4,14 @@ import { StringInput } from './StringInput'
 
 export class ArrayStringInput extends ArrayInput<string[], any> {
 
-    serialize(value?: string) {
+    serialize(value: string) {
         let result = [] 
         if (value) {
             let converter = new StringInput()
             for (const i of value.split(',')) {
-                let tmp = converter.serialize(i)
-                if (tmp !== undefined) {
-                    result.push(tmp)
+                converter.serialize(i)
+                if (converter.value !== undefined) {
+                    result.push(converter.value)
                 }
             }
         }

@@ -2,7 +2,7 @@ import _ from 'lodash'
 import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
 import { config } from '../config'
 import { Model } from '../model'
-import { Query } from '../queries'
+import { Query } from '../queries/query'
 import { AutoReset } from './auto-reset/AutoReset'
 
 export interface InputConstructorArgs<T, M extends Model> {

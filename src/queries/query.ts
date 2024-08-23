@@ -2,9 +2,10 @@ import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
 import { Repository } from '../repository'
 import { config } from '../config'
 import { Model } from '../model'
-import { Filter } from '../filters'
+import { Filter } from '../filters/Filter'
 import { waitIsFalse, waitIsTrue } from '../utils'
-import { OrderByInput, NumberInput } from '../inputs'
+import { OrderByInput } from '../inputs/OrderByInput'
+import { NumberInput } from '../inputs/NumberInput'
 import { ArrayStringInput } from '../inputs/ArrayStringInput'
 
 export const DISPOSER_AUTOUPDATE = "__autoupdate"
@@ -17,7 +18,8 @@ export interface QueryProps<M extends Model> {
     repository                  ?: Repository<M>
     //
     filter                      ?: Filter
-    order_by                    ?: OrderByInput
+    order_by                    ?: OrderByInput 
+
     // pagination
     offset                      ?: NumberInput<any>
     limit                       ?: NumberInput<any>
@@ -27,24 +29,18 @@ export interface QueryProps<M extends Model> {
     omit                        ?: ArrayStringInput
     //
     autoupdate                  ?: boolean
-    syncURL                     ?: boolean // deprecated
-    syncURLSearchParams         ?: boolean
-    syncURLSearchParamsPrefix   ?: string
 }
 
 export class Query <M extends Model> {
 
     readonly repository: Repository<M>
     readonly filter    : Filter
-    readonly order_by  : OrderByInput
+    readonly order_by  : OrderByInput 
     readonly offset    : NumberInput<any>
     readonly limit     : NumberInput<any>
     readonly relations : ArrayStringInput
     readonly fields    : ArrayStringInput 
     readonly omit      : ArrayStringInput 
-
-    readonly syncURLSearchParams         : boolean
-    readonly syncURLSearchParamsPrefix   : string
 
     @observable total         : number
     @observable need_to_update: boolean = false
@@ -71,22 +67,21 @@ export class Query <M extends Model> {
         let {
             repository, filter, order_by, offset, limit,
             relations, fields, omit,
-            autoupdate = false, syncURL, syncURLSearchParams = false, syncURLSearchParamsPrefix = ''
+            autoupdate = false
         } = props
-        if (syncURL) syncURLSearchParams = syncURL
 
         this.repository = repository 
         this.filter    = filter
-        this.order_by  = order_by   ? order_by  : new OrderByInput({syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined}) 
-        this.offset    = offset     ? offset    : new NumberInput({syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__offset` : undefined}) 
-        this.limit     = limit      ? limit     : new NumberInput({syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__limit` : undefined  }) 
+        this.order_by  = order_by   ? order_by  : new OrderByInput() 
+        this.offset    = offset     ? offset    : new NumberInput() 
+        this.limit     = limit      ? limit     : new NumberInput() 
         this.relations = relations  ? relations : new ArrayStringInput()
         this.fields    = fields     ? fields    : new ArrayStringInput()
         this.omit      = omit       ? omit      : new ArrayStringInput()
         makeObservable(this)
 
         this.__disposers.push(reaction(
-            () => this.repository.adapter.getURLSearchParams(this).toString(),
+            () => this.repository?.adapter?.getURLSearchParams(this).toString(),
             action('MO: Query Base - need to update', () => {
                 this.need_to_update = true
                 this.__is_ready = false

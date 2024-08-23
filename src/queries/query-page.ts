@@ -17,16 +17,16 @@ export class QueryPage<M extends Model> extends Query<M> {
     get current_page()  : number  { return this.offset.value / this.limit.value + 1 }
     get total_pages()   : number  { return this.total ? Math.ceil(this.total / this.limit.value) : 1 }
     // we going to migrate to JS style
-    get isFirstPage() : boolean { return this.offset.value === 0 }
-    get isLastPage () : boolean { return this.offset.value + this.limit.value >= this.total }
-    get currentPage() : number  { return this.offset.value / this.limit.value + 1 }
-    get totalPages()  : number  { return this.total ? Math.ceil(this.total / this.limit.value) : 1 }
+    get isFirstPage() : boolean { return this.is_first_page }
+    get isLastPage () : boolean { return this.is_last_page } 
+    get currentPage() : number  { return this.current_page } 
+    get totalPages()  : number  { return this.total_pages } 
 
     constructor(props: QueryProps<M>) {
         super(props)
         runInAction(() => {
-            if (this.offset === undefined) this.offset.set(0)
-            if (this.limit  === undefined) this.limit.set(config.DEFAULT_PAGE_SIZE)
+            if (this.offset.value === undefined) this.offset.set(0)
+            if (this.limit.value  === undefined) this.limit.set(config.DEFAULT_PAGE_SIZE)
         })
     }
 

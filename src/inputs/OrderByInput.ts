@@ -1,4 +1,4 @@
-import { ASC, DESC, ORDER_BY } from '../queries'
+import { ASC, DESC, ORDER_BY } from '../queries/query'
 import { Input } from './Input'
 
 

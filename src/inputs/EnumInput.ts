@@ -9,9 +9,9 @@ export class EnumInput<EnumType extends Object, EnumValue extends EnumType[keyof
     }
 
     serialize(value?: string) {
-        if (value === 'null')    this.set(null)
-        if (value === undefined) this.set(undefined)
-        if (value === null)      this.set(null)
+             if (value === 'null')    this.set(null)
+        else if (value === undefined) this.set(undefined)
+        else if (value === null)      this.set(null)
         else this.set(Object.values(this.enum).find(v => v == value) as EnumValue)
     }
 

@@ -1,4 +1,4 @@
-import { Input } from '../inputs'
+import { Input } from '../inputs/Input'
 import { SingleFilter } from "./SingleFilter"
 
 

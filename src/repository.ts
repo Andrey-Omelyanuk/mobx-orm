@@ -1,9 +1,9 @@
 import { runInAction } from 'mobx'
 import { Model } from './model'
 import { Cache } from './cache'
-import { Query } from './queries'
+import { Query } from './queries/query'
 import { Filter } from './filters'
-import { Adapter } from './adapters'
+import { Adapter } from './adapters/adapter'
 
 
 export class  Repository<M extends Model> {

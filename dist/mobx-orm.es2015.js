@@ -2,20 +2,17 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v1.3.18
+   * mobx-orm.js v2.0.0
    * Released under the MIT license.
    */
 
-import { observable, action, makeObservable, reaction, runInAction, autorun, computed, observe, intercept, extendObservable } from 'mobx';
+import { observable, action, makeObservable, runInAction, autorun, reaction, intercept, observe, extendObservable, computed } from 'mobx';
 import _ from 'lodash';
-
-const ASC = true;
-const DESC = false;
 
 // Global config of Mobx-ORM
 const config = {
     DEFAULT_PAGE_SIZE: 50,
-    AUTO_UPDATE_DELAY: 100,
+    AUTO_UPDATE_DELAY: 100, // ms
     NON_FIELD_ERRORS_KEY: 'non_field_errors',
     // NOTE: React router manage URL by own way. 
     // change UPDATE_SEARCH_PARAMS and WATCTH_URL_CHANGES in this case
@@ -54,893 +51,194 @@ function __metadata(metadataKey, metadataValue) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
 }
 
-class Filter {
-}
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
 
-// Note: any type can be === null
-var ValueType;
-(function (ValueType) {
-    ValueType[ValueType["STRING"] = 0] = "STRING";
-    ValueType[ValueType["NUMBER"] = 1] = "NUMBER";
-    ValueType[ValueType["BOOL"] = 2] = "BOOL";
-    ValueType[ValueType["DATETIME"] = 3] = "DATETIME";
-    ValueType[ValueType["DATE"] = 4] = "DATE";
-})(ValueType || (ValueType = {}));
-class SingleFilter extends Filter {
-    constructor(field, value, value_type, options) {
-        super();
-        Object.defineProperty(this, "field", {
+class Cache {
+    constructor(model, name) {
+        Object.defineProperty(this, "name", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "value_type", {
+        Object.defineProperty(this, "model", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        }); // TODO: type
+        Object.defineProperty(this, "store", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "value", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        }); // string|number|boolean|null|undefined|string[]|number[]
-        Object.defineProperty(this, "options", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "__disposers", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
-        this.options = options;
-        this.field = field;
-        // auto detect type if type was not provided
-        if (value_type === undefined) {
-            switch (typeof value) {
-                case 'number':
-                    this.value_type = ValueType.NUMBER;
-                    break;
-                case 'boolean':
-                    this.value_type = ValueType.BOOL;
-                    break;
-                default:
-                    this.value_type = value instanceof Date ? ValueType.DATETIME : ValueType.STRING;
-            }
-        }
-        else {
-            this.value_type = value_type;
-        }
-        this.value = value;
+        this.name = name ? name : model.name;
+        this.model = model;
+        this.store = new Map();
         makeObservable(this);
-        // this.__disposers.push(autorun(() => {
-        //     if (this.value === undefined && getDefaultValue !== undefined) {
-        //         this.value = getDefaultValue(this)
-        //     }
-        // }
     }
-    get URLSearchParams() {
-        let search_params = new URLSearchParams();
-        let value = this.deserialize();
-        value !== undefined && search_params.set(this.URIField, value);
-        return search_params;
+    get(id) {
+        return this.store.get(id);
     }
-    set(value) {
-        this.value = value;
+    inject(obj) {
+        if (obj.id === undefined)
+            throw new Error(`Object should have id!`);
+        const exist_obj = this.store.get(obj.id);
+        if (exist_obj && exist_obj !== obj)
+            throw new Error(`Object ${obj.constructor.name}: ${obj.id} already exist in the cache. ${this.name}`);
+        this.store.set(obj.id, obj);
     }
-    setFromURI(uri) {
-        const search_params = new URLSearchParams(uri);
-        const field_name = this.URIField;
-        const value = search_params.has(field_name) ? search_params.get(field_name) : undefined;
-        this.serialize(value);
+    eject(obj) {
+        return this.store.delete(obj.id);
     }
-    isMatch(obj) {
-        // it's always match if value of filter is undefined
-        if (this.value === undefined)
-            return true;
-        return match$1(obj, this.field, this.value, this.operator);
-    }
-    // convert from string
-    serialize(value) {
-        let result;
-        if (value === undefined) {
-            this.value = undefined;
-            return;
+    update(raw_obj) {
+        let obj = this.store.get(raw_obj.id);
+        if (obj)
+            obj.updateFromRaw(raw_obj);
+        else {
+            obj = new this.model(raw_obj);
+            this.inject(obj);
         }
-        if (value === 'null') {
-            this.value = null;
-            return;
-        }
-        switch (this.value_type) {
-            case ValueType.STRING:
-                result = value;
-                break;
-            case ValueType.NUMBER:
-                result = parseInt(value);
-                if (isNaN(result))
-                    result = undefined;
-                break;
-            case ValueType.BOOL:
-                // I'm not shure that it is string
-                result = value === 'true' ? true : value === 'false' ? false : undefined;
-                break;
-            case ValueType.DATE:
-            case ValueType.DATETIME:
-                result = new Date(value);
-                break;
-        }
-        this.value = result;
+        return obj;
     }
-    // convert to string
-    deserialize(value) {
-        if (value === undefined) {
-            value = this.value;
-        }
-        if (value === undefined)
-            return undefined;
-        if (value === null)
-            return 'null';
-        switch (this.value_type) {
-            case ValueType.STRING:
-                return '' + value;
-            case ValueType.NUMBER:
-                if (isNaN(value) || value === true || value === false) {
-                    return undefined;
-                }
-                else {
-                    return '' + value;
-                }
-            case ValueType.BOOL:
-                // I'm not shure that it is string
-                return !!value ? 'true' : 'false';
-            case ValueType.DATE:
-                return value instanceof Date ? value.toISOString().split('T')[0] : "";
-            case ValueType.DATETIME:
-                return value instanceof Date ? value.toISOString() : "";
-        }
+    clear() {
+        for (let obj of this.store.values())
+            obj.destroy();
+        this.store.clear();
     }
 }
 __decorate([
     observable,
-    __metadata("design:type", Object)
-], SingleFilter.prototype, "value", void 0);
+    __metadata("design:type", Map)
+], Cache.prototype, "store", void 0);
 __decorate([
-    action('MO: Filter - set'),
+    action('cache - inject'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], SingleFilter.prototype, "set", null);
+], Cache.prototype, "inject", null);
 __decorate([
-    action('MO: Filter - set from URI'),
+    action('cache - eject'),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], SingleFilter.prototype, "setFromURI", null);
-function match$1(obj, field_name, filter_value, operator) {
-    let field_names = field_name.split('__');
-    let current_field_name = field_names[0];
-    let current_value = obj[current_field_name];
-    if (field_names.length === 1)
-        return operator(current_value, filter_value);
-    else if (field_names.length > 1) {
-        let next_field_name = field_name.substring(field_names[0].length + 2);
-        // we have object relation
-        if (typeof current_value === 'object' && current_value !== null) {
-            if (Array.isArray(current_value)) {
-                let result = false;
-                for (const item of current_value) {
-                    result = match$1(item, next_field_name, filter_value, operator);
-                    if (result)
-                        return result;
-                }
-            }
-            else {
-                return match$1(current_value, next_field_name, filter_value, operator);
-            }
-        }
-    }
-    return false;
-}
-
-class ComboFilter extends Filter {
-    constructor(filters) {
-        super();
-        Object.defineProperty(this, "filters", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.filters = filters;
-    }
-    get URLSearchParams() {
-        let search_params = new URLSearchParams();
-        for (let filter of this.filters) {
-            filter.URLSearchParams.forEach((value, key) => search_params.set(key, value));
-        }
-        return search_params;
-    }
-    setFromURI(uri) {
-        for (let filter of this.filters) {
-            filter.setFromURI(uri);
-        }
-    }
-}
-
-class EQ_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}`;
-    }
-    operator(value_a, value_b) {
-        return value_a === value_b;
-    }
-    alias(alias_field) {
-        const alias_filter = EQ(alias_field, this.value, this.value_type);
-        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
-        return alias_filter;
-    }
-}
-// EQV is a verbose version of EQ
-class EQV_Filter extends EQ_Filter {
-    get URIField() {
-        return `${this.field}__eq`;
-    }
-}
-function EQ(field, value, value_type) {
-    return new EQ_Filter(field, value, value_type);
-}
-function EQV(field, value, value_type) {
-    return new EQV_Filter(field, value, value_type);
-}
-
-class NOT_EQ_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__not_eq`;
-    }
-    operator(value_a, value_b) {
-        return value_a !== value_b;
-    }
-    alias(alias_field) {
-        const alias_filter = NOT_EQ(alias_field, this.value, this.value_type);
-        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
-        return alias_filter;
-    }
-}
-function NOT_EQ(field, value, value_type) {
-    return new NOT_EQ_Filter(field, value, value_type);
-}
-
-class GT_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__gt`;
-    }
-    operator(value_a, value_b) {
-        return value_a > value_b;
-    }
-    alias(alias_field) {
-        const alias_filter = GT(alias_field, this.value, this.value_type);
-        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
-        return alias_filter;
-    }
-}
-function GT(field, value, value_type) {
-    return new GT_Filter(field, value, value_type);
-}
-
-class GTE_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__gte`;
-    }
-    operator(value_a, value_b) {
-        return value_a >= value_b;
-    }
-    alias(alias_field) {
-        const alias_filter = GTE(alias_field, this.value, this.value_type);
-        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
-        return alias_filter;
-    }
-}
-function GTE(field, value, value_type) {
-    return new GTE_Filter(field, value, value_type);
-}
-
-class LT_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__lt`;
-    }
-    operator(value_a, value_b) {
-        return value_a < value_b;
-    }
-    alias(alias_field) {
-        const alias_filter = LT(alias_field, this.value, this.value_type);
-        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
-        return alias_filter;
-    }
-}
-function LT(field, value, value_type) {
-    return new LT_Filter(field, value, value_type);
-}
-
-class LTE_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__lte`;
-    }
-    operator(value_a, value_b) {
-        return value_a <= value_b;
-    }
-    alias(alias_field) {
-        const alias_filter = LTE(alias_field, this.value, this.value_type);
-        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
-        return alias_filter;
-    }
-}
-function LTE(field, value, value_type) {
-    return new LTE_Filter(field, value, value_type);
-}
-
-class IN_Filter extends SingleFilter {
-    constructor(field, value, value_type) {
-        if (value === undefined) {
-            value = [];
-        }
-        super(field, value, value_type);
-    }
-    alias(alias_field) {
-        const alias_filter = IN(alias_field, this.value, this.value_type);
-        reaction(() => this.value, (value) => { alias_filter.value = value; }, { fireImmediately: true });
-        return alias_filter;
-    }
-    serialize(value) {
-        if (value === undefined) {
-            this.value = [];
-            return;
-        }
-        let result = [];
-        for (const i of value.split(',')) {
-            super.serialize(i);
-            if (this.value !== undefined) {
-                result.push(this.value);
-            }
-        }
-        this.value = result;
-    }
-    deserialize() {
-        let result = [];
-        for (const i of this.value) {
-            let v = super.deserialize(i);
-            if (v !== undefined) {
-                result.push(v);
-            }
-        }
-        return result.length ? result.join(',') : undefined;
-    }
-    get URIField() {
-        return `${this.field}__in`;
-    }
-    operator(value_a, value_b) {
-        // it's always match if value of filter is empty []
-        if (value_b.length === 0)
-            return true;
-        for (let v of value_b) {
-            if (v === value_a)
-                return true;
-        }
-        return false;
-    }
-}
-function IN(field, value, value_type) {
-    return new IN_Filter(field, value, value_type);
-}
-
-class LIKE_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__contains`;
-    }
-    operator(current_value, filter_value) {
-        return current_value.includes(filter_value);
-    }
-    alias(alias_field) {
-        const alias_filter = LIKE(alias_field, this.value, this.value_type);
-        reaction(() => this.value, (value) => { alias_filter.set(value); }, { fireImmediately: true });
-        return alias_filter;
-    }
-}
-function LIKE(field, value, value_type) {
-    return new LIKE_Filter(field, value, value_type);
-}
-
-class ILIKE_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__icontains`;
-    }
-    operator(current_value, filter_value) {
-        return current_value.toLowerCase().includes(filter_value.toLowerCase());
-    }
-    alias(alias_field) {
-        const alias_filter = ILIKE(alias_field, this.value, this.value_type);
-        reaction(() => this.value, (value) => { alias_filter.set(value); }, { fireImmediately: true });
-        return alias_filter;
-    }
-}
-function ILIKE(field, value, value_type) {
-    return new ILIKE_Filter(field, value, value_type);
-}
-
-class AND_Filter extends ComboFilter {
-    isMatch(obj) {
-        for (let filter of this.filters) {
-            if (!filter.isMatch(obj)) {
-                return false;
-            }
-        }
-        return true;
-    }
-}
-function AND(...filters) { return new AND_Filter(filters); }
-
-// Depricated
-class QueryBase {
-    constructor(adapter, base_cache, selector) {
-        Object.defineProperty(this, "filters", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "order_by", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "fields", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "omit", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "relations", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        // I cannot declare these observables directly into QueryPage
-        Object.defineProperty(this, "offset", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "limit", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "total", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 0
-        });
-        Object.defineProperty(this, "need_to_update", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        }); // set to true then filters/order_by/page/page_size was changed and back to false after load
-        Object.defineProperty(this, "__base_cache", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "__adapter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "__items", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
-        Object.defineProperty(this, "__is_loading", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "__is_ready", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "__error", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: ''
-        });
-        Object.defineProperty(this, "__disposers", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
-        Object.defineProperty(this, "__disposer_objects", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
-        this.__base_cache = base_cache;
-        this.__adapter = adapter;
-        this.filters = selector === null || selector === void 0 ? void 0 : selector.filter;
-        this.order_by = (selector === null || selector === void 0 ? void 0 : selector.order_by) || new Map();
-        this.fields = (selector === null || selector === void 0 ? void 0 : selector.fields) || [];
-        this.omit = (selector === null || selector === void 0 ? void 0 : selector.omit) || [];
-        this.relations = (selector === null || selector === void 0 ? void 0 : selector.relations) || [];
-        makeObservable(this);
-        this.__disposers.push(reaction(() => {
-            var _a;
-            return {
-                filter: (_a = this.filters) === null || _a === void 0 ? void 0 : _a.URLSearchParams.toString(),
-                order_by: Array.from(this.order_by, ([name, value]) => ([name, value])),
-                // order_by: this.order_by, 
-                offset: this.offset,
-                limit: this.limit,
-            };
-        }, action('MO: Query Base - need to update', () => this.need_to_update = true), { fireImmediately: true, delay: 200 }));
-    }
-    get is_loading() { return this.__is_loading; }
-    get is_ready() { return this.__is_ready; }
-    get error() { return this.__error; }
-    destroy() {
-        while (this.__disposers.length) {
-            this.__disposers.pop()();
-        }
-        for (let __id in this.__disposer_objects) {
-            this.__disposer_objects[__id]();
-            delete this.__disposer_objects[__id];
-        }
-    }
-    // use it if everybody should know that the query data is updating
-    async load() {
-        this.__is_loading = true;
-        try {
-            await this.shadowLoad();
-        }
-        finally {
-            // we have to wait a next tick before set __is_loading to true, mobx recalculation should be done before
-            await new Promise(resolve => setTimeout(resolve));
-            runInAction(() => this.__is_loading = false);
-        }
-    }
-    get autoupdate() {
-        // TODO: move the name of disposer to const
-        return !!this.__disposer_objects['__autoupdate'];
-    }
-    set autoupdate(value) {
-        if (value !== this.autoupdate) {
-            // off
-            if (!value) {
-                if (this.__disposer_objects['__autoupdate']) {
-                    this.__disposer_objects['__autoupdate']();
-                }
-                delete this.__disposer_objects['__autoupdate'];
-            }
-            // on 
-            else {
-                this.__disposer_objects['__autoupdate'] = reaction(() => this.need_to_update, (need_to_update) => {
-                    if (need_to_update)
-                        this.load();
-                }, { fireImmediately: true });
-            }
-        }
-    }
-    get selector() {
-        return {
-            filter: this.filters,
-            order_by: this.order_by,
-            fields: this.fields,
-            omit: this.omit,
-            relations: this.relations,
-            offset: this.offset,
-            limit: this.limit
-        };
-    }
-    // use it if you need use promise instead of observe is_ready
-    ready() {
-        return new Promise((resolve, reject) => {
-            autorun((reaction) => {
-                if (this.__is_ready) {
-                    reaction.dispose();
-                    resolve(this.__is_ready);
-                }
-            });
-        });
-    }
-    // use it if you need use promise instead of observe is_loading
-    loading() {
-        return new Promise((resolve, reject) => {
-            autorun((reaction) => {
-                if (!this.__is_loading) {
-                    reaction.dispose();
-                    resolve(!this.__is_loading);
-                }
-            });
-        });
-    }
-}
+], Cache.prototype, "eject", null);
 __decorate([
-    observable,
-    __metadata("design:type", Filter)
-], QueryBase.prototype, "filters", void 0);
+    action('cache - update'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Object)
+], Cache.prototype, "update", null);
 __decorate([
-    observable,
-    __metadata("design:type", Object)
-], QueryBase.prototype, "order_by", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Array)
-], QueryBase.prototype, "fields", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Array)
-], QueryBase.prototype, "omit", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Array)
-], QueryBase.prototype, "relations", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Number)
-], QueryBase.prototype, "offset", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Number)
-], QueryBase.prototype, "limit", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Number)
-], QueryBase.prototype, "total", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], QueryBase.prototype, "need_to_update", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Array)
-], QueryBase.prototype, "__items", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], QueryBase.prototype, "__is_loading", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], QueryBase.prototype, "__is_ready", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", String)
-], QueryBase.prototype, "__error", void 0);
-__decorate([
-    action('MO: Query Base - load'),
+    action('cache - clear'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], QueryBase.prototype, "load", null);
+    __metadata("design:returntype", void 0)
+], Cache.prototype, "clear", null);
 
-// Depricated
-class Query extends QueryBase {
-    constructor(adapter, base_cache, selector) {
-        super(adapter, base_cache, selector);
-        // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(this.__base_cache, action('MO: Query - update from cache changes', (change) => {
-            if (change.type == 'add') {
-                this.__watch_obj(change.newValue);
-            }
-            if (change.type == "delete") {
-                let id = change.name;
-                let obj = change.oldValue;
-                this.__disposer_objects[id]();
-                delete this.__disposer_objects[id];
-                let i = this.__items.indexOf(obj);
-                if (i != -1)
-                    this.__items.splice(i, 1);
-            }
-        })));
-        // ch all exist objects of model 
-        for (let [id, obj] of this.__base_cache) {
-            this.__watch_obj(obj);
+class Repository {
+    constructor(model, adapter, cache) {
+        Object.defineProperty(this, "model", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "cache", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "adapter", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.model = model;
+        this.adapter = adapter;
+        this.cache = cache ? cache : new Cache(model);
+    }
+    async action(obj, name, kwargs, controller) {
+        return await this.adapter.action(obj.id, name, kwargs, controller);
+    }
+    async create(obj, controller) {
+        let raw_obj = await this.adapter.create(obj.raw_data, controller);
+        obj.updateFromRaw(raw_obj); // update id and other fields
+        obj.refreshInitData(); // backend can return default values and they should be in __init_data
+        return obj;
+    }
+    async update(obj, controller) {
+        let raw_obj = await this.adapter.update(obj.id, obj.only_changed_raw_data, controller);
+        obj.updateFromRaw(raw_obj);
+        obj.refreshInitData();
+        return obj;
+    }
+    async delete(obj, controller) {
+        await this.adapter.delete(obj.id, controller);
+        obj.destroy();
+        this.cache.eject(obj);
+        return obj;
+    }
+    async get(obj_id, controller) {
+        let raw_obj = await this.adapter.get(obj_id, controller);
+        if (this.cache) {
+            const obj = this.cache.update(raw_obj);
+            obj.refreshInitData();
+            return obj;
         }
+        return new this.model(raw_obj);
     }
-    async shadowLoad() {
-        try {
-            let objs = await this.__adapter.load(this.selector);
-            this.__load(objs);
-            // we have to wait a next tick before set __is_ready to true, mobx recalculation should be done before
-            await new Promise(resolve => setTimeout(resolve));
-            runInAction(() => {
-                this.__is_ready = true;
-                this.need_to_update = false;
-            });
+    /* Returns ONE object */
+    async find(query, controller) {
+        let raw_obj = await this.adapter.find(query, controller);
+        if (this.cache) {
+            const obj = this.cache.update(raw_obj);
+            obj.refreshInitData();
+            return obj;
         }
-        catch (e) {
-            // 'MO: Query Base - shadow load - error',
-            runInAction(() => this.__error = e);
-            throw e;
-        }
+        return new this.model(raw_obj);
     }
-    get items() {
-        let __items = this.__items.map(x => x); // copy __items (not deep)
-        if (this.order_by.size) {
-            let compare = (a, b) => {
-                for (const [key, value] of this.order_by) {
-                    if (value === ASC) {
-                        if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
-                            return 1;
-                        if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
-                            return -1;
-                        if (a[key] < b[key])
-                            return -1;
-                        if (a[key] > b[key])
-                            return 1;
-                    }
-                    else {
-                        if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
-                            return -1;
-                        if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
-                            return 1;
-                        if (a[key] < b[key])
-                            return 1;
-                        if (a[key] > b[key])
-                            return -1;
-                    }
-                }
-                return 0;
-            };
-            __items.sort(compare);
-        }
-        return __items;
-    }
-    __load(objs) {
-        // Query don't need to overide the items, query's items should be get only from the cache
-        // Query page have to use it only 
-    }
-    __watch_obj(obj) {
-        if (this.__disposer_objects[obj.id])
-            this.__disposer_objects[obj.id]();
-        this.__disposer_objects[obj.id] = reaction(() => !this.filters || this.filters.isMatch(obj), action('MO: Query - obj was changed', (should) => {
-            let i = this.__items.indexOf(obj);
-            // should be in the items and it is not in the items? add it to the items
-            if (should && i == -1)
-                this.__items.push(obj);
-            // should not be in the items and it is in the items? remove it from the items
-            if (!should && i != -1)
-                this.__items.splice(i, 1);
-        }), { fireImmediately: true });
-    }
-}
-__decorate([
-    action('MO: Query Base - shadow load'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], Query.prototype, "shadowLoad", null);
-__decorate([
-    computed,
-    __metadata("design:type", Object),
-    __metadata("design:paramtypes", [])
-], Query.prototype, "items", null);
-
-// Depriated
-class QueryPage extends QueryBase {
-    __load(objs) {
-        this.__items.splice(0, this.__items.length);
-        this.__items.push(...objs);
-    }
-    setPageSize(size) { this.limit = size; this.offset = 0; }
-    setPage(n) { this.offset = this.limit * (n > 0 ? n - 1 : 0); }
-    goToFirstPage() { this.setPage(1); }
-    goToPrevPage() { this.setPage(this.current_page - 1); }
-    goToNextPage() { this.setPage(this.current_page + 1); }
-    goToLastPage() { this.setPage(this.total_pages); }
-    get is_first_page() { return this.offset === 0; }
-    get is_last_page() { return this.offset + this.limit >= this.total; }
-    get current_page() { return this.offset / this.limit + 1; }
-    get total_pages() { return this.total ? Math.ceil(this.total / this.limit) : 1; }
-    constructor(adapter, base_cache, selector) {
-        super(adapter, base_cache, selector);
+    /* Returns MANY objects */
+    async load(query, controller) {
+        let raw_objs = await this.adapter.load(query, controller);
+        let objs = [];
+        // it should invoke in one big action
         runInAction(() => {
-            this.offset = (selector === null || selector === void 0 ? void 0 : selector.offset) || 0;
-            this.limit = (selector === null || selector === void 0 ? void 0 : selector.limit) || 50;
+            if (this.cache) {
+                for (let raw_obj of raw_objs) {
+                    const obj = this.cache.update(raw_obj);
+                    obj.refreshInitData();
+                    objs.push(obj);
+                }
+            }
+            else {
+                for (let raw_obj of raw_objs) {
+                    objs.push(new this.model(raw_obj));
+                }
+            }
         });
+        return objs;
     }
-    get items() { return this.__items; }
-    async shadowLoad() {
-        try {
-            const objs = await this.__adapter.load(this.selector);
-            this.__load(objs);
-            const total = await this.__adapter.getTotalCount(this.filters);
-            runInAction(() => {
-                this.total = total;
-                this.__is_ready = true;
-                this.need_to_update = false;
-            });
-        }
-        catch (e) {
-            // 'MO: Query Base - shadow load - error',
-            runInAction(() => this.__error = e);
-            throw e;
-        }
+    async getTotalCount(filter, controller) {
+        return await this.adapter.getTotalCount(filter, controller);
+    }
+    async getDistinct(filter, field, controller) {
+        return await this.adapter.getDistinct(filter, field, controller);
     }
 }
-__decorate([
-    action('MO: Query Page - load'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Array]),
-    __metadata("design:returntype", void 0)
-], QueryPage.prototype, "__load", null);
-__decorate([
-    action('MO: set page size'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
-], QueryPage.prototype, "setPageSize", null);
-__decorate([
-    action('MO: set page'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
-], QueryPage.prototype, "setPage", null);
-__decorate([
-    action('MO: fisrt page'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], QueryPage.prototype, "goToFirstPage", null);
-__decorate([
-    action('MO: prev page'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], QueryPage.prototype, "goToPrevPage", null);
-__decorate([
-    action('MO: next page'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], QueryPage.prototype, "goToNextPage", null);
-__decorate([
-    action('MO: last page'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], QueryPage.prototype, "goToLastPage", null);
-__decorate([
-    action('MO: Query Base - shadow load'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], QueryPage.prototype, "shadowLoad", null);
+// Model.repository is readonly, use decorator to customize repository 
+function repository(adapter, cache) {
+    return (cls) => {
+        let repository = new Repository(cls, adapter, cache);
+        cls.__proto__.repository = repository;
+    };
+}
 
 function waitIsTrue(obj, field) {
     return new Promise((resolve, reject) => {
@@ -1108,7 +406,7 @@ class Input {
         (_b = this.autoResetObj) === null || _b === void 0 ? void 0 : _b.destroy();
     }
     toString() {
-        return this.deserialize(this.value);
+        return this.deserialize();
     }
     // Any changes in options should reset __isReady
     __doOptions() {
@@ -1128,15 +426,16 @@ class Input {
         const name = this.syncURLSearchParams;
         const searchParams = new URLSearchParams(window.location.search);
         if (searchParams.has(name)) {
-            this.set(this.serialize(searchParams.get(name)));
+            this.serialize(searchParams.get(name));
         }
         // watch for URL changes and update Input
         function updataInputFromURL() {
             const searchParams = new URLSearchParams(window.location.search);
             if (searchParams.has(name)) {
-                const value = this.serialize(searchParams.get(name));
-                if (this.value !== value) {
-                    this.set(value);
+                const raw_value = searchParams.get(name);
+                const exist_raw_value = this.deserialize();
+                if (raw_value !== exist_raw_value) {
+                    this.serialize(raw_value);
                 }
             }
             else if (this.value !== undefined) {
@@ -1147,9 +446,9 @@ class Input {
         // watch for Input changes and update URL
         this.__disposers.push(reaction(
         // I cannot use this.value because it can be a Map
-        () => this.deserialize(this.value), () => {
+        () => this.deserialize(), () => {
             const searchParams = new URLSearchParams(window.location.search);
-            const _value = this.deserialize(this.value);
+            const _value = this.deserialize();
             if (_value === '' || _value === undefined) {
                 searchParams.delete(name);
             }
@@ -1161,13 +460,14 @@ class Input {
     }
     __doSyncLocalStorage() {
         const name = this.syncLocalStorage;
-        const value = this.serialize(localStorage.getItem(name));
-        if (this.value !== value) {
-            this.set(value);
+        const raw_value = localStorage.getItem(name);
+        const exist_raw_value = this.deserialize();
+        if (exist_raw_value !== raw_value) {
+            this.serialize(raw_value);
         }
         this.__disposers.push(reaction(() => this.value, (value) => {
             if (value !== undefined) {
-                localStorage.setItem(name, this.deserialize(value));
+                localStorage.setItem(name, this.deserialize());
             }
             else {
                 localStorage.removeItem(name);
@@ -1219,12 +519,12 @@ class OrderByInput extends Input {
                 }
             }
         }
-        return result;
+        this.value = result;
     }
-    deserialize(value) {
-        if (value) {
+    deserialize() {
+        if (this.value) {
             let result = '';
-            for (const [key, val] of value) {
+            for (const [key, val] of this.value) {
                 if (result)
                     result += ',';
                 if (val === DESC)
@@ -1238,28 +538,28 @@ class OrderByInput extends Input {
     }
 }
 
-class NumberBaseInput extends Input {
+class NumberInput extends Input {
     serialize(value) {
         if (value === undefined)
-            return undefined;
-        if (value === 'null')
-            return null;
-        if (value === null)
-            return undefined;
-        let result = parseInt(value);
-        if (isNaN(result))
-            result = undefined;
-        return result;
+            this.set(undefined);
+        else if (value === 'null')
+            this.set(null);
+        else if (value === null)
+            this.set(undefined);
+        else {
+            let result = parseInt(value);
+            if (isNaN(result))
+                result = undefined;
+            this.set(result);
+        }
     }
-    deserialize(value) {
-        if (value === undefined)
+    deserialize() {
+        if (this.value === undefined)
             return undefined;
-        if (value === null)
+        if (this.value === null)
             return 'null';
-        return '' + value;
+        return '' + this.value;
     }
-}
-class NumberInput extends NumberBaseInput {
 }
 
 class ArrayInput extends Input {
@@ -1273,19 +573,20 @@ class ArrayInput extends Input {
 class StringInput extends Input {
     serialize(value) {
         if (value === undefined)
-            return undefined;
-        if (value === 'null')
-            return null;
-        if (value === null)
-            return undefined;
-        return value;
+            this.set(undefined);
+        else if (value === 'null')
+            this.set(null);
+        else if (value === null)
+            this.set(undefined);
+        else
+            this.set(value);
     }
-    deserialize(value) {
-        if (value === undefined)
+    deserialize() {
+        if (this.value === undefined)
             return undefined;
-        if (value === null)
+        if (this.value === null)
             return 'null';
-        return value;
+        return this.value;
     }
 }
 
@@ -1295,20 +596,20 @@ class ArrayStringInput extends ArrayInput {
         if (value) {
             let converter = new StringInput();
             for (const i of value.split(',')) {
-                let tmp = converter.serialize(i);
-                if (tmp !== undefined) {
-                    result.push(tmp);
+                converter.serialize(i);
+                if (converter.value !== undefined) {
+                    result.push(converter.value);
                 }
             }
         }
-        return result;
+        this.set(result);
     }
-    deserialize(value) {
+    deserialize() {
         let result = [];
-        if (value) {
-            for (const i of value) {
-                let converter = new StringInput();
-                let v = converter.deserialize(i);
+        if (this.value) {
+            for (const i of this.value) {
+                let converter = new StringInput({ value: i });
+                let v = converter.deserialize();
                 if (v !== undefined) {
                     result.push(v);
                 }
@@ -1319,57 +620,60 @@ class ArrayStringInput extends ArrayInput {
 }
 
 const DISPOSER_AUTOUPDATE = "__autoupdate";
-class QueryX {
+const ASC = true;
+const DESC = false;
+class Query {
+    get is_loading() { return this.__is_loading; }
+    get is_ready() { return this.__is_ready; }
+    get error() { return this.__error; }
+    get items() { return this.__items; }
+    // we going to migrate to JS style
+    get isLoading() { return this.__is_loading; }
+    get isReady() { return this.__is_ready; }
     constructor(props) {
+        Object.defineProperty(this, "repository", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "filter", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "input_order_by", {
+        Object.defineProperty(this, "order_by", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "input_offset", {
+        Object.defineProperty(this, "offset", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "input_limit", {
+        Object.defineProperty(this, "limit", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "input_relations", {
+        Object.defineProperty(this, "relations", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "input_fields", {
+        Object.defineProperty(this, "fields", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "input_omit", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "syncURLSearchParams", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "syncURLSearchParamsPrefix", {
+        Object.defineProperty(this, "omit", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -1388,12 +692,6 @@ class QueryX {
             value: false
         });
         Object.defineProperty(this, "timestamp", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "adapter", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -1441,6 +739,17 @@ class QueryX {
             writable: true,
             value: {}
         });
+        // Deprecated, it should be moved to the adapter
+        // get URLSearchParams(): URLSearchParams{
+        //     const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
+        //     if (this.order_by.size       ) searchParams.set('__order_by' , this.input_order_by.deserialize(this.order_by))
+        //     if (this.limit !== undefined ) searchParams.set('__limit'    , this.input_limit.deserialize(this.limit))
+        //     if (this.offset !== undefined) searchParams.set('__offset'   , this.input_offset.deserialize(this.offset))
+        //     if (this.relations.length    ) searchParams.set('__relations', this.input_relations.deserialize(this.relations))
+        //     if (this.fields.length       ) searchParams.set('__fields'   , this.input_fields.deserialize(this.fields))
+        //     if (this.omit.length         ) searchParams.set('__omit'     , this.input_omit.deserialize(this.omit))
+        //     return searchParams
+        // }
         // use it if you need use promise instead of observe is_ready
         Object.defineProperty(this, "ready", {
             enumerable: true,
@@ -1455,48 +764,23 @@ class QueryX {
             writable: true,
             value: async () => waitIsFalse(this, '__is_loading')
         });
-        let { adapter, filter, order_by = new Map(), offset, limit, relations = [], fields = [], omit = [], autoupdate = false, syncURL, syncURLSearchParams = false, syncURLSearchParamsPrefix = '' } = props;
-        if (syncURL)
-            syncURLSearchParams = syncURL;
-        this.adapter = adapter;
+        let { repository, filter, order_by, offset, limit, relations, fields, omit, autoupdate = false } = props;
+        this.repository = repository;
         this.filter = filter;
-        this.input_order_by = new OrderByInput({ value: order_by, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__order_by` : undefined });
-        this.input_offset = new NumberInput({ value: offset, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__offset` : undefined });
-        this.input_limit = new NumberInput({ value: limit, syncURLSearchParams: syncURLSearchParams ? `${syncURLSearchParamsPrefix}__limit` : undefined });
-        this.input_relations = new ArrayStringInput({ value: relations });
-        this.input_fields = new ArrayStringInput({ value: fields });
-        this.input_omit = new ArrayStringInput({ value: omit });
-        this.syncURLSearchParams = syncURLSearchParams;
-        this.syncURLSearchParamsPrefix = syncURLSearchParamsPrefix;
+        this.order_by = order_by ? order_by : new OrderByInput();
+        this.offset = offset ? offset : new NumberInput();
+        this.limit = limit ? limit : new NumberInput();
+        this.relations = relations ? relations : new ArrayStringInput();
+        this.fields = fields ? fields : new ArrayStringInput();
+        this.omit = omit ? omit : new ArrayStringInput();
         makeObservable(this);
-        this.__disposers.push(reaction(() => this.URLSearchParams.toString(), action('MO: Query Base - need to update', () => {
+        this.__disposers.push(reaction(() => { var _a, _b; return (_b = (_a = this.repository) === null || _a === void 0 ? void 0 : _a.adapter) === null || _b === void 0 ? void 0 : _b.getURLSearchParams(this).toString(); }, action('MO: Query Base - need to update', () => {
             this.need_to_update = true;
             this.__is_ready = false;
         }), { fireImmediately: true }));
         this.autoupdate = autoupdate;
         // this.syncURLSearchParams && this.__doSyncURLSearchParams()
     }
-    get orderBy() { return this.input_order_by.value; } // for js style
-    get order_by() { return this.input_order_by.value; }
-    get offset() { return this.input_offset.value; }
-    get limit() { return this.input_limit.value; }
-    get relations() { return this.input_relations.value; }
-    get fields() { return this.input_fields.value; }
-    get omit() { return this.input_omit.value; }
-    set offset(value) { this.input_offset.set(value); }
-    set limit(value) { this.input_limit.set(value); }
-    set relations(value) { this.input_relations.set(value); }
-    set fields(value) { this.input_fields.set(value); }
-    set omit(value) { this.input_omit.set(value); }
-    get is_loading() { return this.__is_loading; }
-    get is_ready() { return this.__is_ready; }
-    get error() { return this.__error; }
-    get items() { return this.__items; }
-    // backward compatibility, remove it in the future
-    get filters() { return this.filter; }
-    // we going to migrate to JS style
-    get isLoading() { return this.__is_loading; }
-    get isReady() { return this.__is_ready; }
     destroy() {
         var _a;
         (_a = this.__controller) === null || _a === void 0 ? void 0 : _a.abort();
@@ -1528,7 +812,7 @@ class QueryX {
     }
     async __load() {
         return this.__wrap_controller(async () => {
-            const objs = await this.adapter.load(this, this.__controller);
+            const objs = await this.repository.load(this, this.__controller);
             runInAction(() => {
                 this.__items = objs;
             });
@@ -1597,94 +881,714 @@ class QueryX {
             }
         }
     }
-    get URLSearchParams() {
-        const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams();
-        if (this.order_by.size)
-            searchParams.set('__order_by', this.input_order_by.deserialize(this.order_by));
-        if (this.limit !== undefined)
-            searchParams.set('__limit', this.input_limit.deserialize(this.limit));
-        if (this.offset !== undefined)
-            searchParams.set('__offset', this.input_offset.deserialize(this.offset));
-        if (this.relations.length)
-            searchParams.set('__relations', this.input_relations.deserialize(this.relations));
-        if (this.fields.length)
-            searchParams.set('__fields', this.input_fields.deserialize(this.fields));
-        if (this.omit.length)
-            searchParams.set('__omit', this.input_omit.deserialize(this.omit));
-        return searchParams;
-    }
 }
 __decorate([
     observable,
     __metadata("design:type", Number)
-], QueryX.prototype, "total", void 0);
+], Query.prototype, "total", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], QueryX.prototype, "need_to_update", void 0);
+], Query.prototype, "need_to_update", void 0);
 __decorate([
     observable,
     __metadata("design:type", Number)
-], QueryX.prototype, "timestamp", void 0);
+], Query.prototype, "timestamp", void 0);
 __decorate([
     observable,
     __metadata("design:type", Array)
-], QueryX.prototype, "__items", void 0);
+], Query.prototype, "__items", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], QueryX.prototype, "__is_loading", void 0);
+], Query.prototype, "__is_loading", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], QueryX.prototype, "__is_ready", void 0);
+], Query.prototype, "__is_ready", void 0);
 __decorate([
     observable,
     __metadata("design:type", String)
-], QueryX.prototype, "__error", void 0);
+], Query.prototype, "__error", void 0);
 __decorate([
     action('MO: Query Base - load'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], QueryX.prototype, "load", null);
+], Query.prototype, "load", null);
 __decorate([
     action('MO: Query Base - shadow load'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], QueryX.prototype, "shadowLoad", null);
+], Query.prototype, "shadowLoad", null);
 
-class QueryXPage extends QueryX {
-    setPageSize(size) { this.limit = size; this.offset = 0; }
-    setPage(n) { this.offset = this.limit * (n > 0 ? n - 1 : 0); }
+class QueryRaw extends Query {
+    async __load() {
+        return this.__wrap_controller(async () => {
+            // get only raw objects from adapter
+            const objs = await this.repository.load(this, this.__controller);
+            runInAction(() => {
+                this.__items = objs;
+            });
+        });
+    }
+}
+
+class Model {
+    static getQuery(props) {
+        return new Query(Object.assign(Object.assign({}, props), { repository: this.repository }));
+    }
+    static getQueryRaw(props) {
+        return new QueryRaw(Object.assign(Object.assign({}, props), { repository: this.repository }));
+    }
+    // static getQueryXPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXPage<Instance>  {
+    //     return new QueryXPage({...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+    // static getQueryXRawPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXRawPage<Instance> {
+    //     return new QueryXRawPage({...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+    // static getQueryXCacheSync<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXCacheSync<Instance> {
+    //     return new QueryXCacheSync(this.__cache, {...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+    // static getQueryXStream<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXStream<Instance> {
+    //     return new QueryXStream({...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+    // static getQueryXDistinct<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, field: string, props: QueryXProps<Instance>): QueryXDistinct {
+    //     return new QueryXDistinct(field, {...props, adapter: this.__adapter as Adapter<Instance>})
+    // }
+    // static getQuery(selector?: Selector): Query<Model>  {
+    //     return new Query<Model>(this.__adapter, this.__cache, selector)
+    // }
+    // static getQueryPage(selector?: Selector): QueryPage<Model> {
+    //     return new QueryPage(this.__adapter, this.__cache, selector)
+    // }
+    static get(id) {
+        return this.repository.cache.get(id);
+    }
+    static async findById(id) {
+        return this.repository.get(id);
+    }
+    static async find(query) {
+        return this.repository.find(query);
+    }
+    constructor(...args) {
+        Object.defineProperty(this, "id", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: undefined
+        });
+        // TODO: should it be observable?
+        Object.defineProperty(this, "__init_data", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "__disposers", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: new Map()
+        });
+    }
+    destroy() {
+        while (this.__disposers.size) {
+            this.__disposers.forEach((disposer, key) => {
+                disposer();
+                this.__disposers.delete(key);
+            });
+        }
+    }
+    get model() {
+        return this.constructor.__proto__;
+    }
+    // data only from fields (no ids)
+    get raw_data() {
+        let raw_data = {};
+        for (let field_name in this.model.__fields) {
+            if (this[field_name] !== undefined) {
+                raw_data[field_name] = this[field_name];
+            }
+        }
+        return raw_data;
+    }
+    // it is raw_data + id
+    get raw_obj() {
+        let raw_obj = this.raw_data;
+        raw_obj.id = this.id;
+        return raw_obj;
+    }
+    get only_changed_raw_data() {
+        let raw_data = {};
+        for (let field_name in this.model.__fields) {
+            if (this[field_name] !== undefined && this[field_name] != this.__init_data[field_name]) {
+                raw_data[field_name] = this[field_name];
+            }
+        }
+        return raw_data;
+    }
+    get is_changed() {
+        for (let field_name in this.model.__fields) {
+            if (this[field_name] != this.__init_data[field_name]) {
+                return true;
+            }
+        }
+        return false;
+    }
+    async action(name, kwargs) { return await this.model.repository.action(this, name, kwargs); }
+    async create() { return await this.model.repository.create(this); }
+    async update() { return await this.model.repository.update(this); }
+    async delete() { return await this.model.repository.delete(this); }
+    async save() { return this.id === undefined ? this.create() : this.update(); }
+    // update the object from the server
+    async refresh() { return await this.model.repository.get(this.id); }
+    refreshInitData() {
+        if (this.__init_data === undefined)
+            this.__init_data = {};
+        for (let field_name in this.model.__fields) {
+            this.__init_data[field_name] = this[field_name];
+        }
+    }
+    cancelLocalChanges() {
+        for (let field_name in this.model.__fields) {
+            if (this[field_name] !== this.__init_data[field_name]) {
+                this[field_name] = this.__init_data[field_name];
+            }
+        }
+    }
+    updateFromRaw(raw_obj) {
+        if (this.id === undefined && raw_obj.id !== undefined && this.model.repository) {
+            // Note: object with equal id can be already in the cache (race condition)
+            // I have got the object from websocket before the response from the server
+            // Solution: remove the object (that came from websocket) from the cache
+            let exist_obj = this.model.repository.cache.get(raw_obj.id);
+            if (exist_obj) {
+                exist_obj.id = undefined;
+            }
+            this.id = raw_obj.id;
+        }
+        // update the fields if the raw data is exist and it is different
+        for (let field_name in this.model.__fields) {
+            if (raw_obj[field_name] !== undefined && raw_obj[field_name] !== this[field_name]) {
+                this[field_name] = raw_obj[field_name];
+            }
+        }
+        for (let relation in this.model.__relations) {
+            const settings = this.model.__relations[relation].settings;
+            if (settings.foreign_model && raw_obj[relation]) {
+                settings.foreign_model.repository.cache.update(raw_obj[relation]);
+                this[settings.foreign_id_name] = raw_obj[relation].id;
+            }
+            else if (settings.remote_model && raw_obj[relation]) {
+                // many
+                if (Array.isArray(raw_obj[relation])) {
+                    for (const i of raw_obj[relation]) {
+                        settings.remote_model.repository.cache.update(i);
+                    }
+                }
+                // one
+                else {
+                    settings.remote_model.repository.cache.update(raw_obj[relation]);
+                }
+            }
+        }
+    }
+}
+__decorate([
+    observable,
+    __metadata("design:type", Object)
+], Model.prototype, "id", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Object)
+], Model.prototype, "__init_data", void 0);
+__decorate([
+    action('model - destroy'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], Model.prototype, "destroy", null);
+__decorate([
+    action('MO: obj - refresh init data'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], Model.prototype, "refreshInitData", null);
+__decorate([
+    action('MO: obj - cancel local changes'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], Model.prototype, "cancelLocalChanges", null);
+__decorate([
+    action('MO: obj - update from raw'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], Model.prototype, "updateFromRaw", null);
+// Decorator
+function model(constructor) {
+    var original = constructor;
+    // the new constructor
+    let f = function (...args) {
+        let c = class extends original {
+            constructor(...args) { super(...args); }
+        };
+        c.__proto__ = original;
+        let obj = new c();
+        makeObservable(obj);
+        // id field reactions
+        obj.__disposers.set('before changes', intercept(obj, 'id', (change) => {
+            if (change.newValue !== undefined && obj.id !== undefined)
+                throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`);
+            if (obj.id !== undefined && change.newValue === undefined)
+                obj.model.repository.cache.eject(obj);
+            return change;
+        }));
+        obj.__disposers.set('after changes', observe(obj, 'id', (change) => {
+            if (obj.id !== undefined)
+                obj.model.repository.cache.inject(obj);
+        }));
+        // apply fields decorators
+        for (let field_name in obj.model.__fields) {
+            obj.model.__fields[field_name].decorator(obj, field_name);
+        }
+        // apply __relations decorators
+        for (let field_name in obj.model.__relations) {
+            obj.model.__relations[field_name].decorator(obj, field_name);
+        }
+        if (args[0])
+            obj.updateFromRaw(args[0]);
+        obj.refreshInitData();
+        return obj;
+    };
+    f.__proto__ = original;
+    f.prototype = original.prototype; // copy prototype so intanceof operator still works
+    Object.defineProperty(f, "name", { value: original.name });
+    return f; // return new constructor (will override original)
+}
+
+function field_field(obj, field_name) {
+    // make observable and set default value
+    extendObservable(obj, { [field_name]: obj[field_name] });
+}
+function field(cls, field_name) {
+    let model = cls.constructor;
+    if (model.__fields === undefined)
+        model.__fields = {};
+    model.__fields[field_name] = { decorator: field_field }; // register field 
+}
+
+function field_foreign(obj, field_name) {
+    let settings = obj.model.__relations[field_name].settings;
+    let foreign_model = settings.foreign_model;
+    let foreign_id_name = settings.foreign_id_name;
+    // make observable and set default value
+    extendObservable(obj, { [field_name]: undefined });
+    reaction(
+    // watch on foreign cache for foreign object
+    () => {
+        if (obj[foreign_id_name] === undefined)
+            return undefined;
+        if (obj[foreign_id_name] === null)
+            return null;
+        return foreign_model.repository.cache.get(obj[foreign_id_name]);
+    }, 
+    // update foreign field
+    action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true });
+}
+function foreign(foreign_model, foreign_id_name) {
+    return function (cls, field_name) {
+        let model = cls.constructor;
+        if (model.__relations === undefined)
+            model.__relations = {};
+        // register field 
+        model.__relations[field_name] = {
+            decorator: field_foreign,
+            settings: {
+                foreign_model: foreign_model,
+                // if it is empty then try auto detect it (it works only with single id) 
+                foreign_id_name: foreign_id_name !== undefined ? foreign_id_name : `${field_name}_id`
+            }
+        };
+    };
+}
+
+function field_one(obj, field_name) {
+    // make observable and set default value
+    extendObservable(obj, { [field_name]: undefined });
+}
+function one(remote_model, remote_foreign_id_name) {
+    return function (cls, field_name) {
+        let model = cls.prototype.constructor;
+        if (model.__relations === undefined)
+            model.__relations = {};
+        // if it is empty then try auto detect it (it works only with single id) 
+        remote_foreign_id_name = remote_foreign_id_name !== undefined ? remote_foreign_id_name : `${model.name.toLowerCase()}_id`;
+        model.__relations[field_name] = {
+            decorator: field_one,
+            settings: {
+                remote_model: remote_model,
+                remote_foreign_id_name: remote_foreign_id_name
+            }
+        };
+        const disposer_name = `MO: One - update - ${model.name}.${field_name}`;
+        observe(remote_model.repository.cache.store, (change) => {
+            let remote_obj;
+            switch (change.type) {
+                case 'add':
+                    remote_obj = change.newValue;
+                    remote_obj.__disposers.set(disposer_name, reaction(() => {
+                        return {
+                            id: remote_obj[remote_foreign_id_name],
+                            obj: model.repository.cache.get(remote_obj[remote_foreign_id_name])
+                        };
+                    }, action(disposer_name, (_new, _old) => {
+                        if (_old === null || _old === void 0 ? void 0 : _old.obj)
+                            _old.obj[field_name] = _new.id ? undefined : null;
+                        if (_new === null || _new === void 0 ? void 0 : _new.obj)
+                            _new.obj[field_name] = remote_obj;
+                    }), { fireImmediately: true }));
+                    break;
+                case 'delete':
+                    remote_obj = change.oldValue;
+                    if (remote_obj.__disposers.get(disposer_name)) {
+                        remote_obj.__disposers.get(disposer_name)();
+                        remote_obj.__disposers.delete(disposer_name);
+                    }
+                    let obj = model.repository.cache.get(remote_obj[remote_foreign_id_name]);
+                    if (obj)
+                        runInAction(() => { obj[field_name] = undefined; });
+                    break;
+            }
+        });
+    };
+}
+
+function field_many(obj, field_name) {
+    extendObservable(obj, { [field_name]: [] });
+}
+function many(remote_model, remote_foreign_id_name) {
+    return function (cls, field_name) {
+        let model = cls.prototype.constructor;
+        if (model.__relations === undefined)
+            model.__relations = {};
+        // if it is empty then try auto detect it (it works only with single id) 
+        remote_foreign_id_name = remote_foreign_id_name !== undefined ? remote_foreign_id_name : `${model.name.toLowerCase()}_id`;
+        model.__relations[field_name] = {
+            decorator: field_many,
+            settings: {
+                remote_model: remote_model,
+                remote_foreign_id_name: remote_foreign_id_name
+            }
+        };
+        const disposer_name = `MO: Many - update - ${model.name}.${field_name}`;
+        // watch for remote object in the cache 
+        observe(remote_model.repository.cache.store, (remote_change) => {
+            let remote_obj;
+            switch (remote_change.type) {
+                case 'add':
+                    remote_obj = remote_change.newValue;
+                    remote_obj.__disposers.set(disposer_name, reaction(() => model.repository.cache.get(remote_obj[remote_foreign_id_name]), action(disposer_name, (_new, _old) => {
+                        if (_old) {
+                            const i = _old[field_name].indexOf(remote_obj);
+                            if (i > -1)
+                                _old[field_name].splice(i, 1);
+                        }
+                        if (_new) {
+                            const i = _new[field_name].indexOf(remote_obj);
+                            if (i === -1)
+                                _new[field_name].push(remote_obj);
+                        }
+                    }), { fireImmediately: true }));
+                    break;
+                case 'delete':
+                    remote_obj = remote_change.oldValue;
+                    if (remote_obj.__disposers.get(disposer_name)) {
+                        remote_obj.__disposers.get(disposer_name)();
+                        remote_obj.__disposers.delete(disposer_name);
+                    }
+                    let obj = model.repository.cache.get(remote_obj[remote_foreign_id_name]);
+                    if (obj) {
+                        const i = obj[field_name].indexOf(remote_obj);
+                        if (i > -1)
+                            runInAction(() => { obj[field_name].splice(i, 1); });
+                    }
+                    break;
+            }
+        });
+    };
+}
+
+class Filter {
+}
+
+class SingleFilter extends Filter {
+    constructor(field, input) {
+        super();
+        Object.defineProperty(this, "field", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "input", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "__disposers", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
+        this.field = field;
+        this.input = input;
+        makeObservable(this);
+    }
+    get isReady() {
+        return this.input.isReady;
+    }
+    get URLSearchParams() {
+        let search_params = new URLSearchParams();
+        let value = this.input.deserialize();
+        !this.input.disabled && value !== undefined && search_params.set(this.URIField, value);
+        return search_params;
+    }
+    isMatch(obj) {
+        // it's always match if value of filter is undefined
+        if (this.input === undefined || this.input.disabled)
+            return true;
+        return match(obj, this.field, this.input.value, this.operator);
+    }
+}
+__decorate([
+    observable,
+    __metadata("design:type", Input)
+], SingleFilter.prototype, "input", void 0);
+function match(obj, field_name, filter_value, operator) {
+    let field_names = field_name.split('__');
+    let current_field_name = field_names[0];
+    let current_value = obj[current_field_name];
+    if (field_names.length === 1)
+        return operator(current_value, filter_value);
+    else if (field_names.length > 1) {
+        let next_field_name = field_name.substring(field_names[0].length + 2);
+        // we have object relation
+        if (typeof current_value === 'object' && current_value !== null) {
+            if (Array.isArray(current_value)) {
+                let result = false;
+                for (const item of current_value) {
+                    result = match(item, next_field_name, filter_value, operator);
+                    if (result)
+                        return result;
+                }
+            }
+            else {
+                return match(current_value, next_field_name, filter_value, operator);
+            }
+        }
+    }
+    return false;
+}
+
+class ComboFilter extends Filter {
+    constructor(filters) {
+        super();
+        Object.defineProperty(this, "filters", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.filters = filters;
+    }
+    get isReady() {
+        for (let filter of this.filters) {
+            if (!filter.isReady)
+                return false;
+        }
+        return true;
+    }
+    get URLSearchParams() {
+        let search_params = new URLSearchParams();
+        for (let filter of this.filters) {
+            filter.URLSearchParams.forEach((value, key) => search_params.set(key, value));
+        }
+        return search_params;
+    }
+}
+
+class EQ_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}`;
+    }
+    operator(value_a, value_b) {
+        return value_a === value_b;
+    }
+}
+// EQV is a verbose version of EQ that add __eq to the URIField
+class EQV_Filter extends EQ_Filter {
+    get URIField() {
+        return `${this.field}__eq`;
+    }
+}
+function EQ(field, value) {
+    return new EQ_Filter(field, value);
+}
+function EQV(field, value) {
+    return new EQV_Filter(field, value);
+}
+
+class NOT_EQ_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__not_eq`;
+    }
+    operator(value_a, value_b) {
+        return value_a !== value_b;
+    }
+}
+function NOT_EQ(field, value) {
+    return new NOT_EQ_Filter(field, value);
+}
+
+class GT_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__gt`;
+    }
+    operator(value_a, value_b) {
+        return value_a > value_b;
+    }
+}
+function GT(field, value) {
+    return new GT_Filter(field, value);
+}
+
+class GTE_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__gte`;
+    }
+    operator(value_a, value_b) {
+        return value_a >= value_b;
+    }
+}
+function GTE(field, value) {
+    return new GTE_Filter(field, value);
+}
+
+class LT_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__lt`;
+    }
+    operator(value_a, value_b) {
+        return value_a < value_b;
+    }
+}
+function LT(field, value) {
+    return new LT_Filter(field, value);
+}
+
+class LTE_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__lte`;
+    }
+    operator(value_a, value_b) {
+        return value_a <= value_b;
+    }
+}
+function LTE(field, value) {
+    return new LTE_Filter(field, value);
+}
+
+class IN_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__in`;
+    }
+    operator(value_a, value_b) {
+        // it's always match if value of filter is empty []
+        if (value_b.length === 0)
+            return true;
+        for (let v of value_b) {
+            if (v === value_a)
+                return true;
+        }
+        return false;
+    }
+}
+function IN(field, value) {
+    return new IN_Filter(field, value);
+}
+
+class LIKE_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__contains`;
+    }
+    operator(current_value, filter_value) {
+        return current_value.includes(filter_value);
+    }
+}
+function LIKE(field, value) {
+    return new LIKE_Filter(field, value);
+}
+
+class ILIKE_Filter extends SingleFilter {
+    get URIField() {
+        return `${this.field}__icontains`;
+    }
+    operator(current_value, filter_value) {
+        return current_value.toLowerCase().includes(filter_value.toLowerCase());
+    }
+}
+function ILIKE(field, value) {
+    return new ILIKE_Filter(field, value);
+}
+
+class AND_Filter extends ComboFilter {
+    isMatch(obj) {
+        for (let filter of this.filters) {
+            if (!filter.isMatch(obj)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+function AND(...filters) { return new AND_Filter(filters); }
+
+class QueryPage extends Query {
+    setPageSize(size) { this.limit.set(size); this.offset.set(0); }
+    setPage(n) { this.offset.set(this.limit.value * (n > 0 ? n - 1 : 0)); }
     goToFirstPage() { this.setPage(1); }
     goToPrevPage() { this.setPage(this.current_page - 1); }
     goToNextPage() { this.setPage(this.current_page + 1); }
     goToLastPage() { this.setPage(this.total_pages); }
-    get is_first_page() { return this.offset === 0; }
-    get is_last_page() { return this.offset + this.limit >= this.total; }
-    get current_page() { return this.offset / this.limit + 1; }
-    get total_pages() { return this.total ? Math.ceil(this.total / this.limit) : 1; }
+    get is_first_page() { return this.offset.value === 0; }
+    get is_last_page() { return this.offset.value + this.limit.value >= this.total; }
+    get current_page() { return this.offset.value / this.limit.value + 1; }
+    get total_pages() { return this.total ? Math.ceil(this.total / this.limit.value) : 1; }
     // we going to migrate to JS style
-    get isFirstPage() { return this.offset === 0; }
-    get isLastPage() { return this.offset + this.limit >= this.total; }
-    get currentPage() { return this.offset / this.limit + 1; }
-    get totalPages() { return this.total ? Math.ceil(this.total / this.limit) : 1; }
+    get isFirstPage() { return this.is_first_page; }
+    get isLastPage() { return this.is_last_page; }
+    get currentPage() { return this.current_page; }
+    get totalPages() { return this.total_pages; }
     constructor(props) {
         super(props);
         runInAction(() => {
-            if (this.offset === undefined)
-                this.offset = 0;
-            if (this.limit === undefined)
-                this.limit = config.DEFAULT_PAGE_SIZE;
+            if (this.offset.value === undefined)
+                this.offset.set(0);
+            if (this.limit.value === undefined)
+                this.limit.set(config.DEFAULT_PAGE_SIZE);
         });
     }
     async __load() {
         return this.__wrap_controller(async () => {
             const [objs, total] = await Promise.all([
-                this.adapter.load(this, this.__controller),
-                this.adapter.getTotalCount(this.filter, this.__controller)
+                this.repository.load(this, this.__controller),
+                this.repository.getTotalCount(this.filter, this.__controller)
             ]);
             runInAction(() => {
                 this.__items = objs;
@@ -1698,19 +1602,19 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
-], QueryXPage.prototype, "setPageSize", null);
+], QueryPage.prototype, "setPageSize", null);
 __decorate([
     action('MO: set page'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
-], QueryXPage.prototype, "setPage", null);
+], QueryPage.prototype, "setPage", null);
 
-class QueryXCacheSync extends QueryX {
-    constructor(cache, props) {
+class QueryCacheSync extends Query {
+    constructor(props) {
         super(props);
         // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(cache, action('MO: Query - update from cache changes', (change) => {
+        this.__disposers.push(observe(props.repository.cache.store, action('MO: Query - update from cache changes', (change) => {
             if (change.type == 'add') {
                 this.__watch_obj(change.newValue);
             }
@@ -1727,7 +1631,7 @@ class QueryXCacheSync extends QueryX {
             }
         })));
         // ch all exist objects of model 
-        for (let [id, obj] of cache) {
+        for (let [id, obj] of props.repository.cache.store) {
             this.__watch_obj(obj);
         }
     }
@@ -1736,7 +1640,7 @@ class QueryXCacheSync extends QueryX {
             this.__controller.abort();
         this.__controller = new AbortController();
         try {
-            await this.adapter.load(this, this.__controller);
+            await this.repository.load(this, this.__controller);
             // Query don't need to overide the __items,
             // query's items should be get only from the cache
         }
@@ -1751,9 +1655,9 @@ class QueryXCacheSync extends QueryX {
     }
     get items() {
         let __items = this.__items.map(x => x); // copy __items (not deep)
-        if (this.order_by.size) {
+        if (this.order_by.value && this.order_by.value.size) {
             let compare = (a, b) => {
-                for (const [key, value] of this.order_by) {
+                for (const [key, value] of this.order_by.value) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
                             return 1;
@@ -1801,20 +1705,20 @@ __decorate([
     computed,
     __metadata("design:type", Object),
     __metadata("design:paramtypes", [])
-], QueryXCacheSync.prototype, "items", null);
+], QueryCacheSync.prototype, "items", null);
 
-class QueryXStream extends QueryX {
+class QueryStream extends Query {
     // you can reset all and start from beginning
-    goToFirstPage() { this.__items = []; this.offset = 0; }
+    goToFirstPage() { this.__items = []; this.offset.set(0); }
     // you can scroll only forward
-    goToNextPage() { this.offset = this.offset + this.limit; }
+    goToNextPage() { this.offset.set(this.offset.value + this.limit.value); }
     constructor(props) {
         super(props);
         runInAction(() => {
-            if (this.offset === undefined)
-                this.offset = 0;
-            if (this.limit === undefined)
-                this.limit = config.DEFAULT_PAGE_SIZE;
+            if (this.offset.value === undefined)
+                this.offset.set(0);
+            if (this.limit.value === undefined)
+                this.limit.set(config.DEFAULT_PAGE_SIZE);
         });
     }
     async __load() {
@@ -1822,12 +1726,12 @@ class QueryXStream extends QueryX {
             this.__controller.abort();
         this.__controller = new AbortController();
         try {
-            const objs = await this.adapter.load(this, this.__controller);
+            const objs = await this.repository.load(this, this.__controller);
             runInAction(() => {
                 this.__items.push(...objs);
                 // total is not make sense for infinity queries
                 // total = 1 show that last page is reached
-                if (objs.length < this.limit)
+                if (objs.length < this.limit.value)
                     this.total = 1;
             });
         }
@@ -1842,33 +1746,23 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], QueryXStream.prototype, "goToFirstPage", null);
+], QueryStream.prototype, "goToFirstPage", null);
 __decorate([
     action('MO: next page'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], QueryXStream.prototype, "goToNextPage", null);
+], QueryStream.prototype, "goToNextPage", null);
 
-class QueryXRaw extends QueryX {
-    async __load() {
-        return this.__wrap_controller(async () => {
-            // get only raw objects from adapter
-            const objs = await this.adapter.__load(this, this.__controller);
-            runInAction(() => {
-                this.__items = objs;
-            });
-        });
+class QueryRawPage extends QueryPage {
+    constructor(props) {
+        super(props);
     }
-}
-
-// TODO: fix types
-class QueryXRawPage extends QueryXPage {
     async __load() {
         return this.__wrap_controller(async () => {
             // get only raw objects from adapter
-            const objs = await this.adapter.__load(this);
-            const total = await this.adapter.getTotalCount(this.filter);
+            const objs = await this.repository.load(this);
+            const total = await this.repository.getTotalCount(this.filter);
             runInAction(() => {
                 this.__items = objs;
                 this.total = total;
@@ -1877,7 +1771,7 @@ class QueryXRawPage extends QueryXPage {
     }
 }
 
-class QueryXDistinct extends QueryX {
+class QueryDistinct extends Query {
     constructor(field, props) {
         super(props);
         Object.defineProperty(this, "field", {
@@ -1890,7 +1784,7 @@ class QueryXDistinct extends QueryX {
     }
     async __load() {
         return this.__wrap_controller(async () => {
-            const objs = await this.adapter.getDistinct(this.filter, this.field, this.__controller);
+            const objs = await this.repository.getDistinct(this.filter, this.field, this.__controller);
             runInAction(() => {
                 this.__items = objs;
             });
@@ -1898,525 +1792,183 @@ class QueryXDistinct extends QueryX {
     }
 }
 
-class Model {
-    constructor(...args) {
-        Object.defineProperty(this, "id", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: undefined
-        });
-        // TODO: should it be observable?
-        Object.defineProperty(this, "__init_data", {
+class Adapter {
+}
+
+class ReadOnlyAdapter extends Adapter {
+    async create() { throw (`You cannot create using READ ONLY adapter.`); }
+    async update() { throw (`You cannot update using READ ONLY adapter.`); }
+    async delete() { throw (`You cannot delete using READ ONLY adapter.`); }
+}
+
+/*
+You can use this adapter for mock data or for unit test
+*/
+function timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+let local_store = {};
+class LocalAdapter {
+    init_local_data(data) {
+        let objs = {};
+        for (let obj of data) {
+            objs[obj.id] = obj;
+        }
+        local_store[this.store_name] = objs;
+    }
+    constructor(store_name) {
+        Object.defineProperty(this, "store_name", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "__errors", {
+        Object.defineProperty(this, "delay", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
-        }); // depricated, use errors in the form and inputs
-        Object.defineProperty(this, "__disposers", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Map()
-        });
+        }); // delays for simulate real usage, use it only for tests
+        this.store_name = store_name;
+        local_store[this.store_name] = {};
     }
-    // add obj to the cache
-    static inject(obj) {
-        if (obj.id === undefined)
-            throw new Error(`Object should have id!`);
-        if (this.__cache.has(obj.id)) {
-            throw new Error(`Object with id ${obj.id} already exist in the cache of model: "${this.prototype.constructor.name}")`);
+    async action(obj_id, name, kwargs) {
+    }
+    async create(raw_data) {
+        if (this.delay)
+            await timeout(this.delay);
+        // calculate and set new ID
+        let ids = [0];
+        for (let id of Object.keys(local_store[this.store_name])) {
+            ids.push(parseInt(id));
         }
-        this.__cache.set(obj.id, obj);
-    }
-    // remove obj from the cache
-    static eject(obj) {
-        if (this.__cache.has(obj.id))
-            this.__cache.delete(obj.id);
-    }
-    static getQueryX(props) {
-        return new QueryX(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
-    }
-    static getQueryXRaw(props) {
-        return new QueryXRaw(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
-    }
-    static getQueryXPage(props) {
-        return new QueryXPage(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
-    }
-    static getQueryXRawPage(props) {
-        return new QueryXRawPage(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
-    }
-    static getQueryXCacheSync(props) {
-        return new QueryXCacheSync(this.__cache, Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
-    }
-    static getQueryXStream(props) {
-        return new QueryXStream(Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
-    }
-    static getQueryXDistinct(field, props) {
-        return new QueryXDistinct(field, Object.assign(Object.assign({}, props), { adapter: this.__adapter }));
-    }
-    static getQuery(selector) {
-        return new Query(this.__adapter, this.__cache, selector);
-    }
-    static getQueryPage(selector) {
-        return new QueryPage(this.__adapter, this.__cache, selector);
-    }
-    static get(id) {
-        return this.__cache.get(id);
-    }
-    static async findById(id) {
-        return this.__adapter.get(id);
-    }
-    static async find(selector) {
-        return this.__adapter.find(selector);
-    }
-    static updateCache(raw_obj) {
-        let obj;
-        if (this.__cache.has(raw_obj.id)) {
-            obj = this.__cache.get(raw_obj.id);
-            obj.updateFromRaw(raw_obj);
-        }
-        else {
-            obj = new this(raw_obj);
-        }
-        return obj;
-    }
-    static clearCache() {
-        // id = undefined is equal to remove obj from cache
-        for (let obj of this.__cache.values()) {
-            obj.id = undefined;
-        }
-    }
-    get model() {
-        return this.constructor.__proto__;
-    }
-    // data only from fields (no ids)
-    get raw_data() {
-        let raw_data = {};
-        for (let field_name in this.model.__fields) {
-            if (this[field_name] !== undefined) {
-                raw_data[field_name] = this[field_name];
-            }
-        }
+        let max = Math.max.apply(null, ids);
+        raw_data.id = max + 1;
+        local_store[this.store_name][raw_data.id] = raw_data;
         return raw_data;
     }
-    // it is raw_data + id
-    get raw_obj() {
-        let raw_obj = this.raw_data;
-        raw_obj.id = this.id;
+    async get(obj_id) {
+        if (this.delay)
+            await timeout(this.delay);
+        let raw_obj = Object.values(local_store[this.store_name])[0];
         return raw_obj;
     }
-    get only_changed_raw_data() {
-        let raw_data = {};
-        for (let field_name in this.model.__fields) {
-            if (this[field_name] !== undefined && this[field_name] != this.__init_data[field_name]) {
-                raw_data[field_name] = this[field_name];
-            }
+    async update(obj_id, only_changed_raw_data) {
+        if (this.delay)
+            await timeout(this.delay);
+        let raw_obj = local_store[this.store_name][obj_id];
+        for (let field of Object.keys(only_changed_raw_data)) {
+            raw_obj[field] = only_changed_raw_data[field];
         }
-        return raw_data;
+        return raw_obj;
     }
-    get is_changed() {
-        for (let field_name in this.model.__fields) {
-            if (this[field_name] != this.__init_data[field_name]) {
-                return true;
-            }
-        }
-        return false;
+    async delete(obj_id) {
+        if (this.delay)
+            await timeout(this.delay);
+        delete local_store[this.store_name][obj_id];
     }
-    async action(name, kwargs) { return await this.model.__adapter.action(this, name, kwargs); }
-    async create() { return await this.model.__adapter.create(this); }
-    async update() { return await this.model.__adapter.update(this); }
-    async delete() { return await this.model.__adapter.delete(this); }
-    async save() { return this.id === undefined ? this.create() : this.update(); }
-    // update the object from the server
-    async refresh() { return await this.model.__adapter.get(this.id); }
-    /**
-     * @deprecated use errors in the form and inputs
-     */
-    setError(error) {
-        this.__errors = error;
+    async find(query) {
+        if (this.delay)
+            await timeout(this.delay);
+        let raw_obj = Object.values(local_store[this.store_name])[0];
+        return raw_obj;
     }
-    refreshInitData() {
-        if (this.__init_data === undefined)
-            this.__init_data = {};
-        for (let field_name in this.model.__fields) {
-            this.__init_data[field_name] = this[field_name];
-        }
-    }
-    cancelLocalChanges() {
-        for (let field_name in this.model.__fields) {
-            if (this[field_name] !== this.__init_data[field_name]) {
-                this[field_name] = this.__init_data[field_name];
+    async load(query) {
+        if (this.delay)
+            await timeout(this.delay);
+        let raw_objs = [];
+        if (query.filter) {
+            for (let raw_obj of Object.values(local_store[this.store_name])) {
             }
-        }
-    }
-    updateFromRaw(raw_obj) {
-        if (this.id === undefined && raw_obj.id !== undefined) {
-            // Note: object with equal id can be already in the cache (race condition)
-            // I have got the object from websocket before the response from the server
-            // Solution: remove the object (that came from websocket) from the cache
-            let exist_obj = this.model.__cache.get(raw_obj.id);
-            if (exist_obj) {
-                exist_obj.id = undefined;
-            }
-            this.id = raw_obj.id;
-        }
-        // update the fields if the raw data is exist and it is different
-        for (let field_name in this.model.__fields) {
-            if (raw_obj[field_name] !== undefined && raw_obj[field_name] !== this[field_name]) {
-                this[field_name] = raw_obj[field_name];
-            }
-        }
-        for (let relation in this.model.__relations) {
-            const settings = this.model.__relations[relation].settings;
-            if (settings.foreign_model && raw_obj[relation]) {
-                settings.foreign_model.updateCache(raw_obj[relation]);
-                this[settings.foreign_id_name] = raw_obj[relation].id;
-            }
-            else if (settings.remote_model && raw_obj[relation]) {
-                // many
-                if (Array.isArray(raw_obj[relation])) {
-                    for (const i of raw_obj[relation]) {
-                        settings.remote_model.updateCache(i);
-                    }
-                }
-                // one
-                else {
-                    settings.remote_model.updateCache(raw_obj[relation]);
-                }
-            }
-        }
-    }
-}
-__decorate([
-    observable,
-    __metadata("design:type", Number)
-], Model.prototype, "id", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Object)
-], Model.prototype, "__init_data", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Object)
-], Model.prototype, "__errors", void 0);
-__decorate([
-    action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], Model.prototype, "setError", null);
-__decorate([
-    action('MO: obj - refresh init data'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], Model.prototype, "refreshInitData", null);
-__decorate([
-    action('MO: obj - cancel local changes'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], Model.prototype, "cancelLocalChanges", null);
-__decorate([
-    action('MO: obj - update from raw'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], Model.prototype, "updateFromRaw", null);
-__decorate([
-    action('MO: model - inject'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Model]),
-    __metadata("design:returntype", void 0)
-], Model, "inject", null);
-__decorate([
-    action('MO: model - eject'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Model]),
-    __metadata("design:returntype", void 0)
-], Model, "eject", null);
-__decorate([
-    action('MO: model - update the cache from raw'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Model)
-], Model, "updateCache", null);
-__decorate([
-    action('MO: model - clear the cache'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], Model, "clearCache", null);
-// Decorator
-function model(constructor) {
-    var original = constructor;
-    original.__cache = observable(new Map());
-    // the new constructor
-    let f = function (...args) {
-        let c = class extends original {
-            constructor(...args) { super(...args); }
-        };
-        c.__proto__ = original;
-        let obj = new c();
-        // if second arg is true, then it is raw data, don't make it observable
-        if (!args[1]) {
-            makeObservable(obj);
-            // id field reactions
-            obj.__disposers.set('before changes', intercept(obj, 'id', (change) => {
-                if (change.newValue !== undefined && obj.id !== undefined)
-                    throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`);
-                if (obj.id !== undefined && change.newValue === undefined)
-                    obj.model.eject(obj);
-                return change;
-            }));
-            obj.__disposers.set('after changes', observe(obj, 'id', (change) => {
-                if (obj.id !== undefined)
-                    obj.model.inject(obj);
-            }));
-            // apply fields decorators
-            for (let field_name in obj.model.__fields) {
-                obj.model.__fields[field_name].decorator(obj, field_name);
-            }
-            // apply __relations decorators
-            for (let field_name in obj.model.__relations) {
-                obj.model.__relations[field_name].decorator(obj, field_name);
-            }
-            if (args[0])
-                obj.updateFromRaw(args[0]);
-            obj.refreshInitData();
         }
         else {
-            for (let field in args[0]) {
-                obj[field] = args[0][field];
-            }
+            raw_objs = Object.values(local_store[this.store_name]);
         }
-        return obj;
+        // order_by (sort)
+        if (query.order_by.value) {
+            raw_objs = raw_objs.sort((obj_a, obj_b) => {
+                for (let sort_by_field of query.order_by.value) {
+                }
+                return 0;
+            });
+        }
+        // page
+        if (query.limit.value !== undefined && query.offset.value !== undefined) {
+            raw_objs = raw_objs.slice(query.offset.value, query.offset.value + query.limit.value);
+        }
+        return raw_objs;
+    }
+    async getTotalCount(filter) {
+        return Object.values(local_store[this.store_name]).length;
+    }
+    async getDistinct(filter, filed) {
+        return [];
+    }
+    getURLSearchParams(query) {
+        return new URLSearchParams();
+    }
+}
+// model decorator
+function local() {
+    return (cls) => {
+        let repository = new Repository(cls, new LocalAdapter(cls.name));
+        cls.__proto__.repository = repository;
     };
-    f.__proto__ = original;
-    f.prototype = original.prototype; // copy prototype so intanceof operator still works
-    Object.defineProperty(f, "name", { value: original.name });
-    return f; // return new constructor (will override original)
-}
-
-class ReadOnlyModel extends Model {
-    async create() { throw (`You cannot create the obj, ${this.model.name} is READ ONLY model`); }
-    async update() { throw (`You cannot update the obj, ${this.model.name} is READ ONLY model`); }
-    async delete() { throw (`You cannot delete the obj, ${this.model.name} is READ ONLY model`); }
-    async save() { throw (`You cannot save the obj, ${this.model.name} is READ ONLY model`); }
-}
-
-function field_field(obj, field_name) {
-    // make observable and set default value
-    extendObservable(obj, { [field_name]: obj[field_name] });
-}
-function field(cls, field_name) {
-    let model = cls.constructor;
-    if (model.__fields === undefined)
-        model.__fields = {};
-    model.__fields[field_name] = { decorator: field_field }; // register field 
-}
-
-function field_foreign(obj, field_name) {
-    let settings = obj.model.__relations[field_name].settings;
-    let foreign_model = settings.foreign_model;
-    let foreign_id_name = settings.foreign_id_name;
-    // make observable and set default value
-    extendObservable(obj, { [field_name]: undefined });
-    reaction(
-    // watch on foreign cache for foreign object
-    () => {
-        if (obj[foreign_id_name] === undefined)
-            return undefined;
-        if (obj[foreign_id_name] === null)
-            return null;
-        return foreign_model.__cache.get(obj[foreign_id_name]);
-    }, 
-    // update foreign field
-    action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true });
-}
-function foreign(foreign_model, foreign_id_name) {
-    return function (cls, field_name) {
-        let model = cls.constructor;
-        if (model.__relations === undefined)
-            model.__relations = {};
-        // register field 
-        model.__relations[field_name] = {
-            decorator: field_foreign,
-            settings: {
-                foreign_model: foreign_model,
-                // if it is empty then try auto detect it (it works only with single id) 
-                foreign_id_name: foreign_id_name !== undefined ? foreign_id_name : `${field_name}_id`
-            }
-        };
-    };
-}
-
-function field_one(obj, field_name) {
-    // make observable and set default value
-    extendObservable(obj, { [field_name]: undefined });
-}
-function one(remote_model, remote_foreign_id_name) {
-    return function (cls, field_name) {
-        let model = cls.prototype.constructor;
-        if (model.__relations === undefined)
-            model.__relations = {};
-        // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_id_name = remote_foreign_id_name !== undefined ? remote_foreign_id_name : `${model.name.toLowerCase()}_id`;
-        model.__relations[field_name] = {
-            decorator: field_one,
-            settings: {
-                remote_model: remote_model,
-                remote_foreign_id_name: remote_foreign_id_name
-            }
-        };
-        const disposer_name = `MO: One - update - ${model.name}.${field_name}`;
-        observe(remote_model.__cache, (change) => {
-            let remote_obj;
-            switch (change.type) {
-                case 'add':
-                    remote_obj = change.newValue;
-                    remote_obj.__disposers.set(disposer_name, reaction(() => {
-                        return {
-                            id: remote_obj[remote_foreign_id_name],
-                            obj: model.__cache.get(remote_obj[remote_foreign_id_name])
-                        };
-                    }, action(disposer_name, (_new, _old) => {
-                        if (_old === null || _old === void 0 ? void 0 : _old.obj)
-                            _old.obj[field_name] = _new.id ? undefined : null;
-                        if (_new === null || _new === void 0 ? void 0 : _new.obj)
-                            _new.obj[field_name] = remote_obj;
-                    }), { fireImmediately: true }));
-                    break;
-                case 'delete':
-                    remote_obj = change.oldValue;
-                    if (remote_obj.__disposers.get(disposer_name)) {
-                        remote_obj.__disposers.get(disposer_name)();
-                        remote_obj.__disposers.delete(disposer_name);
-                    }
-                    let obj = model.__cache.get(remote_obj[remote_foreign_id_name]);
-                    if (obj)
-                        runInAction(() => { obj[field_name] = undefined; });
-                    break;
-            }
-        });
-    };
-}
-
-function field_many(obj, field_name) {
-    extendObservable(obj, { [field_name]: [] });
-}
-function many(remote_model, remote_foreign_id_name) {
-    return function (cls, field_name) {
-        let model = cls.prototype.constructor;
-        if (model.__relations === undefined)
-            model.__relations = {};
-        // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_id_name = remote_foreign_id_name !== undefined ? remote_foreign_id_name : `${model.name.toLowerCase()}_id`;
-        model.__relations[field_name] = {
-            decorator: field_many,
-            settings: {
-                remote_model: remote_model,
-                remote_foreign_id_name: remote_foreign_id_name
-            }
-        };
-        const disposer_name = `MO: Many - update - ${model.name}.${field_name}`;
-        // watch for remote object in the cache 
-        observe(remote_model.__cache, (remote_change) => {
-            let remote_obj;
-            switch (remote_change.type) {
-                case 'add':
-                    remote_obj = remote_change.newValue;
-                    remote_obj.__disposers.set(disposer_name, reaction(() => model.__cache.get(remote_obj[remote_foreign_id_name]), action(disposer_name, (_new, _old) => {
-                        if (_old) {
-                            const i = _old[field_name].indexOf(remote_obj);
-                            if (i > -1)
-                                _old[field_name].splice(i, 1);
-                        }
-                        if (_new) {
-                            const i = _new[field_name].indexOf(remote_obj);
-                            if (i === -1)
-                                _new[field_name].push(remote_obj);
-                        }
-                    }), { fireImmediately: true }));
-                    break;
-                case 'delete':
-                    remote_obj = remote_change.oldValue;
-                    if (remote_obj.__disposers.get(disposer_name)) {
-                        remote_obj.__disposers.get(disposer_name)();
-                        remote_obj.__disposers.delete(disposer_name);
-                    }
-                    let obj = model.__cache.get(remote_obj[remote_foreign_id_name]);
-                    if (obj) {
-                        const i = obj[field_name].indexOf(remote_obj);
-                        if (i > -1)
-                            runInAction(() => { obj[field_name].splice(i, 1); });
-                    }
-                    break;
-            }
-        });
-    };
-}
-
-class XFilter {
 }
 
 class BooleanInput extends Input {
     serialize(value) {
         if (value === undefined)
-            return undefined;
+            this.set(undefined);
         if (value === 'null')
-            return null;
+            this.set(null);
         if (value === null)
-            return undefined;
-        return value === 'true' ? true : value === 'false' ? false : undefined;
+            this.set(undefined);
+        else
+            this.set(value === 'true' ? true : value === 'false' ? false : undefined);
     }
-    deserialize(value) {
-        if (value === undefined)
+    deserialize() {
+        if (this.value === undefined)
             return undefined;
-        if (value === null)
+        if (this.value === null)
             return 'null';
-        return !!value ? 'true' : 'false';
+        return !!this.value ? 'true' : 'false';
     }
 }
 
 class DateInput extends Input {
     serialize(value) {
         if (value === undefined)
-            return undefined;
+            this.set(undefined);
         if (value === 'null')
-            return null;
-        return new Date(value);
+            this.set(null);
+        else
+            this.set(new Date(value));
     }
-    deserialize(value) {
-        if (value === undefined)
+    deserialize() {
+        if (this.value === undefined)
             return undefined;
-        if (value === null)
+        if (this.value === null)
             return 'null';
-        return value instanceof Date ? value.toISOString().split('T')[0] : "";
+        return this.value instanceof Date ? this.value.toISOString().split('T')[0] : "";
     }
 }
 
 class DateTimeInput extends Input {
     serialize(value) {
         if (value === undefined)
-            return undefined;
-        if (value === 'null')
-            return null;
-        return new Date(value);
+            this.set(undefined);
+        else if (value === 'null')
+            this.set(null);
+        else
+            this.set(new Date(value));
     }
-    deserialize(value) {
-        if (value === undefined)
+    deserialize() {
+        if (this.value === undefined)
             return undefined;
-        if (value === null)
+        if (this.value === null)
             return 'null';
-        return value instanceof Date ? value.toISOString() : "";
+        return this.value instanceof Date ? this.value.toISOString() : "";
     }
 }
 
@@ -2430,23 +1982,23 @@ class EnumInput extends Input {
             value: void 0
         });
         this.enum = args.enum;
-        // TODO: convert enum to query? and use it as usual options?
     }
     serialize(value) {
         if (value === 'null')
-            return null;
-        if (value === undefined)
-            return undefined;
-        if (value === null)
-            return null;
-        return Object.values(this.enum).find(v => v == value);
+            this.set(null);
+        else if (value === undefined)
+            this.set(undefined);
+        else if (value === null)
+            this.set(null);
+        else
+            this.set(Object.values(this.enum).find(v => v == value));
     }
-    deserialize(value) {
-        if (value === undefined)
+    deserialize() {
+        if (this.value === undefined)
             return undefined;
-        if (value === null)
+        if (this.value === null)
             return 'null';
-        return value.toString();
+        return this.value.toString();
     }
 }
 
@@ -2456,20 +2008,20 @@ class ArrayNumberInput extends ArrayInput {
         if (value) {
             let converter = new NumberInput();
             for (const i of value.split(',')) {
-                let tmp = converter.serialize(i);
-                if (tmp !== undefined) {
-                    result.push(tmp);
+                converter.serialize(i);
+                if (converter.value !== undefined) {
+                    result.push(converter.value);
                 }
             }
         }
-        return result;
+        this.set(result);
     }
-    deserialize(value) {
+    deserialize() {
         let result = [];
-        if (value) {
-            for (const i of value) {
-                let converter = new NumberInput();
-                let v = converter.deserialize(i);
+        if (this.value) {
+            for (const i of this.value) {
+                let converter = new NumberInput({ value: i });
+                let v = converter.deserialize();
                 if (v !== undefined) {
                     result.push(v);
                 }
@@ -2602,437 +2154,5 @@ __decorate([
     __metadata("design:type", Array)
 ], Form.prototype, "errors", void 0);
 
-class XSingleFilter extends XFilter {
-    constructor(field, input) {
-        super();
-        Object.defineProperty(this, "field", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "input", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "__disposers", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
-        this.field = field;
-        this.input = input;
-        makeObservable(this);
-    }
-    get isReady() {
-        return this.input.isReady;
-    }
-    get URLSearchParams() {
-        let search_params = new URLSearchParams();
-        let value = this.input.deserialize(this.input.value);
-        !this.input.disabled && value !== undefined && search_params.set(this.URIField, value);
-        return search_params;
-    }
-    isMatch(obj) {
-        // it's always match if value of filter is undefined
-        if (this.input === undefined || this.input.disabled)
-            return true;
-        return match(obj, this.field, this.input.value, this.operator);
-    }
-}
-__decorate([
-    observable,
-    __metadata("design:type", Input)
-], XSingleFilter.prototype, "input", void 0);
-function match(obj, field_name, filter_value, operator) {
-    let field_names = field_name.split('__');
-    let current_field_name = field_names[0];
-    let current_value = obj[current_field_name];
-    if (field_names.length === 1)
-        return operator(current_value, filter_value);
-    else if (field_names.length > 1) {
-        let next_field_name = field_name.substring(field_names[0].length + 2);
-        // we have object relation
-        if (typeof current_value === 'object' && current_value !== null) {
-            if (Array.isArray(current_value)) {
-                let result = false;
-                for (const item of current_value) {
-                    result = match(item, next_field_name, filter_value, operator);
-                    if (result)
-                        return result;
-                }
-            }
-            else {
-                return match(current_value, next_field_name, filter_value, operator);
-            }
-        }
-    }
-    return false;
-}
-
-class XComboFilter extends XFilter {
-    constructor(filters) {
-        super();
-        Object.defineProperty(this, "filters", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.filters = filters;
-    }
-    get isReady() {
-        for (let filter of this.filters) {
-            if (!filter.isReady)
-                return false;
-        }
-        return true;
-    }
-    get URLSearchParams() {
-        let search_params = new URLSearchParams();
-        for (let filter of this.filters) {
-            filter.URLSearchParams.forEach((value, key) => search_params.set(key, value));
-        }
-        return search_params;
-    }
-}
-
-class XEQ_Filter extends XSingleFilter {
-    get URIField() {
-        return `${this.field}`;
-    }
-    operator(value_a, value_b) {
-        return value_a === value_b;
-    }
-}
-// EQV is a verbose version of EQ
-class XEQV_Filter extends XEQ_Filter {
-    get URIField() {
-        return `${this.field}__eq`;
-    }
-}
-function XEQ(field, value) {
-    return new XEQ_Filter(field, value);
-}
-function XEQV(field, value) {
-    return new XEQV_Filter(field, value);
-}
-
-class XNOT_EQ_Filter extends XSingleFilter {
-    get URIField() {
-        return `${this.field}__not_eq`;
-    }
-    operator(value_a, value_b) {
-        return value_a !== value_b;
-    }
-}
-function XNOT_EQ(field, value) {
-    return new XNOT_EQ_Filter(field, value);
-}
-
-class XGT_Filter extends XSingleFilter {
-    get URIField() {
-        return `${this.field}__gt`;
-    }
-    operator(value_a, value_b) {
-        return value_a > value_b;
-    }
-}
-function XGT(field, value) {
-    return new XGT_Filter(field, value);
-}
-
-class XGTE_Filter extends XSingleFilter {
-    get URIField() {
-        return `${this.field}__gte`;
-    }
-    operator(value_a, value_b) {
-        return value_a >= value_b;
-    }
-}
-function XGTE(field, value) {
-    return new XGTE_Filter(field, value);
-}
-
-class XLT_Filter extends XSingleFilter {
-    get URIField() {
-        return `${this.field}__lt`;
-    }
-    operator(value_a, value_b) {
-        return value_a < value_b;
-    }
-}
-function XLT(field, value) {
-    return new XLT_Filter(field, value);
-}
-
-class XLTE_Filter extends XSingleFilter {
-    get URIField() {
-        return `${this.field}__lte`;
-    }
-    operator(value_a, value_b) {
-        return value_a <= value_b;
-    }
-}
-function XLTE(field, value) {
-    return new XLTE_Filter(field, value);
-}
-
-class XIN_Filter extends XSingleFilter {
-    get URIField() {
-        return `${this.field}__in`;
-    }
-    operator(value_a, value_b) {
-        // it's always match if value of filter is empty []
-        if (value_b.length === 0)
-            return true;
-        for (let v of value_b) {
-            if (v === value_a)
-                return true;
-        }
-        return false;
-    }
-}
-function XIN(field, value) {
-    return new XIN_Filter(field, value);
-}
-
-class XLIKE_Filter extends XSingleFilter {
-    get URIField() {
-        return `${this.field}__contains`;
-    }
-    operator(current_value, filter_value) {
-        return current_value.includes(filter_value);
-    }
-}
-function XLIKE(field, value) {
-    return new XLIKE_Filter(field, value);
-}
-
-class XILIKE_Filter extends XSingleFilter {
-    get URIField() {
-        return `${this.field}__icontains`;
-    }
-    operator(current_value, filter_value) {
-        return current_value.toLowerCase().includes(filter_value.toLowerCase());
-    }
-}
-function XILIKE(field, value) {
-    return new XILIKE_Filter(field, value);
-}
-
-class XAND_Filter extends XComboFilter {
-    isMatch(obj) {
-        for (let filter of this.filters) {
-            if (!filter.isMatch(obj)) {
-                return false;
-            }
-        }
-        return true;
-    }
-}
-function XAND(...filters) { return new XAND_Filter(filters); }
-
-class Adapter {
-    constructor(model) {
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.model = model;
-    }
-    async action(obj, name, kwargs, controller) {
-        return await this.model.__adapter.__action(obj.id, name, kwargs, controller);
-    }
-    async create(obj, controller) {
-        var _a;
-        try {
-            let raw_obj = await this.__create(obj.raw_data, controller);
-            obj.updateFromRaw(raw_obj);
-            obj.refreshInitData(); // backend can return default values and they should be in __init_data
-            obj.setError(undefined);
-        }
-        catch (e) {
-            obj.setError((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
-            throw e;
-        }
-        return obj;
-    }
-    async update(obj, controller) {
-        var _a;
-        try {
-            let raw_obj = await this.__update(obj.id, obj.only_changed_raw_data, controller);
-            obj.updateFromRaw(raw_obj);
-            obj.refreshInitData();
-            obj.setError(undefined);
-        }
-        catch (e) {
-            obj.setError((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
-            throw e;
-        }
-        return obj;
-    }
-    async delete(obj, controller) {
-        var _a;
-        try {
-            await this.__delete(obj.id, controller);
-            runInAction(() => obj.id = undefined);
-            obj.setError(undefined);
-        }
-        catch (e) {
-            obj.setError((_a = e.response) === null || _a === void 0 ? void 0 : _a.data);
-            throw e;
-        }
-        return obj;
-    }
-    async get(obj_id, controller) {
-        let raw_obj = await this.__get(obj_id);
-        const obj = this.model.updateCache(raw_obj, controller);
-        obj.refreshInitData();
-        return obj;
-    }
-    /* Returns ONE object */
-    async find(selector, controller) {
-        let raw_obj = await this.__find(selector);
-        const obj = this.model.updateCache(raw_obj, controller);
-        obj.refreshInitData();
-        return obj;
-    }
-    /* Returns MANY objects */
-    async load(selector, controller) {
-        let raw_objs = await this.__load(selector, controller);
-        let objs = [];
-        // it should be happend in one big action
-        runInAction(() => {
-            for (let raw_obj of raw_objs) {
-                const obj = this.model.updateCache(raw_obj);
-                obj.refreshInitData();
-                objs.push(obj);
-            }
-        });
-        return objs;
-    }
-}
-
-/*
-You can use this adapter for mock data or for unit test
-*/
-let local_store = {};
-function timeout(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-class LocalAdapter extends Adapter {
-    constructor(model, store_name) {
-        super(model);
-        Object.defineProperty(this, "store_name", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        // delays for simulate real usage, use it only for tests
-        Object.defineProperty(this, "delay", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.store_name = store_name ? store_name : model.__proto__.name;
-        local_store[this.store_name] = {};
-    }
-    init_local_data(data) {
-        let objs = {};
-        for (let obj of data) {
-            objs[obj.id] = obj;
-        }
-        local_store[this.store_name] = objs;
-    }
-    async __action(obj_id, name, kwargs) {
-    }
-    async __create(raw_data) {
-        if (this.delay)
-            await timeout(this.delay);
-        // calculate and set new ID
-        let ids = [0];
-        for (let id of Object.keys(local_store[this.store_name])) {
-            ids.push(parseInt(id));
-        }
-        let max = Math.max.apply(null, ids);
-        raw_data.id = max + 1;
-        local_store[this.store_name][raw_data.id] = raw_data;
-        return raw_data;
-    }
-    async __update(obj_id, only_changed_raw_data) {
-        if (this.delay)
-            await timeout(this.delay);
-        let raw_obj = local_store[this.store_name][obj_id];
-        for (let field of Object.keys(only_changed_raw_data)) {
-            raw_obj[field] = only_changed_raw_data[field];
-        }
-        return raw_obj;
-    }
-    async __delete(obj_id) {
-        if (this.delay)
-            await timeout(this.delay);
-        delete local_store[this.store_name][obj_id];
-    }
-    async __find(selector) {
-        if (this.delay)
-            await timeout(this.delay);
-        let raw_obj = Object.values(local_store[this.store_name])[0];
-        return raw_obj;
-    }
-    async __get(obj_id) {
-        if (this.delay)
-            await timeout(this.delay);
-        let raw_obj = Object.values(local_store[this.store_name])[0];
-        return raw_obj;
-    }
-    async __load(selector) {
-        const { filter, order_by, limit, offset } = selector || {};
-        if (this.delay)
-            await timeout(this.delay);
-        let raw_objs = [];
-        if (filter) {
-            for (let raw_obj of Object.values(local_store[this.store_name])) {
-            }
-        }
-        else {
-            raw_objs = Object.values(local_store[this.store_name]);
-        }
-        // order_by (sort)
-        if (order_by) {
-            raw_objs = raw_objs.sort((obj_a, obj_b) => {
-                for (let sort_by_field of order_by) {
-                }
-                return 0;
-            });
-        }
-        // page
-        if (limit !== undefined && offset !== undefined) {
-            raw_objs = raw_objs.slice(offset, offset + limit);
-        }
-        return raw_objs;
-    }
-    async getTotalCount(where) {
-        return Object.values(local_store[this.store_name]).length;
-    }
-    async getDistinct(where, filed) {
-        return [];
-    }
-}
-// model decorator
-function local() {
-    return (cls) => {
-        let adapter = new LocalAdapter(cls);
-        cls.__proto__.__adapter = adapter;
-    };
-}
-
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberBaseInput, NumberInput, OrderByInput, Query, QueryBase, QueryPage, QueryX, QueryXCacheSync, QueryXDistinct, QueryXPage, QueryXRaw, QueryXRawPage, QueryXStream, ReadOnlyModel, SingleFilter, StringInput, ValueType, XAND, XAND_Filter, XComboFilter, XEQ, XEQV, XEQV_Filter, XEQ_Filter, XFilter, XGT, XGTE, XGTE_Filter, XGT_Filter, XILIKE, XILIKE_Filter, XIN, XIN_Filter, XLIKE, XLIKE_Filter, XLT, XLTE, XLTE_Filter, XLT_Filter, XNOT_EQ, XNOT_EQ_Filter, XSingleFilter, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, match$1 as match, model, one, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, model, one, repository, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

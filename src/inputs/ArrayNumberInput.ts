@@ -9,9 +9,9 @@ export class ArrayNumberInput extends ArrayInput<number[], any> {
         if (value) {
             let converter = new NumberInput()
             for (const i of value.split(',')) {
-                let tmp = converter.serialize(i)
-                if (tmp !== undefined) {
-                    result.push(tmp)
+                converter.serialize(i)
+                if (converter.value !== undefined) {
+                    result.push(converter.value)
                 }
             }
         }

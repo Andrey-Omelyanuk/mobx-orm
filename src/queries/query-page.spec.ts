@@ -39,10 +39,10 @@ describe('QueryPage', () => {
         it('...', async () => {
             expect(query).toMatchObject({
                 repository: A.repository,
-                filters: undefined,
-                offset: 0,
-                limit: 50 
+                filter: undefined,
             })
+            expect(query.offset.value).toBe(0)
+            expect(query.limit.value).toBe(50)
             expect(repository_load).toHaveBeenCalledTimes(0) 
             // expect(adapter_load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page)
         })
@@ -103,70 +103,70 @@ describe('QueryPage', () => {
 
     describe('pagination', () => {
         it('setPage', async () => {
-                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.setPage(0)        ; expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.setPage(1)        ; expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.setPage(2)        ; expect([query.limit, query.offset]).toMatchObject([50, 50])
+                                      expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.setPage(0)        ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.setPage(1)        ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.setPage(2)        ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 50])
 
-            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
-            query.setPage(1)        ; expect([query.limit, query.offset]).toMatchObject([10, 0])
-            query.setPage(2)        ; expect([query.limit, query.offset]).toMatchObject([10, 10])
-            query.setPage(3)        ; expect([query.limit, query.offset]).toMatchObject([10, 20])
+            query.setPageSize(10)   ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 0])
+            query.setPage(1)        ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 0])
+            query.setPage(2)        ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 10])
+            query.setPage(3)        ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 20])
         })
         it('setPageSize', async () => {
-                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
-            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
-            query.setPageSize(20)   ; expect([query.limit, query.offset]).toMatchObject([20, 0])
+                                      expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.setPageSize(10)   ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 90])
+            query.setPageSize(20)   ; expect([query.limit.value, query.offset.value]).toMatchObject([20, 0])
         })
         it('goToFirstPage', async () => {
-                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([50, 450])
-            query.goToFirstPage()   ; expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.goToFirstPage()   ; expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
-            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
-            query.goToFirstPage()   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
+                                      expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.setPage(10)       ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 450])
+            query.goToFirstPage()   ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.goToFirstPage()   ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.setPageSize(10)   ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 90])
+            query.goToFirstPage()   ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 0])
         })
         it('goToPrevPage', async () => {
-                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.goToPrevPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([50, 450])
-            query.goToPrevPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 400])
-            query.goToPrevPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 350])
-            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
-            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
-            query.goToPrevPage()    ; expect([query.limit, query.offset]).toMatchObject([10, 80])
+                                      expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.goToPrevPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.setPage(10)       ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 450])
+            query.goToPrevPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 400])
+            query.goToPrevPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 350])
+            query.setPageSize(10)   ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 90])
+            query.goToPrevPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 80])
         })
         it('goToNextPage', async () => {
-                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.goToNextPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 50])
-            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([50, 450])
-            query.goToNextPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 500])
-            query.goToNextPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 550])
-            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
-            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
-            query.goToNextPage()    ; expect([query.limit, query.offset]).toMatchObject([10, 100])
+                                      expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.goToNextPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 50])
+            query.setPage(10)       ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 450])
+            query.goToNextPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 500])
+            query.goToNextPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 550])
+            query.setPageSize(10)   ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 90])
+            query.goToNextPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 100])
         })
         it('goToLastPage', async () => {
-                                      expect([query.limit, query.offset]).toMatchObject([50, 0])
-            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+                                      expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
+            query.goToLastPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
 
-            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([50, 450])
-            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.setPage(10)       ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 450])
+            query.goToLastPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
 
             query.total = 50 
-            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 0])
+            query.goToLastPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
 
             query.total = 51 
-            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([50, 50])
+            query.goToLastPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 50])
 
-            query.setPageSize(10)   ; expect([query.limit, query.offset]).toMatchObject([10, 0])
-            query.setPage(10)       ; expect([query.limit, query.offset]).toMatchObject([10, 90])
-            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([10, 50])
+            query.setPageSize(10)   ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 0])
+            query.setPage(10)       ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 90])
+            query.goToLastPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 50])
 
             query.total = 50 
-            query.goToLastPage()    ; expect([query.limit, query.offset]).toMatchObject([10, 40])
+            query.goToLastPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 40])
         })
         it('is_first_page', async () => {
                                       expect(query.is_first_page).toBe(true)

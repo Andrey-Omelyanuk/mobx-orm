@@ -1,16 +1,18 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { Model, model, field, foreign, one } from '../dist/mobx-orm'
+import { Model, model, field, foreign, one, local } from '../dist/mobx-orm'
 
 
 describe('User Profile.', () => {
 
     it('...', async ()=> {
+        @local()
         @model
         class User extends Model {
             @field  name    : string
                     profile : UserProfile
         }
 
+        @local()
         @model
         class UserProfile extends Model {
             @field              user_id	: number

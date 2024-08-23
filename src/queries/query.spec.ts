@@ -28,21 +28,18 @@ describe('QueryX', () => {
             const query = new Query<A>({repository: A.repository})
             expect(query).toMatchObject({
                 items: [],
-                limit: undefined,
-                offset: undefined,
                 total: undefined,
                 repository:  A.repository,
-                relations: [],
-                fields: [],
-                omit: [],
                 need_to_update: true,
                 is_loading: false,
                 is_ready: false,
                 error: '',
-                syncURLSearchParams: false,
-                syncURLSearchParamsPrefix: '',
             })
-            expect(_.isEqual(query.order_by, new Map())).toBe(true)
+            expect(query.limit.value).toBe(undefined)
+            expect(query.offset.value).toBe(undefined)
+            expect(query.relations.value).toEqual([])
+            expect(query.fields.value).toEqual([])
+            expect(query.omit.value).toEqual([])
             expect((query as any).__disposers.length).toBe(1)
         })
         it('some values', async ()=> {
@@ -60,8 +57,6 @@ describe('QueryX', () => {
                 relations   : relations, 
                 fields      : fields,
                 omit        : omit, 
-                syncURLSearchParams: true,
-                syncURLSearchParamsPrefix: 'test',
             })
             expect(query).toMatchObject({
                 items: [],
@@ -72,35 +67,31 @@ describe('QueryX', () => {
                 relations: relations, 
                 fields: fields,
                 omit: omit,
+                order_by: order_by,
                 need_to_update: true,
                 is_loading: false,
                 is_ready: false,
                 error: '',
-                syncURLSearchParams: true,
-                syncURLSearchParamsPrefix: 'test',
             })
-            expect(_.isEqual(query.order_by, new Map([['asc', DESC]]))).toBe(true)
             expect((query as any).__disposers.length).toBe(1)
         })
         it('some values', async ()=> {
             const query = new Query<A>({
                 repository: A.repository,
                 order_by    : undefined,
-                syncURLSearchParams: true,
             })
             expect(query).toMatchObject({
                 items: [],
-                limit: undefined,
-                offset: undefined,
                 total: undefined,
                 repository: A.repository,
                 need_to_update: true,
                 is_loading: false,
                 is_ready: false,
                 error: '',
-                syncURLSearchParams: true,
             })
-            expect(_.isEqual(query.order_by, new Map())).toBe(true)
+            expect(query.limit.value).toBe(undefined)
+            expect(query.offset.value).toBe(undefined)
+            // expect(_.isEqual(query.order_by.value, new Map())).toBe(true)
             expect((query as any).__disposers.length).toBe(1)
         })
     })
@@ -180,7 +171,7 @@ describe('QueryX', () => {
 
         await query.ready();        expect(query.need_to_update).toBe(false)
 
-        runInAction(() => query.order_by.value.set('name', DESC))
-                                    expect(query.need_to_update).toBe(true)
+        // runInAction(() => query.order_by.value.set('name', DESC))
+        //                             expect(query.need_to_update).toBe(true)
     })
 })

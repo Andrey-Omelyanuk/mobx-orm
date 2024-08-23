@@ -5,9 +5,9 @@ import { Input } from './Input'
 export class NumberInput<M extends Model> extends Input<number|null|undefined, M> {
 
     serialize(value: string) {
-        if (value === undefined) this.set(undefined)
-        if (value === 'null')    this.set(null)
-        if (value === null)      this.set(undefined)
+             if (value === undefined) this.set(undefined)
+        else if (value === 'null')    this.set(null)
+        else if (value === null)      this.set(undefined)
         else {
             let result = parseInt(value)
             if (isNaN(result)) result = undefined
