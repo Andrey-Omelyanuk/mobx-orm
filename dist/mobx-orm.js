@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.3
+   * mobx-orm.js v2.0.4
    * Released under the MIT license.
    */
 
@@ -1917,6 +1917,26 @@
         };
     }
 
+    class MockAdapter {
+        async action(obj_id, name, kwargs) { }
+        async create(raw_data) { return raw_data; }
+        async get(obj_id) { return obj_id; }
+        async update(obj_id, only_changed_raw_data) { return only_changed_raw_data; }
+        async delete(obj_id) { }
+        async find(query) { return {}; }
+        async load(query) { return []; }
+        async getTotalCount(filter) { return 0; }
+        async getDistinct(filter, filed) { return []; }
+        getURLSearchParams(query) { return new URLSearchParams(); }
+    }
+    // model decorator
+    function mock() {
+        return (cls) => {
+            let repository = new Repository(cls, new MockAdapter());
+            cls.__proto__.repository = repository;
+        };
+    }
+
     class BooleanInput extends Input {
         serialize(value) {
             if (value === undefined)
@@ -2208,6 +2228,7 @@
     exports.LTE_Filter = LTE_Filter;
     exports.LT_Filter = LT_Filter;
     exports.LocalAdapter = LocalAdapter;
+    exports.MockAdapter = MockAdapter;
     exports.Model = Model;
     exports.NOT_EQ = NOT_EQ;
     exports.NOT_EQ_Filter = NOT_EQ_Filter;
@@ -2235,6 +2256,7 @@
     exports.local = local;
     exports.local_store = local_store;
     exports.many = many;
+    exports.mock = mock;
     exports.model = model;
     exports.one = one;
     exports.repository = repository;

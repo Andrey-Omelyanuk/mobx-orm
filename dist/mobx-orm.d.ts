@@ -459,7 +459,21 @@ declare class LocalAdapter<M extends Model> implements Adapter<M> {
 }
 declare function local(): (cls: any) => void;
 
+declare class MockAdapter<M extends Model> implements Adapter<M> {
+    action(obj_id: number, name: string, kwargs: Object): Promise<any>;
+    create(raw_data: any): Promise<any>;
+    get(obj_id: any): Promise<any>;
+    update(obj_id: number, only_changed_raw_data: any): Promise<any>;
+    delete(obj_id: number): Promise<void>;
+    find(query: Query<M>): Promise<any>;
+    load(query: Query<M>): Promise<any[]>;
+    getTotalCount(filter: Filter): Promise<number>;
+    getDistinct(filter: any, filed: any): Promise<any[]>;
+    getURLSearchParams(query: Query<M>): URLSearchParams;
+}
+declare function mock(): (cls: any) => void;
+
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, model, one, repository, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, waitIsFalse, waitIsTrue };

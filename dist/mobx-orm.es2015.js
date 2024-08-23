@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.3
+   * mobx-orm.js v2.0.4
    * Released under the MIT license.
    */
 
@@ -1910,6 +1910,26 @@ function local() {
     };
 }
 
+class MockAdapter {
+    async action(obj_id, name, kwargs) { }
+    async create(raw_data) { return raw_data; }
+    async get(obj_id) { return obj_id; }
+    async update(obj_id, only_changed_raw_data) { return only_changed_raw_data; }
+    async delete(obj_id) { }
+    async find(query) { return {}; }
+    async load(query) { return []; }
+    async getTotalCount(filter) { return 0; }
+    async getDistinct(filter, filed) { return []; }
+    getURLSearchParams(query) { return new URLSearchParams(); }
+}
+// model decorator
+function mock() {
+    return (cls) => {
+        let repository = new Repository(cls, new MockAdapter());
+        cls.__proto__.repository = repository;
+    };
+}
+
 class BooleanInput extends Input {
     serialize(value) {
         if (value === undefined)
@@ -2164,5 +2184,5 @@ __decorate([
     __metadata("design:type", Array)
 ], Form.prototype, "errors", void 0);
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, model, one, repository, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map
