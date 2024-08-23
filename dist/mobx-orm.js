@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.1
+   * mobx-orm.js v2.0.2
    * Released under the MIT license.
    */
 
@@ -2032,6 +2032,22 @@
         }
     }
 
+    class ObjectInput extends NumberInput {
+        constructor(args) {
+            super(args);
+            Object.defineProperty(this, "model", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.model = args.model;
+        }
+        get obj() {
+            return this.model.get(this.value);
+        }
+    }
+
     function autoResetId(input) {
         var _a;
         if (!input.options) {
@@ -2196,6 +2212,7 @@
     exports.NOT_EQ = NOT_EQ;
     exports.NOT_EQ_Filter = NOT_EQ_Filter;
     exports.NumberInput = NumberInput;
+    exports.ObjectInput = ObjectInput;
     exports.OrderByInput = OrderByInput;
     exports.Query = Query;
     exports.QueryCacheSync = QueryCacheSync;

@@ -134,6 +134,15 @@ declare class OrderByInput extends Input<ORDER_BY, any> {
     deserialize(): string | undefined;
 }
 
+interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T, M> {
+    model: new (...args: any[]) => M;
+}
+declare class ObjectInput<M extends Model> extends NumberInput<M> {
+    readonly model: new (...args: any[]) => M;
+    constructor(args?: ObjectInputConstructorArgs<number, M>);
+    get obj(): M;
+}
+
 declare function autoResetId(input: NumberInput<any>): void;
 
 declare const autoResetArrayOfIDs: (input: ArrayNumberInput) => void;
@@ -453,4 +462,4 @@ declare function local(): (cls: any) => void;
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, model, one, repository, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, model, one, repository, waitIsFalse, waitIsTrue };

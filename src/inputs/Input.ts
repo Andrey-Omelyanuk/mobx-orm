@@ -5,6 +5,7 @@ import { Model } from '../model'
 import { Query } from '../queries/query'
 import { AutoReset } from './auto-reset/AutoReset'
 
+
 export interface InputConstructorArgs<T, M extends Model> {
     value               ?: T
     options             ?: Query<M>
