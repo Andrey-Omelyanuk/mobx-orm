@@ -1,6 +1,5 @@
 import { action, intercept, makeObservable, observable, observe, runInAction, values } from 'mobx'
-import { Query, QueryProps } from './queries/query'
-import { QueryRaw } from './queries/query-raw'
+import { Query, QueryProps, QueryPage, QueryRaw, QueryRawPage, QueryCacheSync, QueryDistinct, QueryStream } from './queries'
 import { Repository } from './repository'
 
 
@@ -31,37 +30,29 @@ export abstract class Model {
         return new Query({...props, repository: this.repository })
     }
 
+    static getQueryPage(props: QueryProps<Model>): QueryPage<Model> {
+        return new QueryPage({...props, repository: this.repository })
+    }
+
     static getQueryRaw(props: QueryProps<Model>): QueryRaw<Model> {
         return new QueryRaw({...props, repository: this.repository })
     }
 
-    // static getQueryXPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXPage<Instance>  {
-    //     return new QueryXPage({...props, adapter: this.__adapter as Adapter<Instance>})
-    // }
+    static getQueryRawPage(props: QueryProps<Model>): QueryRawPage<Model> {
+        return new QueryRawPage({...props, repository: this.repository })
+    }
 
-    // static getQueryXRawPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXRawPage<Instance> {
-    //     return new QueryXRawPage({...props, adapter: this.__adapter as Adapter<Instance>})
-    // }
+    static getQueryCacheSync(props: QueryProps<Model>): QueryCacheSync<Model> {
+        return new QueryCacheSync({...props, repository: this.repository })
+    }
 
-    // static getQueryXCacheSync<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXCacheSync<Instance> {
-    //     return new QueryXCacheSync(this.__cache, {...props, adapter: this.__adapter as Adapter<Instance>})
-    // }
+    static getQueryStream(props: QueryProps<Model>): QueryStream<Model> {
+        return new QueryStream({...props, repository: this.repository })
+    }
 
-    // static getQueryXStream<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXStream<Instance> {
-    //     return new QueryXStream({...props, adapter: this.__adapter as Adapter<Instance>})
-    // }
-
-    // static getQueryXDistinct<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, field: string, props: QueryXProps<Instance>): QueryXDistinct {
-    //     return new QueryXDistinct(field, {...props, adapter: this.__adapter as Adapter<Instance>})
-    // }
-
-    // static getQuery(selector?: Selector): Query<Model>  {
-    //     return new Query<Model>(this.__adapter, this.__cache, selector)
-    // }
-
-    // static getQueryPage(selector?: Selector): QueryPage<Model> {
-    //     return new QueryPage(this.__adapter, this.__cache, selector)
-    // }
+    static getQueryDistinct(field: string, props: QueryProps<Model>): QueryDistinct {
+        return new QueryDistinct(field, {...props, repository: this.repository })
+    }
 
     static get(id: any) {
         return this.repository.cache.get(id)

@@ -220,54 +220,6 @@ declare class AND_Filter extends ComboFilter {
 }
 declare function AND(...filters: Filter[]): Filter;
 
-declare class QueryPage<M extends Model> extends Query<M> {
-    setPageSize(size: number): void;
-    setPage(n: number): void;
-    goToFirstPage(): void;
-    goToPrevPage(): void;
-    goToNextPage(): void;
-    goToLastPage(): void;
-    get is_first_page(): boolean;
-    get is_last_page(): boolean;
-    get current_page(): number;
-    get total_pages(): number;
-    get isFirstPage(): boolean;
-    get isLastPage(): boolean;
-    get currentPage(): number;
-    get totalPages(): number;
-    constructor(props: QueryProps<M>);
-    __load(): Promise<any>;
-}
-
-declare class QueryCacheSync<M extends Model> extends Query<M> {
-    constructor(props: QueryProps<M>);
-    __load(): Promise<void>;
-    get items(): M[];
-    __watch_obj(obj: any): void;
-}
-
-declare class QueryStream<M extends Model> extends Query<M> {
-    goToFirstPage(): void;
-    goToNextPage(): void;
-    constructor(props: QueryProps<M>);
-    __load(): Promise<void>;
-}
-
-declare class QueryRaw<M extends Model> extends Query<M> {
-    __load(): Promise<any>;
-}
-
-declare class QueryRawPage<M extends Model> extends QueryPage<M> {
-    constructor(props: QueryProps<M>);
-    __load(): Promise<any>;
-}
-
-declare class QueryDistinct extends Query<any> {
-    readonly field: string;
-    constructor(field: string, props: QueryProps<any>);
-    __load(): Promise<any>;
-}
-
 declare abstract class Adapter<M extends Model> {
     abstract create(raw_data: any, controller?: AbortController): Promise<any>;
     abstract get(obj_id: any, controller?: AbortController): Promise<any>;
@@ -352,6 +304,54 @@ declare class Query<M extends Model> {
     loading: () => Promise<Boolean>;
 }
 
+declare class QueryPage<M extends Model> extends Query<M> {
+    setPageSize(size: number): void;
+    setPage(n: number): void;
+    goToFirstPage(): void;
+    goToPrevPage(): void;
+    goToNextPage(): void;
+    goToLastPage(): void;
+    get is_first_page(): boolean;
+    get is_last_page(): boolean;
+    get current_page(): number;
+    get total_pages(): number;
+    get isFirstPage(): boolean;
+    get isLastPage(): boolean;
+    get currentPage(): number;
+    get totalPages(): number;
+    constructor(props: QueryProps<M>);
+    __load(): Promise<any>;
+}
+
+declare class QueryCacheSync<M extends Model> extends Query<M> {
+    constructor(props: QueryProps<M>);
+    __load(): Promise<void>;
+    get items(): M[];
+    __watch_obj(obj: any): void;
+}
+
+declare class QueryStream<M extends Model> extends Query<M> {
+    goToFirstPage(): void;
+    goToNextPage(): void;
+    constructor(props: QueryProps<M>);
+    __load(): Promise<void>;
+}
+
+declare class QueryRaw<M extends Model> extends Query<M> {
+    __load(): Promise<any>;
+}
+
+declare class QueryRawPage<M extends Model> extends QueryPage<M> {
+    constructor(props: QueryProps<M>);
+    __load(): Promise<any>;
+}
+
+declare class QueryDistinct extends Query<any> {
+    readonly field: string;
+    constructor(field: string, props: QueryProps<any>);
+    __load(): Promise<any>;
+}
+
 declare abstract class Model {
     static readonly repository: Repository<Model>;
     static __fields: {
@@ -369,7 +369,12 @@ declare abstract class Model {
         };
     };
     static getQuery(props: QueryProps<Model>): Query<Model>;
+    static getQueryPage(props: QueryProps<Model>): QueryPage<Model>;
     static getQueryRaw(props: QueryProps<Model>): QueryRaw<Model>;
+    static getQueryRawPage(props: QueryProps<Model>): QueryRawPage<Model>;
+    static getQueryCacheSync(props: QueryProps<Model>): QueryCacheSync<Model>;
+    static getQueryStream(props: QueryProps<Model>): QueryStream<Model>;
+    static getQueryDistinct(field: string, props: QueryProps<Model>): QueryDistinct;
     static get(id: any): Model;
     static findById(id: any): Promise<Model>;
     static find(query: Query<Model>): Promise<Model>;

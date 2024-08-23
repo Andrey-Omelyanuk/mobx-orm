@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.0
+   * mobx-orm.js v2.0.1
    * Released under the MIT license.
    */
 
@@ -930,6 +930,201 @@
         __metadata("design:returntype", Promise)
     ], Query.prototype, "shadowLoad", null);
 
+    class QueryPage extends Query {
+        setPageSize(size) { this.limit.set(size); this.offset.set(0); }
+        setPage(n) { this.offset.set(this.limit.value * (n > 0 ? n - 1 : 0)); }
+        goToFirstPage() { this.setPage(1); }
+        goToPrevPage() { this.setPage(this.current_page - 1); }
+        goToNextPage() { this.setPage(this.current_page + 1); }
+        goToLastPage() { this.setPage(this.total_pages); }
+        get is_first_page() { return this.offset.value === 0; }
+        get is_last_page() { return this.offset.value + this.limit.value >= this.total; }
+        get current_page() { return this.offset.value / this.limit.value + 1; }
+        get total_pages() { return this.total ? Math.ceil(this.total / this.limit.value) : 1; }
+        // we going to migrate to JS style
+        get isFirstPage() { return this.is_first_page; }
+        get isLastPage() { return this.is_last_page; }
+        get currentPage() { return this.current_page; }
+        get totalPages() { return this.total_pages; }
+        constructor(props) {
+            super(props);
+            mobx.runInAction(() => {
+                if (this.offset.value === undefined)
+                    this.offset.set(0);
+                if (this.limit.value === undefined)
+                    this.limit.set(config.DEFAULT_PAGE_SIZE);
+            });
+        }
+        async __load() {
+            return this.__wrap_controller(async () => {
+                const [objs, total] = await Promise.all([
+                    this.repository.load(this, this.__controller),
+                    this.repository.getTotalCount(this.filter, this.__controller)
+                ]);
+                mobx.runInAction(() => {
+                    this.__items = objs;
+                    this.total = total;
+                });
+            });
+        }
+    }
+    __decorate([
+        mobx.action('MO: set page size'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Number]),
+        __metadata("design:returntype", void 0)
+    ], QueryPage.prototype, "setPageSize", null);
+    __decorate([
+        mobx.action('MO: set page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Number]),
+        __metadata("design:returntype", void 0)
+    ], QueryPage.prototype, "setPage", null);
+
+    class QueryCacheSync extends Query {
+        constructor(props) {
+            super(props);
+            // watch the cache for changes, and update items if needed
+            this.__disposers.push(mobx.observe(props.repository.cache.store, mobx.action('MO: Query - update from cache changes', (change) => {
+                if (change.type == 'add') {
+                    this.__watch_obj(change.newValue);
+                }
+                if (change.type == "delete") {
+                    let id = change.name;
+                    let obj = change.oldValue;
+                    this.__disposer_objects[id]();
+                    delete this.__disposer_objects[id];
+                    let i = this.__items.indexOf(obj);
+                    if (i != -1) {
+                        this.__items.splice(i, 1);
+                        this.total = this.__items.length;
+                    }
+                }
+            })));
+            // ch all exist objects of model 
+            for (let [id, obj] of props.repository.cache.store) {
+                this.__watch_obj(obj);
+            }
+        }
+        async __load() {
+            if (this.__controller)
+                this.__controller.abort();
+            this.__controller = new AbortController();
+            try {
+                await this.repository.load(this, this.__controller);
+                // Query don't need to overide the __items,
+                // query's items should be get only from the cache
+            }
+            catch (e) {
+                if (e.name !== 'AbortError')
+                    throw e;
+            }
+            // we have to wait the next tick
+            // mobx should finished recalculation for model-objects
+            await Promise.resolve();
+            // await new Promise(resolve => setTimeout(resolve))
+        }
+        get items() {
+            let __items = this.__items.map(x => x); // copy __items (not deep)
+            if (this.order_by.value && this.order_by.value.size) {
+                let compare = (a, b) => {
+                    for (const [key, value] of this.order_by.value) {
+                        if (value === ASC) {
+                            if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
+                                return 1;
+                            if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
+                                return -1;
+                            if (a[key] < b[key])
+                                return -1;
+                            if (a[key] > b[key])
+                                return 1;
+                        }
+                        else {
+                            if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
+                                return -1;
+                            if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
+                                return 1;
+                            if (a[key] < b[key])
+                                return 1;
+                            if (a[key] > b[key])
+                                return -1;
+                        }
+                    }
+                    return 0;
+                };
+                __items.sort(compare);
+            }
+            return __items;
+        }
+        __watch_obj(obj) {
+            if (this.__disposer_objects[obj.id])
+                this.__disposer_objects[obj.id]();
+            this.__disposer_objects[obj.id] = mobx.reaction(() => !this.filter || this.filter.isMatch(obj), mobx.action('MO: Query - obj was changed', (should) => {
+                let i = this.__items.indexOf(obj);
+                // should be in the items and it is not in the items? add it to the items
+                if (should && i == -1)
+                    this.__items.push(obj);
+                // should not be in the items and it is in the items? remove it from the items
+                if (!should && i != -1)
+                    this.__items.splice(i, 1);
+                if (this.total != this.__items.length)
+                    this.total = this.__items.length;
+            }), { fireImmediately: true });
+        }
+    }
+    __decorate([
+        mobx.computed,
+        __metadata("design:type", Object),
+        __metadata("design:paramtypes", [])
+    ], QueryCacheSync.prototype, "items", null);
+
+    class QueryStream extends Query {
+        // you can reset all and start from beginning
+        goToFirstPage() { this.__items = []; this.offset.set(0); }
+        // you can scroll only forward
+        goToNextPage() { this.offset.set(this.offset.value + this.limit.value); }
+        constructor(props) {
+            super(props);
+            mobx.runInAction(() => {
+                if (this.offset.value === undefined)
+                    this.offset.set(0);
+                if (this.limit.value === undefined)
+                    this.limit.set(config.DEFAULT_PAGE_SIZE);
+            });
+        }
+        async __load() {
+            if (this.__controller)
+                this.__controller.abort();
+            this.__controller = new AbortController();
+            try {
+                const objs = await this.repository.load(this, this.__controller);
+                mobx.runInAction(() => {
+                    this.__items.push(...objs);
+                    // total is not make sense for infinity queries
+                    // total = 1 show that last page is reached
+                    if (objs.length < this.limit.value)
+                        this.total = 1;
+                });
+            }
+            catch (e) {
+                if (e.name !== 'AbortError')
+                    throw e;
+            }
+        }
+    }
+    __decorate([
+        mobx.action('MO: fisrt page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryStream.prototype, "goToFirstPage", null);
+    __decorate([
+        mobx.action('MO: next page'),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], QueryStream.prototype, "goToNextPage", null);
+
     class QueryRaw extends Query {
         async __load() {
             return this.__wrap_controller(async () => {
@@ -942,34 +1137,66 @@
         }
     }
 
+    class QueryRawPage extends QueryPage {
+        constructor(props) {
+            super(props);
+        }
+        async __load() {
+            return this.__wrap_controller(async () => {
+                // get only raw objects from adapter
+                const objs = await this.repository.load(this);
+                const total = await this.repository.getTotalCount(this.filter);
+                mobx.runInAction(() => {
+                    this.__items = objs;
+                    this.total = total;
+                });
+            });
+        }
+    }
+
+    class QueryDistinct extends Query {
+        constructor(field, props) {
+            super(props);
+            Object.defineProperty(this, "field", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.field = field;
+        }
+        async __load() {
+            return this.__wrap_controller(async () => {
+                const objs = await this.repository.getDistinct(this.filter, this.field, this.__controller);
+                mobx.runInAction(() => {
+                    this.__items = objs;
+                });
+            });
+        }
+    }
+
     class Model {
         static getQuery(props) {
             return new Query(Object.assign(Object.assign({}, props), { repository: this.repository }));
         }
+        static getQueryPage(props) {
+            return new QueryPage(Object.assign(Object.assign({}, props), { repository: this.repository }));
+        }
         static getQueryRaw(props) {
             return new QueryRaw(Object.assign(Object.assign({}, props), { repository: this.repository }));
         }
-        // static getQueryXPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXPage<Instance>  {
-        //     return new QueryXPage({...props, adapter: this.__adapter as Adapter<Instance>})
-        // }
-        // static getQueryXRawPage<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXRawPage<Instance> {
-        //     return new QueryXRawPage({...props, adapter: this.__adapter as Adapter<Instance>})
-        // }
-        // static getQueryXCacheSync<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXCacheSync<Instance> {
-        //     return new QueryXCacheSync(this.__cache, {...props, adapter: this.__adapter as Adapter<Instance>})
-        // }
-        // static getQueryXStream<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, props: QueryXProps<Instance>): QueryXStream<Instance> {
-        //     return new QueryXStream({...props, adapter: this.__adapter as Adapter<Instance>})
-        // }
-        // static getQueryXDistinct<Class extends typeof Model, Instance extends InstanceType<Class>>(this: Class, field: string, props: QueryXProps<Instance>): QueryXDistinct {
-        //     return new QueryXDistinct(field, {...props, adapter: this.__adapter as Adapter<Instance>})
-        // }
-        // static getQuery(selector?: Selector): Query<Model>  {
-        //     return new Query<Model>(this.__adapter, this.__cache, selector)
-        // }
-        // static getQueryPage(selector?: Selector): QueryPage<Model> {
-        //     return new QueryPage(this.__adapter, this.__cache, selector)
-        // }
+        static getQueryRawPage(props) {
+            return new QueryRawPage(Object.assign(Object.assign({}, props), { repository: this.repository }));
+        }
+        static getQueryCacheSync(props) {
+            return new QueryCacheSync(Object.assign(Object.assign({}, props), { repository: this.repository }));
+        }
+        static getQueryStream(props) {
+            return new QueryStream(Object.assign(Object.assign({}, props), { repository: this.repository }));
+        }
+        static getQueryDistinct(field, props) {
+            return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this.repository }));
+        }
         static get(id) {
             return this.repository.cache.get(id);
         }
@@ -1565,239 +1792,6 @@
         }
     }
     function AND(...filters) { return new AND_Filter(filters); }
-
-    class QueryPage extends Query {
-        setPageSize(size) { this.limit.set(size); this.offset.set(0); }
-        setPage(n) { this.offset.set(this.limit.value * (n > 0 ? n - 1 : 0)); }
-        goToFirstPage() { this.setPage(1); }
-        goToPrevPage() { this.setPage(this.current_page - 1); }
-        goToNextPage() { this.setPage(this.current_page + 1); }
-        goToLastPage() { this.setPage(this.total_pages); }
-        get is_first_page() { return this.offset.value === 0; }
-        get is_last_page() { return this.offset.value + this.limit.value >= this.total; }
-        get current_page() { return this.offset.value / this.limit.value + 1; }
-        get total_pages() { return this.total ? Math.ceil(this.total / this.limit.value) : 1; }
-        // we going to migrate to JS style
-        get isFirstPage() { return this.is_first_page; }
-        get isLastPage() { return this.is_last_page; }
-        get currentPage() { return this.current_page; }
-        get totalPages() { return this.total_pages; }
-        constructor(props) {
-            super(props);
-            mobx.runInAction(() => {
-                if (this.offset.value === undefined)
-                    this.offset.set(0);
-                if (this.limit.value === undefined)
-                    this.limit.set(config.DEFAULT_PAGE_SIZE);
-            });
-        }
-        async __load() {
-            return this.__wrap_controller(async () => {
-                const [objs, total] = await Promise.all([
-                    this.repository.load(this, this.__controller),
-                    this.repository.getTotalCount(this.filter, this.__controller)
-                ]);
-                mobx.runInAction(() => {
-                    this.__items = objs;
-                    this.total = total;
-                });
-            });
-        }
-    }
-    __decorate([
-        mobx.action('MO: set page size'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Number]),
-        __metadata("design:returntype", void 0)
-    ], QueryPage.prototype, "setPageSize", null);
-    __decorate([
-        mobx.action('MO: set page'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Number]),
-        __metadata("design:returntype", void 0)
-    ], QueryPage.prototype, "setPage", null);
-
-    class QueryCacheSync extends Query {
-        constructor(props) {
-            super(props);
-            // watch the cache for changes, and update items if needed
-            this.__disposers.push(mobx.observe(props.repository.cache.store, mobx.action('MO: Query - update from cache changes', (change) => {
-                if (change.type == 'add') {
-                    this.__watch_obj(change.newValue);
-                }
-                if (change.type == "delete") {
-                    let id = change.name;
-                    let obj = change.oldValue;
-                    this.__disposer_objects[id]();
-                    delete this.__disposer_objects[id];
-                    let i = this.__items.indexOf(obj);
-                    if (i != -1) {
-                        this.__items.splice(i, 1);
-                        this.total = this.__items.length;
-                    }
-                }
-            })));
-            // ch all exist objects of model 
-            for (let [id, obj] of props.repository.cache.store) {
-                this.__watch_obj(obj);
-            }
-        }
-        async __load() {
-            if (this.__controller)
-                this.__controller.abort();
-            this.__controller = new AbortController();
-            try {
-                await this.repository.load(this, this.__controller);
-                // Query don't need to overide the __items,
-                // query's items should be get only from the cache
-            }
-            catch (e) {
-                if (e.name !== 'AbortError')
-                    throw e;
-            }
-            // we have to wait the next tick
-            // mobx should finished recalculation for model-objects
-            await Promise.resolve();
-            // await new Promise(resolve => setTimeout(resolve))
-        }
-        get items() {
-            let __items = this.__items.map(x => x); // copy __items (not deep)
-            if (this.order_by.value && this.order_by.value.size) {
-                let compare = (a, b) => {
-                    for (const [key, value] of this.order_by.value) {
-                        if (value === ASC) {
-                            if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
-                                return 1;
-                            if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
-                                return -1;
-                            if (a[key] < b[key])
-                                return -1;
-                            if (a[key] > b[key])
-                                return 1;
-                        }
-                        else {
-                            if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
-                                return -1;
-                            if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null))
-                                return 1;
-                            if (a[key] < b[key])
-                                return 1;
-                            if (a[key] > b[key])
-                                return -1;
-                        }
-                    }
-                    return 0;
-                };
-                __items.sort(compare);
-            }
-            return __items;
-        }
-        __watch_obj(obj) {
-            if (this.__disposer_objects[obj.id])
-                this.__disposer_objects[obj.id]();
-            this.__disposer_objects[obj.id] = mobx.reaction(() => !this.filter || this.filter.isMatch(obj), mobx.action('MO: Query - obj was changed', (should) => {
-                let i = this.__items.indexOf(obj);
-                // should be in the items and it is not in the items? add it to the items
-                if (should && i == -1)
-                    this.__items.push(obj);
-                // should not be in the items and it is in the items? remove it from the items
-                if (!should && i != -1)
-                    this.__items.splice(i, 1);
-                if (this.total != this.__items.length)
-                    this.total = this.__items.length;
-            }), { fireImmediately: true });
-        }
-    }
-    __decorate([
-        mobx.computed,
-        __metadata("design:type", Object),
-        __metadata("design:paramtypes", [])
-    ], QueryCacheSync.prototype, "items", null);
-
-    class QueryStream extends Query {
-        // you can reset all and start from beginning
-        goToFirstPage() { this.__items = []; this.offset.set(0); }
-        // you can scroll only forward
-        goToNextPage() { this.offset.set(this.offset.value + this.limit.value); }
-        constructor(props) {
-            super(props);
-            mobx.runInAction(() => {
-                if (this.offset.value === undefined)
-                    this.offset.set(0);
-                if (this.limit.value === undefined)
-                    this.limit.set(config.DEFAULT_PAGE_SIZE);
-            });
-        }
-        async __load() {
-            if (this.__controller)
-                this.__controller.abort();
-            this.__controller = new AbortController();
-            try {
-                const objs = await this.repository.load(this, this.__controller);
-                mobx.runInAction(() => {
-                    this.__items.push(...objs);
-                    // total is not make sense for infinity queries
-                    // total = 1 show that last page is reached
-                    if (objs.length < this.limit.value)
-                        this.total = 1;
-                });
-            }
-            catch (e) {
-                if (e.name !== 'AbortError')
-                    throw e;
-            }
-        }
-    }
-    __decorate([
-        mobx.action('MO: fisrt page'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", []),
-        __metadata("design:returntype", void 0)
-    ], QueryStream.prototype, "goToFirstPage", null);
-    __decorate([
-        mobx.action('MO: next page'),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", []),
-        __metadata("design:returntype", void 0)
-    ], QueryStream.prototype, "goToNextPage", null);
-
-    class QueryRawPage extends QueryPage {
-        constructor(props) {
-            super(props);
-        }
-        async __load() {
-            return this.__wrap_controller(async () => {
-                // get only raw objects from adapter
-                const objs = await this.repository.load(this);
-                const total = await this.repository.getTotalCount(this.filter);
-                mobx.runInAction(() => {
-                    this.__items = objs;
-                    this.total = total;
-                });
-            });
-        }
-    }
-
-    class QueryDistinct extends Query {
-        constructor(field, props) {
-            super(props);
-            Object.defineProperty(this, "field", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            this.field = field;
-        }
-        async __load() {
-            return this.__wrap_controller(async () => {
-                const objs = await this.repository.getDistinct(this.filter, this.field, this.__controller);
-                mobx.runInAction(() => {
-                    this.__items = objs;
-                });
-            });
-        }
-    }
 
     class Adapter {
     }
