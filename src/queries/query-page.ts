@@ -3,10 +3,11 @@ import { Query, QueryProps } from './query'
 import { config } from '../config'
 import { Model } from '../model'
 
+
 export class QueryPage<M extends Model> extends Query<M> {
 
+    @action('MO: set page')      setPage    (n   : number) { this.offset.set(this.limit.value * (n > 0 ? n-1 : 0)) }
     @action('MO: set page size') setPageSize(size: number) { this.limit.set(size); this.offset.set(0) }
-    @action('MO: set page')      setPage(n: number) { this.offset.set(this.limit.value * (n > 0 ? n-1 : 0)) }
     goToFirstPage() { this.setPage(1) }
     goToPrevPage () { this.setPage(this.current_page - 1) }
     goToNextPage () { this.setPage(this.current_page + 1) }
@@ -16,7 +17,7 @@ export class QueryPage<M extends Model> extends Query<M> {
     get is_last_page () : boolean { return this.offset.value + this.limit.value >= this.total }
     get current_page()  : number  { return this.offset.value / this.limit.value + 1 }
     get total_pages()   : number  { return this.total ? Math.ceil(this.total / this.limit.value) : 1 }
-    // we going to migrate to JS style
+    // for compatibility with js code style
     get isFirstPage() : boolean { return this.is_first_page }
     get isLastPage () : boolean { return this.is_last_page } 
     get currentPage() : number  { return this.current_page } 
@@ -33,8 +34,8 @@ export class QueryPage<M extends Model> extends Query<M> {
     async __load() {
         return this.__wrap_controller(async () => {
             const [objs, total] = await Promise.all([
-                this.repository.load(this, this.__controller),
-                this.repository.getTotalCount(this.filter, this.__controller)
+                this.repository.load(this, this.controller),
+                this.repository.getTotalCount(this.filter, this.controller)
             ])
             runInAction(() => {
                 this.__items = objs

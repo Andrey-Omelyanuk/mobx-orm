@@ -3,13 +3,11 @@ import { Repository } from '../repository'
 import { config } from '../config'
 import { Model } from '../model'
 import { Filter } from '../filters/Filter'
-import { waitIsFalse, waitIsTrue } from '../utils'
-import { OrderByInput } from '../inputs/OrderByInput'
-import { NumberInput } from '../inputs/NumberInput'
-import { ArrayStringInput } from '../inputs/ArrayStringInput'
+import { waitIsFalse } from '../utils'
+import { OrderByInput, NumberInput, ArrayStringInput } from '../inputs'
+
 
 export const DISPOSER_AUTOUPDATE = "__autoupdate"
-
 export const ASC = true 
 export const DESC = false 
 export type ORDER_BY = Map<string, boolean>
@@ -19,7 +17,6 @@ export interface QueryProps<M extends Model> {
     //
     filter                      ?: Filter
     order_by                    ?: OrderByInput 
-
     // pagination
     offset                      ?: NumberInput<any>
     limit                       ?: NumberInput<any>
@@ -42,26 +39,23 @@ export class Query <M extends Model> {
     readonly fields    : ArrayStringInput 
     readonly omit      : ArrayStringInput 
 
-    @observable total         : number
-    @observable need_to_update: boolean = false
-    @observable timestamp     : number
+    @observable protected __items: M[] = []         // items from the server
+    @observable total         : number              // total count of items on the server, usefull for pagination
+    @observable is_loading    : boolean = false     // query is loading the data
+    @observable need_to_update: boolean = false     // query was changed and we need to update the data
+    @observable timestamp     : number              // timestamp of the last update, usefull to aviod to trigger react hooks twise
+    @observable error         : string              // error message
 
-    @observable __items: M[] = []
-    @observable __is_loading  : boolean = false 
-    @observable __is_ready    : boolean = false 
-    @observable __error       : string = '' 
+    get items       () { return this.__items }      // the items can be changed after the load (post processing)
 
-    get is_loading  () { return this.__is_loading   }
-    get is_ready    () { return this.__is_ready     }
-    get error       () { return this.__error        }
-    get items       () { return this.__items        }
-    // we going to migrate to JS style
-    get isLoading   () { return this.__is_loading   }
-    get isReady     () { return this.__is_ready     }
+    // for compatibility with js code style
+    get orderBy     () { return this.order_by }
+    get isLoading   () { return this.is_loading }
+    get needToUpdate() { return this.need_to_update }
 
-    __controller        : AbortController
-    __disposers         : (()=>void)[] = []
-    __disposer_objects  : {[field: string]: ()=>void} = {}
+    protected controller        : AbortController
+    protected disposers         : (()=>void)[] = []
+    protected disposer_objects  : {[field: string]: ()=>void} = {}
 
     constructor(props: QueryProps<M>) {
         let {
@@ -78,60 +72,31 @@ export class Query <M extends Model> {
         this.relations = relations  ? relations : new ArrayStringInput()
         this.fields    = fields     ? fields    : new ArrayStringInput()
         this.omit      = omit       ? omit      : new ArrayStringInput()
+        this.autoupdate = autoupdate
         makeObservable(this)
 
-        this.__disposers.push(reaction(
-            () => this.repository?.adapter?.getURLSearchParams(this).toString(),
-            action('MO: Query Base - need to update', () => {
-                this.need_to_update = true
-                this.__is_ready = false
-            }),
+        this.disposers.push(reaction(
+            () => this.repository.adapter?.getURLSearchParams(this).toString(),
+            action('MO: Query Base - need to update', () => this.need_to_update = true ),
             { fireImmediately: true }
         ))
-        this.autoupdate = autoupdate
-        // this.syncURLSearchParams && this.__doSyncURLSearchParams()
     }
 
     destroy() {
-        this.__controller?.abort()
-        while(this.__disposers.length) {
-            this.__disposers.pop()()
+        this.controller?.abort()
+        while(this.disposers.length) {
+            this.disposers.pop()()
         }
-        for(let __id in this.__disposer_objects) {
-            this.__disposer_objects[__id]()
-            delete this.__disposer_objects[__id]
+        for(let __id in this.disposer_objects) {
+            this.disposer_objects[__id]()
+            delete this.disposer_objects[__id]
         } 
-    }
-
-    async __wrap_controller(func: Function) {
-        if (this.__controller) {
-            this.__controller.abort()
-        }
-        this.__controller = new AbortController()
-        let response
-        try {
-            response = await func()
-        } catch (e) {
-            if (e.name !== 'AbortError' && e.message !== 'canceled') throw e
-        } finally {
-            this.__controller = undefined
-        }
-        return response
-    }
-
-    async __load() {
-        return this.__wrap_controller(async () => {
-            const objs = await this.repository.load(this, this.__controller)
-            runInAction(() => {
-                this.__items = objs
-            })
-        })
     }
 
     // use it if everybody should know that the query data is updating
     @action('MO: Query Base - load')
     async load() {
-        this.__is_loading = true
+        this.is_loading = true
         try {
             await this.shadowLoad()
         }
@@ -139,9 +104,7 @@ export class Query <M extends Model> {
             runInAction(() => {
                 // the loading can be canceled by another load
                 // in this case we should not touch the __is_loading
-                if (!this.__controller) {
-                    this.__is_loading = false
-                }
+                if (!this.controller) this.is_loading = false
             })
         }
     }
@@ -151,41 +114,43 @@ export class Query <M extends Model> {
     @action('MO: Query Base - shadow load')
     async shadowLoad() {
         try {
+            this.need_to_update = false 
+
+            // NOTE: Date.now() is used to get the current timestamp
+            //       and it can be the same in the same tick 
+            //       in this case we should increase the timestamp by 1
+            const now = Date.now()
+            if (this.timestamp === now) this.timestamp += 1
+            else                        this.timestamp = now 
+
             await this.__load()
         }
         catch(e) {
-            runInAction(() => {
-                this.__error = e.message
-            })
-        }
-        finally {
-            runInAction(() => {
-                // TODO: timestamp, aviod to trigger react hooks twise
-                if (!this.__is_ready) {
-                    this.__is_ready = true
-                    this.timestamp = Date.now() 
-                }
-                if (this.need_to_update) this.need_to_update = false 
-            })
+            runInAction(() => this.error = e.message )
         }
     }
 
     get autoupdate() {
-        return !! this.__disposer_objects[DISPOSER_AUTOUPDATE]
+        return !! this.disposer_objects[DISPOSER_AUTOUPDATE]
     }
 
     set autoupdate(value: boolean) {
-        if (value !== this.autoupdate) {
+        if (value !== this.autoupdate) {  // indepotent guarantee
             // on 
             if (value) {
                 setTimeout(() => {
-                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
-                        // NOTE: don't need to check pagination and order because they are always ready 
-                        () => this.need_to_update && (this.filter === undefined || this.filter.isReady),
+                    this.disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
+                        () => this.need_to_update 
+                            && (this.filter     === undefined || this.filter    .isReady)
+                            && (this.order_by   === undefined || this.order_by  .isReady)
+                            && (this.offset     === undefined || this.offset    .isReady)
+                            && (this.limit      === undefined || this.limit     .isReady)
+                            && (this.relations  === undefined || this.relations .isReady)
+                            && (this.fields     === undefined || this.fields    .isReady)
+                            && (this.omit       === undefined || this.omit      .isReady)
+                            ,
                         (need_to_update) => {
-                            if (need_to_update) {
-                                this.load()
-                            }
+                            if (need_to_update) this.load()
                         },
                         { fireImmediately: true }
                     )
@@ -193,26 +158,37 @@ export class Query <M extends Model> {
             }
             // off
             else {
-                this.__disposer_objects[DISPOSER_AUTOUPDATE]()
-                delete this.__disposer_objects[DISPOSER_AUTOUPDATE]
+                this.disposer_objects[DISPOSER_AUTOUPDATE]()
+                delete this.disposer_objects[DISPOSER_AUTOUPDATE]
             }
         }
     }
 
-    // Deprecated, it should be moved to the adapter
-    // get URLSearchParams(): URLSearchParams{
-    //     const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
-    //     if (this.order_by.size       ) searchParams.set('__order_by' , this.input_order_by.deserialize(this.order_by))
-    //     if (this.limit !== undefined ) searchParams.set('__limit'    , this.input_limit.deserialize(this.limit))
-    //     if (this.offset !== undefined) searchParams.set('__offset'   , this.input_offset.deserialize(this.offset))
-    //     if (this.relations.length    ) searchParams.set('__relations', this.input_relations.deserialize(this.relations))
-    //     if (this.fields.length       ) searchParams.set('__fields'   , this.input_fields.deserialize(this.fields))
-    //     if (this.omit.length         ) searchParams.set('__omit'     , this.input_omit.deserialize(this.omit))
-    //     return searchParams
-    // }
-
-    // use it if you need use promise instead of observe is_ready
-    ready = async () => waitIsTrue(this, '__is_ready')
     // use it if you need use promise instead of observe is_loading
-    loading = async () => waitIsFalse(this, '__is_loading')
+    loading = async () => waitIsFalse(this, 'is_loading')
+
+    protected async __wrap_controller(func: Function) {
+        if (this.controller) {
+            this.controller.abort()
+        }
+        this.controller = new AbortController()
+        let response
+        try {
+            response = await func()
+        } catch (e) {
+            if (e.name !== 'AbortError' && e.message !== 'canceled') throw e
+        } finally {
+            this.controller = undefined
+        }
+        return response
+    }
+
+    protected async __load() {
+        return this.__wrap_controller(async () => {
+            const objs = await this.repository.load(this, this.controller)
+            runInAction(() => {
+                this.__items = objs
+            })
+        })
+    }
 }

@@ -1,6 +1,7 @@
 import { runInAction } from 'mobx'
 import { Query, QueryProps } from './query'
 
+
 export class QueryDistinct extends Query<any> {
     readonly field: string
     
@@ -11,7 +12,7 @@ export class QueryDistinct extends Query<any> {
 
     async __load() {
         return this.__wrap_controller(async () => {
-            const objs = await this.repository.getDistinct(this.filter, this.field, this.__controller)
+            const objs = await this.repository.getDistinct(this.filter, this.field, this.controller)
             runInAction(() => {
                 this.__items = objs
             })

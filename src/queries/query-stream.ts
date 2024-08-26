@@ -3,6 +3,7 @@ import { Model } from '../model'
 import { Query, QueryProps } from './query'
 import { config } from '../config'
 
+
 export class QueryStream <M extends Model> extends Query<M> {
     // you can reset all and start from beginning
     @action('MO: fisrt page') goToFirstPage() { this.__items = []; this.offset.set(0) }
@@ -18,10 +19,10 @@ export class QueryStream <M extends Model> extends Query<M> {
     }
 
     async __load() {
-        if (this.__controller) this.__controller.abort()
-        this.__controller = new AbortController()
+        if (this.controller) this.controller.abort()
+        this.controller = new AbortController()
         try {
-            const objs = await this.repository.load(this, this.__controller)
+            const objs = await this.repository.load(this, this.controller)
             runInAction(() => {
                 this.__items.push(...objs)
                 // total is not make sense for infinity queries

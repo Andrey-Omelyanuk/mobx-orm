@@ -1,6 +1,5 @@
 import _ from 'lodash'
-import { OrderByInput } from './OrderByInput'
-import { ASC, DESC } from '../queries'
+import { OrderByInput, ASC, DESC } from '../'
 
 
 describe('OrderByInput', () => {

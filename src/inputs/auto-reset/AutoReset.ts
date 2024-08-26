@@ -66,15 +66,15 @@ export abstract class AutoReset<T extends Input<any, any>> {
             return
         }
         this.input = input
-        this.__disposers.push(reaction(
-            () => this.input.options.isReady && !this.input.disabled,
-            (is_ready) => {
-                if(is_ready) {
-                    this.do()
-                } 
-            },
-            { fireImmediately: true },
-        ))
+        // this.__disposers.push(reaction(
+        //     () => this.input.options.isReady && !this.input.disabled,
+        //     (is_ready) => {
+        //         if(is_ready) {
+        //             this.do()
+        //         } 
+        //     },
+        //     { fireImmediately: true },
+        // ))
     }
 
     destroy() {

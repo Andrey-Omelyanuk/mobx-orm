@@ -8,7 +8,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
     constructor(props: QueryProps<M>) {
         super(props)
         // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(props.repository.cache.store, 
+        this.disposers.push(observe(props.repository.cache.store, 
             action('MO: Query - update from cache changes',
             (change: any) => {
                 if (change.type == 'add') {
@@ -18,8 +18,8 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
                     let id = change.name
                     let obj = change.oldValue
 
-                    this.__disposer_objects[id]()
-                    delete this.__disposer_objects[id]
+                    this.disposer_objects[id]()
+                    delete this.disposer_objects[id]
 
                     let i = this.__items.indexOf(obj)
                     if (i != -1) {
@@ -37,10 +37,10 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
     }
 
     async __load() {
-        if (this.__controller) this.__controller.abort()
-        this.__controller = new AbortController()
+        if (this.controller) this.controller.abort()
+        this.controller = new AbortController()
         try {
-            await this.repository.load(this, this.__controller)
+            await this.repository.load(this, this.controller)
             // Query don't need to overide the __items,
             // query's items should be get only from the cache
         } catch (e) {
@@ -79,8 +79,8 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
     }
 
     __watch_obj(obj) {
-        if (this.__disposer_objects[obj.id]) this.__disposer_objects[obj.id]()
-        this.__disposer_objects[obj.id] = reaction(
+        if (this.disposer_objects[obj.id]) this.disposer_objects[obj.id]()
+        this.disposer_objects[obj.id] = reaction(
             () =>  !this.filter || this.filter.isMatch(obj),
             action('MO: Query - obj was changed',
             (should: boolean) => {

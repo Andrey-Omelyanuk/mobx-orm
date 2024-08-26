@@ -1,19 +1,16 @@
 import { runInAction } from 'mobx'
 import { Model } from '../model'
 import { QueryPage } from './query-page'
-import { QueryProps } from './query'
 
+/**
+ * QueryRawPage is a class to load raw objects from the server 
+ * without converting them to models using the repository.
+ */
 
 export class QueryRawPage<M extends Model> extends QueryPage<M> {
-
-    constructor(props: QueryProps<M>) {
-        super(props)
-    }
-
     async __load() {
         return this.__wrap_controller(async () => {
-            // get only raw objects from adapter
-            const objs = await this.repository.load(this)
+            const objs = await this.repository.adapter.load(this)
             const total = await this.repository.getTotalCount(this.filter)
             runInAction(() => {
                 this.__items = objs

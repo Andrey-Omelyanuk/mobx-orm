@@ -3,14 +3,12 @@ import { Query } from '../queries/query'
 import { Repository }  from '../repository'
 import { Filter } from '../filters/Filter'
 import { Adapter } from './adapter'
+import { timeout } from '../utils'
 
 /*
 You can use this adapter for mock data or for unit test
 */
 
-function timeout(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 export let local_store: {string?: {any: Model}} = {}
 

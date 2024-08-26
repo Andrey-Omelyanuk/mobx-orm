@@ -3,105 +3,46 @@ import { Model, model, field, LocalAdapter, local, EQ, ASC, DESC, NumberInput } 
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e } from '../test.utils' 
 import { QueryPage } from './query-page'
 
+
 describe('QueryPage', () => {
 
-    @local()
-    @model class A extends Model {
-        @field   a !: number
-        @field   b !: string
-        @field   c !: boolean
-    }
-
+    @local() @model class A extends Model {}
     let query: QueryPage<A>
-    let query_load              : any
-    let repository_load         : any
-    let repository_getTotalCount: any
-
-    beforeAll(() => {
-        (A.repository.adapter as LocalAdapter<A>).init_local_data(data_set)
-    })
 
     beforeEach(async () => {
-        // TODO: fix repository type
-        query                       = new QueryPage<A>({repository: A.repository as any})
-        query_load                  = jest.spyOn(query, '__load')
-        repository_load             = jest.spyOn(A.repository, 'load')
-        repository_getTotalCount    = jest.spyOn(A.repository, 'getTotalCount')
+        query = new QueryPage<A>({repository: A.repository})
     })
 
     afterEach(async () => {
         query.destroy()
-        A.repository.cache.clear()
-        jest.clearAllMocks();
+        A.repository.cache.clear() 
+        jest.clearAllMocks()
     })
 
-    describe('constructor', () => {
-        it('...', async () => {
+    describe('Constructor', () => {
+        it('default', async () => {
             expect(query).toMatchObject({
-                repository: A.repository,
-                filter: undefined,
+                repository      : A.repository,
+                items           : [],
+                total           : undefined,
             })
             expect(query.offset.value).toBe(0)
             expect(query.limit.value).toBe(50)
-            expect(repository_load).toHaveBeenCalledTimes(0) 
-            // expect(adapter_load).toHaveBeenCalledWith(undefined, query.order_by, query.page_size, query.page)
-        })
-
-        it('need_to_update', async () => {
-                                                            expect(query.need_to_update).toBe(true)
-            query.order_by.set(new Map())                 ; expect(query.need_to_update).toBe(true)
-            runInAction(() => query.need_to_update = false)
-            // const filter = EQ('a', new NumberInput({value: 2}))
-            // runInAction(() => query.filter = filter);      expect(query.need_to_update).toBe(true)
-            // runInAction(() => query.need_to_update = false);expect(query.need_to_update).toBe(false)
-            // runInAction(() => filter.value = 3);            expect(query.need_to_update).toBe(true)
-            // runInAction(() => query.need_to_update = false)
-            // query.setPageSize(3);                           expect(query.need_to_update).toBe(true)
-            // runInAction(() => query.need_to_update = false)
-            // query.setPage(3);                               expect(query.need_to_update).toBe(true)
         })
     })
 
-    // it('shadowLoad', async ()=> {
-    //                         expect(query.total).toBe(0)
-    //                         expect(query_load).toHaveBeenCalledTimes(0)
-    //                         expect(repository_load).toHaveBeenCalledTimes(0)
-    //                         expect(repository_getTotalCount).toHaveBeenCalledTimes(0)
-    //                         expect(query.is_ready).toBe(false)
-    //     await query.shadowLoad() 
-    //                         expect(query.total).toBe(5)
-    //                         expect(query_load).toHaveBeenCalledTimes(1)
-    //                         expect(repository_load).toHaveBeenCalledTimes(1)
-    //                         expect(repository_getTotalCount).toHaveBeenCalledTimes(1)
-    //                         expect(query.is_ready).toBe(true)
-    //                         // expect(query.need_to_update).toBe(false)
-    //     query.need_to_update = true
-    //                         // expect(query.need_to_update).toBe(true)
-    //     await query.shadowLoad() 
-    //                         expect(query_load).toHaveBeenCalledTimes(2)
-    //                         expect(repository_load).toHaveBeenCalledTimes(2)
-    //                         expect(repository_getTotalCount).toHaveBeenCalledTimes(2)
-    //                         expect(query.is_ready).toBe(true)
-    //                         // expect(query.need_to_update).toBe(false)
-    // })
+    describe('Load', () => {
+        it('default', async () => {
+            await query.load()
+            expect(query).toMatchObject({
+                repository      : A.repository,
+                items           : [],
+                total           : 0,        // empty data set, 0 is a proof that load is done correctly
+            })
+        })
+    })
 
-    // it('need_to_update', async () => {
-    //     runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
-    //     runInAction(() => query.order_by = new Map());      expect(query.need_to_update).toBe(true)
-    //     runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
-    //     runInAction(() => query.order_by.set('a', ASC));    expect(query.need_to_update).toBe(true)
-    //     runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
-    //     runInAction(() => query.order_by.set('a', DESC));   expect(query.need_to_update).toBe(true)
-    //     runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
-    //     runInAction(() => query.order_by.set('a', DESC));   expect(query.need_to_update).toBe(false)
-    //     runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
-    //     runInAction(() => query.order_by.set('b', ASC));    expect(query.need_to_update).toBe(true)
-    //     runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
-    //     runInAction(() => query.order_by.delete('a'));      expect(query.need_to_update).toBe(true)
-    //     runInAction(() => query.need_to_update = false);    expect(query.need_to_update).toBe(false)
-    // })
-
-    describe('pagination', () => {
+    describe('Pagination', () => {
         it('setPage', async () => {
                                       expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
             query.setPage(0)        ; expect([query.limit.value, query.offset.value]).toMatchObject([50, 0])
@@ -169,21 +110,20 @@ describe('QueryPage', () => {
             query.goToLastPage()    ; expect([query.limit.value, query.offset.value]).toMatchObject([10, 40])
         })
         it('is_first_page', async () => {
-                                      expect(query.is_first_page).toBe(true)
+            query.total = 50        ; expect(query.is_first_page).toBe(true)
             query.setPage(0)        ; expect(query.is_first_page).toBe(true)
             query.setPage(1)        ; expect(query.is_first_page).toBe(true)
             query.setPage(2)        ; expect(query.is_first_page).toBe(false)
         })
-        // TODO:
-        // it('is_last_page', async () => {
-        //                               expect(query.is_last_page).toBe(true)
-        //     query.setPage(0)        ; expect(query.is_last_page).toBe(true)
-        //     query.setPage(1)        ; expect(query.is_last_page).toBe(true)
-        //     query.setPage(2)        ; expect(query.is_last_page).toBe(true)
-        //     query.total = 1000      ; expect(query.is_last_page).toBe(false)
-        // })
+        it('is_last_page', async () => {
+            query.total = 50        ; expect(query.is_last_page).toBe(true)
+            query.setPage(0)        ; expect(query.is_last_page).toBe(true)
+            query.setPage(1)        ; expect(query.is_last_page).toBe(true)
+            query.setPage(2)        ; expect(query.is_last_page).toBe(true)
+            query.total = 1000      ; expect(query.is_last_page).toBe(false)
+        })
         it('current_page', async () => {
-                                      expect(query.current_page).toBe(1)
+            query.total = 50        ; expect(query.current_page).toBe(1)
             query.setPage(-1)       ; expect(query.current_page).toBe(1)
             query.setPage(0)        ; expect(query.current_page).toBe(1)
             query.setPage(1)        ; expect(query.current_page).toBe(1)
@@ -197,19 +137,4 @@ describe('QueryPage', () => {
             query.total = 200       ; expect(query.total_pages).toBe(4)
         })
     })
-
-    // it('e2e', async () => {
-    //                                 expect(repository_load).toHaveBeenCalledTimes(0) 
-    //     await query.load()
-    //                                 expect(repository_load).toHaveBeenCalledTimes(1) 
-    //                                 expect(repository_load).toHaveBeenCalledWith(query)
-    //                                 expect(query.items).toEqual(data_set)
-    //     query.setPage(2)
-    //                                 expect(query.items).toEqual(data_set)
-    //     await query.load()
-    //                                 expect(repository_load).toHaveBeenCalledTimes(2) 
-    //                                 expect(repository_load).toHaveBeenCalledWith(query)
-    //                                 expect(query.items).toEqual([])
-
-    // })
 })

@@ -14,13 +14,15 @@ describe('QueryXCacheSync', () => {
         // TODO: fix repository type
         const query = new QueryCacheSync<A>({repository: A.repository as any})
         expect(query).toMatchObject({
-            items: [],
-            total: undefined,
-            repository: A.repository,
-            need_to_update: true,
-            is_loading: false,
-            is_ready: false,
-            error: '',
+            repository      :  A.repository,
+            filter          : undefined,
+
+            items           : [],
+            total           : undefined,
+            is_loading      : false,
+            need_to_update  : true,
+            timestamp       : undefined,
+            error           : undefined,
         })
 
     })
@@ -28,13 +30,15 @@ describe('QueryXCacheSync', () => {
     it('constructor: with selector', async ()=> {
         const query = new QueryCacheSync<A>({repository: A.repository as any})
         expect(query).toMatchObject({
-            items: [],
-            total: undefined,
-            repository: A.repository,
-            need_to_update: true,
-            is_loading: false,
-            is_ready: false,
-            error: '',
+            repository      :  A.repository,
+            filter          : undefined,
+
+            items           : [],
+            total           : undefined,
+            is_loading      : false,
+            need_to_update  : true,
+            timestamp       : undefined,
+            error           : undefined,
         })
     })
 })

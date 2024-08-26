@@ -8,7 +8,6 @@ export let obj_e = {id: 4, a: 1, b: 'a', c: true }
 
 export let data_set = [ obj_a, obj_b, obj_c, obj_d, obj_e ]
 
-
 export class TestCache<M extends Model> extends Cache<M> {
     constructor(model: any, name?: string) { super(model, name) }
 

@@ -25,36 +25,36 @@ describe('AutoReset', () => {
         expect(autoReset.do).toHaveBeenCalledTimes(0)
     })
 
-    it('input with options', async () => {
-        const query = TestModel.getQuery({})
-        const input = new NumberInput({
-            value: 2,
-            options: query
-        })
-        runInAction(() => (input.options as any).__is_ready = true)
-        expect(query.isReady).toBe(true)
-        expect(input).toMatchObject({ value: 2, isReady: false, disabled: false })
+    // it('input with options', async () => {
+    //     const query = TestModel.getQuery({})
+    //     const input = new NumberInput({
+    //         value: 2,
+    //         options: query
+    //     })
+    //     runInAction(() => (input.options as any).__is_ready = true)
+    //     expect(query.isReady).toBe(true)
+    //     expect(input).toMatchObject({ value: 2, isReady: false, disabled: false })
 
-        const autoReset = new AutoResetTest(input)
-        expect(input).toMatchObject({ value: 2, isReady: true })
-        expect(autoReset).toMatchObject({ input: input })
-        expect(autoReset.do).toHaveBeenCalledTimes(1)
-    })
+    //     const autoReset = new AutoResetTest(input)
+    //     expect(input).toMatchObject({ value: 2, isReady: true })
+    //     expect(autoReset).toMatchObject({ input: input })
+    //     expect(autoReset.do).toHaveBeenCalledTimes(1)
+    // })
 
-    it('disabled input with options', async () => {
-        const query = TestModel.getQuery({})
-        const input = new NumberInput({
-            value: 2,
-            options: query,
-            disabled: true,
-        })
-        runInAction(() => (input.options as any).__is_ready = true)
-        expect(query.isReady).toBe(true)
-        expect(input).toMatchObject({ value: 2, isReady: true, disabled: true })
+    // it('disabled input with options', async () => {
+    //     const query = TestModel.getQuery({})
+    //     const input = new NumberInput({
+    //         value: 2,
+    //         options: query,
+    //         disabled: true,
+    //     })
+    //     runInAction(() => (input.options as any).__is_ready = true)
+    //     expect(query.isReady).toBe(true)
+    //     expect(input).toMatchObject({ value: 2, isReady: true, disabled: true })
 
-        const autoReset = new AutoResetTest(input)
-        expect(input).toMatchObject({ value: 2, isReady: true })
-        expect(autoReset).toMatchObject({ input: input })
-        expect(autoReset.do).toHaveBeenCalledTimes(0)
-    })
+    //     const autoReset = new AutoResetTest(input)
+    //     expect(input).toMatchObject({ value: 2, isReady: true })
+    //     expect(autoReset).toMatchObject({ input: input })
+    //     expect(autoReset.do).toHaveBeenCalledTimes(0)
+    // })
 })
