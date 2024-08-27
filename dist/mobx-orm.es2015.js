@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.4
+   * mobx-orm.js v2.0.5
    * Released under the MIT license.
    */
 
@@ -260,6 +260,9 @@ function waitIsFalse(obj, field) {
         });
     });
 }
+function timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 class Input {
     constructor(args) {
@@ -381,13 +384,12 @@ class Input {
                 && (this.options === undefined
                     // if not required and value is undefined or empty array - it is ready
                     || (!this.required && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)))
-                    || this.options.isReady));
+                    || !this.options.needToUpdate));
     }
     get isError() {
         return this.errors.length > 0;
     }
     set(value) {
-        var _a;
         this.value = value;
         // if debounce is on then set __isReady to false and then to true after debounce
         if (this.debounce)
@@ -395,7 +397,7 @@ class Input {
         if (!this.required || !(this.required && value === undefined)) {
             this.__setReadyTrue();
         }
-        if (!this.isInit && (!this.options || ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isReady))) {
+        if (!this.isInit && (!this.options || !this.options.needToUpdate)) {
             this.isInit = true;
         }
     }
@@ -410,15 +412,12 @@ class Input {
     }
     // Any changes in options should reset __isReady
     __doOptions() {
-        this.__disposers.push(reaction(() => this.options.isReady, () => {
-            this.__isReady = false;
-        }));
+        this.__disposers.push(reaction(() => this.options.needToUpdate, () => this.__isReady = false));
     }
     __doAutoReset() {
-        this.__disposers.push(reaction(() => this.options.is_ready && !this.disabled, (is_ready) => {
-            if (is_ready) {
+        this.__disposers.push(reaction(() => !this.options.needToUpdate && !this.disabled, (is_ready) => {
+            if (is_ready)
                 this.autoReset(this);
-            }
         }, { fireImmediately: true }));
     }
     __doSyncURLSearchParams() {
@@ -506,35 +505,23 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], Input.prototype, "set", null);
 
-class OrderByInput extends Input {
+class StringInput extends Input {
     serialize(value) {
-        let result = new Map();
-        if (value) {
-            for (const item of value.split(',')) {
-                if (item[0] === '-') {
-                    result.set(item.slice(1), DESC);
-                }
-                else {
-                    result.set(item, ASC);
-                }
-            }
-        }
-        this.value = result;
+        if (value === undefined)
+            this.set(undefined);
+        else if (value === 'null')
+            this.set(null);
+        else if (value === null)
+            this.set(undefined);
+        else
+            this.set(value);
     }
     deserialize() {
-        if (this.value) {
-            let result = '';
-            for (const [key, val] of this.value) {
-                if (result)
-                    result += ',';
-                if (val === DESC)
-                    result += '-';
-                const field = key.replace(/\./g, '__');
-                result += field;
-            }
-            return result ? result : undefined;
-        }
-        return undefined;
+        if (this.value === undefined)
+            return undefined;
+        if (this.value === null)
+            return 'null';
+        return this.value;
     }
 }
 
@@ -562,31 +549,97 @@ class NumberInput extends Input {
     }
 }
 
-class ArrayInput extends Input {
-    constructor(args) {
-        if (args === undefined || args.value === undefined)
-            args = Object.assign(Object.assign({}, args), { value: [] });
-        super(args);
-    }
-}
-
-class StringInput extends Input {
+class BooleanInput extends Input {
     serialize(value) {
         if (value === undefined)
             this.set(undefined);
-        else if (value === 'null')
+        if (value === 'null')
             this.set(null);
-        else if (value === null)
+        if (value === null)
             this.set(undefined);
         else
-            this.set(value);
+            this.set(value === 'true' ? true : value === 'false' ? false : undefined);
     }
     deserialize() {
         if (this.value === undefined)
             return undefined;
         if (this.value === null)
             return 'null';
-        return this.value;
+        return !!this.value ? 'true' : 'false';
+    }
+}
+
+class DateInput extends Input {
+    serialize(value) {
+        if (value === undefined)
+            this.set(undefined);
+        if (value === 'null')
+            this.set(null);
+        else
+            this.set(new Date(value));
+    }
+    deserialize() {
+        if (this.value === undefined)
+            return undefined;
+        if (this.value === null)
+            return 'null';
+        return this.value instanceof Date ? this.value.toISOString().split('T')[0] : "";
+    }
+}
+
+class DateTimeInput extends Input {
+    serialize(value) {
+        if (value === undefined)
+            this.set(undefined);
+        else if (value === 'null')
+            this.set(null);
+        else
+            this.set(new Date(value));
+    }
+    deserialize() {
+        if (this.value === undefined)
+            return undefined;
+        if (this.value === null)
+            return 'null';
+        return this.value instanceof Date ? this.value.toISOString() : "";
+    }
+}
+
+class EnumInput extends Input {
+    constructor(args) {
+        super(args);
+        Object.defineProperty(this, "enum", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.enum = args.enum;
+    }
+    serialize(value) {
+        if (value === 'null')
+            this.set(null);
+        else if (value === undefined)
+            this.set(undefined);
+        else if (value === null)
+            this.set(null);
+        else
+            this.set(Object.values(this.enum).find(v => v == value));
+    }
+    deserialize() {
+        if (this.value === undefined)
+            return undefined;
+        if (this.value === null)
+            return 'null';
+        return this.value.toString();
+    }
+}
+
+class ArrayInput extends Input {
+    constructor(args) {
+        if (args === undefined || args.value === undefined)
+            args = Object.assign(Object.assign({}, args), { value: [] });
+        super(args);
     }
 }
 
@@ -619,17 +672,211 @@ class ArrayStringInput extends ArrayInput {
     }
 }
 
+class ArrayNumberInput extends ArrayInput {
+    serialize(value) {
+        let result = [];
+        if (value) {
+            let converter = new NumberInput();
+            for (const i of value.split(',')) {
+                converter.serialize(i);
+                if (converter.value !== undefined) {
+                    result.push(converter.value);
+                }
+            }
+        }
+        this.set(result);
+    }
+    deserialize() {
+        let result = [];
+        if (this.value) {
+            for (const i of this.value) {
+                let converter = new NumberInput({ value: i });
+                let v = converter.deserialize();
+                if (v !== undefined) {
+                    result.push(v);
+                }
+            }
+        }
+        return result.length ? result.join(',') : undefined;
+    }
+}
+
+class OrderByInput extends Input {
+    serialize(value) {
+        let result = new Map();
+        if (value) {
+            for (const item of value.split(',')) {
+                if (item[0] === '-') {
+                    result.set(item.slice(1), DESC);
+                }
+                else {
+                    result.set(item, ASC);
+                }
+            }
+        }
+        this.value = result;
+    }
+    deserialize() {
+        if (this.value) {
+            let result = '';
+            for (const [key, val] of this.value) {
+                if (result)
+                    result += ',';
+                if (val === DESC)
+                    result += '-';
+                const field = key.replace(/\./g, '__');
+                result += field;
+            }
+            return result ? result : undefined;
+        }
+        return undefined;
+    }
+}
+
+class ObjectInput extends NumberInput {
+    constructor(args) {
+        super(args);
+        Object.defineProperty(this, "model", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.model = args.model;
+    }
+    get obj() {
+        return this.model.get(this.value);
+    }
+}
+
+function autoResetId(input) {
+    var _a;
+    if (!input.options) {
+        console.warn('Input with autoResetId has no options', input);
+        return;
+    }
+    // if value still in options, do nothing
+    for (const item of input.options.items) {
+        if (item.id === input.value) {
+            input.set(input.value); // we need to set value to trigger reaction
+            return;
+        }
+    }
+    // otherwise set first available id or undefined
+    input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
+}
+
+const autoResetArrayOfIDs = (input) => {
+    if (!input.options) {
+        console.warn('Input with autoResetArrayOfIDs has no options', input);
+        return;
+    }
+    // if one of values not in options, reset the input 
+    for (const id of input.value) {
+        let found = false;
+        for (const item of input.options.items) {
+            if (item.id === id) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            input.set([]);
+            return;
+        }
+    }
+    input.set(input.value);
+};
+
+const autoResetArrayToEmpty = (input) => {
+    if (!input.options)
+        input.set(input.value);
+    else
+        input.set([]);
+};
+
+class Form {
+    constructor(inputs, submit, cancel) {
+        Object.defineProperty(this, "inputs", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "isLoading", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+        });
+        Object.defineProperty(this, "errors", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
+        Object.defineProperty(this, "__submit", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "__cancel", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.inputs = inputs;
+        this.__submit = submit;
+        this.__cancel = cancel;
+    }
+    get isReady() {
+        return Object.values(this.inputs).every(input => input.isReady);
+    }
+    get isError() {
+        return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError);
+    }
+    async submit() {
+        if (!this.isReady) {
+            // just ignore
+            return;
+        }
+        this.isLoading = true;
+        this.errors = [];
+        try {
+            await this.__submit();
+        }
+        catch (err) {
+            for (const key in err.message) {
+                if (key === config.NON_FIELD_ERRORS_KEY) {
+                    this.errors = err.message[key];
+                }
+                else {
+                    this.inputs[key].errors = err.message[key];
+                }
+            }
+        }
+        this.isLoading = false;
+    }
+    cancel() {
+        this.__cancel();
+    }
+}
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Form.prototype, "isLoading", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Array)
+], Form.prototype, "errors", void 0);
+
 const DISPOSER_AUTOUPDATE = "__autoupdate";
 const ASC = true;
 const DESC = false;
 class Query {
-    get is_loading() { return this.__is_loading; }
-    get is_ready() { return this.__is_ready; }
-    get error() { return this.__error; }
-    get items() { return this.__items; }
-    // we going to migrate to JS style
-    get isLoading() { return this.__is_loading; }
-    get isReady() { return this.__is_ready; }
+    get items() { return this.__items; } // the items can be changed after the load (post processing)
     constructor(props) {
         Object.defineProperty(this, "repository", {
             enumerable: true,
@@ -643,7 +890,7 @@ class Query {
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "order_by", {
+        Object.defineProperty(this, "orderBy", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -679,124 +926,162 @@ class Query {
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "total", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "need_to_update", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "timestamp", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
         Object.defineProperty(this, "__items", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: []
-        });
-        Object.defineProperty(this, "__is_loading", {
+        }); // items from the server
+        Object.defineProperty(this, "total", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        }); // total count of items on the server, usefull for pagination
+        Object.defineProperty(this, "isLoading", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: false
-        });
-        Object.defineProperty(this, "__is_ready", {
+        }); // query is loading the data
+        Object.defineProperty(this, "needToUpdate", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: false
-        });
-        Object.defineProperty(this, "__error", {
+        }); // query was changed and we need to update the data
+        Object.defineProperty(this, "timestamp", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: ''
-        });
-        Object.defineProperty(this, "__controller", {
+            value: void 0
+        }); // timestamp of the last update, usefull to aviod to trigger react hooks twise
+        Object.defineProperty(this, "error", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        }); // error message
+        Object.defineProperty(this, "controller", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "__disposers", {
+        Object.defineProperty(this, "disposers", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: []
         });
-        Object.defineProperty(this, "__disposer_objects", {
+        Object.defineProperty(this, "disposerObjects", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: {}
-        });
-        // Deprecated, it should be moved to the adapter
-        // get URLSearchParams(): URLSearchParams{
-        //     const searchParams = this.filter ? this.filter.URLSearchParams : new URLSearchParams()
-        //     if (this.order_by.size       ) searchParams.set('__order_by' , this.input_order_by.deserialize(this.order_by))
-        //     if (this.limit !== undefined ) searchParams.set('__limit'    , this.input_limit.deserialize(this.limit))
-        //     if (this.offset !== undefined) searchParams.set('__offset'   , this.input_offset.deserialize(this.offset))
-        //     if (this.relations.length    ) searchParams.set('__relations', this.input_relations.deserialize(this.relations))
-        //     if (this.fields.length       ) searchParams.set('__fields'   , this.input_fields.deserialize(this.fields))
-        //     if (this.omit.length         ) searchParams.set('__omit'     , this.input_omit.deserialize(this.omit))
-        //     return searchParams
-        // }
-        // use it if you need use promise instead of observe is_ready
-        Object.defineProperty(this, "ready", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: async () => waitIsTrue(this, '__is_ready')
         });
         // use it if you need use promise instead of observe is_loading
         Object.defineProperty(this, "loading", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: async () => waitIsFalse(this, '__is_loading')
+            value: async () => waitIsFalse(this, 'is_loading')
         });
-        let { repository, filter, order_by, offset, limit, relations, fields, omit, autoupdate = false } = props;
+        let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = false } = props;
         this.repository = repository;
         this.filter = filter;
-        this.order_by = order_by ? order_by : new OrderByInput();
+        this.orderBy = orderBy ? orderBy : new OrderByInput();
         this.offset = offset ? offset : new NumberInput();
         this.limit = limit ? limit : new NumberInput();
         this.relations = relations ? relations : new ArrayStringInput();
         this.fields = fields ? fields : new ArrayStringInput();
         this.omit = omit ? omit : new ArrayStringInput();
-        makeObservable(this);
-        this.__disposers.push(reaction(() => { var _a, _b; return (_b = (_a = this.repository) === null || _a === void 0 ? void 0 : _a.adapter) === null || _b === void 0 ? void 0 : _b.getURLSearchParams(this).toString(); }, action('MO: Query Base - need to update', () => {
-            this.need_to_update = true;
-            this.__is_ready = false;
-        }), { fireImmediately: true }));
         this.autoupdate = autoupdate;
-        // this.syncURLSearchParams && this.__doSyncURLSearchParams()
+        makeObservable(this);
+        this.disposers.push(reaction(() => { var _a; return { isReady: this.isReady, url: (_a = this.repository.adapter) === null || _a === void 0 ? void 0 : _a.getURLSearchParams(this).toString() }; }, action('MO: Query Base - need to update', ({ isReady }) => { if (isReady)
+            this.needToUpdate = true; }), { fireImmediately: true }));
     }
     destroy() {
         var _a;
-        (_a = this.__controller) === null || _a === void 0 ? void 0 : _a.abort();
-        while (this.__disposers.length) {
-            this.__disposers.pop()();
+        (_a = this.controller) === null || _a === void 0 ? void 0 : _a.abort();
+        while (this.disposers.length) {
+            this.disposers.pop()();
         }
-        for (let __id in this.__disposer_objects) {
-            this.__disposer_objects[__id]();
-            delete this.__disposer_objects[__id];
+        for (let __id in this.disposerObjects) {
+            this.disposerObjects[__id]();
+            delete this.disposerObjects[__id];
         }
     }
-    async __wrap_controller(func) {
-        if (this.__controller) {
-            this.__controller.abort();
+    // use it if everybody should know that the query data is updating
+    async load() {
+        this.isLoading = true;
+        try {
+            await this.shadowLoad();
         }
-        this.__controller = new AbortController();
+        finally {
+            runInAction(() => {
+                // the loading can be canceled by another load
+                // in this case we should not touch the __is_loading
+                if (!this.controller)
+                    this.isLoading = false;
+            });
+        }
+    }
+    // use it if nobody should know that the query data is updating
+    // for example you need to update the current data on the page and you don't want to show a spinner
+    async shadowLoad() {
+        try {
+            this.needToUpdate = false;
+            // NOTE: Date.now() is used to get the current timestamp
+            //       and it can be the same in the same tick 
+            //       in this case we should increase the timestamp by 1
+            const now = Date.now();
+            if (this.timestamp === now)
+                this.timestamp += 1;
+            else
+                this.timestamp = now;
+            await this.__load();
+        }
+        catch (e) {
+            runInAction(() => this.error = e.message);
+        }
+    }
+    get autoupdate() {
+        return !!this.disposerObjects[DISPOSER_AUTOUPDATE];
+    }
+    set autoupdate(value) {
+        if (value !== this.autoupdate) { // indepotent guarantee
+            // on 
+            if (value) {
+                setTimeout(() => {
+                    this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(() => this.needToUpdate && this.isReady, (needToUpdate) => {
+                        if (needToUpdate)
+                            this.load();
+                    }, { fireImmediately: true });
+                }, config.AUTO_UPDATE_DELAY);
+            }
+            // off
+            else {
+                this.disposerObjects[DISPOSER_AUTOUPDATE]();
+                delete this.disposerObjects[DISPOSER_AUTOUPDATE];
+            }
+        }
+    }
+    // check if all dependecies are ready
+    get isReady() {
+        return (this.filter === undefined || this.filter.isReady)
+            && this.orderBy.isReady
+            && this.offset.isReady
+            && this.limit.isReady
+            && this.relations.isReady
+            && this.fields.isReady
+            && this.omit.isReady;
+    }
+    async __wrap_controller(func) {
+        if (this.controller) {
+            this.controller.abort();
+        }
+        this.controller = new AbortController();
         let response;
         try {
             response = await func();
@@ -806,82 +1091,23 @@ class Query {
                 throw e;
         }
         finally {
-            this.__controller = undefined;
+            this.controller = undefined;
         }
         return response;
     }
     async __load() {
         return this.__wrap_controller(async () => {
-            const objs = await this.repository.load(this, this.__controller);
+            const objs = await this.repository.load(this, this.controller);
             runInAction(() => {
                 this.__items = objs;
             });
         });
     }
-    // use it if everybody should know that the query data is updating
-    async load() {
-        this.__is_loading = true;
-        try {
-            await this.shadowLoad();
-        }
-        finally {
-            runInAction(() => {
-                // the loading can be canceled by another load
-                // in this case we should not touch the __is_loading
-                if (!this.__controller) {
-                    this.__is_loading = false;
-                }
-            });
-        }
-    }
-    // use it if nobody should know that the query data is updating
-    // for example you need to update the current data on the page and you don't want to show a spinner
-    async shadowLoad() {
-        try {
-            await this.__load();
-        }
-        catch (e) {
-            runInAction(() => {
-                this.__error = e.message;
-            });
-        }
-        finally {
-            runInAction(() => {
-                // TODO: timestamp, aviod to trigger react hooks twise
-                if (!this.__is_ready) {
-                    this.__is_ready = true;
-                    this.timestamp = Date.now();
-                }
-                if (this.need_to_update)
-                    this.need_to_update = false;
-            });
-        }
-    }
-    get autoupdate() {
-        return !!this.__disposer_objects[DISPOSER_AUTOUPDATE];
-    }
-    set autoupdate(value) {
-        if (value !== this.autoupdate) {
-            // on 
-            if (value) {
-                setTimeout(() => {
-                    this.__disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
-                    // NOTE: don't need to check pagination and order because they are always ready 
-                    () => this.need_to_update && (this.filter === undefined || this.filter.isReady), (need_to_update) => {
-                        if (need_to_update) {
-                            this.load();
-                        }
-                    }, { fireImmediately: true });
-                }, config.AUTO_UPDATE_DELAY);
-            }
-            // off
-            else {
-                this.__disposer_objects[DISPOSER_AUTOUPDATE]();
-                delete this.__disposer_objects[DISPOSER_AUTOUPDATE];
-            }
-        }
-    }
 }
+__decorate([
+    observable,
+    __metadata("design:type", Array)
+], Query.prototype, "__items", void 0);
 __decorate([
     observable,
     __metadata("design:type", Number)
@@ -889,27 +1115,19 @@ __decorate([
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], Query.prototype, "need_to_update", void 0);
+], Query.prototype, "isLoading", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Query.prototype, "needToUpdate", void 0);
 __decorate([
     observable,
     __metadata("design:type", Number)
 ], Query.prototype, "timestamp", void 0);
 __decorate([
     observable,
-    __metadata("design:type", Array)
-], Query.prototype, "__items", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], Query.prototype, "__is_loading", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], Query.prototype, "__is_ready", void 0);
-__decorate([
-    observable,
     __metadata("design:type", String)
-], Query.prototype, "__error", void 0);
+], Query.prototype, "error", void 0);
 __decorate([
     action('MO: Query Base - load'),
     __metadata("design:type", Function),
@@ -924,8 +1142,8 @@ __decorate([
 ], Query.prototype, "shadowLoad", null);
 
 class QueryPage extends Query {
-    setPageSize(size) { this.limit.set(size); this.offset.set(0); }
     setPage(n) { this.offset.set(this.limit.value * (n > 0 ? n - 1 : 0)); }
+    setPageSize(size) { this.limit.set(size); this.offset.set(0); }
     goToFirstPage() { this.setPage(1); }
     goToPrevPage() { this.setPage(this.current_page - 1); }
     goToNextPage() { this.setPage(this.current_page + 1); }
@@ -934,7 +1152,7 @@ class QueryPage extends Query {
     get is_last_page() { return this.offset.value + this.limit.value >= this.total; }
     get current_page() { return this.offset.value / this.limit.value + 1; }
     get total_pages() { return this.total ? Math.ceil(this.total / this.limit.value) : 1; }
-    // we going to migrate to JS style
+    // for compatibility with js code style
     get isFirstPage() { return this.is_first_page; }
     get isLastPage() { return this.is_last_page; }
     get currentPage() { return this.current_page; }
@@ -951,8 +1169,8 @@ class QueryPage extends Query {
     async __load() {
         return this.__wrap_controller(async () => {
             const [objs, total] = await Promise.all([
-                this.repository.load(this, this.__controller),
-                this.repository.getTotalCount(this.filter, this.__controller)
+                this.repository.load(this, this.controller),
+                this.repository.getTotalCount(this.filter, this.controller)
             ]);
             runInAction(() => {
                 this.__items = objs;
@@ -962,31 +1180,31 @@ class QueryPage extends Query {
     }
 }
 __decorate([
-    action('MO: set page size'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0)
-], QueryPage.prototype, "setPageSize", null);
-__decorate([
     action('MO: set page'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], QueryPage.prototype, "setPage", null);
+__decorate([
+    action('MO: set page size'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], QueryPage.prototype, "setPageSize", null);
 
 class QueryCacheSync extends Query {
     constructor(props) {
         super(props);
         // watch the cache for changes, and update items if needed
-        this.__disposers.push(observe(props.repository.cache.store, action('MO: Query - update from cache changes', (change) => {
+        this.disposers.push(observe(props.repository.cache.store, action('MO: Query - update from cache changes', (change) => {
             if (change.type == 'add') {
                 this.__watch_obj(change.newValue);
             }
             if (change.type == "delete") {
                 let id = change.name;
                 let obj = change.oldValue;
-                this.__disposer_objects[id]();
-                delete this.__disposer_objects[id];
+                this.disposerObjects[id]();
+                delete this.disposerObjects[id];
                 let i = this.__items.indexOf(obj);
                 if (i != -1) {
                     this.__items.splice(i, 1);
@@ -1000,11 +1218,11 @@ class QueryCacheSync extends Query {
         }
     }
     async __load() {
-        if (this.__controller)
-            this.__controller.abort();
-        this.__controller = new AbortController();
+        if (this.controller)
+            this.controller.abort();
+        this.controller = new AbortController();
         try {
-            await this.repository.load(this, this.__controller);
+            await this.repository.load(this, this.controller);
             // Query don't need to overide the __items,
             // query's items should be get only from the cache
         }
@@ -1019,9 +1237,9 @@ class QueryCacheSync extends Query {
     }
     get items() {
         let __items = this.__items.map(x => x); // copy __items (not deep)
-        if (this.order_by.value && this.order_by.value.size) {
+        if (this.orderBy.value && this.orderBy.value.size) {
             let compare = (a, b) => {
-                for (const [key, value] of this.order_by.value) {
+                for (const [key, value] of this.orderBy.value) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
                             return 1;
@@ -1050,9 +1268,9 @@ class QueryCacheSync extends Query {
         return __items;
     }
     __watch_obj(obj) {
-        if (this.__disposer_objects[obj.id])
-            this.__disposer_objects[obj.id]();
-        this.__disposer_objects[obj.id] = reaction(() => !this.filter || this.filter.isMatch(obj), action('MO: Query - obj was changed', (should) => {
+        if (this.disposerObjects[obj.id])
+            this.disposerObjects[obj.id]();
+        this.disposerObjects[obj.id] = reaction(() => !this.filter || this.filter.isMatch(obj), action('MO: Query - obj was changed', (should) => {
             let i = this.__items.indexOf(obj);
             // should be in the items and it is not in the items? add it to the items
             if (should && i == -1)
@@ -1086,11 +1304,11 @@ class QueryStream extends Query {
         });
     }
     async __load() {
-        if (this.__controller)
-            this.__controller.abort();
-        this.__controller = new AbortController();
+        if (this.controller)
+            this.controller.abort();
+        this.controller = new AbortController();
         try {
-            const objs = await this.repository.load(this, this.__controller);
+            const objs = await this.repository.load(this, this.controller);
             runInAction(() => {
                 this.__items.push(...objs);
                 // total is not make sense for infinity queries
@@ -1118,11 +1336,14 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], QueryStream.prototype, "goToNextPage", null);
 
+/**
+ * QueryRaw is a class to load raw objects from the server
+ * without converting them to models using the repository.
+ */
 class QueryRaw extends Query {
     async __load() {
         return this.__wrap_controller(async () => {
-            // get only raw objects from adapter
-            const objs = await this.repository.load(this, this.__controller);
+            const objs = await this.repository.adapter.load(this, this.controller);
             runInAction(() => {
                 this.__items = objs;
             });
@@ -1130,14 +1351,14 @@ class QueryRaw extends Query {
     }
 }
 
+/**
+ * QueryRawPage is a class to load raw objects from the server
+ * without converting them to models using the repository.
+ */
 class QueryRawPage extends QueryPage {
-    constructor(props) {
-        super(props);
-    }
     async __load() {
         return this.__wrap_controller(async () => {
-            // get only raw objects from adapter
-            const objs = await this.repository.load(this);
+            const objs = await this.repository.adapter.load(this);
             const total = await this.repository.getTotalCount(this.filter);
             runInAction(() => {
                 this.__items = objs;
@@ -1160,7 +1381,7 @@ class QueryDistinct extends Query {
     }
     async __load() {
         return this.__wrap_controller(async () => {
-            const objs = await this.repository.getDistinct(this.filter, this.field, this.__controller);
+            const objs = await this.repository.getDistinct(this.filter, this.field, this.controller);
             runInAction(() => {
                 this.__items = objs;
             });
@@ -1798,9 +2019,6 @@ class ReadOnlyAdapter extends Adapter {
 /*
 You can use this adapter for mock data or for unit test
 */
-function timeout(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 let local_store = {};
 class LocalAdapter {
     init_local_data(data) {
@@ -1879,9 +2097,9 @@ class LocalAdapter {
             raw_objs = Object.values(local_store[this.store_name]);
         }
         // order_by (sort)
-        if (query.order_by.value) {
+        if (query.orderBy.value) {
             raw_objs = raw_objs.sort((obj_a, obj_b) => {
-                for (let sort_by_field of query.order_by.value) {
+                for (let sort_by_field of query.orderBy.value) {
                 }
                 return 0;
             });
@@ -1930,259 +2148,5 @@ function mock() {
     };
 }
 
-class BooleanInput extends Input {
-    serialize(value) {
-        if (value === undefined)
-            this.set(undefined);
-        if (value === 'null')
-            this.set(null);
-        if (value === null)
-            this.set(undefined);
-        else
-            this.set(value === 'true' ? true : value === 'false' ? false : undefined);
-    }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return !!this.value ? 'true' : 'false';
-    }
-}
-
-class DateInput extends Input {
-    serialize(value) {
-        if (value === undefined)
-            this.set(undefined);
-        if (value === 'null')
-            this.set(null);
-        else
-            this.set(new Date(value));
-    }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return this.value instanceof Date ? this.value.toISOString().split('T')[0] : "";
-    }
-}
-
-class DateTimeInput extends Input {
-    serialize(value) {
-        if (value === undefined)
-            this.set(undefined);
-        else if (value === 'null')
-            this.set(null);
-        else
-            this.set(new Date(value));
-    }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return this.value instanceof Date ? this.value.toISOString() : "";
-    }
-}
-
-class EnumInput extends Input {
-    constructor(args) {
-        super(args);
-        Object.defineProperty(this, "enum", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.enum = args.enum;
-    }
-    serialize(value) {
-        if (value === 'null')
-            this.set(null);
-        else if (value === undefined)
-            this.set(undefined);
-        else if (value === null)
-            this.set(null);
-        else
-            this.set(Object.values(this.enum).find(v => v == value));
-    }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return this.value.toString();
-    }
-}
-
-class ArrayNumberInput extends ArrayInput {
-    serialize(value) {
-        let result = [];
-        if (value) {
-            let converter = new NumberInput();
-            for (const i of value.split(',')) {
-                converter.serialize(i);
-                if (converter.value !== undefined) {
-                    result.push(converter.value);
-                }
-            }
-        }
-        this.set(result);
-    }
-    deserialize() {
-        let result = [];
-        if (this.value) {
-            for (const i of this.value) {
-                let converter = new NumberInput({ value: i });
-                let v = converter.deserialize();
-                if (v !== undefined) {
-                    result.push(v);
-                }
-            }
-        }
-        return result.length ? result.join(',') : undefined;
-    }
-}
-
-class ObjectInput extends NumberInput {
-    constructor(args) {
-        super(args);
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.model = args.model;
-    }
-    get obj() {
-        return this.model.get(this.value);
-    }
-}
-
-function autoResetId(input) {
-    var _a;
-    if (!input.options) {
-        console.warn('Input with autoResetId has no options', input);
-        return;
-    }
-    // if value still in options, do nothing
-    for (const item of input.options.items) {
-        if (item.id === input.value) {
-            input.set(input.value); // we need to set value to trigger reaction
-            return;
-        }
-    }
-    // otherwise set first available id or undefined
-    input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
-}
-
-const autoResetArrayOfIDs = (input) => {
-    if (!input.options) {
-        console.warn('Input with autoResetArrayOfIDs has no options', input);
-        return;
-    }
-    // if one of values not in options, reset the input 
-    for (const id of input.value) {
-        let found = false;
-        for (const item of input.options.items) {
-            if (item.id === id) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            input.set([]);
-            return;
-        }
-    }
-    input.set(input.value);
-};
-
-const autoResetArrayToEmpty = (input) => {
-    if (!input.options)
-        input.set(input.value);
-    else
-        input.set([]);
-};
-
-class Form {
-    constructor(inputs, submit, cancel) {
-        Object.defineProperty(this, "inputs", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "isLoading", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "errors", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
-        Object.defineProperty(this, "__submit", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "__cancel", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.inputs = inputs;
-        this.__submit = submit;
-        this.__cancel = cancel;
-    }
-    get isReady() {
-        return Object.values(this.inputs).every(input => input.isReady);
-    }
-    get isError() {
-        return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError);
-    }
-    async submit() {
-        if (!this.isReady) {
-            // just ignore
-            return;
-        }
-        this.isLoading = true;
-        this.errors = [];
-        try {
-            await this.__submit();
-        }
-        catch (err) {
-            for (const key in err.message) {
-                if (key === config.NON_FIELD_ERRORS_KEY) {
-                    this.errors = err.message[key];
-                }
-                else {
-                    this.inputs[key].errors = err.message[key];
-                }
-            }
-        }
-        this.isLoading = false;
-    }
-    cancel() {
-        this.__cancel();
-    }
-}
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], Form.prototype, "isLoading", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Array)
-], Form.prototype, "errors", void 0);
-
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

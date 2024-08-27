@@ -266,7 +266,7 @@ type ORDER_BY = Map<string, boolean>;
 interface QueryProps<M extends Model> {
     repository?: Repository<M>;
     filter?: Filter;
-    order_by?: OrderByInput;
+    orderBy?: OrderByInput;
     offset?: NumberInput<any>;
     limit?: NumberInput<any>;
     relations?: ArrayStringInput;
@@ -277,45 +277,39 @@ interface QueryProps<M extends Model> {
 declare class Query<M extends Model> {
     readonly repository: Repository<M>;
     readonly filter: Filter;
-    readonly order_by: OrderByInput;
+    readonly orderBy: OrderByInput;
     readonly offset: NumberInput<any>;
     readonly limit: NumberInput<any>;
     readonly relations: ArrayStringInput;
     readonly fields: ArrayStringInput;
     readonly omit: ArrayStringInput;
+    protected __items: M[];
     total: number;
-    need_to_update: boolean;
+    isLoading: boolean;
+    needToUpdate: boolean;
     timestamp: number;
-    __items: M[];
-    __is_loading: boolean;
-    __is_ready: boolean;
-    __error: string;
-    get is_loading(): boolean;
-    get is_ready(): boolean;
-    get error(): string;
+    error: string;
     get items(): M[];
-    get isLoading(): boolean;
-    get isReady(): boolean;
-    __controller: AbortController;
-    __disposers: (() => void)[];
-    __disposer_objects: {
+    protected controller: AbortController;
+    protected disposers: (() => void)[];
+    protected disposerObjects: {
         [field: string]: () => void;
     };
     constructor(props: QueryProps<M>);
     destroy(): void;
-    __wrap_controller(func: Function): Promise<any>;
-    __load(): Promise<any>;
     load(): Promise<void>;
     shadowLoad(): Promise<void>;
     get autoupdate(): boolean;
     set autoupdate(value: boolean);
-    ready: () => Promise<Boolean>;
+    get isReady(): boolean;
     loading: () => Promise<Boolean>;
+    protected __wrap_controller(func: Function): Promise<any>;
+    protected __load(): Promise<any>;
 }
 
 declare class QueryPage<M extends Model> extends Query<M> {
-    setPageSize(size: number): void;
     setPage(n: number): void;
+    setPageSize(size: number): void;
     goToFirstPage(): void;
     goToPrevPage(): void;
     goToNextPage(): void;
@@ -346,12 +340,19 @@ declare class QueryStream<M extends Model> extends Query<M> {
     __load(): Promise<void>;
 }
 
+/**
+ * QueryRaw is a class to load raw objects from the server
+ * without converting them to models using the repository.
+ */
 declare class QueryRaw<M extends Model> extends Query<M> {
     __load(): Promise<any>;
 }
 
+/**
+ * QueryRawPage is a class to load raw objects from the server
+ * without converting them to models using the repository.
+ */
 declare class QueryRawPage<M extends Model> extends QueryPage<M> {
-    constructor(props: QueryProps<M>);
     __load(): Promise<any>;
 }
 
@@ -475,5 +476,6 @@ declare function mock(): (cls: any) => void;
 
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
+declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, timeout, waitIsFalse, waitIsTrue };
