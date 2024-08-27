@@ -19,8 +19,8 @@ describe('QueryXCacheSync', () => {
 
             items           : [],
             total           : undefined,
-            is_loading      : false,
-            need_to_update  : true,
+            isLoading       : false,
+            needToUpdate    : true,
             timestamp       : undefined,
             error           : undefined,
         })
@@ -35,8 +35,8 @@ describe('QueryXCacheSync', () => {
 
             items           : [],
             total           : undefined,
-            is_loading      : false,
-            need_to_update  : true,
+            isLoading       : false,
+            needToUpdate    : true,
             timestamp       : undefined,
             error           : undefined,
         })

@@ -86,10 +86,10 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         }
 
         // order_by (sort)
-        if (query.order_by.value) {
+        if (query.orderBy.value) {
             raw_objs = raw_objs.sort((obj_a, obj_b) => {
                 let res
-                for(let sort_by_field of query.order_by.value) {
+                for(let sort_by_field of query.orderBy.value) {
                 }
                 return 0
             })

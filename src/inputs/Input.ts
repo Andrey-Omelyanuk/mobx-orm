@@ -72,7 +72,7 @@ export abstract class Input<T, M extends Model> {
             && (     this.options === undefined
                 // if not required and value is undefined or empty array - it is ready
                 || (!this.required && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)))
-                ||  !this.options.need_to_update
+                ||  !this.options.needToUpdate
             )
         )
     }
@@ -89,7 +89,7 @@ export abstract class Input<T, M extends Model> {
         if (!this.required || !(this.required && value === undefined)) {
             this.__setReadyTrue()
         }
-        if (!this.isInit && (!this.options || !this.options.need_to_update)) {
+        if (!this.isInit && (!this.options || !this.options.needToUpdate)) {
             this.isInit = true
         }
     }
@@ -110,14 +110,14 @@ export abstract class Input<T, M extends Model> {
     // Any changes in options should reset __isReady
     __doOptions () {
         this.__disposers.push(reaction(
-            () => this.options.need_to_update,
+            () => this.options.needToUpdate,
             () => this.__isReady = false
         ))
     }
 
     __doAutoReset () {
         this.__disposers.push(reaction(
-            () => !this.options.need_to_update && !this.disabled,
+            () => !this.options.needToUpdate && !this.disabled,
             (is_ready) => {
                 if(is_ready) this.autoReset(this)
             },

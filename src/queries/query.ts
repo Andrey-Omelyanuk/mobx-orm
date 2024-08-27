@@ -16,7 +16,7 @@ export interface QueryProps<M extends Model> {
     repository                  ?: Repository<M>
     //
     filter                      ?: Filter
-    order_by                    ?: OrderByInput 
+    orderBy                     ?: OrderByInput 
     // pagination
     offset                      ?: NumberInput<any>
     limit                       ?: NumberInput<any>
@@ -32,7 +32,7 @@ export class Query <M extends Model> {
 
     readonly repository: Repository<M>
     readonly filter    : Filter
-    readonly order_by  : OrderByInput 
+    readonly orderBy   : OrderByInput 
     readonly offset    : NumberInput<any>
     readonly limit     : NumberInput<any>
     readonly relations : ArrayStringInput
@@ -40,33 +40,28 @@ export class Query <M extends Model> {
     readonly omit      : ArrayStringInput 
 
     @observable protected __items: M[] = []         // items from the server
-    @observable total         : number              // total count of items on the server, usefull for pagination
-    @observable is_loading    : boolean = false     // query is loading the data
-    @observable need_to_update: boolean = false     // query was changed and we need to update the data
-    @observable timestamp     : number              // timestamp of the last update, usefull to aviod to trigger react hooks twise
-    @observable error         : string              // error message
+    @observable total           : number              // total count of items on the server, usefull for pagination
+    @observable isLoading       : boolean = false     // query is loading the data
+    @observable needToUpdate    : boolean = false     // query was changed and we need to update the data
+    @observable timestamp       : number              // timestamp of the last update, usefull to aviod to trigger react hooks twise
+    @observable error           : string              // error message
 
     get items       () { return this.__items }      // the items can be changed after the load (post processing)
 
-    // for compatibility with js code style
-    get orderBy     () { return this.order_by }
-    get isLoading   () { return this.is_loading }
-    get needToUpdate() { return this.need_to_update }
-
     protected controller        : AbortController
     protected disposers         : (()=>void)[] = []
-    protected disposer_objects  : {[field: string]: ()=>void} = {}
+    protected disposerObjects   : {[field: string]: ()=>void} = {}
 
     constructor(props: QueryProps<M>) {
         let {
-            repository, filter, order_by, offset, limit,
+            repository, filter, orderBy, offset, limit,
             relations, fields, omit,
             autoupdate = false
         } = props
 
         this.repository = repository 
         this.filter    = filter
-        this.order_by  = order_by   ? order_by  : new OrderByInput() 
+        this.orderBy   = orderBy    ? orderBy   : new OrderByInput() 
         this.offset    = offset     ? offset    : new NumberInput() 
         this.limit     = limit      ? limit     : new NumberInput() 
         this.relations = relations  ? relations : new ArrayStringInput()
@@ -76,8 +71,8 @@ export class Query <M extends Model> {
         makeObservable(this)
 
         this.disposers.push(reaction(
-            () => this.repository.adapter?.getURLSearchParams(this).toString(),
-            action('MO: Query Base - need to update', () => this.need_to_update = true ),
+            () => { return {isReady: this.isReady, url: this.repository.adapter?.getURLSearchParams(this).toString()}},
+            action('MO: Query Base - need to update', ({isReady}) => { if(isReady) this.needToUpdate = true }),
             { fireImmediately: true }
         ))
     }
@@ -87,16 +82,16 @@ export class Query <M extends Model> {
         while(this.disposers.length) {
             this.disposers.pop()()
         }
-        for(let __id in this.disposer_objects) {
-            this.disposer_objects[__id]()
-            delete this.disposer_objects[__id]
+        for(let __id in this.disposerObjects) {
+            this.disposerObjects[__id]()
+            delete this.disposerObjects[__id]
         } 
     }
 
     // use it if everybody should know that the query data is updating
     @action('MO: Query Base - load')
     async load() {
-        this.is_loading = true
+        this.isLoading = true
         try {
             await this.shadowLoad()
         }
@@ -104,7 +99,7 @@ export class Query <M extends Model> {
             runInAction(() => {
                 // the loading can be canceled by another load
                 // in this case we should not touch the __is_loading
-                if (!this.controller) this.is_loading = false
+                if (!this.controller) this.isLoading = false
             })
         }
     }
@@ -114,7 +109,7 @@ export class Query <M extends Model> {
     @action('MO: Query Base - shadow load')
     async shadowLoad() {
         try {
-            this.need_to_update = false 
+            this.needToUpdate = false 
 
             // NOTE: Date.now() is used to get the current timestamp
             //       and it can be the same in the same tick 
@@ -131,7 +126,7 @@ export class Query <M extends Model> {
     }
 
     get autoupdate() {
-        return !! this.disposer_objects[DISPOSER_AUTOUPDATE]
+        return !! this.disposerObjects[DISPOSER_AUTOUPDATE]
     }
 
     set autoupdate(value: boolean) {
@@ -139,18 +134,10 @@ export class Query <M extends Model> {
             // on 
             if (value) {
                 setTimeout(() => {
-                    this.disposer_objects[DISPOSER_AUTOUPDATE] = reaction(
-                        () => this.need_to_update 
-                            && (this.filter     === undefined || this.filter    .isReady)
-                            && (this.order_by   === undefined || this.order_by  .isReady)
-                            && (this.offset     === undefined || this.offset    .isReady)
-                            && (this.limit      === undefined || this.limit     .isReady)
-                            && (this.relations  === undefined || this.relations .isReady)
-                            && (this.fields     === undefined || this.fields    .isReady)
-                            && (this.omit       === undefined || this.omit      .isReady)
-                            ,
-                        (need_to_update) => {
-                            if (need_to_update) this.load()
+                    this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(
+                        () => this.needToUpdate && this.isReady,
+                        (needToUpdate) => {
+                            if (needToUpdate) this.load()
                         },
                         { fireImmediately: true }
                     )
@@ -158,10 +145,21 @@ export class Query <M extends Model> {
             }
             // off
             else {
-                this.disposer_objects[DISPOSER_AUTOUPDATE]()
-                delete this.disposer_objects[DISPOSER_AUTOUPDATE]
+                this.disposerObjects[DISPOSER_AUTOUPDATE]()
+                delete this.disposerObjects[DISPOSER_AUTOUPDATE]
             }
         }
+    }
+
+    // check if all dependecies are ready
+    get isReady() {
+        return (this.filter === undefined || this.filter.isReady)
+            && this.orderBy   .isReady
+            && this.offset    .isReady
+            && this.limit     .isReady
+            && this.relations .isReady
+            && this.fields    .isReady
+            && this.omit      .isReady
     }
 
     // use it if you need use promise instead of observe is_loading

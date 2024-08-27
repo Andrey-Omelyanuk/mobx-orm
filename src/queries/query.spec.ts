@@ -22,17 +22,17 @@ describe('Query', () => {
         it('default', async ()=> {
             const query = new Query<A>({repository: A.repository})
             expect(query).toMatchObject({
-                repository      :  A.repository,
+                repository      : A.repository,
                 filter          : undefined,
 
                 items           : [],
                 total           : undefined,
-                is_loading      : false,
-                need_to_update  : true,
+                isLoading       : false,
+                needToUpdate    : true,
                 timestamp       : undefined,
                 error           : undefined,
             })
-            expect(query.order_by   .value).toBe(undefined)
+            expect(query.orderBy    .value).toBe(undefined)
             expect(query.limit      .value).toBe(undefined)
             expect(query.offset     .value).toBe(undefined)
             expect(query.relations  .value).toEqual([])
@@ -42,7 +42,7 @@ describe('Query', () => {
         })
         it('some values', async ()=> {
             const filter    = EQ('name', new StringInput({value: 'test'}))
-            const order_by  = new OrderByInput({value: new Map([['asc', DESC]])})
+            const orderBy   = new OrderByInput({value: new Map([['asc', DESC]])})
             const offset    = new NumberInput({value: 100})
             const limit     = new NumberInput({value: 500})
             const relations = new ArrayStringInput({value: ['rel_a', 'rel_b']})
@@ -51,7 +51,7 @@ describe('Query', () => {
             const query     = new Query<A>({
                 repository  : A.repository,
                 filter      : filter,
-                order_by    : order_by, 
+                orderBy     : orderBy, 
                 offset      : offset,
                 limit       : limit,
                 relations   : relations, 
@@ -61,7 +61,7 @@ describe('Query', () => {
             expect(query).toMatchObject({
                 repository      : A.repository,
                 filter          : filter,
-                order_by        : order_by,
+                orderBy         : orderBy,
                 limit           : limit,
                 offset          : offset,
                 relations       : relations, 
@@ -70,8 +70,8 @@ describe('Query', () => {
 
                 items           : [],
                 total           : undefined,
-                is_loading      : false,
-                need_to_update  : true,
+                isLoading       : false,
+                needToUpdate    : true,
                 timestamp       : undefined,
                 error           : undefined,
             })
@@ -82,26 +82,26 @@ describe('Query', () => {
     describe('Destructor', () => {
         it('default', async ()=> {
             const query = new Query<A>({repository: A.repository}) as any
-            query.disposers.push(         reaction(() => query.is_loading, () => null));  expect(query.disposers.length).toBe(2)
-            query.disposer_objects['x'] = reaction(() => query.is_loading, () => null );  expect(Object.keys(query.disposer_objects).length).toBe(1)
-            query.destroy();                                                              expect(query.disposers.length).toBe(0)
-                                                                                          expect(Object.keys(query.disposer_objects).length).toBe(0)
+            query.disposers.push(        reaction(() => query.isLoading, () => null));  expect(query.disposers.length).toBe(2)
+            query.disposerObjects['x'] = reaction(() => query.isLoading, () => null );  expect(Object.keys(query.disposerObjects).length).toBe(1)
+            query.destroy();                                                            expect(query.disposers.length).toBe(0)
+                                                                                        expect(Object.keys(query.disposerObjects).length).toBe(0)
         })
     })
 
     describe('Load', () => {
         it('is_loading flag', (done) => {
-            const query = new Query<A>({repository: A.repository});     expect(query.is_loading).toBe(false)
-            query.load().finally(()=> {                                 expect(query.is_loading).toBe(false)
+            const query = new Query<A>({repository: A.repository});     expect(query.isLoading).toBe(false)
+            query.load().finally(()=> {                                 expect(query.isLoading).toBe(false)
                 done()
-            });                                                         expect(query.is_loading).toBe(true)
+            });                                                         expect(query.isLoading).toBe(true)
         })
 
         it('need_to_update should set to false', (done) => {
-            const query = new Query<A>({repository: A.repository});     expect(query.need_to_update).toBe(true)
-            query.load().finally(()=> {                                 expect(query.need_to_update).toBe(false)
+            const query = new Query<A>({repository: A.repository});     expect(query.needToUpdate).toBe(true)
+            query.load().finally(()=> {                                 expect(query.needToUpdate).toBe(false)
                 done()                                                  // it set to false as loading started
-            });                                                         expect(query.need_to_update).toBe(false)
+            });                                                         expect(query.needToUpdate).toBe(false)
         })
 
         it('timestamp', async () => {
@@ -141,10 +141,10 @@ describe('Query', () => {
         })
 
         it('shadow load don`t trigger is_loading flag', (done) => {
-            const query = new Query<A>({repository: A.repository});     expect(query.is_loading).toBe(false)
-            query.shadowLoad().finally(()=> {                           expect(query.is_loading).toBe(false)
+            const query = new Query<A>({repository: A.repository});     expect(query.isLoading).toBe(false)
+            query.shadowLoad().finally(()=> {                           expect(query.isLoading).toBe(false)
                 done()
-            });                                                         expect(query.is_loading).toBe(false)
+            });                                                         expect(query.isLoading).toBe(false)
         })
     })
 
@@ -152,12 +152,12 @@ describe('Query', () => {
         it('on/off', () => {
             const query = new Query<A>({repository: A.repository}) as any
                                                                         expect(query.autoupdate).toBe(false)
-                                                                        expect(query.disposer_objects[DISPOSER_AUTOUPDATE]).toBe(undefined)
+                                                                        expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).toBe(undefined)
             query.autoupdate = true                    
             jest.runAllTimers();                                        expect(query.autoupdate).toBe(true)
-                                                                        expect(query.disposer_objects[DISPOSER_AUTOUPDATE]).not.toBe(undefined)                     
+                                                                        expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).not.toBe(undefined)                     
             query.autoupdate = false;                                   expect(query.autoupdate).toBe(false)
-                                                                        expect(query.disposer_objects[DISPOSER_AUTOUPDATE]).toBe(undefined)                     
+                                                                        expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).toBe(undefined)                     
         })
 
         it('in action', async () => {
@@ -165,18 +165,18 @@ describe('Query', () => {
             const value   = new StringInput({value: 'test', options})
             const query   = new Query<A>({repository: A.repository, filter: EQ('name', value), autoupdate: true})
 
-            jest.runAllTimers();        expect(options.need_to_update   ).toBe(true)
-                                        expect(query.filter.isReady     ).toBe(false)
-                                        expect(query.need_to_update     ).toBe(true)
+            jest.runAllTimers();        expect(options.needToUpdate   ).toBe(true)
+                                        expect(query.filter.isReady   ).toBe(false)
+                                        expect(query.needToUpdate     ).toBe(false)
 
-            await options.load();       expect(options.need_to_update   ).toBe(false)
-                                        expect(query.filter.isReady     ).toBe(false)
-                                        expect(query.need_to_update     ).toBe(true)
+            await options.load();       expect(options.needToUpdate   ).toBe(false)
+                                        expect(query.filter.isReady   ).toBe(false)
+                                        expect(query.needToUpdate     ).toBe(false)
 
-            value.set('test');          expect(options.need_to_update   ).toBe(false)
-                                        expect(query.filter.isReady     ).toBe(true)
+            value.set('test');          expect(options.needToUpdate   ).toBe(false)
+                                        expect(query.filter.isReady   ).toBe(true)
                                         // autoupdate: load() was triggered after the value.set
-                                        expect(query.need_to_update     ).toBe(false)
+                                        expect(query.needToUpdate     ).toBe(false)
         })
     })
 

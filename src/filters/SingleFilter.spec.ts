@@ -20,7 +20,7 @@ describe('SingleFilter', () => {
         const options = TestModel.getQuery({})
         const value =  new NumberInput({value: 1, options})
         const filter = EQ('test', value)                    ; expect(filter.isReady).toBe(value.isReady)
-        runInAction(() => options.need_to_update = false)   ; expect(filter.isReady).toBe(value.isReady)
+        runInAction(() => options.needToUpdate = false)     ; expect(filter.isReady).toBe(value.isReady)
         value.set(2)                                        ; expect(filter.isReady).toBe(value.isReady)
     })
 

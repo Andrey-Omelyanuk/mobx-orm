@@ -18,8 +18,8 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
                     let id = change.name
                     let obj = change.oldValue
 
-                    this.disposer_objects[id]()
-                    delete this.disposer_objects[id]
+                    this.disposerObjects[id]()
+                    delete this.disposerObjects[id]
 
                     let i = this.__items.indexOf(obj)
                     if (i != -1) {
@@ -55,9 +55,9 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
     @computed
     get items() { 
         let __items = this.__items.map(x=>x) // copy __items (not deep)
-        if (this.order_by.value && this.order_by.value.size) {
+        if (this.orderBy.value && this.orderBy.value.size) {
             let compare = (a, b) => {
-                for(const [key, value] of this.order_by.value) {
+                for(const [key, value] of this.orderBy.value) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
                         if ((b[key] === undefined || b[key] === null) && (a[key] !== undefined && a[key] !== null)) return -1
@@ -79,8 +79,8 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
     }
 
     __watch_obj(obj) {
-        if (this.disposer_objects[obj.id]) this.disposer_objects[obj.id]()
-        this.disposer_objects[obj.id] = reaction(
+        if (this.disposerObjects[obj.id]) this.disposerObjects[obj.id]()
+        this.disposerObjects[obj.id] = reaction(
             () =>  !this.filter || this.filter.isMatch(obj),
             action('MO: Query - obj was changed',
             (should: boolean) => {
