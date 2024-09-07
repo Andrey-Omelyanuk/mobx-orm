@@ -6,6 +6,10 @@ import { Repository } from './repository'
 export abstract class Model {
     static readonly repository  : Repository<Model>
 
+    // Original Class will be decorated by model decorator,
+    // use this flag to detect original class 
+    static readonly isOriginalClass = true
+
     // - fields
     // - relations (not exist on outside)
     static __fields       : {

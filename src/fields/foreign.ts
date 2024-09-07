@@ -26,7 +26,9 @@ function field_foreign(obj, field_name) {
 
 export function foreign(foreign_model: any, foreign_id_name?: string) {
     return function (cls: any, field_name: string) {
-        let model = cls.constructor
+        // if cls already was decorated by model decorator then use original constructor
+        let model = cls.prototype?.constructor.isOriginalClass ? cls.prototype.constructor : cls.constructor
+        // let model = cls.prototype.constructor
         if (model.__relations === undefined) model.__relations = {}
         // register field 
         model.__relations[field_name] = { 

@@ -364,6 +364,7 @@ declare class QueryDistinct extends Query<any> {
 
 declare abstract class Model {
     static readonly repository: Repository<Model>;
+    static readonly isOriginalClass = true;
     static __fields: {
         [field_name: string]: {
             decorator: (obj: Model, field_name: string) => void;

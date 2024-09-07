@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.5
+   * mobx-orm.js v2.0.6
    * Released under the MIT license.
    */
 
@@ -450,9 +450,8 @@
             }
             this.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)));
             // watch for Input changes and update URL
-            this.__disposers.push(mobx.reaction(
-            // I cannot use this.value because it can be a Map
-            () => this.deserialize(), () => {
+            this.__disposers.push(mobx.reaction(() => this.deserialize(), // I cannot use this.value because it can be a Map
+            () => {
                 const searchParams = new URLSearchParams(window.location.search);
                 const _value = this.deserialize();
                 if (_value === '' || _value === undefined) {
@@ -1551,6 +1550,14 @@
             }
         }
     }
+    // Original Class will be decorated by model decorator,
+    // use this flag to detect original class 
+    Object.defineProperty(Model, "isOriginalClass", {
+        enumerable: true,
+        configurable: true,
+        writable: true,
+        value: true
+    });
     __decorate([
         mobx.observable,
         __metadata("design:type", Object)
@@ -1656,7 +1663,10 @@
     }
     function foreign(foreign_model, foreign_id_name) {
         return function (cls, field_name) {
-            let model = cls.constructor;
+            var _a;
+            // if cls already was decorated by model decorator then use original constructor
+            let model = ((_a = cls.prototype) === null || _a === void 0 ? void 0 : _a.constructor.isOriginalClass) ? cls.prototype.constructor : cls.constructor;
+            // let model = cls.prototype.constructor
             if (model.__relations === undefined)
                 model.__relations = {};
             // register field 
