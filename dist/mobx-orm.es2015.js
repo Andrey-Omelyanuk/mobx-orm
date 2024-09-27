@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.6
+   * mobx-orm.js v2.0.7
    * Released under the MIT license.
    */
 
@@ -793,83 +793,6 @@ const autoResetArrayToEmpty = (input) => {
     else
         input.set([]);
 };
-
-class Form {
-    constructor(inputs, submit, cancel) {
-        Object.defineProperty(this, "inputs", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "isLoading", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "errors", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
-        Object.defineProperty(this, "__submit", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "__cancel", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.inputs = inputs;
-        this.__submit = submit;
-        this.__cancel = cancel;
-    }
-    get isReady() {
-        return Object.values(this.inputs).every(input => input.isReady);
-    }
-    get isError() {
-        return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError);
-    }
-    async submit() {
-        if (!this.isReady) {
-            // just ignore
-            return;
-        }
-        this.isLoading = true;
-        this.errors = [];
-        try {
-            await this.__submit();
-        }
-        catch (err) {
-            for (const key in err.message) {
-                if (key === config.NON_FIELD_ERRORS_KEY) {
-                    this.errors = err.message[key];
-                }
-                else {
-                    this.inputs[key].errors = err.message[key];
-                }
-            }
-        }
-        this.isLoading = false;
-    }
-    cancel() {
-        this.__cancel();
-    }
-}
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], Form.prototype, "isLoading", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Array)
-], Form.prototype, "errors", void 0);
 
 const DISPOSER_AUTOUPDATE = "__autoupdate";
 const ASC = true;
@@ -2158,5 +2081,111 @@ function mock() {
     };
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, timeout, waitIsFalse, waitIsTrue };
+class Form {
+    constructor(inputs, submit, cancel) {
+        Object.defineProperty(this, "inputs", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "isLoading", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+        });
+        Object.defineProperty(this, "errors", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
+        Object.defineProperty(this, "__submit", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "__cancel", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.inputs = inputs;
+        this.__submit = submit;
+        this.__cancel = cancel;
+    }
+    get isReady() {
+        return Object.values(this.inputs).every(input => input.isReady);
+    }
+    get isError() {
+        return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError);
+    }
+    async submit() {
+        if (!this.isReady) {
+            // just ignore
+            return;
+        }
+        this.isLoading = true;
+        this.errors = [];
+        try {
+            await this.__submit();
+        }
+        catch (err) {
+            for (const key in err.message) {
+                if (key === config.NON_FIELD_ERRORS_KEY) {
+                    this.errors = err.message[key];
+                }
+                else {
+                    this.inputs[key].errors = err.message[key];
+                }
+            }
+        }
+        this.isLoading = false;
+    }
+    cancel() {
+        this.__cancel();
+    }
+}
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Form.prototype, "isLoading", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Array)
+], Form.prototype, "errors", void 0);
+
+class ObjectForm extends Form {
+    constructor(inputs) {
+        super(inputs, () => {
+            if (!this.obj) {
+                throw new Error('ObjectForm error: obj is not set');
+            }
+            // move all values from inputs to obj
+            for (let fieldName of Object.keys(inputs)) {
+                this.obj[fieldName] = inputs[fieldName].value;
+            }
+            return this.obj.save();
+        }, () => { });
+        Object.defineProperty(this, "obj", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+    }
+    setObj(obj) {
+        this.obj = obj;
+        for (let fieldName of Object.keys(this.inputs)) {
+            if (!obj.hasOwnProperty(fieldName)) {
+                console.error(`ObjectForm error: object has no field ${fieldName}`, obj);
+            }
+        }
+    }
+}
+
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ObjectForm, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

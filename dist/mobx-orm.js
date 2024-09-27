@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.6
+   * mobx-orm.js v2.0.7
    * Released under the MIT license.
    */
 
@@ -800,83 +800,6 @@
         else
             input.set([]);
     };
-
-    class Form {
-        constructor(inputs, submit, cancel) {
-            Object.defineProperty(this, "inputs", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "isLoading", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: false
-            });
-            Object.defineProperty(this, "errors", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            });
-            Object.defineProperty(this, "__submit", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "__cancel", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            this.inputs = inputs;
-            this.__submit = submit;
-            this.__cancel = cancel;
-        }
-        get isReady() {
-            return Object.values(this.inputs).every(input => input.isReady);
-        }
-        get isError() {
-            return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError);
-        }
-        async submit() {
-            if (!this.isReady) {
-                // just ignore
-                return;
-            }
-            this.isLoading = true;
-            this.errors = [];
-            try {
-                await this.__submit();
-            }
-            catch (err) {
-                for (const key in err.message) {
-                    if (key === config.NON_FIELD_ERRORS_KEY) {
-                        this.errors = err.message[key];
-                    }
-                    else {
-                        this.inputs[key].errors = err.message[key];
-                    }
-                }
-            }
-            this.isLoading = false;
-        }
-        cancel() {
-            this.__cancel();
-        }
-    }
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Boolean)
-    ], Form.prototype, "isLoading", void 0);
-    __decorate([
-        mobx.observable,
-        __metadata("design:type", Array)
-    ], Form.prototype, "errors", void 0);
 
     const DISPOSER_AUTOUPDATE = "__autoupdate";
     const ASC = true;
@@ -2165,6 +2088,112 @@
         };
     }
 
+    class Form {
+        constructor(inputs, submit, cancel) {
+            Object.defineProperty(this, "inputs", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "isLoading", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: false
+            });
+            Object.defineProperty(this, "errors", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: []
+            });
+            Object.defineProperty(this, "__submit", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "__cancel", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.inputs = inputs;
+            this.__submit = submit;
+            this.__cancel = cancel;
+        }
+        get isReady() {
+            return Object.values(this.inputs).every(input => input.isReady);
+        }
+        get isError() {
+            return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError);
+        }
+        async submit() {
+            if (!this.isReady) {
+                // just ignore
+                return;
+            }
+            this.isLoading = true;
+            this.errors = [];
+            try {
+                await this.__submit();
+            }
+            catch (err) {
+                for (const key in err.message) {
+                    if (key === config.NON_FIELD_ERRORS_KEY) {
+                        this.errors = err.message[key];
+                    }
+                    else {
+                        this.inputs[key].errors = err.message[key];
+                    }
+                }
+            }
+            this.isLoading = false;
+        }
+        cancel() {
+            this.__cancel();
+        }
+    }
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Boolean)
+    ], Form.prototype, "isLoading", void 0);
+    __decorate([
+        mobx.observable,
+        __metadata("design:type", Array)
+    ], Form.prototype, "errors", void 0);
+
+    class ObjectForm extends Form {
+        constructor(inputs) {
+            super(inputs, () => {
+                if (!this.obj) {
+                    throw new Error('ObjectForm error: obj is not set');
+                }
+                // move all values from inputs to obj
+                for (let fieldName of Object.keys(inputs)) {
+                    this.obj[fieldName] = inputs[fieldName].value;
+                }
+                return this.obj.save();
+            }, () => { });
+            Object.defineProperty(this, "obj", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+        }
+        setObj(obj) {
+            this.obj = obj;
+            for (let fieldName of Object.keys(this.inputs)) {
+                if (!obj.hasOwnProperty(fieldName)) {
+                    console.error(`ObjectForm error: object has no field ${fieldName}`, obj);
+                }
+            }
+        }
+    }
+
     exports.AND = AND;
     exports.AND_Filter = AND_Filter;
     exports.ASC = ASC;
@@ -2207,6 +2236,7 @@
     exports.NOT_EQ = NOT_EQ;
     exports.NOT_EQ_Filter = NOT_EQ_Filter;
     exports.NumberInput = NumberInput;
+    exports.ObjectForm = ObjectForm;
     exports.ObjectInput = ObjectInput;
     exports.OrderByInput = OrderByInput;
     exports.Query = Query;

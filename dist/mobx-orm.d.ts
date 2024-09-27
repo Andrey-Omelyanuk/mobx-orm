@@ -149,23 +149,6 @@ declare const autoResetArrayOfIDs: (input: ArrayNumberInput) => void;
 
 declare const autoResetArrayToEmpty: (input: any) => void;
 
-declare class Form {
-    readonly inputs: {
-        [key: string]: Input<any, any>;
-    };
-    isLoading: boolean;
-    errors: string[];
-    private __submit;
-    private __cancel;
-    constructor(inputs: {
-        [key: string]: Input<any, any>;
-    }, submit: () => Promise<void>, cancel: () => void);
-    get isReady(): boolean;
-    get isError(): boolean;
-    submit(): Promise<void>;
-    cancel(): void;
-}
-
 declare class EQ_Filter extends SingleFilter {
     get URIField(): string;
     operator(value_a: any, value_b: any): boolean;
@@ -475,8 +458,33 @@ declare class MockAdapter<M extends Model> implements Adapter<M> {
 }
 declare function mock(): (cls: any) => void;
 
+declare class Form {
+    readonly inputs: {
+        [key: string]: Input<any, any>;
+    };
+    isLoading: boolean;
+    errors: string[];
+    private __submit;
+    private __cancel;
+    constructor(inputs: {
+        [key: string]: Input<any, any>;
+    }, submit: () => Promise<void>, cancel: () => void);
+    get isReady(): boolean;
+    get isError(): boolean;
+    submit(): Promise<void>;
+    cancel(): void;
+}
+
+declare class ObjectForm<M extends Model> extends Form {
+    obj: M;
+    constructor(inputs: {
+        string: Input<any, any>;
+    });
+    setObj(obj: M): void;
+}
+
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, timeout, waitIsFalse, waitIsTrue };
