@@ -478,9 +478,8 @@ declare class Form {
 declare class ObjectForm<M extends Model> extends Form {
     obj: M;
     constructor(inputs: {
-        string: Input<any, any>;
-    });
-    setObj(obj: M): void;
+        [key: string]: Input<any, any>;
+    }, onSubmitted?: (obj: M) => void, onCancelled?: () => void);
 }
 
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;

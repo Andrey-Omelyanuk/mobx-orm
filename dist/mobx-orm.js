@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.7
+   * mobx-orm.js v2.0.8
    * Released under the MIT license.
    */
 
@@ -2146,7 +2146,10 @@
                         this.errors = err.message[key];
                     }
                     else {
-                        this.inputs[key].errors = err.message[key];
+                        if (this.inputs[key])
+                            this.inputs[key].errors = err.message[key];
+                        else
+                            throw err;
                     }
                 }
             }
@@ -2166,31 +2169,33 @@
     ], Form.prototype, "errors", void 0);
 
     class ObjectForm extends Form {
-        constructor(inputs) {
-            super(inputs, () => {
+        constructor(inputs, onSubmitted, onCancelled) {
+            super(inputs, async () => {
                 if (!this.obj) {
+                    // console.error('ObjectForm error: obj is not set', this)
                     throw new Error('ObjectForm error: obj is not set');
+                }
+                const fieldsNames = Object.keys(this.obj);
+                for (let fieldName of Object.keys(this.inputs)) {
+                    if (!fieldsNames.includes(fieldName)) {
+                        // console.error(`ObjectForm error: object has no field ${fieldName}`, this)
+                        throw new Error(`ObjectForm error: object has no field ${fieldName}`);
+                    }
                 }
                 // move all values from inputs to obj
                 for (let fieldName of Object.keys(inputs)) {
                     this.obj[fieldName] = inputs[fieldName].value;
                 }
-                return this.obj.save();
-            }, () => { });
+                const response = await this.obj.save();
+                if (onSubmitted)
+                    onSubmitted(response);
+            }, onCancelled);
             Object.defineProperty(this, "obj", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
                 value: void 0
             });
-        }
-        setObj(obj) {
-            this.obj = obj;
-            for (let fieldName of Object.keys(this.inputs)) {
-                if (!obj.hasOwnProperty(fieldName)) {
-                    console.error(`ObjectForm error: object has no field ${fieldName}`, obj);
-                }
-            }
         }
     }
 

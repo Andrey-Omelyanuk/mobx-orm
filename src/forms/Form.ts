@@ -41,7 +41,10 @@ export class Form {
                 if (key === config.NON_FIELD_ERRORS_KEY) {
                     this.errors = err.message[key]
                 } else {
-                    this.inputs[key].errors = err.message[key]
+                    if (this.inputs[key])
+                        this.inputs[key].errors = err.message[key]
+                    else 
+                        throw err
                 }
             }
         }
