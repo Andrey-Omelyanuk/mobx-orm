@@ -47,7 +47,7 @@ export abstract class Input<T, M extends Model> {
         this.debounce           = args?.debounce
         this.autoReset          = args?.autoReset
         this.isInit             = false
-        this.__isReady          = !this.options
+        this.__isReady          = !(this.required && this.options?.needToUpdate === true)
         // if debounce is on then we have to have debounced version of __setReadyTrue
         if (this.debounce)
             this.__setReadyTrue = _.debounce(() => runInAction(() => this.__isReady = true), this.debounce)

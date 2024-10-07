@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.10
+   * mobx-orm.js v2.0.11
    * Released under the MIT license.
    */
 
@@ -266,6 +266,7 @@ function timeout(ms) {
 
 class Input {
     constructor(args) {
+        var _a;
         Object.defineProperty(this, "value", {
             enumerable: true,
             configurable: true,
@@ -360,7 +361,7 @@ class Input {
         this.debounce = args === null || args === void 0 ? void 0 : args.debounce;
         this.autoReset = args === null || args === void 0 ? void 0 : args.autoReset;
         this.isInit = false;
-        this.__isReady = !this.options;
+        this.__isReady = !(this.required && ((_a = this.options) === null || _a === void 0 ? void 0 : _a.needToUpdate) === true);
         // if debounce is on then we have to have debounced version of __setReadyTrue
         if (this.debounce)
             this.__setReadyTrue = _.debounce(() => runInAction(() => this.__isReady = true), this.debounce);
@@ -1726,6 +1727,7 @@ class SingleFilter extends Filter {
             writable: true,
             value: void 0
         });
+        // TODO: is __disposers deprecated? I don't find any usage of it and I don't how it can be used
         Object.defineProperty(this, "__disposers", {
             enumerable: true,
             configurable: true,

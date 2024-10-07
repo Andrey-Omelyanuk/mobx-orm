@@ -6,6 +6,7 @@ import { Input } from '../inputs/Input'
 export abstract class SingleFilter extends Filter {
     readonly    field       : string
     @observable input       : Input<any, any> 
+    // TODO: is __disposers deprecated? I don't find any usage of it and I don't how it can be used
     __disposers             : (()=>void)[] = []
 
     constructor(field: string, input: Input<any, any>) {
