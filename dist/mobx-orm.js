@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.9
+   * mobx-orm.js v2.0.10
    * Released under the MIT license.
    */
 
@@ -965,6 +965,7 @@
         async shadowLoad() {
             try {
                 this.needToUpdate = false;
+                this.error = undefined;
                 // NOTE: Date.now() is used to get the current timestamp
                 //       and it can be the same in the same tick 
                 //       in this case we should increase the timestamp by 1

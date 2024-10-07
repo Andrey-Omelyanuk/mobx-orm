@@ -110,6 +110,7 @@ export class Query <M extends Model> {
     async shadowLoad() {
         try {
             this.needToUpdate = false 
+            this.error = undefined
 
             // NOTE: Date.now() is used to get the current timestamp
             //       and it can be the same in the same tick 

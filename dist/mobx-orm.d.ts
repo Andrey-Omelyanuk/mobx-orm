@@ -97,7 +97,7 @@ declare class BooleanInput extends Input<boolean | null | undefined, any> {
 }
 
 declare class DateInput extends Input<Date | null | undefined, any> {
-    serialize(value?: string): void;
+    serialize(value: string): void;
     deserialize(): string;
 }
 
