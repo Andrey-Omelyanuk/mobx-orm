@@ -1,11 +1,12 @@
-import { Input } from "./Input"
+import { Input } from './Input'
 
 
 export class DateTimeInput extends Input<Date|null|undefined, any> {
 
-    serialize(value?: string) {
+    serialize(value: string) {
              if (value === undefined) this.set(undefined)
         else if (value === 'null')    this.set(null)
+        else if (value === null)      this.set(null)
         else this.set(new Date(value))
     }
 

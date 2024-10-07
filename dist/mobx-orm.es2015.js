@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.8
+   * mobx-orm.js v2.0.9
    * Released under the MIT license.
    */
 
@@ -572,7 +572,9 @@ class DateInput extends Input {
     serialize(value) {
         if (value === undefined)
             this.set(undefined);
-        if (value === 'null')
+        else if (value === 'null')
+            this.set(null);
+        else if (value === null)
             this.set(null);
         else
             this.set(new Date(value));
@@ -591,6 +593,8 @@ class DateTimeInput extends Input {
         if (value === undefined)
             this.set(undefined);
         else if (value === 'null')
+            this.set(null);
+        else if (value === null)
             this.set(null);
         else
             this.set(new Date(value));
