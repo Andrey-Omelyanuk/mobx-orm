@@ -19,6 +19,6 @@ export class IN_Filter extends SingleFilter {
     }
 }
 
-export function IN(field: string, value: Input<any, any>) : SingleFilter { 
+export function IN(field: string, value: Input<any>) : SingleFilter { 
     return new IN_Filter(field, value)
 }

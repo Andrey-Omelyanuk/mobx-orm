@@ -32,15 +32,13 @@ export class QueryPage<M extends Model> extends Query<M> {
     }
 
     async __load() {
-        return this.__wrap_controller(async () => {
-            const [objs, total] = await Promise.all([
-                this.repository.load(this, this.controller),
-                this.repository.getTotalCount(this.filter, this.controller)
-            ])
-            runInAction(() => {
-                this.__items = objs
-                this.total = total
-            })
+        const [objs, total] = await Promise.all([
+            this.repository.load(this, this.controller),
+            this.repository.getTotalCount(this.filter, this.controller)
+        ])
+        runInAction(() => {
+            this.__items = objs
+            this.total = total
         })
     }
 }

@@ -13,6 +13,6 @@ export class LT_Filter extends SingleFilter {
     }
 }
 
-export function LT(field: string, value: Input<any, any>) : SingleFilter {
+export function LT(field: string, value: Input<any>) : SingleFilter {
     return new LT_Filter(field, value)
 }

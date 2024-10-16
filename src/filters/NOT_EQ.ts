@@ -14,6 +14,6 @@ export class NOT_EQ_Filter extends SingleFilter {
     }
 }
 
-export function NOT_EQ(field: string, value: Input<any, any>) : SingleFilter {
+export function NOT_EQ(field: string, value: Input<any>) : SingleFilter {
     return new NOT_EQ_Filter(field, value)
 }

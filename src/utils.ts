@@ -1,4 +1,5 @@
-import { autorun } from "mobx"
+import { autorun } from 'mobx'
+
 
 export function waitIsTrue(obj: any, field: string) : Promise<Boolean> {
     return new Promise((resolve, reject) => { 

@@ -5,11 +5,11 @@ import { Input } from '../inputs/Input'
 
 export abstract class SingleFilter extends Filter {
     readonly    field       : string
-    @observable input       : Input<any, any> 
+    @observable input       : Input<any> 
     // TODO: is __disposers deprecated? I don't find any usage of it and I don't how it can be used
     __disposers             : (()=>void)[] = []
 
-    constructor(field: string, input: Input<any, any>) {
+    constructor(field: string, input: Input<any>) {
         super()
         this.field = field
         this.input = input 
@@ -22,8 +22,8 @@ export abstract class SingleFilter extends Filter {
 
     get URLSearchParams(): URLSearchParams{
         let search_params = new URLSearchParams()
-        let value = this.input.deserialize() 
-        !this.input.disabled && value !== undefined && search_params.set(this.URIField, value)
+        let value = this.input.toString()
+        !this.input.isDisabled && value !== undefined && search_params.set(this.URIField, value)
         return search_params
     }
 
@@ -33,7 +33,7 @@ export abstract class SingleFilter extends Filter {
 
     isMatch(obj: any): boolean {
         // it's always match if value of filter is undefined
-        if (this.input === undefined || this.input.disabled)
+        if (this.input === undefined || this.input.isDisabled)
             return true
 
         return match(obj, this.field, this.input.value, this.operator)

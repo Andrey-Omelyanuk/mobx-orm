@@ -5,7 +5,7 @@ import { Form } from './Form'
 
 export class ObjectForm<M extends Model> extends Form {
     obj: M
-    constructor(inputs: { [key: string]: Input<any, any> }, onSubmitted?: (obj: M) => void , onCancelled?: () => void) {
+    constructor(inputs: { [key: string]: Input<any> }, onSubmitted?: (obj: M) => void , onCancelled?: () => void) {
         super(
             inputs,
             async () => {

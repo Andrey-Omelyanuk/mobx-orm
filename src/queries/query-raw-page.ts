@@ -9,13 +9,11 @@ import { QueryPage } from './query-page'
 
 export class QueryRawPage<M extends Model> extends QueryPage<M> {
     async __load() {
-        return this.__wrap_controller(async () => {
-            const objs = await this.repository.adapter.load(this)
-            const total = await this.repository.getTotalCount(this.filter)
-            runInAction(() => {
-                this.__items = objs
-                this.total = total
-            })
+        const objs = await this.repository.adapter.load(this)
+        const total = await this.repository.getTotalCount(this.filter)
+        runInAction(() => {
+            this.__items = objs
+            this.total = total
         })
     }
 }

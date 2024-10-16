@@ -13,6 +13,6 @@ export class ILIKE_Filter extends SingleFilter {
     }
 }
 
-export function ILIKE(field: string, value: Input<any, any>) : SingleFilter {
+export function ILIKE(field: string, value: Input<any>) : SingleFilter {
     return new ILIKE_Filter(field, value)
 }

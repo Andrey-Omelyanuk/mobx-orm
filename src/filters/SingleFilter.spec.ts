@@ -2,6 +2,7 @@ import { runInAction } from 'mobx'
 import { Model, StringInput, NumberInput, local } from '..'
 import { SingleFilter } from './SingleFilter'
 import { EQ } from './EQ'
+import { ObjectInput } from '../inputs' 
 
 
 describe('SingleFilter', () => {
@@ -18,9 +19,9 @@ describe('SingleFilter', () => {
 
     it('isReady', () => {
         const options = TestModel.getQuery({})
-        const value =  new NumberInput({value: 1, options})
+        const value =  new ObjectInput({value: 1, options})
         const filter = EQ('test', value)                    ; expect(filter.isReady).toBe(value.isReady)
-        runInAction(() => options.needToUpdate = false)     ; expect(filter.isReady).toBe(value.isReady)
+        runInAction(() => options.isNeedToUpdate = false)     ; expect(filter.isReady).toBe(value.isReady)
         value.set(2)                                        ; expect(filter.isReady).toBe(value.isReady)
     })
 

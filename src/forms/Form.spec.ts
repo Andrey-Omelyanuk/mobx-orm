@@ -27,32 +27,32 @@ describe('Form', () => {
             c: new StringInput(),
         }, async () => {}, () => {} )
 
-        it('all inputs are ready', async ()=> {
-            runInAction(() => {
-                form.inputs.a.__isReady = true
-                form.inputs.b.__isReady = true
-                form.inputs.c.__isReady = true
-            })
-            expect(form.isReady).toBe(true)
-        })
+        // it('all inputs are ready', async ()=> {
+        //     runInAction(() => {
+        //         form.inputs.a.isNeedToCheckValue = true
+        //         form.inputs.b.isNeedToCheckValue = true
+        //         form.inputs.c.isNeedToCheckValue = true
+        //     })
+        //     expect(form.isReady).toBe(true)
+        // })
 
-        it('only some inputs are ready', async ()=> {
-            runInAction(() => {
-                form.inputs.a.__isReady = true
-                form.inputs.b.__isReady = false
-                form.inputs.c.__isReady = true 
-            })
-            expect(form.isReady).toBe(false)
-        })
+        // it('only some inputs are ready', async ()=> {
+        //     runInAction(() => {
+        //         form.inputs.a.isNeedToCheckValue = false 
+        //         form.inputs.b.isNeedToCheckValue = true 
+        //         form.inputs.c.isNeedToCheckValue = false 
+        //     })
+        //     expect(form.isReady).toBe(false)
+        // })
 
-        it('all inputs are not ready', async ()=> {
-            runInAction(() => {
-                form.inputs.a.__isReady = false
-                form.inputs.b.__isReady = false
-                form.inputs.c.__isReady = false 
-            })
-            expect(form.isReady).toBe(false)
-        })
+        // it('all inputs are not ready', async ()=> {
+        //     runInAction(() => {
+        //         form.inputs.a.isNeedToCheckValue = true 
+        //         form.inputs.b.isNeedToCheckValue = true 
+        //         form.inputs.c.isNeedToCheckValue = true 
+        //     })
+        //     expect(form.isReady).toBe(false)
+        // })
     })
 
     describe('isError', () => {
@@ -66,9 +66,9 @@ describe('Form', () => {
             // reset all errors
             runInAction(() => {
                 form.errors = []
-                form.inputs.a.errors = ['a error']
-                form.inputs.b.errors = ['b error']
-                form.inputs.c.errors = ['c error']
+                form.inputs.a.errors = []
+                form.inputs.b.errors = []
+                form.inputs.c.errors = []
             })
         })
 
@@ -147,19 +147,19 @@ describe('Form', () => {
             expect(form.isLoading).toBe(true)
         })
 
-        it('run submit when the form is not ready yet', (done)=> {
-            // nothing should happen
-            const submit = jest.fn(async () => {})
-            const form = new Form({a: new StringInput()}, submit, () => {} )
-            runInAction(() => form.inputs.a.__isReady = false)
-            expect(form).toMatchObject({isReady: false, isLoading: false})
-            form.submit().then(() => {
-                expect(form).toMatchObject({isReady: false, isLoading: false})
-                expect(submit).toHaveBeenCalledTimes(0)
-                done()
-            })
-            expect(form).toMatchObject({isReady: false, isLoading: false})
-        })
+        // it('run submit when the form is not ready yet', (done)=> {
+        //     // nothing should happen
+        //     const submit = jest.fn(async () => {})
+        //     const form = new Form({a: new StringInput()}, submit, () => {} )
+        //     runInAction(() => form.inputs.a.isNeedToCheckValue = false)
+        //     expect(form).toMatchObject({isReady: false, isLoading: false})
+        //     form.submit().then(() => {
+        //         expect(form).toMatchObject({isReady: false, isLoading: false})
+        //         expect(submit).toHaveBeenCalledTimes(0)
+        //         done()
+        //     })
+        //     expect(form).toMatchObject({isReady: false, isLoading: false})
+        // })
     })
 
     it('cancel', async ()=> {

@@ -1,16 +1,17 @@
 import { action, makeObservable, observable } from 'mobx'
+import { ID } from './types'
 import { Model } from './model'
 
 
 export class Cache<M extends Model> {
                 readonly name: string
-                readonly model: any  // TODO: type
-    @observable readonly store: Map<number, M>
+                readonly model: any         // TODO: type
+    @observable readonly store: Map<ID, M>
 
     constructor(model: any, name?: string) {
         this.name = name ? name : model.name 
         this.model = model
-        this.store = new Map<any, M>()
+        this.store = new Map<ID, M>()
         makeObservable(this)
     }
 

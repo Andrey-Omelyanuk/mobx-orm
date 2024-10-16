@@ -1,5 +1,6 @@
 import { action, computed, observe, reaction } from 'mobx'
-import { Query, QueryProps, ASC } from './query'
+import { Query, QueryProps } from './query'
+import { ASC } from '../types'
 import { Model } from '../model'
 
 

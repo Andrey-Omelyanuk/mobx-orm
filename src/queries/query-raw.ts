@@ -9,11 +9,9 @@ import { Model } from '../model'
 
 export class QueryRaw<M extends Model> extends Query<M> {
     async __load() {
-        return this.__wrap_controller(async () => {
-            const objs = await this.repository.adapter.load(this, this.controller)
-            runInAction(() => {
-                this.__items = objs
-            })
+        const objs = await this.repository.adapter.load(this, this.controller)
+        runInAction(() => {
+            this.__items = objs
         })
     }
 }

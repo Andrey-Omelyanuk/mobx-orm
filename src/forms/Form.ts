@@ -4,14 +4,14 @@ import { config } from '..'
 
 
 export class Form {
-    readonly    inputs      : { [key: string]: Input<any, any> }
+    readonly    inputs      : { [key: string]: Input<any> }
     @observable isLoading   : boolean = false
     @observable errors      : string[] = []
 
     private __submit: () => Promise<void>
     private __cancel: () => void
 
-    constructor(inputs: { [key: string]: Input<any, any> }, submit: () => Promise<void>, cancel: () => void) {
+    constructor(inputs: { [key: string]: Input<any> }, submit: () => Promise<void>, cancel: () => void) {
         this.inputs = inputs
         this.__submit = submit
         this.__cancel = cancel
@@ -22,7 +22,7 @@ export class Form {
     }
 
     get isError(): boolean {
-        return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError)
+        return this.errors.length > 0 || Object.values(this.inputs).some(input => input.errors.length > 0)
     }
 
     async submit() {

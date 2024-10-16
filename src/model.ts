@@ -1,7 +1,7 @@
 import { action, intercept, makeObservable, observable, observe, runInAction, values } from 'mobx'
 import { Query, QueryProps, QueryPage, QueryRaw, QueryRawPage, QueryCacheSync, QueryDistinct, QueryStream } from './queries'
 import { Repository } from './repository'
-
+import { ID } from './types'
 
 export abstract class Model {
     static readonly repository  : Repository<Model>
@@ -58,11 +58,11 @@ export abstract class Model {
         return new QueryDistinct(field, {...props, repository: this.repository })
     }
 
-    static get(id: any) {
+    static get(id: ID) {
         return this.repository.cache.get(id)
     }
 
-    static async findById(id: any) : Promise<Model> {
+    static async findById(id: ID) : Promise<Model> {
         return this.repository.get(id)
     }
 
@@ -70,7 +70,7 @@ export abstract class Model {
         return this.repository.find(query)
     }
 
-    @observable id: any|undefined = undefined
+    @observable id: ID = undefined
     // TODO: should it be observable?
     @observable __init_data: any   
     __disposers = new Map()

@@ -6,7 +6,8 @@ describe('Utils', () => {
     it('waitIsFalse', (done)=> {
         const obj = { field: true}
         makeAutoObservable(obj)
-        waitIsFalse(obj, 'field').then(() => {   expect(obj.field).toBe(false)
+        waitIsFalse(obj, 'field').then(() => {
+            expect(obj.field).toBe(false)
             done()
         })
         runInAction(() => obj.field = false)
@@ -15,10 +16,10 @@ describe('Utils', () => {
     it('waitIsTrue', (done)=> {
         const obj = { field: false }
         makeAutoObservable(obj)
-        waitIsTrue(obj, 'field').then(() => {   expect(obj.field).toBe(true)
+        waitIsTrue(obj, 'field').then(() => {
+            expect(obj.field).toBe(true)
             done()
         })
         runInAction(() => obj.field = true)
     })
-
 })

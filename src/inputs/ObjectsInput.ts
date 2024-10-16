@@ -1,1 +1,0 @@
-// TODO: ObjectsInput based on ArrayNumberInput with default autoReset + types

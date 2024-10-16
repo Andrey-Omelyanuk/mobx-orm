@@ -1,6 +1,7 @@
 import { local } from '../adapters'
 import { runInAction } from 'mobx'
 import { Model, model, field, one } from '../'
+import { ID } from '../types'
 
 
 describe('Field: One', () => {
@@ -47,7 +48,7 @@ describe('Field: One', () => {
 
     describe('Usage', () => {
         @local() @model class A extends Model {         b    : B }
-        @local() @model class B extends Model { @field  a_id : number }
+        @local() @model class B extends Model { @field  a_id : ID }
         one(B)(A, 'b')
 
         beforeEach(() => {

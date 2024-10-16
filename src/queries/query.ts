@@ -8,9 +8,6 @@ import { OrderByInput, NumberInput, ArrayStringInput } from '../inputs'
 
 
 export const DISPOSER_AUTOUPDATE = "__autoupdate"
-export const ASC = true 
-export const DESC = false 
-export type ORDER_BY = Map<string, boolean>
 
 export interface QueryProps<M extends Model> {
     repository                  ?: Repository<M>
@@ -18,8 +15,8 @@ export interface QueryProps<M extends Model> {
     filter                      ?: Filter
     orderBy                     ?: OrderByInput 
     // pagination
-    offset                      ?: NumberInput<any>
-    limit                       ?: NumberInput<any>
+    offset                      ?: NumberInput
+    limit                       ?: NumberInput
     // fields controll
     relations                   ?: ArrayStringInput
     fields                      ?: ArrayStringInput
@@ -28,13 +25,33 @@ export interface QueryProps<M extends Model> {
     autoupdate                  ?: boolean
 }
 
+/* Query live cycle:
+
+    Event           isLoading   needToUpdate    isReady     items
+    ------------------------------------------------------------------------
+    Create          -           -               -           []
+
+
+    loading start   +!          -               -           reset error
+        |
+    loading finish  -!          -               +!          set some items or error
+
+
+    filter changes  -           +!              -!
+        |
+    loading start   +!          -!              -           reset error
+        |
+    loading finish  -!          -               +!          set some items or error
+
+*/
+
 export class Query <M extends Model> {
 
     readonly repository: Repository<M>
     readonly filter    : Filter
     readonly orderBy   : OrderByInput 
-    readonly offset    : NumberInput<any>
-    readonly limit     : NumberInput<any>
+    readonly offset    : NumberInput
+    readonly limit     : NumberInput
     readonly relations : ArrayStringInput
     readonly fields    : ArrayStringInput 
     readonly omit      : ArrayStringInput 
@@ -42,7 +59,7 @@ export class Query <M extends Model> {
     @observable protected __items: M[] = []         // items from the server
     @observable total           : number              // total count of items on the server, usefull for pagination
     @observable isLoading       : boolean = false     // query is loading the data
-    @observable needToUpdate    : boolean = false     // query was changed and we need to update the data
+    @observable isNeedToUpdate  : boolean = false     // query was changed and we need to update the data
     @observable timestamp       : number              // timestamp of the last update, usefull to aviod to trigger react hooks twise
     @observable error           : string              // error message
 
@@ -71,9 +88,11 @@ export class Query <M extends Model> {
         makeObservable(this)
 
         this.disposers.push(reaction(
-            () => { return {isReady: this.isReady, url: this.repository.adapter?.getURLSearchParams(this).toString()}},
-            action('MO: Query Base - need to update', ({isReady}) => { if(isReady) this.needToUpdate = true }),
-            { fireImmediately: true }
+            () => this.dependenciesAreReady,
+            (dependenciesAreReady) => {
+                if(dependenciesAreReady && !this.isNeedToUpdate)
+                    runInAction(() => this.isNeedToUpdate = true)
+            }
         ))
     }
 
@@ -88,58 +107,26 @@ export class Query <M extends Model> {
         } 
     }
 
-    // use it if everybody should know that the query data is updating
-    @action('MO: Query Base - load')
-    async load() {
-        this.isLoading = true
-        try {
-            await this.shadowLoad()
-        }
-        finally {
-            runInAction(() => {
-                // the loading can be canceled by another load
-                // in this case we should not touch the __is_loading
-                if (!this.controller) this.isLoading = false
-            })
-        }
-    }
+    loading = async () => waitIsFalse(this, 'isLoading')
+    ready   = async () => waitIsFalse(this, 'isReady')
 
-    // use it if nobody should know that the query data is updating
-    // for example you need to update the current data on the page and you don't want to show a spinner
-    @action('MO: Query Base - shadow load')
-    async shadowLoad() {
-        try {
-            this.needToUpdate = false 
-            this.error = undefined
-
-            // NOTE: Date.now() is used to get the current timestamp
-            //       and it can be the same in the same tick 
-            //       in this case we should increase the timestamp by 1
-            const now = Date.now()
-            if (this.timestamp === now) this.timestamp += 1
-            else                        this.timestamp = now 
-
-            await this.__load()
-        }
-        catch(e) {
-            runInAction(() => this.error = e.message )
-        }
-    }
-
-    get autoupdate() {
+    get autoupdate() : boolean {
         return !! this.disposerObjects[DISPOSER_AUTOUPDATE]
     }
 
+    // Note: autoupdate trigger always the load(),
+    // shadowLoad() is not make sense to trigger by autoupdate
+    // because autoupdate means => user have changed something on UI inputs
+    // and we should to show the UI reaction
     set autoupdate(value: boolean) {
         if (value !== this.autoupdate) {  // indepotent guarantee
             // on 
             if (value) {
                 setTimeout(() => {
+                    // TODO: I have to add debounce here
                     this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(
-                        () => this.needToUpdate && this.isReady,
-                        (needToUpdate) => {
-                            if (needToUpdate) this.load()
-                        },
+                        () => this.isNeedToUpdate && this.dependenciesAreReady,
+                        (updateIt) => { if(updateIt) this.load() },
                         { fireImmediately: true }
                     )
                 }, config.AUTO_UPDATE_DELAY)
@@ -152,8 +139,7 @@ export class Query <M extends Model> {
         }
     }
 
-    // check if all dependecies are ready
-    get isReady() {
+    get dependenciesAreReady() {
         return (this.filter === undefined || this.filter.isReady)
             && this.orderBy   .isReady
             && this.offset    .isReady
@@ -163,31 +149,62 @@ export class Query <M extends Model> {
             && this.omit      .isReady
     }
 
-    // use it if you need use promise instead of observe is_loading
-    loading = async () => waitIsFalse(this, 'is_loading')
+    // NOTE: if we use only shadowLoad() the isLoading will be always false.
+    // In this case isReady is equal to !isNeedToUpdate.
+    get isReady() {
+        return !this.isNeedToUpdate && !this.isLoading
+    }
 
-    protected async __wrap_controller(func: Function) {
-        if (this.controller) {
-            this.controller.abort()
-        }
-        this.controller = new AbortController()
-        let response
+    // use it if everybody should know that the query data is updating
+    @action('MO: Query Base - load')
+    async load() {
+        this.isLoading = true
         try {
-            response = await func()
-        } catch (e) {
-            if (e.name !== 'AbortError' && e.message !== 'canceled') throw e
-        } finally {
+            await this.shadowLoad()
+        }
+        finally {
+            runInAction(() => {
+                // the loading can be canceled by another load
+                // in this case we should not touch isLoading
+                if (!this.controller) this.isLoading = false
+            })
+        }
+    }
+
+    // use it directly instead of load() if nobody should know that the query data is updating
+    // for example you need to update the current data on the page and you don't want to show a spinner
+    @action('MO: Query Base - shadow load')
+    async shadowLoad() {
+
+        this.isNeedToUpdate = false 
+        this.error = undefined
+
+        if (this.controller)
+            this.controller.abort()
+        this.controller = new AbortController()
+
+        // NOTE: Date.now() is used to get the current timestamp
+        //       and it can be the same in the same tick 
+        //       in this case we should increase the timestamp by 1
+        const now = Date.now()
+        if (this.timestamp === now) this.timestamp += 1
+        else                        this.timestamp = now 
+
+        try {
+            await this.__load()
+        }
+        catch (e) {
+            // ignore the cancelation of the request
+            if (e.name !== 'AbortError' && e.message !== 'canceled')
+                runInAction(() => this.error = e.message )
+        }
+        finally {
             this.controller = undefined
         }
-        return response
     }
 
     protected async __load() {
-        return this.__wrap_controller(async () => {
-            const objs = await this.repository.load(this, this.controller)
-            runInAction(() => {
-                this.__items = objs
-            })
-        })
+        const objs = await this.repository.load(this, this.controller)
+        runInAction(() => this.__items = objs)
     }
 }

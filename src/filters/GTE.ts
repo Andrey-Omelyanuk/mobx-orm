@@ -13,6 +13,6 @@ export class GTE_Filter extends SingleFilter {
     }
 }
 
-export function GTE(field: string, value: Input<any, any>) : SingleFilter {
+export function GTE(field: string, value: Input<any>) : SingleFilter {
     return new GTE_Filter(field, value)
 }

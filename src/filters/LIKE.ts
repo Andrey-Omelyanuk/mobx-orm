@@ -13,6 +13,6 @@ export class LIKE_Filter extends SingleFilter {
     }
 }
 
-export function LIKE(field: string, value: Input<any, any>) : SingleFilter {
+export function LIKE(field: string, value: Input<any>) : SingleFilter {
     return new LIKE_Filter(field, value)
 }

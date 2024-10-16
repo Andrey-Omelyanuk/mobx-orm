@@ -1,6 +1,7 @@
 import { runInAction } from 'mobx'
 import { local } from '../adapters'
 import { Model, model, field, many } from '../'
+import { ID } from '../types'
 
 
 describe('Field: Many', () => {
@@ -48,7 +49,7 @@ describe('Field: Many', () => {
 
     describe('Usage', () => {
         @local() @model class A extends Model {        bs   : B[]    }
-        @local() @model class B extends Model { @field a_id : number }
+        @local() @model class B extends Model { @field a_id : ID }
         many(B)(A, 'bs')
 
         beforeEach(() => {

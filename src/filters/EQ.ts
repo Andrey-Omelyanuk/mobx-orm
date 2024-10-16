@@ -20,10 +20,10 @@ export class EQV_Filter extends EQ_Filter {
     }
 }
 
-export function EQ(field: string, value: Input<any, any>) : SingleFilter {
+export function EQ(field: string, value: Input<any>) : SingleFilter {
     return new EQ_Filter(field, value)
 }
 
-export function EQV(field: string, value: Input<any, any>) : SingleFilter {
+export function EQV(field: string, value: Input<any>) : SingleFilter {
     return new EQV_Filter(field, value)
 }

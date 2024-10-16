@@ -1,14 +1,10 @@
-import { NumberInput } from '../NumberInput'
+import { ObjectInput } from '../ObjectInput'
 
-export function autoResetId(input: NumberInput<any>) {
-    if (!input.options) {
-        console.warn('Input with autoResetId has no options', input)
-        return 
-    }
+
+export function autoResetId(input: ObjectInput<any>) {
     // if value still in options, do nothing
     for (const item of input.options.items) {
         if (item.id === input.value) {
-            input.set(input.value) // we need to set value to trigger reaction
             return
         }
     }

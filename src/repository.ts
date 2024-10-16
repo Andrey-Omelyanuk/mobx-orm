@@ -1,5 +1,6 @@
 import { runInAction } from 'mobx'
 import { Model } from './model'
+import { ID } from './types'
 import { Cache } from './cache'
 import { Query } from './queries/query'
 import { Filter } from './filters'
@@ -42,7 +43,7 @@ export class  Repository<M extends Model> {
         return obj
     }
 
-    async get(obj_id: number, controller?: AbortController): Promise<M> {
+    async get(obj_id: ID, controller?: AbortController): Promise<M> {
         let raw_obj = await this.adapter.get(obj_id, controller)
         if (this.cache) {
             const obj = this.cache.update(raw_obj)

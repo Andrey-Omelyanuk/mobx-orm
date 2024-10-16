@@ -19,18 +19,12 @@ export class QueryStream <M extends Model> extends Query<M> {
     }
 
     async __load() {
-        if (this.controller) this.controller.abort()
-        this.controller = new AbortController()
-        try {
-            const objs = await this.repository.load(this, this.controller)
-            runInAction(() => {
-                this.__items.push(...objs)
-                // total is not make sense for infinity queries
-                // total = 1 show that last page is reached
-                if (objs.length < this.limit.value) this.total = 1
-            })
-        } catch (e) {
-            if (e.name !== 'AbortError')  throw e
-        } 
+        const objs = await this.repository.load(this, this.controller)
+        runInAction(() => {
+            this.__items.push(...objs)
+            // total is not make sense for infinity queries
+            // total = 1 show that last page is reached
+            if (objs.length < this.limit.value) this.total = 1
+        })
     }
 }

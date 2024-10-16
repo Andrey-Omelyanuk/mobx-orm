@@ -1,22 +1,47 @@
-// TODO: ObjectInput based on NumberInput with default autoReset + types
+import { reaction } from 'mobx'
+import { Query } from '../queries'
 import { Model } from '../model'
-import { InputConstructorArgs } from './Input'
-import { NumberInput } from './NumberInput'
+import { ID } from '../types'
+import { TYPE } from '../convert'
+import { Input, InputConstructorArgs } from './Input'
 
 
-export interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T, M> {
-    model: new (...args: any[]) => M
+export interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
+    options: Query<M>
+    autoReset? (input: ObjectInput<M>): void
 }
 
-export class ObjectInput<M extends Model> extends NumberInput<M> {
-    readonly model: new (...args: any[]) => M
+export class ObjectInput<M extends Model> extends Input<ID> {
+    readonly    type   : TYPE = TYPE.ID
+    readonly    options: Query<M>
 
-    constructor (args?: ObjectInputConstructorArgs<number, M>) {
-        super(args as InputConstructorArgs<number, M>)
-        this.model = args.model
+    constructor (args: ObjectInputConstructorArgs<ID, M>) {
+        super(args as InputConstructorArgs<ID>)
+        this.options = args.options
+        if (args?.autoReset) {
+            this.__disposers.push(reaction(
+                () => this.options.isReady,
+                (isReady, previousValue) => {
+                    if(isReady && !previousValue) {
+                        args.autoReset(this)
+                    }
+                }
+            ))
+        }
     }
 
     get obj() : M {
-        return (this.model as any).get(this.value)
+        return (this.options.repository.model as any).get(this.value)
+    }
+
+    get isReady () {
+        // options should be checked first
+        // because without options it doesn't make sense to check value 
+        return this.options.isReady && super.isReady
+    }
+
+    destroy () {
+        super.destroy()
+        this.options.destroy()
     }
 }

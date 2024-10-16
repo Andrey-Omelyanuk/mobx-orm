@@ -13,6 +13,6 @@ export class LTE_Filter extends SingleFilter {
     }
 }
 
-export function LTE(field: string, value: Input<any, any>) : SingleFilter {
+export function LTE(field: string, value: Input<any>) : SingleFilter {
     return new LTE_Filter(field, value)
 }
