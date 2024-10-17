@@ -137,14 +137,12 @@ declare class Repository<M extends Model> {
 declare function repository(adapter: any, cache?: any): (cls: any) => void;
 
 interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
-    options: Query<M>;
-    autoReset?(input: ObjectInput<M>): void;
+    options?: Query<M>;
+    autoReset?: (input: ObjectInput<M>) => void;
 }
 declare class ObjectInput<M extends Model> extends Input<ID> {
-    readonly type: TYPE;
-    readonly options: Query<M>;
-    constructor(args: ObjectInputConstructorArgs<ID, M>);
-    get obj(): M;
+    readonly options?: Query<M>;
+    constructor(args?: ObjectInputConstructorArgs<ID, M>);
     get isReady(): boolean;
     destroy(): void;
 }

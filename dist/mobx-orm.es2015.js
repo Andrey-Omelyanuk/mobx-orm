@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.1.1
+   * mobx-orm.js v2.1.2
    * Released under the MIT license.
    */
 
@@ -650,13 +650,10 @@ const ArrayDateTimeInput = (args) => {
 
 class ObjectInput extends Input {
     constructor(args) {
+        if (!args)
+            args = {};
+        args.type = TYPE.ID;
         super(args);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.ID
-        });
         Object.defineProperty(this, "options", {
             enumerable: true,
             configurable: true,
@@ -664,24 +661,24 @@ class ObjectInput extends Input {
             value: void 0
         });
         this.options = args.options;
-        this.__disposers.push(reaction(() => this.options.isReady, (isReady, previousValue) => {
-            if (isReady && !previousValue) {
-                runInAction(() => this.isNeedToUpdate = true);
-                (args === null || args === void 0 ? void 0 : args.autoReset) && args.autoReset(this);
-            }
-        }));
-    }
-    get obj() {
-        return this.options.repository.model.get(this.value);
+        if (this.options) {
+            this.__disposers.push(reaction(() => this.options.isReady, (isReady, previousValue) => {
+                if (isReady && !previousValue) {
+                    runInAction(() => this.isNeedToUpdate = true);
+                    (args === null || args === void 0 ? void 0 : args.autoReset) && args.autoReset(this);
+                }
+            }));
+        }
     }
     get isReady() {
         // options should be checked first
         // because without options it doesn't make sense to check value 
-        return this.options.isReady && super.isReady;
+        return this.options ? this.options.isReady && super.isReady : super.isReady;
     }
     destroy() {
+        var _a;
         super.destroy();
-        this.options.destroy();
+        (_a = this.options) === null || _a === void 0 ? void 0 : _a.destroy();
     }
 }
 
