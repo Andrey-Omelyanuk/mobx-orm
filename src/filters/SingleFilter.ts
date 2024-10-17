@@ -3,16 +3,26 @@ import { Filter } from './Filter'
 import { Input } from '../inputs/Input'
 
 
-export abstract class SingleFilter extends Filter {
+export class SingleFilter extends Filter {
     readonly    field       : string
     @observable input       : Input<any> 
     // TODO: is __disposers deprecated? I don't find any usage of it and I don't how it can be used
     __disposers             : (()=>void)[] = []
 
-    constructor(field: string, input: Input<any>) {
+    readonly getURIField : (field: string) => string 
+    readonly operator    : (value_a, value_b) => boolean 
+
+    constructor(
+        field: string,
+        input: Input<any>,
+        getURIField: (field: string) => string,
+        operator: (a: any, b: any) => boolean,
+    ) {
         super()
         this.field = field
         this.input = input 
+        this.getURIField = getURIField
+        this.operator = operator
         makeObservable(this)
     }
 
@@ -23,13 +33,9 @@ export abstract class SingleFilter extends Filter {
     get URLSearchParams(): URLSearchParams{
         let search_params = new URLSearchParams()
         let value = this.input.toString()
-        !this.input.isDisabled && value !== undefined && search_params.set(this.URIField, value)
+        !this.input.isDisabled && value !== undefined && search_params.set(this.getURIField(this.field), value)
         return search_params
     }
-
-    abstract get URIField() : string
-
-    abstract operator(value_a, value_b) : boolean
 
     isMatch(obj: any): boolean {
         // it's always match if value of filter is undefined
@@ -64,4 +70,48 @@ function match(obj: any, field_name: string, filter_value: any, operator: (value
         }
     }
     return false
+}
+
+export function EQ(field: string, input: Input<any>) : SingleFilter {
+    return new SingleFilter(field, input, (field: string) => `${field}`, (a: any, b: any) => a === b)
+}
+export function EQV(field: string, input: Input<any>) : SingleFilter {
+    return new SingleFilter(field, input, (field: string) => `${field}__eq`, (a: any, b: any) => a === b)
+}
+export function NOT_EQ(field: string, input: Input<any>) : SingleFilter {
+    return new SingleFilter(field, input, (field: string) => `${field}__not_eq`, (a: any, b: any) => a !== b)
+}
+export function GT(field: string, input: Input<any>) : SingleFilter {
+    return new SingleFilter(field, input, (field: string) => `${field}__gt`, (a: any, b: any) => a > b)
+}
+export function GTE(field: string, input: Input<any>) : SingleFilter {
+    return new SingleFilter(field, input, (field: string) => `${field}__gte`, (a: any, b: any) => a >= b)
+}
+export function LT(field: string, input: Input<any>) : SingleFilter {
+    return new SingleFilter(field, input, (feild: string) => `${field}__lt`, (a: any, b: any) => a < b)
+}
+export function LTE(field: string, input: Input<any>) : SingleFilter {
+    return new SingleFilter(field, input, (field: string) => `${field}__lte`, (a: any, b: any) => a <= b)
+}
+export function LIKE(field: string, input: Input<any>) : SingleFilter {
+    return new SingleFilter(field, input, (field: string) => `${field}__contains`, (a: any, b: any) => a.includes(b))
+}
+export function ILIKE(field: string, input: Input<any>) : SingleFilter {
+    return new SingleFilter(field, input, (field: string) => `${field}__icontains`,
+        (a: any, b: any) => a.toLowerCase().includes(b.toLowerCase())
+    )
+}
+export function IN(field: string, input: Input<any>) : SingleFilter { 
+    return new SingleFilter(field, input, (field: string) => `${field}__in`,
+        (a, b) => {
+            // it's always match if value of filter is empty []
+            if (b.length === 0)
+                return true
+            for (let v of b) {
+                if (v === a)
+                    return true
+            }
+            return false
+        }
+    )
 }

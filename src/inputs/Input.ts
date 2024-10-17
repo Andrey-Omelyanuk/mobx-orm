@@ -21,6 +21,7 @@ export abstract class Input<T> {
     @observable          isRequired          : boolean
     @observable          isDisabled          : boolean
     @observable          isDebouncing        : boolean          //  
+    @observable          isNeedToUpdate      : boolean          //  
     @observable          errors              : string[] = []    // validations or backend errors put here
                 readonly debounce            : number
                 readonly syncURL            ?: string
@@ -33,6 +34,7 @@ export abstract class Input<T> {
         this.isRequired         = !!args?.required
         this.isDisabled         = !!args?.disabled
         this.isDebouncing       = false 
+        this.isNeedToUpdate     = false 
         this.debounce           = args?.debounce
         this.syncURL            = args?.syncURL
         this.syncLocalStorage   = args?.syncLocalStorage
@@ -55,6 +57,7 @@ export abstract class Input<T> {
     @action
     public set (value: T) {
         this.value = value
+        this.isNeedToUpdate = false
         if (this.debounce) {
             this.isDebouncing = true 
             this.stopDebouncing()       // will stop debouncing after debounce
@@ -66,6 +69,7 @@ export abstract class Input<T> {
             return true
         return !(this.errors.length
             ||  this.isDebouncing
+            ||  this.isNeedToUpdate
             ||  this.isRequired && (this.value === undefined || (Array.isArray(this.value) && !this.value.length))
         )
     }

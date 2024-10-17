@@ -20,16 +20,6 @@ describe('ObjectInput', () => {
                 value           : undefined,
                 options         : options,
             })
-            expect(input.__disposers.length).toBe(0)
-        })
-        it('autoReset', async () => {
-            const options = TestModel.getQuery({})
-            const input = new ObjectInput<TestModel>({ options, autoReset: autoResetId })
-            expect(input).toMatchObject({
-                value           : undefined,
-                options         : options,
-            })
-            // autoReset +1
             expect(input.__disposers.length).toBe(1)
         })
     })

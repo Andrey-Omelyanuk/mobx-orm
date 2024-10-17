@@ -1,4 +1,4 @@
-import { reaction } from 'mobx'
+import { reaction, runInAction } from 'mobx'
 import { Query } from '../queries'
 import { Model } from '../model'
 import { ID } from '../types'
@@ -18,16 +18,15 @@ export class ObjectInput<M extends Model> extends Input<ID> {
     constructor (args: ObjectInputConstructorArgs<ID, M>) {
         super(args as InputConstructorArgs<ID>)
         this.options = args.options
-        if (args?.autoReset) {
-            this.__disposers.push(reaction(
-                () => this.options.isReady,
-                (isReady, previousValue) => {
-                    if(isReady && !previousValue) {
-                        args.autoReset(this)
-                    }
+        this.__disposers.push(reaction(
+            () => this.options.isReady,
+            (isReady, previousValue) => {
+                if(isReady && !previousValue) {
+                    runInAction(() => this.isNeedToUpdate = true)
+                    args?.autoReset && args.autoReset(this)
                 }
-            ))
-        }
+            }
+        ))
     }
 
     get obj() : M {

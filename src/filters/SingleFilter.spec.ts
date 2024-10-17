@@ -1,41 +1,189 @@
 import { runInAction } from 'mobx'
-import { Model, StringInput, NumberInput, local } from '..'
-import { SingleFilter } from './SingleFilter'
-import { EQ } from './EQ'
+import { Model, NumberInput, local } from '..'
 import { ObjectInput } from '../inputs' 
+import { SingleFilter, EQ, EQV, NOT_EQ, GT, GTE, LT, LTE, LIKE, ILIKE, IN } from './SingleFilter'
 
 
 describe('SingleFilter', () => {
     @local()
     class TestModel extends Model {}
-    class TestSingleFilter extends SingleFilter {
-        get URIField(): string {
-            return `${this.field}` 
-        }
-        operator(value_a: any, value_b: any): boolean {
-            return value_a === value_b
-        }
-    }
 
     it('isReady', () => {
         const options = TestModel.getQuery({})
-        const value =  new ObjectInput({value: 1, options})
-        const filter = EQ('test', value)                    ; expect(filter.isReady).toBe(value.isReady)
-        runInAction(() => options.isNeedToUpdate = false)     ; expect(filter.isReady).toBe(value.isReady)
-        value.set(2)                                        ; expect(filter.isReady).toBe(value.isReady)
+        const input =  new ObjectInput({value: 1, options})
+        const filter = new SingleFilter('test', input, () => `test`, (a: any, b: any) => a === b)
+                                                            ; expect(options.isReady).toBe(true)
+                                                            ; expect(input  .isReady).toBe(true)
+                                                            ; expect(filter .isReady).toBe(true)
+
+        runInAction(() => options.isNeedToUpdate = true)    ; expect(options.isReady).toBe(false)
+                                                            ; expect(input  .isReady).toBe(false)
+                                                            ; expect(filter .isReady).toBe(false)
+
+        runInAction(() => options.isNeedToUpdate = false)   ; expect(options.isReady).toBe(true)
+                                                            ; expect(input  .isNeedToUpdate).toBe(true)
+                                                            ; expect(input  .isReady).toBe(false)
+
+        input.set(2)                                        ; expect(input  .isReady).toBe(true)
+                                                            ; expect(filter .isReady).toBe(true)
     })
 
     it('URLSearchParams', () => {
-        expect(EQ('test', new NumberInput({value: 1})).URLSearchParams.toString()).toBe('test=1')
-        expect(EQ('test', new NumberInput({value: null})).URLSearchParams.toString()).toBe('test=null')
-        expect(EQ('test', new NumberInput()).URLSearchParams.toString()).toBe('')
-
-        expect(EQ('test', new StringInput({value: 'abc'})).URLSearchParams.toString()).toBe('test=abc')
-        expect(EQ('test', new StringInput({value: null})).URLSearchParams.toString()).toBe('test=null')
-        expect(EQ('test', new StringInput()).URLSearchParams.toString()).toBe('')
+        const input =  new NumberInput({value: 1})
+        const filter = new SingleFilter('test', input, () => `test-x`, (a: any, b: any) => a === b)
+                            ; expect(filter.URLSearchParams.toString()).toBe('test-x=1')
+        input.set(null)     ; expect(filter.URLSearchParams.toString()).toBe('test-x=null')
+        input.set(undefined); expect(filter.URLSearchParams.toString()).toBe('')
     })
 
     it('isMatch', () => {
         // TODO: implement
+    })
+
+    describe('EQ', () => {
+        const filter = EQ('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field')
+        })
+        it('operator', async () => {
+            expect(filter.operator(1, 2)).toBe(false)
+            expect(filter.operator(2, 1)).toBe(false)
+            expect(filter.operator(1, 1)).toBe(true)
+            expect(filter.operator('a', 'b')).toBe(false)
+            expect(filter.operator('b', 'a')).toBe(false)
+            expect(filter.operator('a', 'a')).toBe(true)
+        })
+    })
+
+    describe('EQV', () => {
+        const filter = EQV('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field__eq')
+        })
+        it('operator', async () => {
+            expect(filter.operator(1, 2)).toBe(false)
+            expect(filter.operator(2, 1)).toBe(false)
+            expect(filter.operator(1, 1)).toBe(true)
+            expect(filter.operator('a', 'b')).toBe(false)
+            expect(filter.operator('b', 'a')).toBe(false)
+            expect(filter.operator('a', 'a')).toBe(true)
+        })
+    })
+
+    describe('NOT_EQ', () => {
+        const filter = NOT_EQ('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field__not_eq')
+        })
+        it('operator', async () => {
+            expect(filter.operator(1, 2)).toBe(true)
+            expect(filter.operator(2, 1)).toBe(true)
+            expect(filter.operator(1, 1)).toBe(false)
+            expect(filter.operator('a', 'b')).toBe(true)
+            expect(filter.operator('b', 'a')).toBe(true)
+            expect(filter.operator('a', 'a')).toBe(false)
+        })
+    })
+
+    describe('GT', () => {
+        const filter = GT('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field__gt')
+        })
+        it('operator', async () => {
+            expect(filter.operator(1, 2)).toBe(false)
+            expect(filter.operator(2, 1)).toBe(true)
+            expect(filter.operator(1, 1)).toBe(false)
+            expect(filter.operator('a', 'b')).toBe(false)
+            expect(filter.operator('b', 'a')).toBe(true)
+            expect(filter.operator('a', 'a')).toBe(false)
+        })
+    })
+
+    describe('GTE', () => {
+        const filter = GTE('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field__gte')
+        })
+        it('operator', async () => {
+            expect(filter.operator(1, 2)).toBe(false)
+            expect(filter.operator(2, 1)).toBe(true)
+            expect(filter.operator(1, 1)).toBe(true)
+            expect(filter.operator('a', 'b')).toBe(false)
+            expect(filter.operator('b', 'a')).toBe(true)
+            expect(filter.operator('a', 'a')).toBe(true)
+        })
+    })
+
+    describe('LT', () => {
+        const filter = LT('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field__lt')
+        })
+        it('operator', async () => {
+            expect(filter.operator(1, 2)).toBe(true)
+            expect(filter.operator(2, 1)).toBe(false)
+            expect(filter.operator(1, 1)).toBe(false)
+            expect(filter.operator('a', 'b')).toBe(true)
+            expect(filter.operator('b', 'a')).toBe(false)
+            expect(filter.operator('a', 'a')).toBe(false)
+        })
+    })
+
+    describe('LTE', () => {
+        const filter = LTE('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field__lte')
+        })
+        it('operator', async () => {
+            expect(filter.operator(1, 2)).toBe(true)
+            expect(filter.operator(2, 1)).toBe(false)
+            expect(filter.operator(1, 1)).toBe(true)
+            expect(filter.operator('a', 'b')).toBe(true)
+            expect(filter.operator('b', 'a')).toBe(false)
+            expect(filter.operator('a', 'a')).toBe(true)
+        })
+    })
+
+    describe('LIKE', () => {
+        const filter = LIKE('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field__contains')
+        })
+        it('operator', async () => {
+            expect(filter.operator('test one', 'test')).toBe(true)
+            expect(filter.operator('test one', 'one' )).toBe(true)
+            expect(filter.operator('test one', 'ONE' )).toBe(false)
+            expect(filter.operator('test one', 'o'   )).toBe(true)
+            expect(filter.operator('test one', 'two' )).toBe(false)
+            expect(filter.operator('test one', ''    )).toBe(true)
+        })
+    })
+
+    describe('ILIKE', () => {
+        const filter = ILIKE('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field__icontains')
+        })
+        it('operator', async () => {
+            expect(filter.operator('test one', 'test')).toBe(true)
+            expect(filter.operator('test one', 'one' )).toBe(true)
+            expect(filter.operator('test one', 'ONE' )).toBe(true)
+            expect(filter.operator('test one', 'o'   )).toBe(true)
+            expect(filter.operator('test one', 'two' )).toBe(false)
+            expect(filter.operator('test one', ''    )).toBe(true)
+        })
+    })
+
+    describe('IN', () => {
+        const filter = IN('field', new NumberInput({value: 1}))
+        it('URIField', async () => {
+            expect(filter.getURIField(filter.field)).toBe('field__in')
+        })
+        it('operator', async () => {
+            expect(filter.operator(1, [])).toBe(true)
+            expect(filter.operator(1, [1,2,3])).toBe(true)
+            expect(filter.operator(1, [2,3])).toBe(false)
+        })
     })
 })

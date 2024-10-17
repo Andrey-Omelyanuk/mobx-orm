@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.0.11
+   * mobx-orm.js v2.1.0
    * Released under the MIT license.
    */
 
@@ -264,40 +264,215 @@ function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const ASC = true;
+const DESC = false;
+
+var TYPE;
+(function (TYPE) {
+    TYPE["ID"] = "id";
+    TYPE["STRING"] = "string";
+    TYPE["NUMBER"] = "number";
+    TYPE["DATE"] = "date";
+    TYPE["DATETIME"] = "datetime";
+    TYPE["BOOLEAN"] = "boolean";
+    TYPE["ARRAY_ID"] = "array-id";
+    TYPE["ARRAY_STRING"] = "array-string";
+    TYPE["ARRAY_NUMBER"] = "array-number";
+    TYPE["ARRAY_DATE"] = "array-date";
+    TYPE["ARRAY_DATETIME"] = "array-datetime";
+    TYPE["ORDER_BY"] = "order-by";
+})(TYPE || (TYPE = {}));
+const arrayToString = (type, value) => {
+    let result = [];
+    if (value) {
+        for (const i of value) {
+            let v = toString(type, i);
+            if (v !== undefined)
+                result.push(v);
+        }
+    }
+    return result.length ? result.join(',') : undefined;
+};
+const stringToArray = (type, value) => {
+    let result = [];
+    if (value) {
+        for (const i of value.split(',')) {
+            let v = stringTo(type, i);
+            if (v !== undefined) {
+                result.push(v);
+            }
+        }
+    }
+    return result;
+};
+const toString = (valueType, value) => {
+    if (value === undefined)
+        return undefined;
+    if (value === null)
+        return 'null';
+    switch (valueType) {
+        case TYPE.NUMBER: return '' + value;
+        case TYPE.ID: return '' + value;
+        case TYPE.STRING: return value;
+        case TYPE.DATE: return value instanceof Date ? value.toISOString().split('T')[0] : "";
+        case TYPE.DATETIME: return value instanceof Date ? value.toISOString() : "";
+        case TYPE.BOOLEAN: return !!value ? 'true' : 'false';
+        case TYPE.ARRAY_STRING: return arrayToString(TYPE.STRING, value);
+        case TYPE.ARRAY_NUMBER: return arrayToString(TYPE.NUMBER, value);
+        case TYPE.ARRAY_DATE: return arrayToString(TYPE.DATE, value);
+        case TYPE.ARRAY_DATETIME: return arrayToString(TYPE.DATETIME, value);
+        case TYPE.ORDER_BY:
+            if (value) {
+                let result = '';
+                for (const [key, val] of value) {
+                    if (result)
+                        result += ',';
+                    if (val === DESC)
+                        result += '-';
+                    result += key.replace(/\./g, '__');
+                }
+                return result ? result : undefined;
+            }
+            return undefined;
+    }
+};
+const stringTo = (valueType, value, enumType) => {
+    let result;
+    if (value === undefined)
+        return undefined;
+    else if (value === 'null')
+        return null;
+    else if (value === null)
+        return null;
+    switch (valueType) {
+        case TYPE.NUMBER:
+            result = parseInt(value);
+            if (isNaN(result))
+                return undefined;
+            return result;
+        case TYPE.ID:
+            result = parseInt(value);
+            if (isNaN(result))
+                return value;
+            return result;
+        case TYPE.STRING: return value;
+        case TYPE.DATE: return new Date(value);
+        case TYPE.DATETIME: return new Date(value);
+        case TYPE.BOOLEAN: return value === 'true' ? true : value === 'false' ? false : undefined;
+        case TYPE.ARRAY_STRING: return stringToArray(TYPE.STRING, value);
+        case TYPE.ARRAY_NUMBER: return stringToArray(TYPE.NUMBER, value);
+        case TYPE.ARRAY_DATE: return stringToArray(TYPE.DATE, value);
+        case TYPE.ARRAY_DATETIME: return stringToArray(TYPE.DATETIME, value);
+        case TYPE.ORDER_BY:
+            result = new Map();
+            if (value) {
+                for (const item of value.split(',')) {
+                    if (item[0] === '-')
+                        result.set(item.slice(1), DESC);
+                    else
+                        result.set(item, ASC);
+                }
+            }
+            return result;
+    }
+};
+
+const syncURLHandler = (paramName, input) => {
+    const searchParams = new URLSearchParams(window.location.search);
+    // init from URL Search Params
+    if (searchParams.has(paramName)) {
+        input.setFromString(searchParams.get(paramName));
+    }
+    // watch for URL changes and update Input
+    function updataInputFromURL() {
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.has(paramName)) {
+            const raw_value = searchParams.get(paramName);
+            const exist_raw_value = input.toString();
+            if (raw_value !== exist_raw_value) {
+                input.setFromString(raw_value);
+            }
+        }
+        else if (input.value !== undefined)
+            this.set(undefined);
+    }
+    input.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(undefined)));
+    // watch for Input changes and update URL
+    input.__disposers.push(reaction(() => input.toString(), // I cannot use this.value because it can be a Map
+    (value) => {
+        const searchParams = new URLSearchParams(window.location.search);
+        if (value === '' || value === undefined)
+            searchParams.delete(paramName);
+        else if (searchParams.get(paramName) !== value)
+            searchParams.set(paramName, value);
+        config.UPDATE_SEARCH_PARAMS(searchParams);
+    }, { fireImmediately: true }));
+};
+
+const syncLocalStorageHandler = (paramName, input) => {
+    // init value from localStorage
+    if (paramName in localStorage) {
+        let raw_value = localStorage.getItem(paramName);
+        const exist_raw_value = input.toString();
+        if (exist_raw_value !== raw_value)
+            input.setFromString(raw_value);
+    }
+    // watch for changes and save to localStorage
+    input.__disposers.push(reaction(() => input.value, (value, previousValue) => {
+        // WARNING: input should return 'null' if value is null
+        // because localStorage cannot store null
+        if (value !== undefined)
+            localStorage.setItem(paramName, input.toString());
+        else
+            localStorage.removeItem(paramName);
+    }, { fireImmediately: true }));
+};
+
 class Input {
     constructor(args) {
-        var _a;
         Object.defineProperty(this, "value", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "isRequired", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "isDisabled", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "isDebouncing", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        }); //  
+        Object.defineProperty(this, "isNeedToUpdate", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        }); //  
         Object.defineProperty(this, "errors", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: []
-        });
-        Object.defineProperty(this, "options", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        }); // should be a Query
-        Object.defineProperty(this, "required", {
+        }); // validations or backend errors put here
+        Object.defineProperty(this, "debounce", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "disabled", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "syncURLSearchParams", {
+        Object.defineProperty(this, "syncURL", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -309,43 +484,13 @@ class Input {
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "debounce", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "autoReset", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "autoResetObj", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "isInit", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "__isReady", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
         Object.defineProperty(this, "__disposers", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: []
         });
-        Object.defineProperty(this, "__setReadyTrue", {
+        Object.defineProperty(this, "stopDebouncing", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -353,125 +498,46 @@ class Input {
         });
         // init all observables before use it in reaction
         this.value = args === null || args === void 0 ? void 0 : args.value;
-        this.options = args === null || args === void 0 ? void 0 : args.options;
-        this.required = !!(args === null || args === void 0 ? void 0 : args.required);
-        this.disabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
-        this.syncURLSearchParams = (args === null || args === void 0 ? void 0 : args.syncURL) || (args === null || args === void 0 ? void 0 : args.syncURLSearchParams);
-        this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
+        this.isRequired = !!(args === null || args === void 0 ? void 0 : args.required);
+        this.isDisabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
+        this.isDebouncing = false;
+        this.isNeedToUpdate = false;
         this.debounce = args === null || args === void 0 ? void 0 : args.debounce;
-        this.autoReset = args === null || args === void 0 ? void 0 : args.autoReset;
-        this.isInit = false;
-        this.__isReady = !(this.required && ((_a = this.options) === null || _a === void 0 ? void 0 : _a.needToUpdate) === true);
-        // if debounce is on then we have to have debounced version of __setReadyTrue
-        if (this.debounce)
-            this.__setReadyTrue = _.debounce(() => runInAction(() => this.__isReady = true), this.debounce);
-        else
-            this.__setReadyTrue = () => this.__isReady = true;
+        this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
+        this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
         makeObservable(this);
-        // init reactions
-        this.options && this.__doOptions();
-        this.syncURLSearchParams && this.__doSyncURLSearchParams();
-        this.syncLocalStorage && this.__doSyncLocalStorage();
-        if (args === null || args === void 0 ? void 0 : args.autoResetClass) {
-            this.autoResetObj = new args.autoResetClass(this);
-        }
-        else if (this.autoReset) {
-            this.__doAutoReset();
-        }
-    }
-    get isReady() {
-        return this.disabled
-            || (this.__isReady
-                && (this.options === undefined
-                    // if not required and value is undefined or empty array - it is ready
-                    || (!this.required && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)))
-                    || !this.options.needToUpdate));
-    }
-    get isError() {
-        return this.errors.length > 0;
-    }
-    set(value) {
-        this.value = value;
-        // if debounce is on then set __isReady to false and then to true after debounce
-        if (this.debounce)
-            this.__isReady = false;
-        if (!this.required || !(this.required && value === undefined)) {
-            this.__setReadyTrue();
-        }
-        if (!this.isInit && (!this.options || !this.options.needToUpdate)) {
-            this.isInit = true;
+        // the order is important, because syncURL has more priority under syncLocalStorage
+        // i.e. init from syncURL can overwrite value from syncLocalStorage
+        this.syncLocalStorage && syncLocalStorageHandler(this.syncLocalStorage, this);
+        this.syncURL && syncURLHandler(this.syncURL, this);
+        if (this.debounce) {
+            this.stopDebouncing = _.debounce(() => runInAction(() => this.isDebouncing = false), this.debounce);
         }
     }
     destroy() {
-        var _a, _b;
         this.__disposers.forEach(disposer => disposer());
-        (_a = this.options) === null || _a === void 0 ? void 0 : _a.destroy();
-        (_b = this.autoResetObj) === null || _b === void 0 ? void 0 : _b.destroy();
+    }
+    set(value) {
+        this.value = value;
+        this.isNeedToUpdate = false;
+        if (this.debounce) {
+            this.isDebouncing = true;
+            this.stopDebouncing(); // will stop debouncing after debounce
+        }
+    }
+    get isReady() {
+        if (this.isDisabled)
+            return true;
+        return !(this.errors.length
+            || this.isDebouncing
+            || this.isNeedToUpdate
+            || this.isRequired && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)));
+    }
+    setFromString(value) {
+        this.set(stringTo(this.type, value));
     }
     toString() {
-        return this.deserialize();
-    }
-    // Any changes in options should reset __isReady
-    __doOptions() {
-        this.__disposers.push(reaction(() => this.options.needToUpdate, () => this.__isReady = false));
-    }
-    __doAutoReset() {
-        this.__disposers.push(reaction(() => !this.options.needToUpdate && !this.disabled, (is_ready) => {
-            if (is_ready)
-                this.autoReset(this);
-        }, { fireImmediately: true }));
-    }
-    __doSyncURLSearchParams() {
-        // init from URL Search Params
-        const name = this.syncURLSearchParams;
-        const searchParams = new URLSearchParams(window.location.search);
-        if (searchParams.has(name)) {
-            this.serialize(searchParams.get(name));
-        }
-        // watch for URL changes and update Input
-        function updataInputFromURL() {
-            const searchParams = new URLSearchParams(window.location.search);
-            if (searchParams.has(name)) {
-                const raw_value = searchParams.get(name);
-                const exist_raw_value = this.deserialize();
-                if (raw_value !== exist_raw_value) {
-                    this.serialize(raw_value);
-                }
-            }
-            else if (this.value !== undefined) {
-                this.set(undefined);
-            }
-        }
-        this.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)));
-        // watch for Input changes and update URL
-        this.__disposers.push(reaction(() => this.deserialize(), // I cannot use this.value because it can be a Map
-        () => {
-            const searchParams = new URLSearchParams(window.location.search);
-            const _value = this.deserialize();
-            if (_value === '' || _value === undefined) {
-                searchParams.delete(name);
-            }
-            else if (searchParams.get(name) !== _value) {
-                searchParams.set(name, _value);
-            }
-            config.UPDATE_SEARCH_PARAMS(searchParams);
-        }, { fireImmediately: true }));
-    }
-    __doSyncLocalStorage() {
-        const name = this.syncLocalStorage;
-        const raw_value = localStorage.getItem(name);
-        const exist_raw_value = this.deserialize();
-        if (exist_raw_value !== raw_value) {
-            this.serialize(raw_value);
-        }
-        this.__disposers.push(reaction(() => this.value, (value) => {
-            if (value !== undefined) {
-                localStorage.setItem(name, this.deserialize());
-            }
-            else {
-                localStorage.removeItem(name);
-            }
-        }, { fireImmediately: true }));
+        return toString(this.type, this.value);
     }
 }
 __decorate([
@@ -480,162 +546,94 @@ __decorate([
 ], Input.prototype, "value", void 0);
 __decorate([
     observable,
+    __metadata("design:type", Boolean)
+], Input.prototype, "isRequired", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Input.prototype, "isDisabled", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Input.prototype, "isDebouncing", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Boolean)
+], Input.prototype, "isNeedToUpdate", void 0);
+__decorate([
+    observable,
     __metadata("design:type", Array)
 ], Input.prototype, "errors", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], Input.prototype, "required", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], Input.prototype, "disabled", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], Input.prototype, "isInit", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], Input.prototype, "__isReady", void 0);
 __decorate([
     action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Input.prototype, "set", null);
-
 class StringInput extends Input {
-    serialize(value) {
-        if (value === undefined)
-            this.set(undefined);
-        else if (value === 'null')
-            this.set(null);
-        else if (value === null)
-            this.set(undefined);
-        else
-            this.set(value);
-    }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return this.value;
-    }
-}
-
-class NumberInput extends Input {
-    serialize(value) {
-        if (value === undefined)
-            this.set(undefined);
-        else if (value === 'null')
-            this.set(null);
-        else if (value === null)
-            this.set(undefined);
-        else {
-            let result = parseInt(value);
-            if (isNaN(result))
-                result = undefined;
-            this.set(result);
-        }
-    }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return '' + this.value;
-    }
-}
-
-class BooleanInput extends Input {
-    serialize(value) {
-        if (value === undefined)
-            this.set(undefined);
-        if (value === 'null')
-            this.set(null);
-        if (value === null)
-            this.set(undefined);
-        else
-            this.set(value === 'true' ? true : value === 'false' ? false : undefined);
-    }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return !!this.value ? 'true' : 'false';
-    }
-}
-
-class DateInput extends Input {
-    serialize(value) {
-        if (value === undefined)
-            this.set(undefined);
-        else if (value === 'null')
-            this.set(null);
-        else if (value === null)
-            this.set(null);
-        else
-            this.set(new Date(value));
-    }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return this.value instanceof Date ? this.value.toISOString().split('T')[0] : "";
-    }
-}
-
-class DateTimeInput extends Input {
-    serialize(value) {
-        if (value === undefined)
-            this.set(undefined);
-        else if (value === 'null')
-            this.set(null);
-        else if (value === null)
-            this.set(null);
-        else
-            this.set(new Date(value));
-    }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return this.value instanceof Date ? this.value.toISOString() : "";
-    }
-}
-
-class EnumInput extends Input {
-    constructor(args) {
-        super(args);
-        Object.defineProperty(this, "enum", {
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: void 0
+            value: TYPE.STRING
         });
-        this.enum = args.enum;
     }
-    serialize(value) {
-        if (value === 'null')
-            this.set(null);
-        else if (value === undefined)
-            this.set(undefined);
-        else if (value === null)
-            this.set(null);
-        else
-            this.set(Object.values(this.enum).find(v => v == value));
+}
+class NumberInput extends Input {
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.NUMBER
+        });
     }
-    deserialize() {
-        if (this.value === undefined)
-            return undefined;
-        if (this.value === null)
-            return 'null';
-        return this.value.toString();
+}
+class DateInput extends Input {
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.DATE
+        });
+    }
+}
+class DateTimeInput extends Input {
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.DATETIME
+        });
+    }
+}
+class BooleanInput extends Input {
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.BOOLEAN
+        });
+    }
+}
+class OrderByInput extends Input {
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.ORDER_BY
+        });
     }
 }
 
@@ -646,123 +644,93 @@ class ArrayInput extends Input {
         super(args);
     }
 }
-
 class ArrayStringInput extends ArrayInput {
-    serialize(value) {
-        let result = [];
-        if (value) {
-            let converter = new StringInput();
-            for (const i of value.split(',')) {
-                converter.serialize(i);
-                if (converter.value !== undefined) {
-                    result.push(converter.value);
-                }
-            }
-        }
-        this.set(result);
-    }
-    deserialize() {
-        let result = [];
-        if (this.value) {
-            for (const i of this.value) {
-                let converter = new StringInput({ value: i });
-                let v = converter.deserialize();
-                if (v !== undefined) {
-                    result.push(v);
-                }
-            }
-        }
-        return result.length ? result.join(',') : undefined;
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.ARRAY_STRING
+        });
     }
 }
-
 class ArrayNumberInput extends ArrayInput {
-    serialize(value) {
-        let result = [];
-        if (value) {
-            let converter = new NumberInput();
-            for (const i of value.split(',')) {
-                converter.serialize(i);
-                if (converter.value !== undefined) {
-                    result.push(converter.value);
-                }
-            }
-        }
-        this.set(result);
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.ARRAY_NUMBER
+        });
     }
-    deserialize() {
-        let result = [];
-        if (this.value) {
-            for (const i of this.value) {
-                let converter = new NumberInput({ value: i });
-                let v = converter.deserialize();
-                if (v !== undefined) {
-                    result.push(v);
-                }
-            }
-        }
-        return result.length ? result.join(',') : undefined;
+}
+class ArrayDateInput extends ArrayInput {
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.ARRAY_DATE
+        });
+    }
+}
+class ArrayDateTimeInput extends ArrayInput {
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.ARRAY_DATETIME
+        });
     }
 }
 
-class OrderByInput extends Input {
-    serialize(value) {
-        let result = new Map();
-        if (value) {
-            for (const item of value.split(',')) {
-                if (item[0] === '-') {
-                    result.set(item.slice(1), DESC);
-                }
-                else {
-                    result.set(item, ASC);
-                }
-            }
-        }
-        this.value = result;
-    }
-    deserialize() {
-        if (this.value) {
-            let result = '';
-            for (const [key, val] of this.value) {
-                if (result)
-                    result += ',';
-                if (val === DESC)
-                    result += '-';
-                const field = key.replace(/\./g, '__');
-                result += field;
-            }
-            return result ? result : undefined;
-        }
-        return undefined;
-    }
-}
-
-class ObjectInput extends NumberInput {
+class ObjectInput extends Input {
     constructor(args) {
         super(args);
-        Object.defineProperty(this, "model", {
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: TYPE.ID
+        });
+        Object.defineProperty(this, "options", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        this.model = args.model;
+        this.options = args.options;
+        this.__disposers.push(reaction(() => this.options.isReady, (isReady, previousValue) => {
+            if (isReady && !previousValue) {
+                runInAction(() => this.isNeedToUpdate = true);
+                (args === null || args === void 0 ? void 0 : args.autoReset) && args.autoReset(this);
+            }
+        }));
     }
     get obj() {
-        return this.model.get(this.value);
+        return this.options.repository.model.get(this.value);
+    }
+    get isReady() {
+        // options should be checked first
+        // because without options it doesn't make sense to check value 
+        return this.options.isReady && super.isReady;
+    }
+    destroy() {
+        super.destroy();
+        this.options.destroy();
     }
 }
 
 function autoResetId(input) {
     var _a;
-    if (!input.options) {
-        console.warn('Input with autoResetId has no options', input);
-        return;
-    }
     // if value still in options, do nothing
     for (const item of input.options.items) {
         if (item.id === input.value) {
-            input.set(input.value); // we need to set value to trigger reaction
             return;
         }
     }
@@ -770,38 +738,26 @@ function autoResetId(input) {
     input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
 }
 
-const autoResetArrayOfIDs = (input) => {
-    if (!input.options) {
-        console.warn('Input with autoResetArrayOfIDs has no options', input);
-        return;
-    }
-    // if one of values not in options, reset the input 
-    for (const id of input.value) {
-        let found = false;
-        for (const item of input.options.items) {
-            if (item.id === id) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            input.set([]);
-            return;
-        }
-    }
-    input.set(input.value);
-};
-
-const autoResetArrayToEmpty = (input) => {
-    if (!input.options)
-        input.set(input.value);
-    else
-        input.set([]);
-};
-
 const DISPOSER_AUTOUPDATE = "__autoupdate";
-const ASC = true;
-const DESC = false;
+/* Query live cycle:
+
+    Event           isLoading   needToUpdate    isReady     items
+    ------------------------------------------------------------------------
+    Create          -           -               -           []
+
+
+    loading start   +!          -               -           reset error
+        |
+    loading finish  -!          -               +!          set some items or error
+
+
+    filter changes  -           +!              -!
+        |
+    loading start   +!          -!              -           reset error
+        |
+    loading finish  -!          -               +!          set some items or error
+
+*/
 class Query {
     get items() { return this.__items; } // the items can be changed after the load (post processing)
     constructor(props) {
@@ -871,7 +827,7 @@ class Query {
             writable: true,
             value: false
         }); // query is loading the data
-        Object.defineProperty(this, "needToUpdate", {
+        Object.defineProperty(this, "isNeedToUpdate", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -907,12 +863,17 @@ class Query {
             writable: true,
             value: {}
         });
-        // use it if you need use promise instead of observe is_loading
         Object.defineProperty(this, "loading", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: async () => waitIsFalse(this, 'is_loading')
+            value: async () => waitIsFalse(this, 'isLoading')
+        });
+        Object.defineProperty(this, "ready", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: async () => waitIsFalse(this, 'isReady')
         });
         let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = false } = props;
         this.repository = repository;
@@ -925,8 +886,10 @@ class Query {
         this.omit = omit ? omit : new ArrayStringInput();
         this.autoupdate = autoupdate;
         makeObservable(this);
-        this.disposers.push(reaction(() => { var _a; return { isReady: this.isReady, url: (_a = this.repository.adapter) === null || _a === void 0 ? void 0 : _a.getURLSearchParams(this).toString() }; }, action('MO: Query Base - need to update', ({ isReady }) => { if (isReady)
-            this.needToUpdate = true; }), { fireImmediately: true }));
+        this.disposers.push(reaction(() => this.dependenciesAreReady, (dependenciesAreReady) => {
+            if (dependenciesAreReady && !this.isNeedToUpdate)
+                runInAction(() => this.isNeedToUpdate = true);
+        }));
     }
     destroy() {
         var _a;
@@ -939,53 +902,21 @@ class Query {
             delete this.disposerObjects[__id];
         }
     }
-    // use it if everybody should know that the query data is updating
-    async load() {
-        this.isLoading = true;
-        try {
-            await this.shadowLoad();
-        }
-        finally {
-            runInAction(() => {
-                // the loading can be canceled by another load
-                // in this case we should not touch the __is_loading
-                if (!this.controller)
-                    this.isLoading = false;
-            });
-        }
-    }
-    // use it if nobody should know that the query data is updating
-    // for example you need to update the current data on the page and you don't want to show a spinner
-    async shadowLoad() {
-        try {
-            this.needToUpdate = false;
-            this.error = undefined;
-            // NOTE: Date.now() is used to get the current timestamp
-            //       and it can be the same in the same tick 
-            //       in this case we should increase the timestamp by 1
-            const now = Date.now();
-            if (this.timestamp === now)
-                this.timestamp += 1;
-            else
-                this.timestamp = now;
-            await this.__load();
-        }
-        catch (e) {
-            runInAction(() => this.error = e.message);
-        }
-    }
     get autoupdate() {
         return !!this.disposerObjects[DISPOSER_AUTOUPDATE];
     }
+    // Note: autoupdate trigger always the load(),
+    // shadowLoad() is not make sense to trigger by autoupdate
+    // because autoupdate means => user have changed something on UI inputs
+    // and we should to show the UI reaction
     set autoupdate(value) {
         if (value !== this.autoupdate) { // indepotent guarantee
             // on 
             if (value) {
                 setTimeout(() => {
-                    this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(() => this.needToUpdate && this.isReady, (needToUpdate) => {
-                        if (needToUpdate)
-                            this.load();
-                    }, { fireImmediately: true });
+                    // TODO: I have to add debounce here
+                    this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(() => this.isNeedToUpdate && this.dependenciesAreReady, (updateIt) => { if (updateIt)
+                        this.load(); }, { fireImmediately: true });
                 }, config.AUTO_UPDATE_DELAY);
             }
             // off
@@ -995,8 +926,7 @@ class Query {
             }
         }
     }
-    // check if all dependecies are ready
-    get isReady() {
+    get dependenciesAreReady() {
         return (this.filter === undefined || this.filter.isReady)
             && this.orderBy.isReady
             && this.offset.isReady
@@ -1005,31 +935,57 @@ class Query {
             && this.fields.isReady
             && this.omit.isReady;
     }
-    async __wrap_controller(func) {
-        if (this.controller) {
-            this.controller.abort();
-        }
-        this.controller = new AbortController();
-        let response;
+    // NOTE: if we use only shadowLoad() the isLoading will be always false.
+    // In this case isReady is equal to !isNeedToUpdate.
+    get isReady() {
+        return !this.isNeedToUpdate && !this.isLoading;
+    }
+    // use it if everybody should know that the query data is updating
+    async load() {
+        this.isLoading = true;
         try {
-            response = await func();
+            await this.shadowLoad();
+        }
+        finally {
+            runInAction(() => {
+                // the loading can be canceled by another load
+                // in this case we should not touch isLoading
+                if (!this.controller)
+                    this.isLoading = false;
+            });
+        }
+    }
+    // use it directly instead of load() if nobody should know that the query data is updating
+    // for example you need to update the current data on the page and you don't want to show a spinner
+    async shadowLoad() {
+        this.isNeedToUpdate = false;
+        this.error = undefined;
+        if (this.controller)
+            this.controller.abort();
+        this.controller = new AbortController();
+        // NOTE: Date.now() is used to get the current timestamp
+        //       and it can be the same in the same tick 
+        //       in this case we should increase the timestamp by 1
+        const now = Date.now();
+        if (this.timestamp === now)
+            this.timestamp += 1;
+        else
+            this.timestamp = now;
+        try {
+            await this.__load();
         }
         catch (e) {
+            // ignore the cancelation of the request
             if (e.name !== 'AbortError' && e.message !== 'canceled')
-                throw e;
+                runInAction(() => this.error = e.message);
         }
         finally {
             this.controller = undefined;
         }
-        return response;
     }
     async __load() {
-        return this.__wrap_controller(async () => {
-            const objs = await this.repository.load(this, this.controller);
-            runInAction(() => {
-                this.__items = objs;
-            });
-        });
+        const objs = await this.repository.load(this, this.controller);
+        runInAction(() => this.__items = objs);
     }
 }
 __decorate([
@@ -1047,7 +1003,7 @@ __decorate([
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], Query.prototype, "needToUpdate", void 0);
+], Query.prototype, "isNeedToUpdate", void 0);
 __decorate([
     observable,
     __metadata("design:type", Number)
@@ -1095,15 +1051,13 @@ class QueryPage extends Query {
         });
     }
     async __load() {
-        return this.__wrap_controller(async () => {
-            const [objs, total] = await Promise.all([
-                this.repository.load(this, this.controller),
-                this.repository.getTotalCount(this.filter, this.controller)
-            ]);
-            runInAction(() => {
-                this.__items = objs;
-                this.total = total;
-            });
+        const [objs, total] = await Promise.all([
+            this.repository.load(this, this.controller),
+            this.repository.getTotalCount(this.filter, this.controller)
+        ]);
+        runInAction(() => {
+            this.__items = objs;
+            this.total = total;
         });
     }
 }
@@ -1232,23 +1186,14 @@ class QueryStream extends Query {
         });
     }
     async __load() {
-        if (this.controller)
-            this.controller.abort();
-        this.controller = new AbortController();
-        try {
-            const objs = await this.repository.load(this, this.controller);
-            runInAction(() => {
-                this.__items.push(...objs);
-                // total is not make sense for infinity queries
-                // total = 1 show that last page is reached
-                if (objs.length < this.limit.value)
-                    this.total = 1;
-            });
-        }
-        catch (e) {
-            if (e.name !== 'AbortError')
-                throw e;
-        }
+        const objs = await this.repository.load(this, this.controller);
+        runInAction(() => {
+            this.__items.push(...objs);
+            // total is not make sense for infinity queries
+            // total = 1 show that last page is reached
+            if (objs.length < this.limit.value)
+                this.total = 1;
+        });
     }
 }
 __decorate([
@@ -1270,11 +1215,9 @@ __decorate([
  */
 class QueryRaw extends Query {
     async __load() {
-        return this.__wrap_controller(async () => {
-            const objs = await this.repository.adapter.load(this, this.controller);
-            runInAction(() => {
-                this.__items = objs;
-            });
+        const objs = await this.repository.adapter.load(this, this.controller);
+        runInAction(() => {
+            this.__items = objs;
         });
     }
 }
@@ -1285,13 +1228,11 @@ class QueryRaw extends Query {
  */
 class QueryRawPage extends QueryPage {
     async __load() {
-        return this.__wrap_controller(async () => {
-            const objs = await this.repository.adapter.load(this);
-            const total = await this.repository.getTotalCount(this.filter);
-            runInAction(() => {
-                this.__items = objs;
-                this.total = total;
-            });
+        const objs = await this.repository.adapter.load(this);
+        const total = await this.repository.getTotalCount(this.filter);
+        runInAction(() => {
+            this.__items = objs;
+            this.total = total;
         });
     }
 }
@@ -1308,11 +1249,9 @@ class QueryDistinct extends Query {
         this.field = field;
     }
     async __load() {
-        return this.__wrap_controller(async () => {
-            const objs = await this.repository.getDistinct(this.filter, this.field, this.controller);
-            runInAction(() => {
-                this.__items = objs;
-            });
+        const objs = await this.repository.getDistinct(this.filter, this.field, this.controller);
+        runInAction(() => {
+            this.__items = objs;
         });
     }
 }
@@ -1713,7 +1652,7 @@ class Filter {
 }
 
 class SingleFilter extends Filter {
-    constructor(field, input) {
+    constructor(field, input, getURIField, operator) {
         super();
         Object.defineProperty(this, "field", {
             enumerable: true,
@@ -1734,8 +1673,22 @@ class SingleFilter extends Filter {
             writable: true,
             value: []
         });
+        Object.defineProperty(this, "getURIField", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "operator", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         this.field = field;
         this.input = input;
+        this.getURIField = getURIField;
+        this.operator = operator;
         makeObservable(this);
     }
     get isReady() {
@@ -1743,13 +1696,13 @@ class SingleFilter extends Filter {
     }
     get URLSearchParams() {
         let search_params = new URLSearchParams();
-        let value = this.input.deserialize();
-        !this.input.disabled && value !== undefined && search_params.set(this.URIField, value);
+        let value = this.input.toString();
+        !this.input.isDisabled && value !== undefined && search_params.set(this.getURIField(this.field), value);
         return search_params;
     }
     isMatch(obj) {
         // it's always match if value of filter is undefined
-        if (this.input === undefined || this.input.disabled)
+        if (this.input === undefined || this.input.isDisabled)
             return true;
         return match(obj, this.field, this.input.value, this.operator);
     }
@@ -1783,6 +1736,45 @@ function match(obj, field_name, filter_value, operator) {
     }
     return false;
 }
+function EQ(field, input) {
+    return new SingleFilter(field, input, (field) => `${field}`, (a, b) => a === b);
+}
+function EQV(field, input) {
+    return new SingleFilter(field, input, (field) => `${field}__eq`, (a, b) => a === b);
+}
+function NOT_EQ(field, input) {
+    return new SingleFilter(field, input, (field) => `${field}__not_eq`, (a, b) => a !== b);
+}
+function GT(field, input) {
+    return new SingleFilter(field, input, (field) => `${field}__gt`, (a, b) => a > b);
+}
+function GTE(field, input) {
+    return new SingleFilter(field, input, (field) => `${field}__gte`, (a, b) => a >= b);
+}
+function LT(field, input) {
+    return new SingleFilter(field, input, (feild) => `${field}__lt`, (a, b) => a < b);
+}
+function LTE(field, input) {
+    return new SingleFilter(field, input, (field) => `${field}__lte`, (a, b) => a <= b);
+}
+function LIKE(field, input) {
+    return new SingleFilter(field, input, (field) => `${field}__contains`, (a, b) => a.includes(b));
+}
+function ILIKE(field, input) {
+    return new SingleFilter(field, input, (field) => `${field}__icontains`, (a, b) => a.toLowerCase().includes(b.toLowerCase()));
+}
+function IN(field, input) {
+    return new SingleFilter(field, input, (field) => `${field}__in`, (a, b) => {
+        // it's always match if value of filter is empty []
+        if (b.length === 0)
+            return true;
+        for (let v of b) {
+            if (v === a)
+                return true;
+        }
+        return false;
+    });
+}
 
 class ComboFilter extends Filter {
     constructor(filters) {
@@ -1810,131 +1802,6 @@ class ComboFilter extends Filter {
         return search_params;
     }
 }
-
-class EQ_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}`;
-    }
-    operator(value_a, value_b) {
-        return value_a === value_b;
-    }
-}
-// EQV is a verbose version of EQ that add __eq to the URIField
-class EQV_Filter extends EQ_Filter {
-    get URIField() {
-        return `${this.field}__eq`;
-    }
-}
-function EQ(field, value) {
-    return new EQ_Filter(field, value);
-}
-function EQV(field, value) {
-    return new EQV_Filter(field, value);
-}
-
-class NOT_EQ_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__not_eq`;
-    }
-    operator(value_a, value_b) {
-        return value_a !== value_b;
-    }
-}
-function NOT_EQ(field, value) {
-    return new NOT_EQ_Filter(field, value);
-}
-
-class GT_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__gt`;
-    }
-    operator(value_a, value_b) {
-        return value_a > value_b;
-    }
-}
-function GT(field, value) {
-    return new GT_Filter(field, value);
-}
-
-class GTE_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__gte`;
-    }
-    operator(value_a, value_b) {
-        return value_a >= value_b;
-    }
-}
-function GTE(field, value) {
-    return new GTE_Filter(field, value);
-}
-
-class LT_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__lt`;
-    }
-    operator(value_a, value_b) {
-        return value_a < value_b;
-    }
-}
-function LT(field, value) {
-    return new LT_Filter(field, value);
-}
-
-class LTE_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__lte`;
-    }
-    operator(value_a, value_b) {
-        return value_a <= value_b;
-    }
-}
-function LTE(field, value) {
-    return new LTE_Filter(field, value);
-}
-
-class IN_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__in`;
-    }
-    operator(value_a, value_b) {
-        // it's always match if value of filter is empty []
-        if (value_b.length === 0)
-            return true;
-        for (let v of value_b) {
-            if (v === value_a)
-                return true;
-        }
-        return false;
-    }
-}
-function IN(field, value) {
-    return new IN_Filter(field, value);
-}
-
-class LIKE_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__contains`;
-    }
-    operator(current_value, filter_value) {
-        return current_value.includes(filter_value);
-    }
-}
-function LIKE(field, value) {
-    return new LIKE_Filter(field, value);
-}
-
-class ILIKE_Filter extends SingleFilter {
-    get URIField() {
-        return `${this.field}__icontains`;
-    }
-    operator(current_value, filter_value) {
-        return current_value.toLowerCase().includes(filter_value.toLowerCase());
-    }
-}
-function ILIKE(field, value) {
-    return new ILIKE_Filter(field, value);
-}
-
 class AND_Filter extends ComboFilter {
     isMatch(obj) {
         for (let filter of this.filters) {
@@ -2128,7 +1995,7 @@ class Form {
         return Object.values(this.inputs).every(input => input.isReady);
     }
     get isError() {
-        return this.errors.length > 0 || Object.values(this.inputs).every(input => input.isError);
+        return this.errors.length > 0 || Object.values(this.inputs).some(input => input.errors.length > 0);
     }
     async submit() {
         if (!this.isReady) {
@@ -2199,5 +2066,5 @@ class ObjectForm extends Form {
     }
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ObjectForm, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ObjectForm, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

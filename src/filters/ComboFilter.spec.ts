@@ -1,6 +1,6 @@
-import { Model, Query, StringInput } from '..'
-import { EQ } from './EQ'
-import { ComboFilter } from './ComboFilter'
+import { Model, Query, StringInput, NumberInput } from '..'
+import { EQ } from './SingleFilter'
+import { ComboFilter, AND } from './ComboFilter'
 
 
 describe('ComboFilter', () => {
@@ -21,5 +21,16 @@ describe('ComboFilter', () => {
     })
     it('URLSearchParams', () => {
         // TODO: implement
+    })
+
+    describe('AND', () => {
+        it('isMatch', () => {
+            const a = new NumberInput({value: 1})
+            const b = new NumberInput({value: 2})
+            const obj_true = { a: 1, b: 2 }
+            const obj_false = { a: 1, b: 1 }
+            expect(AND(EQ('a', a), EQ('b', b)).isMatch(obj_true)).toBe(true)
+            expect(AND(EQ('a', a), EQ('b', b)).isMatch(obj_false)).toBe(false)
+        })
     })
 })

@@ -6,72 +6,100 @@ declare const config: {
     WATCTH_URL_CHANGES: (callback: any) => () => void;
 };
 
+type ID = string | number;
+declare const ASC = true;
+declare const DESC = false;
+type ORDER_BY = Map<string, boolean>;
+
 declare abstract class Filter {
     abstract get URLSearchParams(): URLSearchParams;
     abstract isMatch(obj: any): boolean;
     abstract get isReady(): boolean;
 }
 
-declare abstract class AutoReset<T extends Input<any, any>> {
-    input: T;
-    __disposers: any[];
-    constructor(input: T);
-    destroy(): void;
-    abstract do(): void;
+declare enum TYPE {
+    ID = "id",
+    STRING = "string",
+    NUMBER = "number",
+    DATE = "date",
+    DATETIME = "datetime",
+    BOOLEAN = "boolean",
+    ARRAY_ID = "array-id",
+    ARRAY_STRING = "array-string",
+    ARRAY_NUMBER = "array-number",
+    ARRAY_DATE = "array-date",
+    ARRAY_DATETIME = "array-datetime",
+    ORDER_BY = "order-by"
 }
 
-interface InputConstructorArgs<T, M extends Model> {
+interface InputConstructorArgs<T> {
     value?: T;
-    options?: Query<M>;
     required?: boolean;
     disabled?: boolean;
-    syncURL?: string;
-    syncURLSearchParams?: string;
-    syncLocalStorage?: string;
     debounce?: number;
-    autoReset?: (input: Input<T, M>) => void;
-    autoResetClass?: new (input: Input<T, M>) => AutoReset<Input<T, M>>;
+    syncURL?: string;
+    syncLocalStorage?: string;
 }
-declare abstract class Input<T, M extends Model> {
+declare abstract class Input<T> {
+    abstract readonly type: TYPE;
     value: T;
+    isRequired: boolean;
+    isDisabled: boolean;
+    isDebouncing: boolean;
+    isNeedToUpdate: boolean;
     errors: string[];
-    readonly options?: Query<M>;
-    required: boolean;
-    disabled: boolean;
-    readonly syncURLSearchParams?: string;
+    readonly debounce: number;
+    readonly syncURL?: string;
     readonly syncLocalStorage?: string;
-    readonly debounce?: number;
-    readonly autoReset?: (input: Input<T, M>) => void;
-    readonly autoResetObj?: AutoReset<Input<T, M>>;
-    isInit: boolean;
-    __isReady: boolean;
     __disposers: any[];
-    __setReadyTrue: Function;
-    constructor(args?: InputConstructorArgs<T, M>);
-    get isReady(): boolean;
-    get isError(): boolean;
-    set(value: T): void;
+    constructor(args?: InputConstructorArgs<T>);
     destroy(): void;
-    abstract serialize(value: string): void;
-    abstract deserialize(): string;
+    private stopDebouncing;
+    set(value: T): void;
+    get isReady(): boolean;
+    setFromString(value: string): void;
     toString(): string;
-    __doOptions(): void;
-    __doAutoReset(): void;
-    __doSyncURLSearchParams(): void;
-    __doSyncLocalStorage(): void;
+}
+declare class StringInput extends Input<string> {
+    readonly type = TYPE.STRING;
+}
+declare class NumberInput extends Input<number> {
+    readonly type = TYPE.NUMBER;
+}
+declare class DateInput extends Input<Date> {
+    readonly type = TYPE.DATE;
+}
+declare class DateTimeInput extends Input<Date> {
+    readonly type = TYPE.DATETIME;
+}
+declare class BooleanInput extends Input<boolean> {
+    readonly type = TYPE.BOOLEAN;
+}
+declare class OrderByInput extends Input<ORDER_BY> {
+    readonly type = TYPE.ORDER_BY;
 }
 
-declare abstract class SingleFilter extends Filter {
+declare class SingleFilter extends Filter {
     readonly field: string;
-    input: Input<any, any>;
+    input: Input<any>;
     __disposers: (() => void)[];
-    constructor(field: string, input: Input<any, any>);
+    readonly getURIField: (field: string) => string;
+    readonly operator: (value_a: any, value_b: any) => boolean;
+    constructor(field: string, input: Input<any>, getURIField: (field: string) => string, operator: (a: any, b: any) => boolean);
     get isReady(): boolean;
     get URLSearchParams(): URLSearchParams;
-    abstract get URIField(): string;
-    abstract operator(value_a: any, value_b: any): boolean;
     isMatch(obj: any): boolean;
 }
+declare function EQ(field: string, input: Input<any>): SingleFilter;
+declare function EQV(field: string, input: Input<any>): SingleFilter;
+declare function NOT_EQ(field: string, input: Input<any>): SingleFilter;
+declare function GT(field: string, input: Input<any>): SingleFilter;
+declare function GTE(field: string, input: Input<any>): SingleFilter;
+declare function LT(field: string, input: Input<any>): SingleFilter;
+declare function LTE(field: string, input: Input<any>): SingleFilter;
+declare function LIKE(field: string, input: Input<any>): SingleFilter;
+declare function ILIKE(field: string, input: Input<any>): SingleFilter;
+declare function IN(field: string, input: Input<any>): SingleFilter;
 
 declare abstract class ComboFilter extends Filter {
     readonly filters: Filter[];
@@ -80,133 +108,6 @@ declare abstract class ComboFilter extends Filter {
     get isReady(): boolean;
     get URLSearchParams(): URLSearchParams;
 }
-
-declare class StringInput extends Input<string | null | undefined, any> {
-    serialize(value: string): void;
-    deserialize(): string;
-}
-
-declare class NumberInput<M extends Model> extends Input<number | null | undefined, M> {
-    serialize(value: string): void;
-    deserialize(): string;
-}
-
-declare class BooleanInput extends Input<boolean | null | undefined, any> {
-    serialize(value?: string): void;
-    deserialize(): string;
-}
-
-declare class DateInput extends Input<Date | null | undefined, any> {
-    serialize(value: string): void;
-    deserialize(): string;
-}
-
-declare class DateTimeInput extends Input<Date | null | undefined, any> {
-    serialize(value: string): void;
-    deserialize(): string;
-}
-
-declare class EnumInput<EnumType extends Object, EnumValue extends EnumType[keyof EnumType]> extends Input<EnumValue | null | undefined, any> {
-    private enum;
-    constructor(args: InputConstructorArgs<EnumValue, any> & {
-        enum: EnumType;
-    });
-    serialize(value?: string): void;
-    deserialize(): string;
-}
-
-declare abstract class ArrayInput<T, M extends Model> extends Input<T, M> {
-    constructor(args?: InputConstructorArgs<T, M>);
-}
-
-declare class ArrayStringInput extends ArrayInput<string[], any> {
-    serialize(value: string): void;
-    deserialize(): string;
-}
-
-declare class ArrayNumberInput extends ArrayInput<number[], any> {
-    serialize(value: string): void;
-    deserialize(): string;
-}
-
-declare class OrderByInput extends Input<ORDER_BY, any> {
-    serialize(value: string): void;
-    deserialize(): string | undefined;
-}
-
-interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T, M> {
-    model: new (...args: any[]) => M;
-}
-declare class ObjectInput<M extends Model> extends NumberInput<M> {
-    readonly model: new (...args: any[]) => M;
-    constructor(args?: ObjectInputConstructorArgs<number, M>);
-    get obj(): M;
-}
-
-declare function autoResetId(input: NumberInput<any>): void;
-
-declare const autoResetArrayOfIDs: (input: ArrayNumberInput) => void;
-
-declare const autoResetArrayToEmpty: (input: any) => void;
-
-declare class EQ_Filter extends SingleFilter {
-    get URIField(): string;
-    operator(value_a: any, value_b: any): boolean;
-}
-declare class EQV_Filter extends EQ_Filter {
-    get URIField(): string;
-}
-declare function EQ(field: string, value: Input<any, any>): SingleFilter;
-declare function EQV(field: string, value: Input<any, any>): SingleFilter;
-
-declare class NOT_EQ_Filter extends SingleFilter {
-    get URIField(): string;
-    operator(value_a: any, value_b: any): boolean;
-}
-declare function NOT_EQ(field: string, value: Input<any, any>): SingleFilter;
-
-declare class GT_Filter extends SingleFilter {
-    get URIField(): string;
-    operator(value_a: any, value_b: any): boolean;
-}
-declare function GT(field: string, value: Input<any, any>): SingleFilter;
-
-declare class GTE_Filter extends SingleFilter {
-    get URIField(): string;
-    operator(value_a: any, value_b: any): boolean;
-}
-declare function GTE(field: string, value: Input<any, any>): SingleFilter;
-
-declare class LT_Filter extends SingleFilter {
-    get URIField(): string;
-    operator(value_a: any, value_b: any): boolean;
-}
-declare function LT(field: string, value: Input<any, any>): SingleFilter;
-
-declare class LTE_Filter extends SingleFilter {
-    get URIField(): string;
-    operator(value_a: any, value_b: any): boolean;
-}
-declare function LTE(field: string, value: Input<any, any>): SingleFilter;
-
-declare class IN_Filter extends SingleFilter {
-    get URIField(): string;
-    operator(value_a: any, value_b: any): boolean;
-}
-declare function IN(field: string, value: Input<any, any>): SingleFilter;
-
-declare class LIKE_Filter extends SingleFilter {
-    get URIField(): string;
-    operator(current_value: any, filter_value: any): boolean;
-}
-declare function LIKE(field: string, value: Input<any, any>): SingleFilter;
-
-declare class ILIKE_Filter extends SingleFilter {
-    get URIField(): string;
-    operator(current_value: any, filter_value: any): boolean;
-}
-declare function ILIKE(field: string, value: Input<any, any>): SingleFilter;
-
 declare class AND_Filter extends ComboFilter {
     isMatch(obj: any): boolean;
 }
@@ -214,10 +115,10 @@ declare function AND(...filters: Filter[]): Filter;
 
 declare abstract class Adapter<M extends Model> {
     abstract create(raw_data: any, controller?: AbortController): Promise<any>;
-    abstract get(obj_id: any, controller?: AbortController): Promise<any>;
-    abstract update(obj_id: any, only_changed_raw_data: any, controller?: AbortController): Promise<any>;
-    abstract delete(obj_id: any, controller?: AbortController): Promise<void>;
-    abstract action(obj_id: any, name: string, kwargs: Object, controller?: AbortController): Promise<any>;
+    abstract get(obj_id: ID, controller?: AbortController): Promise<any>;
+    abstract update(obj_id: ID, only_changed_raw_data: any, controller?: AbortController): Promise<any>;
+    abstract delete(obj_id: ID, controller?: AbortController): Promise<void>;
+    abstract action(obj_id: ID, name: string, kwargs: Object, controller?: AbortController): Promise<any>;
     abstract find(query: Query<M>, controller?: AbortController): Promise<any>;
     abstract load(query: Query<M>, controller?: AbortController): Promise<any[]>;
     abstract getTotalCount(filter: Filter, controller?: AbortController): Promise<number>;
@@ -234,7 +135,7 @@ declare class Repository<M extends Model> {
     create(obj: M, controller?: AbortController): Promise<M>;
     update(obj: M, controller?: AbortController): Promise<M>;
     delete(obj: M, controller?: AbortController): Promise<M>;
-    get(obj_id: number, controller?: AbortController): Promise<M>;
+    get(obj_id: ID, controller?: AbortController): Promise<M>;
     find(query: Query<M>, controller?: AbortController): Promise<M>;
     load(query: Query<M>, controller?: AbortController): Promise<M[]>;
     getTotalCount(filter: Filter, controller?: AbortController): Promise<number>;
@@ -242,16 +143,48 @@ declare class Repository<M extends Model> {
 }
 declare function repository(adapter: any, cache?: any): (cls: any) => void;
 
+declare abstract class ArrayInput<T> extends Input<T> {
+    constructor(args?: InputConstructorArgs<T>);
+}
+declare class ArrayStringInput extends ArrayInput<string[]> {
+    readonly type = TYPE.ARRAY_STRING;
+}
+declare class ArrayNumberInput extends ArrayInput<number[]> {
+    readonly type = TYPE.ARRAY_NUMBER;
+}
+declare class ArrayDateInput extends ArrayInput<Date[]> {
+    readonly type = TYPE.ARRAY_DATE;
+}
+declare class ArrayDateTimeInput extends ArrayInput<Date[]> {
+    readonly type = TYPE.ARRAY_DATETIME;
+}
+
+interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
+    options: Query<M>;
+    autoReset?(input: ObjectInput<M>): void;
+}
+declare class ObjectInput<M extends Model> extends Input<ID> {
+    readonly type: TYPE;
+    readonly options: Query<M>;
+    constructor(args: ObjectInputConstructorArgs<ID, M>);
+    get obj(): M;
+    get isReady(): boolean;
+    destroy(): void;
+}
+
+declare function autoResetId(input: ObjectInput<any>): void;
+
+declare const syncURLHandler: (paramName: string, input: Input<any>) => void;
+
+declare const syncLocalStorageHandler: (paramName: string, input: Input<any>) => void;
+
 declare const DISPOSER_AUTOUPDATE = "__autoupdate";
-declare const ASC = true;
-declare const DESC = false;
-type ORDER_BY = Map<string, boolean>;
 interface QueryProps<M extends Model> {
     repository?: Repository<M>;
     filter?: Filter;
     orderBy?: OrderByInput;
-    offset?: NumberInput<any>;
-    limit?: NumberInput<any>;
+    offset?: NumberInput;
+    limit?: NumberInput;
     relations?: ArrayStringInput;
     fields?: ArrayStringInput;
     omit?: ArrayStringInput;
@@ -261,15 +194,15 @@ declare class Query<M extends Model> {
     readonly repository: Repository<M>;
     readonly filter: Filter;
     readonly orderBy: OrderByInput;
-    readonly offset: NumberInput<any>;
-    readonly limit: NumberInput<any>;
+    readonly offset: NumberInput;
+    readonly limit: NumberInput;
     readonly relations: ArrayStringInput;
     readonly fields: ArrayStringInput;
     readonly omit: ArrayStringInput;
     protected __items: M[];
     total: number;
     isLoading: boolean;
-    needToUpdate: boolean;
+    isNeedToUpdate: boolean;
     timestamp: number;
     error: string;
     get items(): M[];
@@ -280,14 +213,15 @@ declare class Query<M extends Model> {
     };
     constructor(props: QueryProps<M>);
     destroy(): void;
-    load(): Promise<void>;
-    shadowLoad(): Promise<void>;
+    loading: () => Promise<Boolean>;
+    ready: () => Promise<Boolean>;
     get autoupdate(): boolean;
     set autoupdate(value: boolean);
+    get dependenciesAreReady(): boolean;
     get isReady(): boolean;
-    loading: () => Promise<Boolean>;
-    protected __wrap_controller(func: Function): Promise<any>;
-    protected __load(): Promise<any>;
+    load(): Promise<void>;
+    shadowLoad(): Promise<void>;
+    protected __load(): Promise<void>;
 }
 
 declare class QueryPage<M extends Model> extends Query<M> {
@@ -306,7 +240,7 @@ declare class QueryPage<M extends Model> extends Query<M> {
     get currentPage(): number;
     get totalPages(): number;
     constructor(props: QueryProps<M>);
-    __load(): Promise<any>;
+    __load(): Promise<void>;
 }
 
 declare class QueryCacheSync<M extends Model> extends Query<M> {
@@ -328,7 +262,7 @@ declare class QueryStream<M extends Model> extends Query<M> {
  * without converting them to models using the repository.
  */
 declare class QueryRaw<M extends Model> extends Query<M> {
-    __load(): Promise<any>;
+    __load(): Promise<void>;
 }
 
 /**
@@ -336,13 +270,13 @@ declare class QueryRaw<M extends Model> extends Query<M> {
  * without converting them to models using the repository.
  */
 declare class QueryRawPage<M extends Model> extends QueryPage<M> {
-    __load(): Promise<any>;
+    __load(): Promise<void>;
 }
 
 declare class QueryDistinct extends Query<any> {
     readonly field: string;
     constructor(field: string, props: QueryProps<any>);
-    __load(): Promise<any>;
+    __load(): Promise<void>;
 }
 
 declare abstract class Model {
@@ -369,10 +303,10 @@ declare abstract class Model {
     static getQueryCacheSync(props: QueryProps<Model>): QueryCacheSync<Model>;
     static getQueryStream(props: QueryProps<Model>): QueryStream<Model>;
     static getQueryDistinct(field: string, props: QueryProps<Model>): QueryDistinct;
-    static get(id: any): Model;
-    static findById(id: any): Promise<Model>;
+    static get(id: ID): Model;
+    static findById(id: ID): Promise<Model>;
     static find(query: Query<Model>): Promise<Model>;
-    id: any | undefined;
+    id: ID;
     __init_data: any;
     __disposers: Map<any, any>;
     constructor(...args: any[]);
@@ -397,7 +331,7 @@ declare function model(constructor: any): any;
 declare class Cache<M extends Model> {
     readonly name: string;
     readonly model: any;
-    readonly store: Map<number, M>;
+    readonly store: Map<ID, M>;
     constructor(model: any, name?: string);
     get(id: any): M | undefined;
     inject(obj: M): void;
@@ -460,14 +394,14 @@ declare function mock(): (cls: any) => void;
 
 declare class Form {
     readonly inputs: {
-        [key: string]: Input<any, any>;
+        [key: string]: Input<any>;
     };
     isLoading: boolean;
     errors: string[];
     private __submit;
     private __cancel;
     constructor(inputs: {
-        [key: string]: Input<any, any>;
+        [key: string]: Input<any>;
     }, submit: () => Promise<void>, cancel: () => void);
     get isReady(): boolean;
     get isError(): boolean;
@@ -478,7 +412,7 @@ declare class Form {
 declare class ObjectForm<M extends Model> extends Form {
     obj: M;
     constructor(inputs: {
-        [key: string]: Input<any, any>;
+        [key: string]: Input<any>;
     }, onSubmitted?: (obj: M) => void, onCancelled?: () => void);
 }
 
@@ -486,4 +420,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, EQV_Filter, EQ_Filter, EnumInput, Filter, Form, GT, GTE, GTE_Filter, GT_Filter, ILIKE, ILIKE_Filter, IN, IN_Filter, Input, InputConstructorArgs, LIKE, LIKE_Filter, LT, LTE, LTE_Filter, LT_Filter, LocalAdapter, MockAdapter, Model, NOT_EQ, NOT_EQ_Filter, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetArrayOfIDs, autoResetArrayToEmpty, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
