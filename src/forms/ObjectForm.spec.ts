@@ -14,16 +14,16 @@ describe('ObjectForm', () => {
     })
 
     it('constructor', async ()=> {
-        const inputA = new StringInput()
-        const inputB = new NumberInput()
+        const inputA = StringInput()
+        const inputB = NumberInput()
         const inputs = { a: inputA, b: inputB }
         const form = new ObjectForm(inputs)
         expect(form.inputs).toBe(inputs)
     })
 
     it('submit', (done)=> {
-        const inputA = new StringInput()
-        const inputB = new NumberInput()
+        const inputA = StringInput()
+        const inputB = NumberInput()
         const onSubmitted = (obj: A) => {
             expect(obj.a).toBe('a')
             expect(obj.b).toBe(1)
@@ -53,8 +53,8 @@ describe('ObjectForm', () => {
     })
 
     it('submit without match fields between form and object', async ()=> {
-        const inputA = new StringInput()
-        const inputB = new NumberInput()
+        const inputA = StringInput()
+        const inputB = NumberInput()
         const form = new ObjectForm<A>({a: inputA, X: inputB})
         form.obj = new A({})
         await expect(form.submit())

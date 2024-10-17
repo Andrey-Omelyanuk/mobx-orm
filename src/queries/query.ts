@@ -4,7 +4,8 @@ import { config } from '../config'
 import { Model } from '../model'
 import { Filter } from '../filters/Filter'
 import { waitIsFalse } from '../utils'
-import { OrderByInput, NumberInput, ArrayStringInput } from '../inputs'
+import { OrderByInput, NumberInput, ArrayStringInput, Input } from '../inputs'
+import { ORDER_BY } from '../types'
 
 
 export const DISPOSER_AUTOUPDATE = "__autoupdate"
@@ -13,14 +14,14 @@ export interface QueryProps<M extends Model> {
     repository                  ?: Repository<M>
     //
     filter                      ?: Filter
-    orderBy                     ?: OrderByInput 
+    orderBy                     ?: Input<ORDER_BY>
     // pagination
-    offset                      ?: NumberInput
-    limit                       ?: NumberInput
+    offset                      ?: Input<number>
+    limit                       ?: Input<number>
     // fields controll
-    relations                   ?: ArrayStringInput
-    fields                      ?: ArrayStringInput
-    omit                        ?: ArrayStringInput
+    relations                   ?: Input<string[]>
+    fields                      ?: Input<string[]> 
+    omit                        ?: Input<string[]> 
     //
     autoupdate                  ?: boolean
 }
@@ -49,12 +50,12 @@ export class Query <M extends Model> {
 
     readonly repository: Repository<M>
     readonly filter    : Filter
-    readonly orderBy   : OrderByInput 
-    readonly offset    : NumberInput
-    readonly limit     : NumberInput
-    readonly relations : ArrayStringInput
-    readonly fields    : ArrayStringInput 
-    readonly omit      : ArrayStringInput 
+    readonly orderBy   : Input<ORDER_BY>
+    readonly offset    : Input<number>
+    readonly limit     : Input<number>
+    readonly relations : Input<string[]>
+    readonly fields    : Input<string[]>
+    readonly omit      : Input<string[]>
 
     @observable protected __items: M[] = []         // items from the server
     @observable total           : number              // total count of items on the server, usefull for pagination
@@ -78,12 +79,12 @@ export class Query <M extends Model> {
 
         this.repository = repository 
         this.filter    = filter
-        this.orderBy   = orderBy    ? orderBy   : new OrderByInput() 
-        this.offset    = offset     ? offset    : new NumberInput() 
-        this.limit     = limit      ? limit     : new NumberInput() 
-        this.relations = relations  ? relations : new ArrayStringInput()
-        this.fields    = fields     ? fields    : new ArrayStringInput()
-        this.omit      = omit       ? omit      : new ArrayStringInput()
+        this.orderBy   = orderBy    ? orderBy   : OrderByInput() 
+        this.offset    = offset     ? offset    : NumberInput() 
+        this.limit     = limit      ? limit     : NumberInput() 
+        this.relations = relations  ? relations : ArrayStringInput()
+        this.fields    = fields     ? fields    : ArrayStringInput()
+        this.omit      = omit       ? omit      : ArrayStringInput()
         this.autoupdate = autoupdate
         makeObservable(this)
 

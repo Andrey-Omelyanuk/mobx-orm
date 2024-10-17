@@ -29,7 +29,7 @@ describe('SingleFilter', () => {
     })
 
     it('URLSearchParams', () => {
-        const input =  new NumberInput({value: 1})
+        const input =  NumberInput({value: 1})
         const filter = new SingleFilter('test', input, () => `test-x`, (a: any, b: any) => a === b)
                             ; expect(filter.URLSearchParams.toString()).toBe('test-x=1')
         input.set(null)     ; expect(filter.URLSearchParams.toString()).toBe('test-x=null')
@@ -41,7 +41,7 @@ describe('SingleFilter', () => {
     })
 
     describe('EQ', () => {
-        const filter = EQ('field', new NumberInput({value: 1}))
+        const filter = EQ('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field')
         })
@@ -56,7 +56,7 @@ describe('SingleFilter', () => {
     })
 
     describe('EQV', () => {
-        const filter = EQV('field', new NumberInput({value: 1}))
+        const filter = EQV('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field__eq')
         })
@@ -71,7 +71,7 @@ describe('SingleFilter', () => {
     })
 
     describe('NOT_EQ', () => {
-        const filter = NOT_EQ('field', new NumberInput({value: 1}))
+        const filter = NOT_EQ('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field__not_eq')
         })
@@ -86,7 +86,7 @@ describe('SingleFilter', () => {
     })
 
     describe('GT', () => {
-        const filter = GT('field', new NumberInput({value: 1}))
+        const filter = GT('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field__gt')
         })
@@ -101,7 +101,7 @@ describe('SingleFilter', () => {
     })
 
     describe('GTE', () => {
-        const filter = GTE('field', new NumberInput({value: 1}))
+        const filter = GTE('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field__gte')
         })
@@ -116,7 +116,7 @@ describe('SingleFilter', () => {
     })
 
     describe('LT', () => {
-        const filter = LT('field', new NumberInput({value: 1}))
+        const filter = LT('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field__lt')
         })
@@ -131,7 +131,7 @@ describe('SingleFilter', () => {
     })
 
     describe('LTE', () => {
-        const filter = LTE('field', new NumberInput({value: 1}))
+        const filter = LTE('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field__lte')
         })
@@ -146,7 +146,7 @@ describe('SingleFilter', () => {
     })
 
     describe('LIKE', () => {
-        const filter = LIKE('field', new NumberInput({value: 1}))
+        const filter = LIKE('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field__contains')
         })
@@ -161,7 +161,7 @@ describe('SingleFilter', () => {
     })
 
     describe('ILIKE', () => {
-        const filter = ILIKE('field', new NumberInput({value: 1}))
+        const filter = ILIKE('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field__icontains')
         })
@@ -176,7 +176,7 @@ describe('SingleFilter', () => {
     })
 
     describe('IN', () => {
-        const filter = IN('field', new NumberInput({value: 1}))
+        const filter = IN('field', NumberInput({value: 1}))
         it('URIField', async () => {
             expect(filter.getURIField(filter.field)).toBe('field__in')
         })

@@ -7,7 +7,6 @@ export const syncLocalStorageHandler = (paramName: string, input: Input<any>) =>
     if (paramName in localStorage) {
         let raw_value = localStorage.getItem(paramName)
         const exist_raw_value = input.toString() 
-
         if (exist_raw_value !== raw_value)
             input.setFromString(raw_value)
     }
@@ -22,6 +21,5 @@ export const syncLocalStorageHandler = (paramName: string, input: Input<any>) =>
             else
                 localStorage.removeItem(paramName)
         },
-        { fireImmediately: true },
     ))
 }

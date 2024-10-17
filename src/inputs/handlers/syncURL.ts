@@ -20,15 +20,14 @@ export const syncURLHandler = (paramName: string, input: Input<any>) => {
             }
         }
         else if (input.value !== undefined)
-            this.set(undefined)
+            input.set(undefined)
     }
-    input.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(this)))
+    input.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(input)))
     // watch for Input changes and update URL
     input.__disposers.push(reaction(
         () => input.toString(),  // I cannot use this.value because it can be a Map
         (value) => {
             const searchParams = new URLSearchParams(window.location.search)
-
             if (value === '' || value === undefined)
                 searchParams.delete(paramName)
             else if (searchParams.get(paramName) !== value)
