@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.1.0
+   * mobx-orm.js v2.1.1
    * Released under the MIT license.
    */
 
@@ -394,9 +394,9 @@ const syncURLHandler = (paramName, input) => {
             }
         }
         else if (input.value !== undefined)
-            this.set(undefined);
+            input.set(undefined);
     }
-    input.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(undefined)));
+    input.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(input)));
     // watch for Input changes and update URL
     input.__disposers.push(reaction(() => input.toString(), // I cannot use this.value because it can be a Map
     (value) => {
@@ -425,11 +425,17 @@ const syncLocalStorageHandler = (paramName, input) => {
             localStorage.setItem(paramName, input.toString());
         else
             localStorage.removeItem(paramName);
-    }, { fireImmediately: true }));
+    }));
 };
 
 class Input {
     constructor(args) {
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "value", {
             enumerable: true,
             configurable: true,
@@ -498,6 +504,7 @@ class Input {
         });
         // init all observables before use it in reaction
         this.value = args === null || args === void 0 ? void 0 : args.value;
+        this.type = args === null || args === void 0 ? void 0 : args.type;
         this.isRequired = !!(args === null || args === void 0 ? void 0 : args.required);
         this.isDisabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
         this.isDebouncing = false;
@@ -506,13 +513,13 @@ class Input {
         this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
         this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
         makeObservable(this);
+        if (this.debounce) {
+            this.stopDebouncing = _.debounce(() => runInAction(() => this.isDebouncing = false), this.debounce);
+        }
         // the order is important, because syncURL has more priority under syncLocalStorage
         // i.e. init from syncURL can overwrite value from syncLocalStorage
         this.syncLocalStorage && syncLocalStorageHandler(this.syncLocalStorage, this);
         this.syncURL && syncURLHandler(this.syncURL, this);
-        if (this.debounce) {
-            this.stopDebouncing = _.debounce(() => runInAction(() => this.isDebouncing = false), this.debounce);
-        }
     }
     destroy() {
         this.__disposers.forEach(disposer => disposer());
@@ -570,124 +577,76 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Input.prototype, "set", null);
-class StringInput extends Input {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.STRING
-        });
-    }
-}
-class NumberInput extends Input {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.NUMBER
-        });
-    }
-}
-class DateInput extends Input {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.DATE
-        });
-    }
-}
-class DateTimeInput extends Input {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.DATETIME
-        });
-    }
-}
-class BooleanInput extends Input {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.BOOLEAN
-        });
-    }
-}
-class OrderByInput extends Input {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.ORDER_BY
-        });
-    }
-}
-
-class ArrayInput extends Input {
-    constructor(args) {
-        if (args === undefined || args.value === undefined)
-            args = Object.assign(Object.assign({}, args), { value: [] });
-        super(args);
-    }
-}
-class ArrayStringInput extends ArrayInput {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.ARRAY_STRING
-        });
-    }
-}
-class ArrayNumberInput extends ArrayInput {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.ARRAY_NUMBER
-        });
-    }
-}
-class ArrayDateInput extends ArrayInput {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.ARRAY_DATE
-        });
-    }
-}
-class ArrayDateTimeInput extends ArrayInput {
-    constructor() {
-        super(...arguments);
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: TYPE.ARRAY_DATETIME
-        });
-    }
-}
+// export class StringInput        extends Input<string>   { readonly type = TYPE.STRING }
+const StringInput = (args) => {
+    if (!args)
+        args = {};
+    args.type = TYPE.STRING;
+    return new Input(args);
+};
+// export class NumberInput        extends Input<number>   { readonly type = TYPE.NUMBER }
+const NumberInput = (args) => {
+    if (!args)
+        args = {};
+    args.type = TYPE.NUMBER;
+    return new Input(args);
+};
+// export class DateInput          extends Input<Date>     { readonly type = TYPE.DATE }
+const DateInput = (args) => {
+    if (!args)
+        args = {};
+    args.type = TYPE.DATE;
+    return new Input(args);
+};
+// export class DateTimeInput      extends Input<Date>     { readonly type = TYPE.DATETIME }
+const DateTimeInput = (args) => {
+    if (!args)
+        args = {};
+    args.type = TYPE.DATETIME;
+    return new Input(args);
+};
+// export class BooleanInput       extends Input<boolean>  { readonly type = TYPE.BOOLEAN }
+const BooleanInput = (args) => {
+    if (!args)
+        args = {};
+    args.type = TYPE.BOOLEAN;
+    return new Input(args);
+};
+// export class OrderByInput       extends Input<ORDER_BY> { readonly type = TYPE.ORDER_BY }
+const OrderByInput = (args) => {
+    if (!args)
+        args = {};
+    args.type = TYPE.ORDER_BY;
+    return new Input(args);
+};
+// export class ArrayStringInput   extends ArrayInput<string[]> { readonly type = TYPE.ARRAY_STRING }
+const ArrayStringInput = (args) => {
+    if (args === undefined || args.value === undefined)
+        args = Object.assign(Object.assign({}, args), { value: [] });
+    args.type = TYPE.ARRAY_STRING;
+    return new Input(args);
+};
+// export class ArrayNumberInput   extends ArrayInput<number[]> { readonly type = TYPE.ARRAY_NUMBER }
+const ArrayNumberInput = (args) => {
+    if (args === undefined || args.value === undefined)
+        args = Object.assign(Object.assign({}, args), { value: [] });
+    args.type = TYPE.ARRAY_NUMBER;
+    return new Input(args);
+};
+// export class ArrayDateInput     extends ArrayInput<Date[]>   { readonly type = TYPE.ARRAY_DATE }
+const ArrayDateInput = (args) => {
+    if (args === undefined || args.value === undefined)
+        args = Object.assign(Object.assign({}, args), { value: [] });
+    args.type = TYPE.ARRAY_DATE;
+    return new Input(args);
+};
+// export class ArrayDateTimeInput extends ArrayInput<Date[]>   { readonly type = TYPE.ARRAY_DATETIME }
+const ArrayDateTimeInput = (args) => {
+    if (args === undefined || args.value === undefined)
+        args = Object.assign(Object.assign({}, args), { value: [] });
+    args.type = TYPE.ARRAY_DATETIME;
+    return new Input(args);
+};
 
 class ObjectInput extends Input {
     constructor(args) {
@@ -878,12 +837,12 @@ class Query {
         let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = false } = props;
         this.repository = repository;
         this.filter = filter;
-        this.orderBy = orderBy ? orderBy : new OrderByInput();
-        this.offset = offset ? offset : new NumberInput();
-        this.limit = limit ? limit : new NumberInput();
-        this.relations = relations ? relations : new ArrayStringInput();
-        this.fields = fields ? fields : new ArrayStringInput();
-        this.omit = omit ? omit : new ArrayStringInput();
+        this.orderBy = orderBy ? orderBy : OrderByInput();
+        this.offset = offset ? offset : NumberInput();
+        this.limit = limit ? limit : NumberInput();
+        this.relations = relations ? relations : ArrayStringInput();
+        this.fields = fields ? fields : ArrayStringInput();
+        this.omit = omit ? omit : ArrayStringInput();
         this.autoupdate = autoupdate;
         makeObservable(this);
         this.disposers.push(reaction(() => this.dependenciesAreReady, (dependenciesAreReady) => {
@@ -2066,5 +2025,5 @@ class ObjectForm extends Form {
     }
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ObjectForm, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ObjectForm, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map

@@ -39,9 +39,10 @@ interface InputConstructorArgs<T> {
     debounce?: number;
     syncURL?: string;
     syncLocalStorage?: string;
+    type?: TYPE;
 }
-declare abstract class Input<T> {
-    abstract readonly type: TYPE;
+declare class Input<T> {
+    readonly type: TYPE;
     value: T;
     isRequired: boolean;
     isDisabled: boolean;
@@ -60,24 +61,16 @@ declare abstract class Input<T> {
     setFromString(value: string): void;
     toString(): string;
 }
-declare class StringInput extends Input<string> {
-    readonly type = TYPE.STRING;
-}
-declare class NumberInput extends Input<number> {
-    readonly type = TYPE.NUMBER;
-}
-declare class DateInput extends Input<Date> {
-    readonly type = TYPE.DATE;
-}
-declare class DateTimeInput extends Input<Date> {
-    readonly type = TYPE.DATETIME;
-}
-declare class BooleanInput extends Input<boolean> {
-    readonly type = TYPE.BOOLEAN;
-}
-declare class OrderByInput extends Input<ORDER_BY> {
-    readonly type = TYPE.ORDER_BY;
-}
+declare const StringInput: (args?: InputConstructorArgs<string>) => Input<string>;
+declare const NumberInput: (args?: InputConstructorArgs<number>) => Input<number>;
+declare const DateInput: (args?: InputConstructorArgs<Date>) => Input<Date>;
+declare const DateTimeInput: (args?: InputConstructorArgs<Date>) => Input<Date>;
+declare const BooleanInput: (args?: InputConstructorArgs<boolean>) => Input<boolean>;
+declare const OrderByInput: (args?: InputConstructorArgs<ORDER_BY>) => Input<ORDER_BY>;
+declare const ArrayStringInput: (args?: InputConstructorArgs<string[]>) => Input<string[]>;
+declare const ArrayNumberInput: (args?: InputConstructorArgs<number[]>) => Input<number[]>;
+declare const ArrayDateInput: (args?: InputConstructorArgs<Date[]>) => Input<Date[]>;
+declare const ArrayDateTimeInput: (args?: InputConstructorArgs<Date[]>) => Input<Date[]>;
 
 declare class SingleFilter extends Filter {
     readonly field: string;
@@ -143,22 +136,6 @@ declare class Repository<M extends Model> {
 }
 declare function repository(adapter: any, cache?: any): (cls: any) => void;
 
-declare abstract class ArrayInput<T> extends Input<T> {
-    constructor(args?: InputConstructorArgs<T>);
-}
-declare class ArrayStringInput extends ArrayInput<string[]> {
-    readonly type = TYPE.ARRAY_STRING;
-}
-declare class ArrayNumberInput extends ArrayInput<number[]> {
-    readonly type = TYPE.ARRAY_NUMBER;
-}
-declare class ArrayDateInput extends ArrayInput<Date[]> {
-    readonly type = TYPE.ARRAY_DATE;
-}
-declare class ArrayDateTimeInput extends ArrayInput<Date[]> {
-    readonly type = TYPE.ARRAY_DATETIME;
-}
-
 interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
     options: Query<M>;
     autoReset?(input: ObjectInput<M>): void;
@@ -182,23 +159,23 @@ declare const DISPOSER_AUTOUPDATE = "__autoupdate";
 interface QueryProps<M extends Model> {
     repository?: Repository<M>;
     filter?: Filter;
-    orderBy?: OrderByInput;
-    offset?: NumberInput;
-    limit?: NumberInput;
-    relations?: ArrayStringInput;
-    fields?: ArrayStringInput;
-    omit?: ArrayStringInput;
+    orderBy?: Input<ORDER_BY>;
+    offset?: Input<number>;
+    limit?: Input<number>;
+    relations?: Input<string[]>;
+    fields?: Input<string[]>;
+    omit?: Input<string[]>;
     autoupdate?: boolean;
 }
 declare class Query<M extends Model> {
     readonly repository: Repository<M>;
     readonly filter: Filter;
-    readonly orderBy: OrderByInput;
-    readonly offset: NumberInput;
-    readonly limit: NumberInput;
-    readonly relations: ArrayStringInput;
-    readonly fields: ArrayStringInput;
-    readonly omit: ArrayStringInput;
+    readonly orderBy: Input<ORDER_BY>;
+    readonly offset: Input<number>;
+    readonly limit: Input<number>;
+    readonly relations: Input<string[]>;
+    readonly fields: Input<string[]>;
+    readonly omit: Input<string[]>;
     protected __items: M[];
     total: number;
     isLoading: boolean;
@@ -420,4 +397,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
