@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.1.2
+   * mobx-orm.js v2.1.3
    * Released under the MIT license.
    */
 
@@ -282,8 +282,10 @@ var TYPE;
     TYPE["ARRAY_DATETIME"] = "array-datetime";
     TYPE["ORDER_BY"] = "order-by";
 })(TYPE || (TYPE = {}));
+const ARRAYS = [TYPE.ARRAY_STRING, TYPE.ARRAY_NUMBER, TYPE.ARRAY_DATE, TYPE.ARRAY_DATETIME, TYPE.ORDER_BY];
 const arrayToString = (type, value) => {
     let result = [];
+    // if (value === null) return undefined
     if (value) {
         for (const i of value) {
             let v = toString(type, i);
@@ -308,7 +310,7 @@ const stringToArray = (type, value) => {
 const toString = (valueType, value) => {
     if (value === undefined)
         return undefined;
-    if (value === null)
+    if (value === null && !ARRAYS.includes(valueType))
         return 'null';
     switch (valueType) {
         case TYPE.NUMBER: return '' + value;
@@ -338,12 +340,14 @@ const toString = (valueType, value) => {
 };
 const stringTo = (valueType, value, enumType) => {
     let result;
-    if (value === undefined)
-        return undefined;
-    else if (value === 'null')
-        return null;
-    else if (value === null)
-        return null;
+    if (!ARRAYS.includes(valueType)) {
+        if (value === undefined)
+            return undefined;
+        else if (value === 'null')
+            return null;
+        else if (value === null)
+            return null;
+    }
     switch (valueType) {
         case TYPE.NUMBER:
             result = parseInt(value);
@@ -787,7 +791,7 @@ class Query {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: false
+            value: true
         }); // query was changed and we need to update the data
         Object.defineProperty(this, "timestamp", {
             enumerable: true,

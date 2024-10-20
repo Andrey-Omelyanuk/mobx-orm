@@ -14,9 +14,11 @@ export enum TYPE {
     ARRAY_DATETIME  = 'array-datetime',
     ORDER_BY        = 'order-by',
 }
+const ARRAYS = [TYPE.ARRAY_STRING, TYPE.ARRAY_NUMBER, TYPE.ARRAY_DATE, TYPE.ARRAY_DATETIME, TYPE.ORDER_BY]
 
 const arrayToString = (type, value) => {
     let result = [] 
+    // if (value === null) return undefined
     if (value) {
         for (const i of value) {
             let v = toString(type, i) 
@@ -42,7 +44,7 @@ const stringToArray = (type, value) => {
 
 export const toString = (valueType: TYPE, value: any): string => {
     if (value === undefined) return undefined
-    if (value === null) return 'null'
+    if (value === null && !ARRAYS.includes(valueType)) return 'null'
 
     switch (valueType) {
         case TYPE.NUMBER:   return ''+value
@@ -73,9 +75,11 @@ export const toString = (valueType: TYPE, value: any): string => {
 export const stringTo = (valueType: TYPE, value: string, enumType?: Object): any => {
     let result
 
-         if (value === undefined) return undefined
-    else if (value === 'null')    return null
-    else if (value === null)      return null
+    if (!ARRAYS.includes(valueType)) {
+             if (value === undefined) return undefined
+        else if (value === 'null') return null
+        else if (value ===  null) return null
+    }
 
     switch (valueType) {
         case TYPE.NUMBER:   

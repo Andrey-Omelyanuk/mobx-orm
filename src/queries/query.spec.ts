@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import { reaction, runInAction } from 'mobx'
+import { reaction } from 'mobx'
 import { TestAdapter } from '../test.utils'
 import { 
     model, Model, EQ, StringInput, local, Repository, OrderByInput, NumberInput, ArrayStringInput,
-    Query, DISPOSER_AUTOUPDATE, DESC
+    Query, DISPOSER_AUTOUPDATE, DESC, ObjectInput
 } from '../'
 
 
@@ -19,64 +19,64 @@ describe('Query', () => {
     })
 
     describe('Constructor', () => {
-        // it('default', async ()=> {
-        //     const query = new Query<A>({repository: A.repository})
-        //     expect(query).toMatchObject({
-        //         repository      : A.repository,
-        //         filter          : undefined,
+        it('default', async ()=> {
+            const query = new Query<A>({repository: A.repository})
+            expect(query).toMatchObject({
+                repository      : A.repository,
+                filter          : undefined,
 
-        //         items           : [],
-        //         total           : undefined,
-        //         isLoading       : false,
-        //         isNeedToUpdate  : true,
-        //         timestamp       : undefined,
-        //         error           : undefined,
-        //     })
-        //     expect(query.orderBy    .value).toBe(undefined)
-        //     expect(query.limit      .value).toBe(undefined)
-        //     expect(query.offset     .value).toBe(undefined)
-        //     expect(query.relations  .value).toEqual([])
-        //     expect(query.fields     .value).toEqual([])
-        //     expect(query.omit       .value).toEqual([])
-        //     expect((query as any).disposers.length).toBe(1)
-        // })
-        // it('some values', async ()=> {
-        //     const filter    = EQ('name', new StringInput({value: 'test'}))
-        //     const orderBy   = new OrderByInput({value: new Map([['asc', DESC]])})
-        //     const offset    = new NumberInput({value: 100})
-        //     const limit     = new NumberInput({value: 500})
-        //     const relations = new ArrayStringInput({value: ['rel_a', 'rel_b']})
-        //     const fields    = new ArrayStringInput({value: ['field_a', 'field_b']})
-        //     const omit      = new ArrayStringInput({value: ['omit_a', 'omit_b']})
-        //     const query     = new Query<A>({
-        //         repository  : A.repository,
-        //         filter      : filter,
-        //         orderBy     : orderBy, 
-        //         offset      : offset,
-        //         limit       : limit,
-        //         relations   : relations, 
-        //         fields      : fields,
-        //         omit        : omit, 
-        //     })
-        //     expect(query).toMatchObject({
-        //         repository      : A.repository,
-        //         filter          : filter,
-        //         orderBy         : orderBy,
-        //         limit           : limit,
-        //         offset          : offset,
-        //         relations       : relations, 
-        //         fields          : fields,
-        //         omit            : omit,
+                items           : [],
+                total           : undefined,
+                isLoading       : false,
+                isNeedToUpdate  : true,
+                timestamp       : undefined,
+                error           : undefined,
+                // relations       : [],
+                // fields          : [],
+                // omit            : [],
+                // orderBy        : undefined,
+                // limit          : undefined,
+                // offset         : undefined,
+            })
+            expect((query as any).disposers.length).toBe(1)
+        })
+        it('some values', async ()=> {
+            const filter    = EQ('name', StringInput({value: 'test'}))
+            const orderBy   = OrderByInput({value: new Map([['asc', DESC]])})
+            const offset    = NumberInput({value: 100})
+            const limit     = NumberInput({value: 500})
+            const relations = ArrayStringInput({value: ['rel_a', 'rel_b']})
+            const fields    = ArrayStringInput({value: ['field_a', 'field_b']})
+            const omit      = ArrayStringInput({value: ['omit_a', 'omit_b']})
+            const query     = new Query<A>({
+                repository  : A.repository,
+                filter      : filter,
+                orderBy     : orderBy, 
+                offset      : offset,
+                limit       : limit,
+                relations   : relations, 
+                fields      : fields,
+                omit        : omit, 
+            })
+            expect(query).toMatchObject({
+                repository      : A.repository,
+                filter          : filter,
+                orderBy         : orderBy,
+                limit           : limit,
+                offset          : offset,
+                relations       : relations, 
+                fields          : fields,
+                omit            : omit,
 
-        //         items           : [],
-        //         total           : undefined,
-        //         isLoading       : false,
-        //         isNeedToUpdate  : true,
-        //         timestamp       : undefined,
-        //         error           : undefined,
-        //     })
-        //     expect((query as any).disposers.length).toBe(1)
-        // })
+                items           : [],
+                total           : undefined,
+                isLoading       : false,
+                isNeedToUpdate  : true,
+                timestamp       : undefined,
+                error           : undefined,
+            })
+            expect((query as any).disposers.length).toBe(1)
+        })
     })
 
     describe('Destructor', () => {
@@ -90,19 +90,19 @@ describe('Query', () => {
     })
 
     describe('Load', () => {
-        it('is_loading flag', (done) => {
+        it('isLoading', (done) => {
             const query = new Query<A>({repository: A.repository});     expect(query.isLoading).toBe(false)
             query.load().finally(()=> {                                 expect(query.isLoading).toBe(false)
                 done()
             });                                                         expect(query.isLoading).toBe(true)
         })
 
-        // it('need_to_update should set to false', (done) => {
-        //     const query = new Query<A>({repository: A.repository});     expect(query.isNeedToUpdate).toBe(true)
-        //     query.load().finally(()=> {                                 expect(query.isNeedToUpdate).toBe(false)
-        //         done()                                                  // it set to false as loading started
-        //     });                                                         expect(query.isNeedToUpdate).toBe(false)
-        // })
+        it('need_to_update should set to false', (done) => {
+            const query = new Query<A>({repository: A.repository});     expect(query.isNeedToUpdate).toBe(true)
+            query.load().finally(()=> {                                 expect(query.isNeedToUpdate).toBe(false)
+                done()                                                  // it set to false as loading started
+            });                                                         expect(query.isNeedToUpdate).toBe(false)
+        })
 
         it('timestamp', async () => {
             // NOTE: Date.now() is used to get the current timestamp
@@ -160,24 +160,38 @@ describe('Query', () => {
                                         expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).toBe(undefined)                     
         })
 
-        // it('in action', async () => {
-        //     const options    = new Query<A>({repository: A.repository})
-        //     const inputValue = new StringInput({value: 'test', options})
-        //     const query      = new Query<A>({repository: A.repository, filter: EQ('name', inputValue), autoupdate: true})
+        it('in action', async () => {
+            const options = new Query<A>({repository: A.repository})
+            const input   = new ObjectInput({value: 'test', options})
+            const query   = new Query<A>({repository: A.repository, filter: EQ('name', input), autoupdate: true})
 
-        //     jest.runAllTimers();        expect(options.isNeedToUpdate).toBe(true)
-        //                                 // expect(query.filter.isReady  ).toBe(true)
-        //                                 expect(query.isNeedToUpdate  ).toBe(false)
+                                        expect(options.isNeedToUpdate   ).toBe(true)
+                                        expect(options.isReady          ).toBe(false)
+                                        expect(input.isReady            ).toBe(false)
+                                        expect(query.isNeedToUpdate     ).toBe(true)
+                                        expect(query.isReady            ).toBe(false)
 
-        //     await options.load();       expect(options.isNeedToUpdate).toBe(false)
-        //                                 // expect(query.filter.isReady  ).toBe(false)
-        //                                 expect(query.isNeedToUpdate  ).toBe(false)
+            jest.runAllTimers();        expect(options.isNeedToUpdate   ).toBe(true)
+                                        expect(options.isReady          ).toBe(false)
+                                        expect(input.isReady            ).toBe(false)
+                                        expect(query.isNeedToUpdate     ).toBe(true)
+                                        expect(query.isReady            ).toBe(false)
+                                        // nothing changed, auto update is not triggered because the input is not ready
 
-        //     inputValue.set('test');     expect(options.isNeedToUpdate).toBe(false)
-        //                                 expect(query.filter.isReady  ).toBe(true)
-        //                                 // autoupdate: load() was triggered after the value.set
-        //                                 expect(query.isNeedToUpdate  ).toBe(false)
-        // })
+            await options.load();       expect(options.isNeedToUpdate   ).toBe(false)   // changed
+                                        expect(options.isReady          ).toBe(true)    // changed
+                                        expect(input.isReady            ).toBe(false)   // is not ready yet, neet do set the value
+                                        expect(query.isNeedToUpdate     ).toBe(true)
+                                        expect(query.isReady            ).toBe(false)
+
+            input.set('test');          expect(options.isNeedToUpdate   ).toBe(false)
+                                        expect(options.isReady          ).toBe(true)
+                                        expect(input.isReady            ).toBe(true)    // changed
+                                        expect(query.isNeedToUpdate     ).toBe(false)   // changed
+                                        expect(query.isReady            ).toBe(false)   // should wait next tick to trigger auto update
+            await jest.runAllTimersAsync()
+                                        expect(query.isReady            ).toBe(true)   // done
+        })
     })
 
     describe('e2e', () => {

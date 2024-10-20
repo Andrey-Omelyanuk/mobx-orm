@@ -12,11 +12,7 @@ describe('SingleFilter', () => {
         const options = TestModel.getQuery({})
         const input =  new ObjectInput({value: 1, options})
         const filter = new SingleFilter('test', input, () => `test`, (a: any, b: any) => a === b)
-                                                            ; expect(options.isReady).toBe(true)
-                                                            ; expect(input  .isReady).toBe(true)
-                                                            ; expect(filter .isReady).toBe(true)
-
-        runInAction(() => options.isNeedToUpdate = true)    ; expect(options.isReady).toBe(false)
+                                                            ; expect(options.isReady).toBe(false)
                                                             ; expect(input  .isReady).toBe(false)
                                                             ; expect(filter .isReady).toBe(false)
 
@@ -26,6 +22,11 @@ describe('SingleFilter', () => {
 
         input.set(2)                                        ; expect(input  .isReady).toBe(true)
                                                             ; expect(filter .isReady).toBe(true)
+
+        runInAction(() => options.isNeedToUpdate = true)    ; expect(options.isReady).toBe(false)
+                                                            ; expect(input  .isReady).toBe(false)
+                                                            ; expect(filter .isReady).toBe(false)
+
     })
 
     it('URLSearchParams', () => {

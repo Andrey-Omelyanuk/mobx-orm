@@ -1,4 +1,5 @@
 import { TYPE, toString, stringTo } from './convert'
+import { ASC, DESC } from './types'
 
 
 describe('Convert', () => {
@@ -24,12 +25,37 @@ describe('Convert', () => {
         it('BOOLEAN', async () => {
         })
         it('ARRAY_STRING', async () => {
+            expect(stringTo(TYPE.ARRAY_STRING, 'a'      )).toMatchObject(['a',])
+            expect(stringTo(TYPE.ARRAY_STRING, 'a,b,2'  )).toMatchObject(['a','b','2',])
+            expect(stringTo(TYPE.ARRAY_STRING, 'test'   )).toMatchObject(['test'])
+            expect(stringTo(TYPE.ARRAY_STRING, 'null'   )).toMatchObject([null,])
+            expect(stringTo(TYPE.ARRAY_STRING, undefined)).toMatchObject([])
+            expect(stringTo(TYPE.ARRAY_STRING, null     )).toMatchObject([])
         })
         it('ARRAY_NUMBER', async () => {
+            expect(stringTo(TYPE.ARRAY_NUMBER, '0'      )).toMatchObject([0,])
+            expect(stringTo(TYPE.ARRAY_NUMBER, '0,1,2'  )).toMatchObject([0,1,2,])
+            expect(stringTo(TYPE.ARRAY_NUMBER, 'test'   )).toMatchObject([])
+            expect(stringTo(TYPE.ARRAY_NUMBER, 'null'   )).toMatchObject([null,])
+            expect(stringTo(TYPE.ARRAY_NUMBER, undefined)).toMatchObject([])
+            expect(stringTo(TYPE.ARRAY_NUMBER, null     )).toMatchObject([])
         })
         it('ARRAY_DATE', async () => {
         })
         it('ARRAY_DATETIME', async () => {
+        })
+        it('ORDER_BY', async () => {
+            expect(stringTo(TYPE.ORDER_BY, 'a'      )).toMatchObject(new Map([['a', ASC]]))
+            expect(stringTo(TYPE.ORDER_BY, 'a,b'    )).toMatchObject(new Map([['a', ASC], ['b', ASC]]))
+            expect(stringTo(TYPE.ORDER_BY, '-a'     )).toMatchObject(new Map([['a', DESC]]))
+            expect(stringTo(TYPE.ORDER_BY, '-a,-b'  )).toMatchObject(new Map([['a', DESC], ['b', DESC]]))
+            expect(stringTo(TYPE.ORDER_BY, undefined)).toMatchObject(new Map([]))
+            
+//         it('"a"'      , async () => { i.serialize('a')      ; expect(_.isEqual(i.value, new Map([['a', ASC]]))).toBe(true) })
+//         it('"a,b"'    , async () => { i.serialize('a,b')    ; expect(_.isEqual(i.value, new Map([['a', ASC], ['b', ASC]]))).toBe(true) })
+//         it('"-a"'     , async () => { i.serialize('-a')     ; expect(_.isEqual(i.value, new Map([['a', DESC]]))).toBe(true) })
+//         it('"-a,-b"'  , async () => { i.serialize('-a,-b')  ; expect(_.isEqual(i.value, new Map([['a', DESC], ['b', DESC]]))).toBe(true) })
+//         it('undefined', async () => { i.serialize(undefined); expect(_.isEqual(i.value, new Map([]))).toBe(true) })
         })
     })
 
@@ -54,72 +80,27 @@ describe('Convert', () => {
         it('BOOLEAN', async () => {
         })
         it('ARRAY_STRING', async () => {
+            expect(toString(TYPE.ARRAY_STRING, ['a',]       )).toBe('a')
+            expect(toString(TYPE.ARRAY_STRING, ['a','b','2'])).toBe('a,b,2')
+            expect(toString(TYPE.ARRAY_STRING, undefined    )).toBe(undefined)
+            expect(toString(TYPE.ARRAY_STRING, null         )).toBe(undefined)
         })
         it('ARRAY_NUMBER', async () => {
+            expect(toString(TYPE.ARRAY_NUMBER, [0,]       )).toBe('0')
+            expect(toString(TYPE.ARRAY_NUMBER, [0,1,2]    )).toBe('0,1,2')
+            expect(toString(TYPE.ARRAY_NUMBER, undefined  )).toBe(undefined)
+            expect(toString(TYPE.ARRAY_NUMBER, null       )).toBe(undefined)
         })
         it('ARRAY_DATE', async () => {
         })
         it('ARRAY_DATETIME', async () => {
         })
+        it('ORDER_BY', async () => {
+            expect(toString(TYPE.ORDER_BY, new Map([['a', ASC]])             )).toBe('a')
+            expect(toString(TYPE.ORDER_BY, new Map([['a', ASC],['b', ASC]]  ))).toBe('a,b')
+            expect(toString(TYPE.ORDER_BY, new Map([['a', DESC]])            )).toBe('-a')
+            expect(toString(TYPE.ORDER_BY, new Map([['a', DESC],['b', DESC]]))).toBe('-a,-b')
+            expect(toString(TYPE.ORDER_BY, new Map()                         )).toBe(undefined)
+        })
     })
 })
-
-// describe('ArrayNumberInput', () => {
-//     let i = new ArrayNumberInput()
-
-//     describe('serialize', () => {
-//         it('"0"'      , async () => { i.serialize('0'      ); expect(i.value).toMatchObject([0,])})
-//         it('"0,1,2"'  , async () => { i.serialize('0,1,2'  ); expect(i.value).toMatchObject([0,1,2,])})
-//         it('"test"'   , async () => { i.serialize('test'   ); expect(i.value).toMatchObject([])})
-//         it('"null"'   , async () => { i.serialize('null'   ); expect(i.value).toMatchObject([null,]) })
-//         it('undefined', async () => { i.serialize(undefined); expect(i.value).toMatchObject([]) })
-//         it('null'     , async () => { i.serialize(null     ); expect(i.value).toMatchObject([]) })
-//     })
-
-//     describe('deserialize', () => {
-//         it('[0]'      , async () => { i.set([0,])       ; expect(i.deserialize()).toBe('0') })
-//         it('[0,1,2]'  , async () => { i.set([0,1,2])    ; expect(i.deserialize()).toBe('0,1,2') })
-//         it('undefined', async () => { i.set(undefined)  ; expect(i.deserialize()).toBe(undefined) })
-//         it('null'     , async () => { i.set(null)       ; expect(i.deserialize()).toBe(undefined) })
-//     })
-// })
-
-// describe('ArrayStringInput', () => {
-//     let i = new ArrayStringInput()
-
-//     describe('serialize', () => {
-//         it('"a"'      , async () => { i.serialize('a'      ); expect(i.value).toMatchObject(['a',])})
-//         it('"a,b,2"'  , async () => { i.serialize('a,b,2'  ); expect(i.value).toMatchObject(['a','b','2',])})
-//         it('"test"'   , async () => { i.serialize('test'   ); expect(i.value).toMatchObject(['test'])})
-//         it('"null"'   , async () => { i.serialize('null'   ); expect(i.value).toMatchObject([null,]) })
-//         it('undefined', async () => { i.serialize(undefined); expect(i.value).toMatchObject([]) })
-//         it('null'     , async () => { i.serialize(null     ); expect(i.value).toMatchObject([]) })
-//     })
-
-//     describe('deserialize', () => {
-//         it('[a]'      , async () => { i.set(['a',])         ; expect(i.deserialize()).toBe('a') })
-//         it('[a,b,2]'  , async () => { i.set(['a','b','2'])  ; expect(i.deserialize()).toBe('a,b,2') })
-//         it('undefined', async () => { i.set(undefined)      ; expect(i.deserialize()).toBe(undefined) })
-//         it('null'     , async () => { i.set(null)           ; expect(i.deserialize()).toBe(undefined) })
-//     })
-// })
-
-// describe('OrderByInput', () => {
-//     let i = new OrderByInput()
-
-//     describe('serialize', () => {
-//         it('"a"'      , async () => { i.serialize('a')      ; expect(_.isEqual(i.value, new Map([['a', ASC]]))).toBe(true) })
-//         it('"a,b"'    , async () => { i.serialize('a,b')    ; expect(_.isEqual(i.value, new Map([['a', ASC], ['b', ASC]]))).toBe(true) })
-//         it('"-a"'     , async () => { i.serialize('-a')     ; expect(_.isEqual(i.value, new Map([['a', DESC]]))).toBe(true) })
-//         it('"-a,-b"'  , async () => { i.serialize('-a,-b')  ; expect(_.isEqual(i.value, new Map([['a', DESC], ['b', DESC]]))).toBe(true) })
-//         it('undefined', async () => { i.serialize(undefined); expect(_.isEqual(i.value, new Map([]))).toBe(true) })
-//     })
-
-//     describe('deserialize', () => {
-//         it('[[a, ASC]]'             , async () => { i.set(new Map([['a', ASC]]))             ; expect(i.deserialize()).toBe('a') })
-//         it('[[a, ASC], [b, ASC]]'   , async () => { i.set(new Map([['a', ASC],['b', ASC]]))  ; expect(i.deserialize()).toBe('a,b') })
-//         it('[[a, DESC]]'            , async () => { i.set(new Map([['a', DESC]]))            ; expect(i.deserialize()).toBe('-a') })
-//         it('[[a, DESC], [b, DESC]]' , async () => { i.set(new Map([['a', DESC],['b', DESC]])); expect(i.deserialize()).toBe('-a,-b') })
-//         it('[]'                     , async () => { i.set(new Map())                         ; expect(i.deserialize()).toBe(undefined) })
-//     })
-// })

@@ -60,7 +60,7 @@ export class Query <M extends Model> {
     @observable protected __items: M[] = []         // items from the server
     @observable total           : number              // total count of items on the server, usefull for pagination
     @observable isLoading       : boolean = false     // query is loading the data
-    @observable isNeedToUpdate  : boolean = false     // query was changed and we need to update the data
+    @observable isNeedToUpdate  : boolean = true      // query was changed and we need to update the data
     @observable timestamp       : number              // timestamp of the last update, usefull to aviod to trigger react hooks twise
     @observable error           : string              // error message
 

@@ -25,6 +25,7 @@ describe('ObjectInput', () => {
     })
     it('isReady', async () => {
         const options = TestModel.getQuery({})
+        runInAction(() => options.isNeedToUpdate = false)
         const input = new ObjectInput({options})            ; expect(input.isReady).toBe(true)
         runInAction(() => input.isRequired = true)          ; expect(input.isReady).toBe(false)
         runInAction(() => input.isRequired = false)         ; expect(input.options.isReady).toBe(true)
