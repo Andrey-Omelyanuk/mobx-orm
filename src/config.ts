@@ -1,3 +1,6 @@
+// TODO: remove dependency of lodash 
+import _ from 'lodash'
+
 // Global config of Mobx-ORM
 export const config = {
     DEFAULT_PAGE_SIZE   : 50,
@@ -13,4 +16,8 @@ export const config = {
         window.addEventListener('popstate', callback)
         return () => { window.removeEventListener('popstate', callback) }
     },
+
+    DEBOUNCE: (func: Function, debounce: number) => {
+        return _.debounce(func, debounce)
+    }
 }

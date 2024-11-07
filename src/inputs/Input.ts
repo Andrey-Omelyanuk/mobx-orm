@@ -1,8 +1,8 @@
-import _ from 'lodash'
 import { action, makeObservable, observable, runInAction } from 'mobx'
 import { ORDER_BY } from '../types'
 import { stringTo, toString, TYPE } from '../convert'
 import { syncLocalStorageHandler, syncURLHandler } from './handlers'
+import { config } from '../config'
 
 
 export interface InputConstructorArgs<T> {
@@ -42,7 +42,10 @@ export class Input<T> {
         this.syncLocalStorage   = args?.syncLocalStorage
         makeObservable(this)
         if (this.debounce) {
-            this.stopDebouncing = _.debounce(() => runInAction(() => this.isDebouncing = false), this.debounce)
+            this.stopDebouncing = config.DEBOUNCE(
+                () => runInAction(() => this.isDebouncing = false),
+                this.debounce
+            )
         }
         // the order is important, because syncURL has more priority under syncLocalStorage
         // i.e. init from syncURL can overwrite value from syncLocalStorage
