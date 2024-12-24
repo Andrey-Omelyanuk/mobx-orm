@@ -5,6 +5,8 @@ export function autoResetId(input: ObjectInput<any>) {
     // if value still in options, do nothing
     for (const item of input.options.items) {
         if (item.id === input.value) {
+            // have to set value to trigger reaction
+            input.set(input.value)
             return
         }
     }
