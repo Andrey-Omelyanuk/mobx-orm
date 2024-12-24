@@ -1,7 +1,7 @@
 {
   "name": "@Andrey-Omelyanuk/mobx-orm",
   "description": "Reactive ORM based on MobX",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "license": "MIT",
   "author": "Andrey Omelyanuk",
   "repository": {

@@ -2,20 +2,21 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.1.3
+   * mobx-orm.js v2.1.4
    * Released under the MIT license.
    */
 
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('mobx'), require('lodash')) :
-    typeof define === 'function' && define.amd ? define(['exports', 'mobx', 'lodash'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["mobx-orm"] = {}, global.mobx, global._));
-})(this, (function (exports, mobx, _) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('lodash'), require('mobx')) :
+    typeof define === 'function' && define.amd ? define(['exports', 'lodash', 'mobx'], factory) :
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["mobx-orm"] = {}, global._, global.mobx));
+})(this, (function (exports, _, mobx) { 'use strict';
 
     function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
     var ___default = /*#__PURE__*/_interopDefaultLegacy(_);
 
+    // TODO: remove dependency of lodash 
     // Global config of Mobx-ORM
     const config = {
         DEFAULT_PAGE_SIZE: 50,
@@ -30,6 +31,9 @@
             window.addEventListener('popstate', callback);
             return () => { window.removeEventListener('popstate', callback); };
         },
+        DEBOUNCE: (func, debounce) => {
+            return ___default["default"].debounce(func, debounce);
+        }
     };
 
     /******************************************************************************
@@ -525,7 +529,7 @@
             this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
             mobx.makeObservable(this);
             if (this.debounce) {
-                this.stopDebouncing = ___default["default"].debounce(() => mobx.runInAction(() => this.isDebouncing = false), this.debounce);
+                this.stopDebouncing = config.DEBOUNCE(() => mobx.runInAction(() => this.isDebouncing = false), this.debounce);
             }
             // the order is important, because syncURL has more priority under syncLocalStorage
             // i.e. init from syncURL can overwrite value from syncLocalStorage
@@ -698,6 +702,8 @@
         // if value still in options, do nothing
         for (const item of input.options.items) {
             if (item.id === input.value) {
+                // have to set value to trigger reaction
+                input.set(input.value);
                 return;
             }
         }

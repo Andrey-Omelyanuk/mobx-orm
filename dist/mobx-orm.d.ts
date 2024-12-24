@@ -4,6 +4,7 @@ declare const config: {
     NON_FIELD_ERRORS_KEY: string;
     UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
     WATCTH_URL_CHANGES: (callback: any) => () => void;
+    DEBOUNCE: (func: Function, debounce: number) => any;
 };
 
 type ID = string | number;

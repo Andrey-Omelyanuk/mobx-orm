@@ -2,13 +2,14 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.1.3
+   * mobx-orm.js v2.1.4
    * Released under the MIT license.
    */
 
-import { observable, action, makeObservable, runInAction, autorun, reaction, computed, observe, intercept, extendObservable } from 'mobx';
 import _ from 'lodash';
+import { observable, action, makeObservable, runInAction, autorun, reaction, computed, observe, intercept, extendObservable } from 'mobx';
 
+// TODO: remove dependency of lodash 
 // Global config of Mobx-ORM
 const config = {
     DEFAULT_PAGE_SIZE: 50,
@@ -23,6 +24,9 @@ const config = {
         window.addEventListener('popstate', callback);
         return () => { window.removeEventListener('popstate', callback); };
     },
+    DEBOUNCE: (func, debounce) => {
+        return _.debounce(func, debounce);
+    }
 };
 
 /******************************************************************************
@@ -518,7 +522,7 @@ class Input {
         this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
         makeObservable(this);
         if (this.debounce) {
-            this.stopDebouncing = _.debounce(() => runInAction(() => this.isDebouncing = false), this.debounce);
+            this.stopDebouncing = config.DEBOUNCE(() => runInAction(() => this.isDebouncing = false), this.debounce);
         }
         // the order is important, because syncURL has more priority under syncLocalStorage
         // i.e. init from syncURL can overwrite value from syncLocalStorage
@@ -691,6 +695,8 @@ function autoResetId(input) {
     // if value still in options, do nothing
     for (const item of input.options.items) {
         if (item.id === input.value) {
+            // have to set value to trigger reaction
+            input.set(input.value);
             return;
         }
     }
