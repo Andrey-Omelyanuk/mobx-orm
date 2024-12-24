@@ -16,7 +16,7 @@
   "typings": "dist/mobx-orm.d.ts",
   "dependencies": {
     "lodash"  : "^4.17.21", 
-    "mobx"    : "^6.13.5" 
+    "mobx"    : "~6.7.0"
   },
   "scripts": {
     "build": "rollup -c",
