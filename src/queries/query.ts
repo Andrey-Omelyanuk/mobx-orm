@@ -5,6 +5,7 @@ import { Filter } from '../filters/Filter'
 import { waitIsFalse } from '../utils'
 import { OrderByInput, NumberInput, ArrayStringInput, Input } from '../inputs'
 import { ORDER_BY } from '../types'
+import { config } from '../config'
 
 
 export const DISPOSER_AUTOUPDATE = "__autoupdate"
@@ -138,7 +139,7 @@ export class Query <M extends Model> {
                         }
 
                     },
-                    { fireImmediately: true }
+                    { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY }
                 )
             }
             // off

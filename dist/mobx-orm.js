@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.1.5
+   * mobx-orm.js v2.1.6
    * Released under the MIT license.
    */
 
@@ -898,7 +898,7 @@
                             setTimeout(() => this.load());
                             // }, config.AUTO_UPDATE_DELAY)
                         }
-                    }, { fireImmediately: true });
+                    }, { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY });
                 }
                 // off
                 else {
