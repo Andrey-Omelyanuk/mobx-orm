@@ -193,6 +193,7 @@ declare class Query<M extends Model> {
     ready: () => Promise<Boolean>;
     get autoupdate(): boolean;
     set autoupdate(value: boolean);
+    toString(): string;
     get dependenciesAreReady(): boolean;
     get isReady(): boolean;
     load(): Promise<void>;
@@ -354,6 +355,22 @@ declare class LocalAdapter<M extends Model> implements Adapter<M> {
 }
 declare function local(): (cls: any) => void;
 
+declare class ConstantAdapter<M extends Model> extends Adapter<M> {
+    readonly constant: any[];
+    constructor(constant: any);
+    action(): Promise<any>;
+    create(): Promise<any>;
+    update(): Promise<any>;
+    delete(): Promise<void>;
+    get(): Promise<any>;
+    find(): Promise<any>;
+    load(): Promise<any[]>;
+    getTotalCount(): Promise<number>;
+    getDistinct(): Promise<any[]>;
+    getURLSearchParams(): URLSearchParams;
+}
+declare function constant(constant: any[]): (cls: any) => void;
+
 declare class MockAdapter<M extends Model> implements Adapter<M> {
     action(obj_id: number, name: string, kwargs: Object): Promise<any>;
     create(raw_data: any): Promise<any>;
@@ -396,4 +413,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, ConstantAdapter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, constant, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

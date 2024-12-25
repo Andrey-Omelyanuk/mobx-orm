@@ -1,6 +1,5 @@
 import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
 import { Repository } from '../repository'
-import { config } from '../config'
 import { Model } from '../model'
 import { Filter } from '../filters/Filter'
 import { waitIsFalse } from '../utils'
@@ -89,11 +88,17 @@ export class Query <M extends Model> {
         makeObservable(this)
 
         this.disposers.push(reaction(
-            () => this.dependenciesAreReady,
-            (dependenciesAreReady) => {
+            // watch the dependenciesAreReady and value only
+            // because isNeedToUpdate should be set to true 
+            // if dependenciesAreReady or/and value are triggered and isNeedToUpdate is false
+            () => {
+                return {dependenciesAreReady: this.dependenciesAreReady, value: this.toString} 
+            },
+            ({dependenciesAreReady, value}) => {
                 if(dependenciesAreReady && !this.isNeedToUpdate)
                     runInAction(() => this.isNeedToUpdate = true)
-            }
+            },
+            { fireImmediately: true }
         ))
     }
 
@@ -123,14 +128,18 @@ export class Query <M extends Model> {
         if (value !== this.autoupdate) {  // indepotent guarantee
             // on 
             if (value) {
-                setTimeout(() => {
-                    // TODO: I have to add debounce here
-                    this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(
-                        () => this.isNeedToUpdate && this.dependenciesAreReady,
-                        (updateIt) => { if(updateIt) this.load() },
-                        { fireImmediately: true }
-                    )
-                }, config.AUTO_UPDATE_DELAY)
+                this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(
+                    () => this.isNeedToUpdate && this.dependenciesAreReady,
+                    (updateIt, old) => {
+                        if(updateIt && updateIt !== old) {
+                            // run the load() in the next tick
+                            setTimeout(() => this.load())
+                            // }, config.AUTO_UPDATE_DELAY)
+                        }
+
+                    },
+                    { fireImmediately: true }
+                )
             }
             // off
             else {
@@ -138,6 +147,14 @@ export class Query <M extends Model> {
                 delete this.disposerObjects[DISPOSER_AUTOUPDATE]
             }
         }
+    }
+
+    // Need to quick compare the querie's state
+    toString() {
+        return `${this.filter === undefined ? '' : this.filter.URLSearchParams.toString()}`
+        +`|${this.orderBy.toString()}`
+        +`|${this.offset.toString()}|${this.limit.toString()}`
+        +`|${this.relations.toString()}|${this.fields.toString()}|${this.omit.toString()}`
     }
 
     get dependenciesAreReady() {

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.1.4
+   * mobx-orm.js v2.1.5
    * Released under the MIT license.
    */
 
@@ -852,10 +852,16 @@ class Query {
         this.omit = omit ? omit : ArrayStringInput();
         this.autoupdate = autoupdate;
         makeObservable(this);
-        this.disposers.push(reaction(() => this.dependenciesAreReady, (dependenciesAreReady) => {
+        this.disposers.push(reaction(
+        // watch the dependenciesAreReady and value only
+        // because isNeedToUpdate should be set to true 
+        // if dependenciesAreReady or/and value are triggered and isNeedToUpdate is false
+        () => {
+            return { dependenciesAreReady: this.dependenciesAreReady, value: this.toString };
+        }, ({ dependenciesAreReady, value }) => {
             if (dependenciesAreReady && !this.isNeedToUpdate)
                 runInAction(() => this.isNeedToUpdate = true);
-        }));
+        }, { fireImmediately: true }));
     }
     destroy() {
         var _a;
@@ -879,11 +885,13 @@ class Query {
         if (value !== this.autoupdate) { // indepotent guarantee
             // on 
             if (value) {
-                setTimeout(() => {
-                    // TODO: I have to add debounce here
-                    this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(() => this.isNeedToUpdate && this.dependenciesAreReady, (updateIt) => { if (updateIt)
-                        this.load(); }, { fireImmediately: true });
-                }, config.AUTO_UPDATE_DELAY);
+                this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(() => this.isNeedToUpdate && this.dependenciesAreReady, (updateIt, old) => {
+                    if (updateIt && updateIt !== old) {
+                        // run the load() in the next tick
+                        setTimeout(() => this.load());
+                        // }, config.AUTO_UPDATE_DELAY)
+                    }
+                }, { fireImmediately: true });
             }
             // off
             else {
@@ -891,6 +899,13 @@ class Query {
                 delete this.disposerObjects[DISPOSER_AUTOUPDATE];
             }
         }
+    }
+    // Need to quick compare the querie's state
+    toString() {
+        return `${this.filter === undefined ? '' : this.filter.URLSearchParams.toString()}`
+            + `|${this.orderBy.toString()}`
+            + `|${this.offset.toString()}|${this.limit.toString()}`
+            + `|${this.relations.toString()}|${this.fields.toString()}|${this.omit.toString()}`;
     }
     get dependenciesAreReady() {
         return (this.filter === undefined || this.filter.isReady)
@@ -1901,6 +1916,58 @@ function local() {
     };
 }
 
+class ConstantAdapter extends Adapter {
+    constructor(constant) {
+        super();
+        Object.defineProperty(this, "constant", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.constant = constant;
+    }
+    async action() {
+        console.warn('ConstantAdapter.action not implemented');
+        return {};
+    }
+    async create() {
+        throw new Error('ConstantAdapter.create should not be used.');
+    }
+    async update() {
+        throw new Error('ConstantAdapter.update should not be used.');
+    }
+    async delete() {
+        throw new Error('ConstantAdapter.delete should not be used.');
+    }
+    async get() {
+        throw new Error('ConstantAdapter.get should not be used.');
+    }
+    async find() {
+        throw new Error('ConstantAdapter.find should not be used.');
+    }
+    async load() {
+        return this.constant;
+    }
+    async getTotalCount() {
+        return this.constant.length;
+    }
+    async getDistinct() {
+        throw new Error('ConstantAdapter.getDistinct should not be used.');
+    }
+    getURLSearchParams() {
+        return new URLSearchParams();
+        // throw new Error('ConstantAdapter.getURLSearchParams should not be used.')
+    }
+}
+// model decorator
+function constant(constant) {
+    return (cls) => {
+        let repository = new Repository(cls, new ConstantAdapter(constant));
+        cls.__proto__.repository = repository;
+    };
+}
+
 class MockAdapter {
     async action(obj_id, name, kwargs) { }
     async create(raw_data) { return raw_data; }
@@ -2032,5 +2099,5 @@ class ObjectForm extends Form {
     }
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ObjectForm, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, ConstantAdapter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ObjectForm, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, constant, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-orm.es2015.js.map
