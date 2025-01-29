@@ -1,6 +1,3 @@
-// TODO: remove dependency of lodash 
-import _ from 'lodash'
-
 // Global config of Mobx-ORM
 export const config = {
     DEFAULT_PAGE_SIZE   : 50,
@@ -18,6 +15,7 @@ export const config = {
     },
 
     DEBOUNCE: (func: Function, debounce: number) => {
-        return _.debounce(func, debounce)
+        // console.warn('Override DEBOUNCE with you debounce function.')
+        return () => func()  // by default there are no debounce 
     }
 }

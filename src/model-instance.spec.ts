@@ -188,8 +188,8 @@ describe('Model Instance', () => {
         })
 
         it('raw_obj with one relations', () => {
-            @local() @model class A extends Model { b: B }
-            @local() @model class B extends Model { @field a_id: number; @field x: string }
+            @local() @model() class A extends Model { b: B }
+            @local() @model() class B extends Model { @field a_id: number; @field x: string }
             one(B)(A, 'b')
             let a = new A({})   
 

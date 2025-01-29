@@ -5,8 +5,8 @@ import { config } from '..'
 
 export class Form {
     readonly    inputs      : { [key: string]: Input<any> }
-    @observable isLoading   : boolean = false
-    @observable errors      : string[] = []
+    @observable accessor isLoading   : boolean = false
+    @observable accessor errors      : string[] = []
 
     private __submit: () => Promise<void>
     private __cancel: () => void

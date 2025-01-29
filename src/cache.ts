@@ -6,7 +6,7 @@ import { Model } from './model'
 export class Cache<M extends Model> {
                 readonly name: string
                 readonly model: any         // TODO: type
-    @observable readonly store: Map<ID, M>
+    @observable accessor store: Map<ID, M>
 
     constructor(model: any, name?: string) {
         this.name = name ? name : model.name 

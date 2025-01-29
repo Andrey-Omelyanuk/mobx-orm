@@ -1,8 +1,8 @@
-import { reaction, runInAction } from 'mobx'
+import { observable, reaction, runInAction } from 'mobx'
 import { Query } from '../queries'
 import { Model } from '../model'
 import { ID } from '../types'
-import { TYPE } from '../convert'
+import { stringTo, toString, TYPE } from '../convert'
 import { Input, InputConstructorArgs } from './Input'
 
 
@@ -14,10 +14,12 @@ export interface ObjectInputConstructorArgs<T, M extends Model> extends InputCon
 export class ObjectInput<M extends Model> extends Input<ID> {
     readonly options?: Query<M>
 
+    @observable accessor isNeedToUpdate: boolean  //  
+
     constructor (args?: ObjectInputConstructorArgs<ID, M>) {
-        if (!args) args = {}
-        args.type = TYPE.ID
         super(args as InputConstructorArgs<ID>)
+
+        this.isNeedToUpdate = false 
         this.options = args.options
         if (this.options) {
             this.__disposers.push(reaction(
@@ -41,5 +43,13 @@ export class ObjectInput<M extends Model> extends Input<ID> {
     destroy () {
         super.destroy()
         this.options?.destroy()
+    }
+
+    // TODO: ID is number OR string
+    setFromString(value: string) {
+        this.set(stringTo(TYPE.ID, value))
+    }
+    toString() {
+        return toString(TYPE.ID, this.value)
     }
 }

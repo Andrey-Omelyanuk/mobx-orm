@@ -57,12 +57,12 @@ export class Query <M extends Model> {
     readonly fields    : Input<string[]>
     readonly omit      : Input<string[]>
 
-    @observable protected __items: M[] = []         // items from the server
-    @observable total           : number              // total count of items on the server, usefull for pagination
-    @observable isLoading       : boolean = false     // query is loading the data
-    @observable isNeedToUpdate  : boolean = true      // query was changed and we need to update the data
-    @observable timestamp       : number              // timestamp of the last update, usefull to aviod to trigger react hooks twise
-    @observable error           : string              // error message
+    @observable accessor __items: M[] = []         // items from the server
+    @observable accessor total           : number              // total count of items on the server, usefull for pagination
+    @observable accessor isLoading       : boolean = false     // query is loading the data
+    @observable accessor isNeedToUpdate  : boolean = true      // query was changed and we need to update the data
+    @observable accessor timestamp       : number              // timestamp of the last update, usefull to aviod to trigger react hooks twise
+    @observable accessor error           : string              // error message
 
     get items       () { return this.__items }      // the items can be changed after the load (post processing)
 
@@ -74,17 +74,17 @@ export class Query <M extends Model> {
         let {
             repository, filter, orderBy, offset, limit,
             relations, fields, omit,
-            autoupdate = false
+            autoupdate = true 
         } = props
 
         this.repository = repository 
         this.filter    = filter
-        this.orderBy   = orderBy    ? orderBy   : OrderByInput() 
-        this.offset    = offset     ? offset    : NumberInput() 
-        this.limit     = limit      ? limit     : NumberInput() 
-        this.relations = relations  ? relations : ArrayStringInput()
-        this.fields    = fields     ? fields    : ArrayStringInput()
-        this.omit      = omit       ? omit      : ArrayStringInput()
+        this.orderBy   = orderBy    ? orderBy   : new OrderByInput() 
+        this.offset    = offset     ? offset    : new NumberInput() 
+        this.limit     = limit      ? limit     : new NumberInput() 
+        this.relations = relations  ? relations : new ArrayStringInput()
+        this.fields    = fields     ? fields    : new ArrayStringInput()
+        this.omit      = omit       ? omit      : new ArrayStringInput()
         this.autoupdate = autoupdate
         makeObservable(this)
 

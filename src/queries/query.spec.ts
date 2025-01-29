@@ -45,13 +45,13 @@ describe('Query', () => {
             expect((query as any).disposers.length).toBe(1)
         })
         it('some values', async ()=> {
-            const filter    = EQ('name', StringInput({value: 'test'}))
-            const orderBy   = OrderByInput({value: new Map([['asc', DESC]])})
-            const offset    = NumberInput({value: 100})
-            const limit     = NumberInput({value: 500})
-            const relations = ArrayStringInput({value: ['rel_a', 'rel_b']})
-            const fields    = ArrayStringInput({value: ['field_a', 'field_b']})
-            const omit      = ArrayStringInput({value: ['omit_a', 'omit_b']})
+            const filter    = EQ('name', new StringInput({value: 'test'}))
+            const orderBy   = new OrderByInput({value: new Map([['asc', DESC]])})
+            const offset    = new NumberInput({value: 100})
+            const limit     = new NumberInput({value: 500})
+            const relations = new ArrayStringInput({value: ['rel_a', 'rel_b']})
+            const fields    = new ArrayStringInput({value: ['field_a', 'field_b']})
+            const omit      = new ArrayStringInput({value: ['omit_a', 'omit_b']})
             const query     = new Query<A>({
                 repository  : A.repository,
                 filter      : filter,

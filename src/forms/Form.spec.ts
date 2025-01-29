@@ -7,8 +7,8 @@ describe('Form', () => {
     it('constructor', async ()=> {
         const submit = async () => {}
         const cancel = () => {}
-        const inputA = StringInput()
-        const inputB = StringInput()
+        const inputA = new StringInput()
+        const inputB = new StringInput()
         const form = new Form({a: inputA, b: inputB}, submit, cancel)
 
         expect(form).toMatchObject({
@@ -22,9 +22,9 @@ describe('Form', () => {
 
     describe('isReady', () => {
         const form = new Form({ 
-            a: StringInput(),
-            b: StringInput(), 
-            c: StringInput(),
+            a: new StringInput(),
+            b: new StringInput(), 
+            c: new StringInput(),
         }, async () => {}, () => {} )
 
         // it('all inputs are ready', async ()=> {
@@ -57,9 +57,9 @@ describe('Form', () => {
 
     describe('isError', () => {
         const form = new Form({ 
-            a: StringInput(),
-            b: StringInput(), 
-            c: StringInput(),
+            a: new StringInput(),
+            b: new StringInput(), 
+            c: new StringInput(),
         }, async () => {}, () => {} )
 
         afterEach(() => {
@@ -103,9 +103,9 @@ describe('Form', () => {
 
     describe('submit', () => {
         const inputs = {
-            a: StringInput(),
-            b: StringInput(), 
-            c: StringInput(),
+            a: new StringInput(),
+            b: new StringInput(), 
+            c: new StringInput(),
         }
         it('good request', (done)=> {
             const submit = jest.fn(async () => {})

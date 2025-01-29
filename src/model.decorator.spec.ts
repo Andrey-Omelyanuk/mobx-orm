@@ -1,7 +1,7 @@
-import { Model, model, field } from './'
+// import { Model, model, field } from '.'
 
 
-describe('Model Class', () => {
+describe('Model Decorator', () => {
 
     it('...', async () => {
     })

@@ -1,8 +1,9 @@
 import { runInAction } from 'mobx'
 import { Query, QueryProps } from './query'
+import { Model } from '@/model'
 
 
-export class QueryDistinct extends Query<any> {
+export class QueryDistinct<M extends Model> extends Query<M> {
     readonly field: string
     
     constructor(field: string, props: QueryProps<any>) {
