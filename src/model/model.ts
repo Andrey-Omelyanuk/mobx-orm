@@ -1,32 +1,54 @@
-import { action, observable } from 'mobx'
-import { Query, QueryProps, QueryPage, QueryRaw, QueryRawPage, QueryCacheSync, QueryDistinct, QueryStream } from './queries'
-import { Repository } from './repository'
-import { ID } from './types'
-import { ModelDescriptor, models } from './models'
+import { action, computed, intercept, observable, observe } from 'mobx'
+import { ID } from '../types'
+import { Repository } from '../repository'
+import models from './models'
+import ModelDescriptor from './model-descriptor'
+import {
+    Query, QueryProps, QueryPage, QueryRaw, QueryRawPage,
+    QueryCacheSync, QueryDistinct, QueryStream
+} from '../queries'
+import { id } from '../fields'
 
 
 /**
  * Model is a base class for all models in the application.
  */
-export abstract class Model {
+export default class Model {
+    /**
+     * @param init - initial data of the object 
+     */
+    constructor (init?: {}) {}
     /**
      * Name of the model in the models map. 
      * Each instance have to have this field. Some decorators use it.
      */
     static readonly modelName: string
     /**
-     * Each object of model has "id" field,
-     * Undefined means that the object is not saved yet or was deleted.
+     * @returns {ModelDescriptor} - model description
      */
-    @observable accessor id: ID = undefined
+    static getModelDescription<T extends typeof Model>(this: T): ModelDescriptor<InstanceType<T>> {
+        return models.get(this.modelName)
+    }
+    /**
+     * ID is a unique identifier of the object. 
+     * It used everywhere in the lib as base.
+     * TODO: impliment composite keys
+     */
+    @computed({ keepAlive: true })
+    get ID(): ID {
+        return this['id']
+    }
+    set ID(value: ID) {
+        this['id'] = value
+    }
     /**
      * Save the initial data of the object that was loaded from the server.
      */
-    @observable accessor __init_data: any
+    @observable accessor init_data: any
     /**
      * disposers for mobx reactions and interceptors, you can add your own disposers
      */
-    private disposers = new Map()
+    readonly disposers = new Map()
     /**
      * Destructor of the object. It removes all disposers.
      */
@@ -37,12 +59,6 @@ export abstract class Model {
                 this.disposers.delete(key)
             })
         }
-    }
-    /**
-     * @returns {ModelDescriptor} - model description
-     */
-    static getModelDescription<T extends Model>(): ModelDescriptor<T> {
-        return models.get(this.modelName)
     }
     /**
      * @returns {ModelDescriptor} - model description
@@ -63,12 +79,12 @@ export abstract class Model {
         return rawData
     }
     /**
-     * @returns {Object} - it is raw_data + id
+     * @returns {Object} - it is raw_data + ID
      */
     get rawObj(): Object {
-        let raw_obj: any = this.rawData
-        raw_obj.id = this.id
-        return raw_obj
+        let rawObj: any = this.rawData
+        rawObj.id = this.ID
+        return rawObj
     }
     /**
      * @returns {Object} - data that was changed, but not saved yet
@@ -76,7 +92,7 @@ export abstract class Model {
     get onlyChangedRawData(): any {
         let rawData: any = {}
         for (let fieldName in this.modelDescription.fields) {
-            if (this[fieldName] !== undefined && this[fieldName] != this.__init_data[fieldName]) {
+            if (this[fieldName] !== undefined && this[fieldName] != this.init_data[fieldName]) {
                 rawData[fieldName] = this[fieldName]
             }
         }
@@ -87,7 +103,7 @@ export abstract class Model {
      */
     get isChanged(): boolean {
         for (let field_name in this.modelDescription.fields) {
-            if (this[field_name] != this.__init_data[field_name]) {
+            if (this[field_name] != this.init_data[field_name]) {
                 return true
             }
         }
@@ -99,9 +115,9 @@ export abstract class Model {
      * Usually it is used after the object was saved and the object should be unmark as changed.
      */
     @action refreshInitData() {
-        if (this.__init_data === undefined) this.__init_data = {}
+        if (this.init_data === undefined) this.init_data = {}
         for (let field_name in this.modelDescription.fields) {
-            this.__init_data[field_name] = this[field_name]
+            this.init_data[field_name] = this[field_name]
         }
     }
     /**
@@ -111,8 +127,8 @@ export abstract class Model {
      */
     @action cancelLocalChanges() {
         for (let field_name in this.modelDescription.fields) {
-            if (this[field_name] !== this.__init_data[field_name]) {
-                this[field_name] = this.__init_data[field_name]
+            if (this[field_name] !== this.init_data[field_name]) {
+                this[field_name] = this.init_data[field_name]
             }
         }
     }
@@ -120,17 +136,18 @@ export abstract class Model {
      * Update the object from the raw data.
      * @description
      * It is used when raw data comes from any source (server, websocket, etc.) and you want to update the object. 
+     * TODO: ID is not ready! I'll finish it later. 
      */
     @action updateFromRaw(rawObj) {
-        if (this.id === undefined && rawObj.id !== undefined && this.modelDescription.repository) {
-            // Note: object with equal id can be already in the cache (race condition)
+        if (this.ID === undefined && rawObj.id !== undefined && this.modelDescription.repository) {
+            // Note: object with equal ID can be already in the cache (race condition)
             // I have got the object from websocket before the response from the server
             // Solution: remove the object (that came from websocket) from the cache
             let exist_obj = this.modelDescription.repository.cache.get(rawObj.id)
             if (exist_obj) {
-                exist_obj.id = undefined
+                exist_obj.ID = undefined
             }
-            this.id = rawObj.id
+            this.ID = rawObj.id
         }
         // update the fields if the raw data is exist and it is different
         for (let field_name in this.modelDescription.fields) {
@@ -166,9 +183,9 @@ export abstract class Model {
     async create() { return await this.modelDescription.repository.create(this) }
     async update() { return await this.modelDescription.repository.update(this) }
     async delete() { return await this.modelDescription.repository.delete(this) }
-    async save() { return this.id === undefined ? this.create() : this.update() }
+    async save() { return this.ID === undefined ? this.create() : this.update() }
     // update the object from the server
-    async refresh() { return await this.modelDescription.repository.get(this.id) }
+    async refresh() { return await this.modelDescription.repository.get(this.ID) }
 
     // --------------------------------------------------------------
     // helper class functions
@@ -193,13 +210,13 @@ export abstract class Model {
     static getQueryDistinct<T extends Model>(field: string, props: QueryProps<T>): QueryDistinct<T> {
         return new QueryDistinct<T>(field, {...props, repository: this.getModelDescription().repository as Repository<T> })
     }
-    static get<T extends Model>(id: ID): T {
+    static get<T extends Model>(ID: ID): T {
         let repository = this.getModelDescription().repository as Repository<T>
-        return repository.cache.get(id)
+        return repository.cache.get(ID)
     }
-    static async findById<T extends Model>(id: ID) : Promise<T> {
+    static async findById<T extends Model>(ID: ID) : Promise<T> {
         let repository = this.getModelDescription().repository as Repository<T>
-        return repository.get(id)
+        return repository.get(ID)
     }
     static async find<T extends Model>(query: Query<T>) : Promise<T> {
         let repository = this.getModelDescription().repository as Repository<T>
@@ -220,16 +237,16 @@ export abstract class Model {
 //         makeObservable(obj)
 //         // id field reactions
 //         obj.__disposers.set('before changes',
-//             intercept(obj, 'id', (change) => {
-//                 if (change.newValue !== undefined && obj.id !== undefined)
-//                     throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`)
-//                 if (obj.id !== undefined && change.newValue === undefined)
+//             intercept(obj, 'ID', (change) => {
+//                 if (change.newValue !== undefined && obj.ID !== undefined)
+//                     throw new Error(`You cannot change ID field: ${obj.ID} to ${change.newValue}`)
+//                 if (obj.ID !== undefined && change.newValue === undefined)
 //                     obj.model.repository.cache.eject(obj)
 //                 return change
 //             }))
 //         obj.__disposers.set('after changes',
-//             observe(obj, 'id', (change) => {
-//                 if (obj.id !== undefined)
+//             observe(obj, 'ID', (change) => {
+//                 if (obj.ID !== undefined)
 //                     obj.model.repository.cache.inject(obj)
 //             }))
 

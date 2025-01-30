@@ -2,7 +2,11 @@ import { Model } from '../model'
 import { Repository }  from '../repository'
 import { Adapter } from './adapter'
 
-
+/**
+ * ConstantAdapter is an adapter that uses a constant array of objects.
+ * It is useful for testing and development or when the data is static and does not change.
+ * For example, a list of countries or a list of categories.
+ */
 export class ConstantAdapter<M extends Model> extends Adapter<M> {
     readonly constant: any[] 
 
@@ -55,9 +59,27 @@ export class ConstantAdapter<M extends Model> extends Adapter<M> {
 }
 
 // model decorator
+// export function constant (constant: any[]) {
+//     return (cls: any) => {
+//         let repository = new Repository(cls, new ConstantAdapter(constant)) 
+//         cls.__proto__.repository = repository
+//     }
+// }
+
+
 export function constant (constant: any[]) {
-    return (cls: any) => {
-        let repository = new Repository(cls, new ConstantAdapter(constant)) 
-        cls.__proto__.repository = repository
+    return function (
+        constructor: any, 
+        context: ClassDecoratorContext
+    ) {
+        context.addInitializer(function () {
+            console.warn(constructor.getModelDescription)
+            console.warn(constructor.prototype)
+            console.warn(constructor.prototype.getModelDescription)
+            console.warn(constructor.prototype.prototype)
+        })
+        // let repository = new Repository(constructor, new ConstantAdapter(constant)) 
+        // constructor.getModelDescription().repository = repository
     }
+
 }

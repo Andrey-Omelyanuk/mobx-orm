@@ -3,7 +3,7 @@ import { Model, model, field, QueryCacheSync, LocalAdapter, local } from '..'
 
 describe('QueryXCacheSync', () => {
     @local()
-    @model class A extends Model {
+    @model() class A extends Model {
         @field   a !: number
         @field   b !: string
         @field   c !: boolean

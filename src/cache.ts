@@ -15,30 +15,30 @@ export class Cache<M extends Model> {
         makeObservable(this)
     }
 
-    get(id: any): M|undefined {
-        return this.store.get(id)
+    get(ID: any): M|undefined {
+        return this.store.get(ID)
     }
 
     @action('cache - inject')
     inject(obj: M) {
-        if (obj.id === undefined)
-            throw new Error(`Object should have id!`)
+        if (obj.ID === undefined)
+            throw new Error(`Object should have ID!`)
 
-        const exist_obj = this.store.get(obj.id)
+        const exist_obj = this.store.get(obj.ID)
         if (exist_obj && exist_obj !== obj)
-            throw new Error(`Object ${obj.constructor.name}: ${obj.id} already exist in the cache. ${this.name}`)
+            throw new Error(`Object ${obj.constructor.name}: ${obj.ID} already exist in the cache. ${this.name}`)
 
-        this.store.set(obj.id, obj)
+        this.store.set(obj.ID, obj)
     }
 
     @action('cache - eject')
     eject(obj: M) {
-        return this.store.delete(obj.id)
+        return this.store.delete(obj.ID)
     }
 
     @action('cache - update')
     update(raw_obj: any): M {
-        let obj: M = this.store.get(raw_obj.id)
+        let obj: M = this.store.get(raw_obj.ID)
         if (obj)
             obj.updateFromRaw(raw_obj)
         else {

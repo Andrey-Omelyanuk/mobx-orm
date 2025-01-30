@@ -12,32 +12,32 @@ export class  Repository<M extends Model> {
     readonly cache     ?: Cache<M>
     readonly adapter    : Adapter<M> 
 
-    constructor(model: any, adapter: any, cache?: any) {
-        this.model      = model 
-        this.adapter    = adapter 
-        this.cache      = cache ? cache : new Cache<M>(model)
+    constructor(model: any, adapter?: any, cache: any = new Cache<M>(model)) {
+        this.model   = model 
+        this.adapter = adapter 
+        this.cache   = cache
     }
 
     async action(obj: M, name: string, kwargs: Object, controller?: AbortController) : Promise<any> {
-        return await this.adapter.action(obj.id, name, kwargs, controller)
+        return await this.adapter.action(obj.ID, name, kwargs, controller)
     }
 
     async create(obj: M, controller?: AbortController) : Promise<M> {
-        let raw_obj = await this.adapter.create(obj.raw_data, controller)
-        obj.updateFromRaw(raw_obj)  // update id and other fields
+        let raw_obj = await this.adapter.create(obj.rawData, controller)
+        obj.updateFromRaw(raw_obj)  // update ID and other fields
         obj.refreshInitData()       // backend can return default values and they should be in __init_data
         return obj
     }
 
     async update(obj: M, controller?: AbortController) : Promise<M> {
-        let raw_obj = await this.adapter.update(obj.id, obj.only_changed_raw_data, controller)
+        let raw_obj = await this.adapter.update(obj.ID, obj.onlyChangedRawData, controller)
         obj.updateFromRaw(raw_obj)
         obj.refreshInitData()
         return obj
     }
 
     async delete(obj: M, controller?: AbortController) : Promise<M> {
-        await this.adapter.delete(obj.id, controller)
+        await this.adapter.delete(obj.ID, controller)
         obj.destroy()
         this.cache.eject(obj)
         return obj

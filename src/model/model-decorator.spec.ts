@@ -1,10 +1,56 @@
-// import { Model, model, field } from '.'
+import { id } from "../fields"
+import { Model, model, models } from "."
 
 
 describe('Model Decorator', () => {
 
-    it('...', async () => {
+    afterEach(async () => {
+        models.clear()
+        jest.clearAllMocks()
     })
+
+    it('Decorate model with extends Model', async () => {
+        @model() class A extends Model { @id id: number }
+        expect(models.has('A')).toBe(true)
+        let a = new A()
+        expect(a).toBeInstanceOf(A)
+        expect(a).toBeInstanceOf(Model)
+        expect(a.modelDescription).toBe(models.get('A'))
+    })
+
+    it('Decorate model with custom name', async () => {
+        @model('CustomA') class A extends Model { @id id: number }
+        let a = new A()
+        expect(a.modelDescription).toBe(models.get('CustomA'))
+    })
+
+    it('Error: Decorate model without extends Model', async () => {
+        expect(() => {
+            @model() class A {}
+        }).toThrow(new Error(`Class "A" should extends Model!`))
+    })
+
+    it('Error: Decorate model with no id', async () => {
+        @model() class A extends Model {}
+        expect(() => {
+            let a = new A()
+        }).toThrow(new Error(`Model "A" should have id field decorator!`))
+    })
+
+    it('Error: decorate model with exist name (using class name)', async () => {
+        function test1() { @model() class A extends Model {} }
+        function test2() { @model() class A extends Model {} }
+        test1()
+        expect(test2).toThrow(new Error(`Model with name "A" already exist!`))
+    })
+
+    it('Error: decorate model with exist name (using custom name)', async () => {
+        function test1() { @model('A') class A extends Model {} }
+        function test2() { @model('A') class B extends Model {} }
+        test1()
+        expect(test2).toThrow(new Error(`Model with name "A" already exist!`))
+    })
+
 
     // TODO: move it to cache.spec.ts
     // describe('inject()', () => {

@@ -3,13 +3,13 @@ import { model, Model, local, NumberInput, ObjectForm, StringInput } from '..'
 describe('ObjectForm', () => {
 
     @local()
-    @model class A extends Model {
+    @model() class A extends Model {
         a: string
         b: number
     }
 
     afterEach(async () => {
-        A.repository.cache.clear() 
+        A.getModelDescription().repository.cache.clear() 
         jest.clearAllMocks()
     })
 

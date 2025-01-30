@@ -29,7 +29,7 @@ export function read_only() {
 describe('Read Only Adapter', () => {
 
     @read_only()
-    @model class A extends Model {}
+    @model() class A extends Model {}
 
     it('create', (done) => {
         let a = new A()

@@ -6,7 +6,7 @@ function field_many(obj: Model, field_name) {
     extendObservable(obj, { [field_name]: [] })
 }
 
-export function many(remote_model: any, remote_foreign_id_name?: string) {
+export default function many(remote_model: any, remote_foreign_id_name?: string) {
     return function (cls: any, field_name: string) {
         let model = cls.prototype.constructor
         if (model.__relations === undefined) model.__relations = {}

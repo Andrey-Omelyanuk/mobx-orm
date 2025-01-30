@@ -24,7 +24,7 @@ function field_foreign(obj, field_name) {
     )
 }
 
-export function foreign(foreign_model: any, foreign_id_name?: string) {
+export default function foreign(foreign_model: any, foreign_id_name?: string) {
     return function (cls: any, field_name: string) {
         // if cls already was decorated by model decorator then use original constructor
         let model = cls.prototype?.constructor.isOriginalClass ? cls.prototype.constructor : cls.constructor

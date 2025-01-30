@@ -1,5 +1,5 @@
 import { runInAction } from 'mobx'
-import { Model } from '../model'
+import { Model } from '../model/model'
 import { ObjectInput } from './ObjectInput'
 import { autoResetId } from './auto-reset'
 

@@ -1,4 +1,5 @@
-import { Cache, Adapter, Repository, Model ,field, model, Query, Filter } from "."
+import { Cache, Adapter, Repository, field, Query, Filter } from "."
+import { model, Model } from './model'
 
 export let obj_a = {id: 0, a: 5, b: 'a', c: true } 
 export let obj_b = {id: 1,       b: 'c', c: false} 
@@ -109,7 +110,7 @@ export function testRepository() {
 }
 
 @testRepository()
-@model
+@model()
 export class TestModel extends Model {
     @field   a ?: number
     @field   b ?: string

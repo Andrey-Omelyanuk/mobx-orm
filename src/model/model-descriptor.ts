@@ -1,23 +1,38 @@
-import { Model } from './model'
-import { Repository } from './repository' 
+import Model from './model'
+import { Repository } from '../repository' 
 
 /**
  * ModelDescriptor is a class that contains all the information about the model.
  */
-export class ModelDescriptor<T extends Model> {
+export default class ModelDescriptor<T extends Model> {
+
+    constructor(modelClass: new () => T) {
+        this.repository = new Repository(modelClass)
+    }
     /**
      * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
      */
     repository: Repository<T>
     /**
+     * Id fields
+     */
+    ids: {
+        [field_name: string]: {
+            decorator   : (obj: Model, field_name: string) => void,
+            settings    ?: any,
+            serialize   ?: any,
+            deserialize ?: any
+        }
+    } = {}
+    /**
      * Fields is a map of all fields in the model that usually use in repository.
      */ 
-    fields       : {
+    fields: {
         [field_name: string]: {
-            // decorator   : (obj: Model, field_name: string) => void,
-            settings    : any,
-            serialize   : any,
-            deserialize : any
+            decorator   : (obj: Model, field_name: string) => void,
+            settings    ?: any,
+            serialize   ?: any,
+            deserialize ?: any
         }
     } = {}
     /**
@@ -33,8 +48,3 @@ export class ModelDescriptor<T extends Model> {
         }
     } = {}
 }
-
-/**
- * Is a map of all models in the application. 
- */
-export const models = new Map<string, ModelDescriptor<any>>()
