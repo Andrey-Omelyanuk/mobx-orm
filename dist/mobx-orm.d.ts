@@ -273,7 +273,7 @@ declare abstract class Model {
             settings: any;
         };
     };
-    static getQuery(props: QueryProps<Model>): Query<Model>;
+    static getQuery<T extends Model>(props: QueryProps<T>): Query<T>;
     static getQueryPage(props: QueryProps<Model>): QueryPage<Model>;
     static getQueryRaw(props: QueryProps<Model>): QueryRaw<Model>;
     static getQueryRawPage(props: QueryProps<Model>): QueryRawPage<Model>;
@@ -303,6 +303,7 @@ declare abstract class Model {
     cancelLocalChanges(): void;
     updateFromRaw(raw_obj: any): void;
 }
+
 declare function model(constructor: any): any;
 
 declare class Cache<M extends Model> {

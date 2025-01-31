@@ -5,14 +5,13 @@ import {
     model, Model, EQ, StringInput, local, Repository, OrderByInput, NumberInput, ArrayStringInput,
     Query, DISPOSER_AUTOUPDATE, DESC, ObjectInput,
     autoResetId,
-    constant
+    constant,
 } from '../'
 
 
 jest.useFakeTimers()
 
 describe('Query', () => {
-
     @local() @model class A extends Model {}
     @local() @model class B extends Model {}
 

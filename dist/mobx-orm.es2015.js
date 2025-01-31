@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-orm.js v2.1.6
+   * mobx-orm.js v2.1.7
    * Released under the MIT license.
    */
 
@@ -1432,7 +1432,7 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Model.prototype, "updateFromRaw", null);
-// Decorator
+
 function model(constructor) {
     var original = constructor;
     // the new constructor

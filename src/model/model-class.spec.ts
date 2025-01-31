@@ -1,4 +1,5 @@
-import { Model, model, field } from './'
+import { field } from '..'
+import { Model, model } from '.'
 
 
 describe('Model Class', () => {

@@ -74,7 +74,7 @@ export class Query <M extends Model> {
         let {
             repository, filter, orderBy, offset, limit,
             relations, fields, omit,
-            autoupdate = false
+            autoupdate = false 
         } = props
 
         this.repository = repository 

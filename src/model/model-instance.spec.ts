@@ -1,4 +1,4 @@
-import { Model, model, field, foreign, one, many, local } from './'
+import { Model, model, field, foreign, one, many, local } from '..'
 
 
 describe('Model Instance', () => {
