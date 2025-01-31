@@ -12,7 +12,9 @@ describe('Id field', () => {
     })
 
     it('Set id when id not exist yet and unset it than.', async () => {
-        @model() class A extends Model { @id id: number }
+        @model({id: id()})
+        class A extends Model { id: number }
+
         let a = new A()
         runInAction(() => { a.id = 1 })
         expect(a.modelDescription.repository.cache.store.has(a.id)).toBe(true)
@@ -22,9 +24,10 @@ describe('Id field', () => {
     })
 
     it('Error: try to change id', async () => {
-        @model() class A extends Model {
-            @id   id: number
-            @field a: number
+        @model({id: id(), a: field() })
+        class A extends Model {
+            id: number
+             a: number
         }
         let a = new A({id: 1, a: 1})
         expect(a.id).toBe(1)

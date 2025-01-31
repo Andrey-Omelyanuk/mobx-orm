@@ -11,7 +11,7 @@ describe('Model Descriptor', () => {
 
     describe('constructor', () => {
         it('default values', () => {
-            @model() class A extends Model { @id id: number }     
+            @model({id: id() }) class A extends Model { id: number }     
             let descriptor = new ModelDescriptor(A)
             expect(descriptor.repository.model).toBe(A)
         })

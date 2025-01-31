@@ -22,7 +22,7 @@ export default class Model {
      * Name of the model in the models map. 
      * Each instance have to have this field. Some decorators use it.
      */
-    static readonly modelName: string
+    static modelName: string
     /**
      * @returns {ModelDescriptor} - model description
      */
@@ -64,7 +64,10 @@ export default class Model {
      * @returns {ModelDescriptor} - model description
      */
     get modelDescription(): ModelDescriptor<Model> {
-        return models.get((this.constructor as typeof Model).modelName)
+        return models.get(this.modelName)
+    }
+    get modelName(): string {
+        return (this.constructor as typeof Model).modelName
     }
     /**
      * @returns {Object} - data only from fields (no ids)

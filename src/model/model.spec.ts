@@ -1,4 +1,4 @@
-import { field, id } from '../fields'
+import { field, foreign, id } from '../fields'
 import { Model, model, ModelDescriptor, models } from '.'
 import { observable, runInAction } from 'mobx'
 
@@ -11,31 +11,40 @@ describe('Model', () => {
 
     describe('constructor', () => {
         it('default value', () => {
-            @model() class A extends Model { @id id: number }     
+            @model({id: id() })
+            class A extends Model { id: number }     
             let a = new A()
             expect(a).toMatchObject({init_data: {}, id: undefined })
         })
 
         it('only id', () => {
-            @model() class A extends Model { @id id: number }     
+            @model({id: id()}) class A extends Model { id: number }     
             let a = new A({id: 1})
             expect(a).toMatchObject({init_data: {}, id: 1 })
         })
 
         it('id + value', () => {
-            @model() class A extends Model {
-                @id    id: number
-                @field  a: number
+            @model({
+                id: id(),
+                a: field()
+            }) class A extends Model {
+                id: number
+                a: number
             }
             let a = new A({id: 1, a: 2})
             expect(a).toMatchObject({init_data: {a: 2}, id: 1, a: 2 })
         })
 
         it('default value in property', () => {
-            @model() class A extends Model {
-                @id    id: number
-                @field a : number = 1 
-                @field b : number 
+            @model({
+                id: id(),
+                a : field(),
+                b : field()
+            })
+            class A extends Model {
+                id: number
+                a : number = 1 
+                b : number 
             }
             let a = new A()
             expect(a).toMatchObject({init_data: {a: 1}, id: undefined, a: 1, b: undefined })
@@ -43,27 +52,37 @@ describe('Model', () => {
     })
 
     it('getModelDescription', () => {
-        @model() class A extends Model { @id id: number }
+        @model({id: id()}) class A extends Model { id: number }
         let desc: ModelDescriptor<A> = A.getModelDescription()
         expect(desc).toBe(models.get('A'))
     })
 
     it('rawData', () => {
-        @model() class A extends Model {
-            @id    id: number
-            @field a : number
-            @field b : number 
+        @model({
+            id: id(),
+            a : field(),
+            b : field()
+        })
+        class A extends Model {
+            id: number
+            a : number
+            b : number 
         }
         let a = new A({a: 1})
         expect(a.rawData).toStrictEqual({a: 1})
     })
 
     it('rawObj', () => {
-        @model() class A extends Model {
-            @id   id : number
-            @field a : number
-            @field b : number 
-                   c : number   // should not to be in rawObj
+        @model({
+            id: id(),
+            a : field(),
+            b : field()
+        })
+        class A extends Model {
+            id : number
+             a : number
+             b : number 
+             c : number   // should not to be in rawObj
         }
         let a = new A({a: 1})           ; expect(a.rawObj).toStrictEqual({id: undefined, a: 1})
         runInAction(() => a.id = 1)     ; expect(a.rawObj).toStrictEqual({id: 1, a: 1})
@@ -71,11 +90,16 @@ describe('Model', () => {
     })
 
     it('onlyChangedRawData', () => {
-        @model() class A extends Model {
-            @id    id: number
-            @field a : number
-            @field b : number 
-                   c : number   // should be ignored because it isn't a field
+        @model({
+            id: id(),
+             a: field(),
+             b: field()
+        })
+        class A extends Model {
+            id: number
+            a : number
+            b : number 
+            c : number   // should be ignored because it isn't a field
         }
         let a = new A({id: 1, a: 2, c: 3})  ; expect(a).toMatchObject({init_data: {}, id: 1, a: 2, b: undefined, c: undefined})
                                               expect(a.onlyChangedRawData).toStrictEqual({})
@@ -85,11 +109,16 @@ describe('Model', () => {
     })
 
     it('isChanged', () => {
-        @model() class A extends Model {
-            @id    id: number
-            @field a : number
-            @field b : number 
-                   c : number   // should be ignored because it isn't a field
+        @model({
+            id: id(),
+             a: field(),
+             b: field()
+        })
+        class A extends Model {
+            id: number
+            a : number
+            b : number 
+            c : number   // should be ignored because it isn't a field
         }
         let a
         a = new A({id: 1, a: 2, c: 3})  ; expect(a.isChanged).toBe(false)
@@ -103,10 +132,15 @@ describe('Model', () => {
     })
 
     it('refreshInitData', () => {
-        @model() class A extends Model {
-            @id   id : number
-            @field a : number
-            @field b : number 
+        @model({
+            id: id(),
+             a: field(),
+             b: field()
+        })
+        class A extends Model {
+            id : number
+            a  : number
+            b  : number 
         }
         let a = new A({a: 1, b: 1}) ; expect(a.init_data).toStrictEqual({a: 1, b: 1})
         a.a = 2                     ; expect(a.init_data).toStrictEqual({a: 1, b: 1})
@@ -116,10 +150,15 @@ describe('Model', () => {
 
     describe('updateFromRaw', () => {
         it('empty raw_obj', () => {
-            @model() class A extends Model {
-                @id   id : number
-                @field a : number
-                @field b : number 
+            @model({
+                id: id(),
+                 a: field(),
+                 b: field()
+            })
+            class A extends Model {
+                id : number
+                 a : number
+                 b : number 
             }
             let a = new A({a: 1, b: 1})   
             let raw_obj = {}
@@ -127,10 +166,15 @@ describe('Model', () => {
         })
 
         it('raw_obj with data only (no id)', () => {
-            @model() class A extends Model {
-                @id   id : number
-                @field a : number
-                @field b : number 
+            @model({
+                id: id(),
+                a: field(),
+                b: field()
+            })
+            class A extends Model {
+                id : number
+                a : number
+                b : number 
             }
             let a = new A({a: 1, b: 1})   
             let raw_obj = {a: 2, b: 2}
@@ -138,10 +182,15 @@ describe('Model', () => {
         })
 
         it('raw_obj with id+data ', () => {
-            @model() class A extends Model {
-                @id   id : number
-                @field a : number
-                @field b : number 
+            @model({
+                id: id(),
+                a: field(),
+                b: field()
+            })
+            class A extends Model {
+                id : number
+                a : number
+                b : number 
             }
             let a = new A({id: 1, a: 1, b: 1})   
             let raw_obj = {id: 1, a: 2, b: 2}
@@ -149,10 +198,15 @@ describe('Model', () => {
         })
 
         it('raw_obj with id+data  (obj has no id)', () => {
-            @model() class A extends Model {
-                @id   id : number
-                @field a : number
-                @field b : number 
+            @model({
+                id: id(),
+                a: field(),
+                b: field()
+            })
+            class A extends Model {
+                id : number
+                a : number
+                b : number 
             }
             let a = new A({a: 1, b: 1})   
             let raw_obj = {id: 1, a: 2, b: 2}
@@ -160,10 +214,15 @@ describe('Model', () => {
         })
 
         it('raw_obj with id+data  (raw_obj has wrong id)', () => {
-            @model() class A extends Model {
-                @id   id : number
-                @field a : number
-                @field b : number 
+            @model({
+                id: id(),
+                a: field(),
+                b: field()
+            })
+            class A extends Model {
+                id : number
+                a : number
+                b : number 
             }
             let a = new A({id: 1, a: 1, b: 1})   
             let raw_obj = {id: 2, a: 2, b: 2}
@@ -171,21 +230,37 @@ describe('Model', () => {
         })
 
         // it('raw_obj with foreign relations', () => {
-        //     @model() class C extends Model {
-        //         @id   id : number
-        //         @field x : string
+        //     @model({
+        //         id: id(),
+        //         x: field()
+        //     })
+        //     class C extends Model {
+        //         id : number
+        //          x : string
         //     }
-        //     @model() class B extends Model {
-        //         @id   id : number
-        //         @field x : string 
+        //     @model({
+        //         id: id(),
+        //         x: field()
+        //     })
+        //     class B extends Model {
+        //         id : number
+        //          x : string 
         //     }
-        //     @model() class A extends Model {
-        //         @id   id   : number
-        //         @field a    : number
-        //         @field b_id : number 
-        //         @field c_id : number 
-        //         @foreign(B) b: B
-        //         @foreign(C) c: C
+        //     @model({
+        //         id: id(),
+        //         a: field(),
+        //         b_id: field(),
+        //         c_id: field(),
+        //         b: foreign(B),
+        //         c: foreign(C)
+        //     })
+        //     class A extends Model {
+        //         id: number
+        //         a: number
+        //         b_id: number 
+        //         c_id: number 
+        //         b: B
+        //         c: C
         //     }
         //     let a = new A({})   
         //     a.updateFromRaw({ id: 1, b: {id: 1, x: 'B'}, c: {id: 1, x: 'C'} })
@@ -226,51 +301,51 @@ describe('Model', () => {
     //     })
     })
 
-    describe('id', () => {
+    // describe('id', () => {
 
-        it('set in constructor', () => {
-            @model() class A extends Model { @id id: number }
-            let cache = A.getModelDescription().repository.cache
-                                    expect(cache.store.size).toBe(0)
-            let a = new A({id: 1})
-                                    expect(cache.store.size).toBe(1)
-                                    expect(cache.get(a.id)).toBe(a)
-                                    expect(a).toMatchObject({id: 1})
-        })
+    //     it('set in constructor', () => {
+    //         @model() class A extends Model { @id id: number }
+    //         let cache = A.getModelDescription().repository.cache
+    //                                 expect(cache.store.size).toBe(0)
+    //         let a = new A({id: 1})
+    //                                 expect(cache.store.size).toBe(1)
+    //                                 expect(cache.get(a.id)).toBe(a)
+    //                                 expect(a).toMatchObject({id: 1})
+    //     })
 
-        it('set later', () => {
-            @model() class A extends Model { @id id: number }     
-            let cache = A.getModelDescription().repository.cache
-            let a = new A()
-                                expect(cache.store.size).toBe(0)
-                                expect(a).toMatchObject({id: undefined})
-            a.id = 1           
-                                expect(cache.store.size).toBe(1)
-                                expect(cache.get(a.id)).toBe(a)
-        })
-        it('edit', () => {
-            @model() class A extends Model { @id id: number }
-            let cache = A.getModelDescription().repository.cache
-                                    expect(cache.store.size).toBe(0)
-            let a = new A({id: 1})              
-                                    expect(cache.store.size).toBe(1)
-                                    expect(cache.get(a.id)).toBe(a)
-                                    expect(a).toMatchObject({id: 1})
-            runInAction(() => {
-                expect(() => a.id = 2)
-                    .toThrow(new Error(`You cannot change id field: 1 to 2`))
-            })
-        })
-        it('edit to undefined', () => {
-            @model() class A extends Model { @id id: number }   
-            let cache = A.getModelDescription().repository.cache
-                                        expect(cache.store.size).toBe(0)
-            let a = new A({id: 1})      
-                                        expect(cache.store.size).toBe(1)
-                                        expect(cache.get(a.id)).toBe(a)
-                                        expect(a).toMatchObject({id: 1})
-            runInAction(() => a.id = undefined)
-                                        expect(cache.store.size).toBe(0)
-        })
-    }) 
+    //     it('set later', () => {
+    //         @model({id: id()}) class A extends Model { id: number }     
+    //         let cache = A.getModelDescription().repository.cache
+    //         let a = new A()
+    //                             expect(cache.store.size).toBe(0)
+    //                             expect(a).toMatchObject({id: undefined})
+    //         runInAction(() => a.id = 1)           
+    //                             expect(cache.store.size).toBe(1)
+    //                             expect(cache.get(a.id)).toBe(a)
+    //     })
+    //     it('edit', () => {
+    //         @model() class A extends Model { @id id: number }
+    //         let cache = A.getModelDescription().repository.cache
+    //                                 expect(cache.store.size).toBe(0)
+    //         let a = new A({id: 1})              
+    //                                 expect(cache.store.size).toBe(1)
+    //                                 expect(cache.get(a.id)).toBe(a)
+    //                                 expect(a).toMatchObject({id: 1})
+    //         runInAction(() => {
+    //             expect(() => a.id = 2)
+    //                 .toThrow(new Error(`You cannot change id field: 1 to 2`))
+    //         })
+    //     })
+    //     it('edit to undefined', () => {
+    //         @model() class A extends Model { @id id: number }   
+    //         let cache = A.getModelDescription().repository.cache
+    //                                     expect(cache.store.size).toBe(0)
+    //         let a = new A({id: 1})      
+    //                                     expect(cache.store.size).toBe(1)
+    //                                     expect(cache.get(a.id)).toBe(a)
+    //                                     expect(a).toMatchObject({id: 1})
+    //         runInAction(() => a.id = undefined)
+    //                                     expect(cache.store.size).toBe(0)
+    //     })
+    // }) 
 })

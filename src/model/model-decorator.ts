@@ -5,24 +5,31 @@ import Model from './model'
 
 /**
  * Decorator for model class. 
- * Register the model in the models map
- * @param modelName - custom name of model in models map, default is class name
  */
-export default function model(modelName?: string) {
-    return function (constructor: any, context: ClassDecoratorContext) {
+export default function model(fields: { [fieldName: string]: Function }, customName?: string) {
+    return function(cls: any) {
         // check that class extends Model
-        if (!(constructor.prototype instanceof Model))
-            throw new Error(`Class "${constructor.name}" should extends Model!`)
-        if (modelName === undefined) modelName = constructor.name
+        if (!(cls.prototype instanceof Model))
+            throw new Error(`Class "${cls.name}" should extends Model!`)
+
+        const modelName = customName ? customName : cls.name
         if (models.has(modelName))
-            throw new Error(`Model with name "${modelName}" already exist!`)
-        models.set(modelName, new ModelDescriptor(constructor))
+            throw new Error(`Model with name "${modelName}" already exist!`);
         // save model name in static property,
         // it help us to find model desctrion in models map
-        constructor.modelName = modelName
-
-        const wrapper = function (...args) {
-            const instance = new constructor(...args);
+        cls.modelName = modelName
+        
+        // register model in models map
+        const modelDescription = new ModelDescriptor(cls)
+        models.set(modelName, modelDescription);
+        // register fields
+        for (const fieldName in fields) {
+            fields[fieldName](modelDescription, fieldName)
+        }
+        // create wrapper for model class
+        // it will apply modelDescription to instance 
+        const wrapper = function (...args: any[]) {
+            const instance = new cls(...args);
             // apply id decorators
             if (Object.keys(this.modelDescription.ids).length === 0) 
                 throw new Error(`Model "${modelName}" should have id field decorator!`)
@@ -39,8 +46,8 @@ export default function model(modelName?: string) {
             instance.refreshInitData()
             return instance
         }
-        wrapper.prototype = constructor.prototype
-        Object.setPrototypeOf(wrapper, constructor)
+        wrapper.prototype = cls.prototype
+        Object.setPrototypeOf(wrapper, cls)
         return wrapper as any
     }
 }

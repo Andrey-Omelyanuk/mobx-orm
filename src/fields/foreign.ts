@@ -1,43 +1,50 @@
-import {extendObservable, reaction, action} from 'mobx'
+import { extendObservable, reaction, action } from 'mobx'
+import { Model, ModelDescriptor } from '../model'
+import { getLocalId } from '../utils'
 
 
-function field_foreign(obj, field_name) {
-    let settings = obj.model.__relations[field_name].settings
-    let foreign_model   = settings.foreign_model
-    let foreign_id_name = settings.foreign_id_name
+export default function foreign<T extends Model>(
+    foreignModelClass: new() => T,
+    foreignIds: string[] = []
+) {
+    return function<M extends Model>(modelDescription: ModelDescriptor<M>, fieldName: string) {
+        if (modelDescription.ids[fieldName])
+            throw new Error(`Foreign field "${fieldName}" already registered in model "${modelDescription.cls.name}"`)
 
-    // make observable and set default value
-    extendObservable(obj, { [field_name]: undefined })
+        // if foreignIds is not defined then try to auto detect it
+        // it's work only with single id
+        const foreignModelDescription = (foreignModelClass as any).getModelDescription()
+        if (foreignIds.length === 0) {
+            let id_fields = Object.keys(foreignModelDescription.ids)
+            if (id_fields.length === 1)
+                foreignIds.push(`${fieldName}_id`)
+            else
+                throw new Error(`Cannot auto detect foreign id field for model ${foreignModelClass.name} on field ${fieldName}`)
+        }
 
-    reaction(
-        // watch on foreign cache for foreign object
-        () => {
-            if (obj[foreign_id_name] === undefined) return undefined
-            if (obj[foreign_id_name] === null) return null 
-            return foreign_model.repository.cache.get(obj[foreign_id_name])
-        },
-        // update foreign field
-        action('MO: Foreign - update',
-            (_new, _old) => obj[field_name] = _new 
-        ),
-        {fireImmediately: true}
-    )
-}
-
-export default function foreign(foreign_model: any, foreign_id_name?: string) {
-    return function (cls: any, field_name: string) {
-        // if cls already was decorated by model decorator then use original constructor
-        let model = cls.prototype?.constructor.isOriginalClass ? cls.prototype.constructor : cls.constructor
-        // let model = cls.prototype.constructor
-        if (model.__relations === undefined) model.__relations = {}
-        // register field 
-        model.__relations[field_name] = { 
-            decorator: field_foreign,
-            settings: {
-                foreign_model: foreign_model,
-                // if it is empty then try auto detect it (it works only with single id) 
-                foreign_id_name: foreign_id_name !== undefined ? foreign_id_name : `${field_name}_id`
+        modelDescription.relations[fieldName] = {
+            // decorator will be called after obj creation for setup the field, see model decorator
+            decorator: (obj: Model, field_name: string) => {
+                extendObservable(obj, { [fieldName]: undefined })
+                reaction(
+                    // watch on foreign cache for foreign object
+                    () => {
+                        const localId = getLocalId(obj, foreignIds)
+                        if (localId === undefined) return undefined
+                        if (localId === null) return null  // foreign object can be not exist explicitly
+                        return foreignModelDescription.repository.cache.get(localId)
+                    },
+                    // update foreign field
+                    action('MO: Foreign - update',
+                        (_new, _old) => obj[fieldName] = _new 
+                    ),
+                    {fireImmediately: true}
+                )
+            },
+            settings : {
+                foreignModel: foreignModelClass,
+                foreignIds  : foreignIds 
             } 
-        } 
+        }
     }
 }

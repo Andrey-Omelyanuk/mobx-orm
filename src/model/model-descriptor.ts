@@ -7,8 +7,13 @@ import { Repository } from '../repository'
 export default class ModelDescriptor<T extends Model> {
 
     constructor(modelClass: new () => T) {
+        this.cls = modelClass
         this.repository = new Repository(modelClass)
     }
+    /**
+     * Model class
+     */
+    cls: new () => T
     /**
      * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
      */
@@ -18,7 +23,7 @@ export default class ModelDescriptor<T extends Model> {
      */
     ids: {
         [field_name: string]: {
-            decorator   : (obj: Model, field_name: string) => void,
+            decorator   : (obj: Model) => void,
             settings    ?: any,
             serialize   ?: any,
             deserialize ?: any
@@ -41,7 +46,7 @@ export default class ModelDescriptor<T extends Model> {
      */
     relations : {
         [field_name: string]: {
-            // decorator   : (obj: Model, field_name: string) => void,
+            decorator   : (obj: Model, field_name: string) => void,
             settings    : any
             // there is no serializer of deserializer because
             // it is derivative and does not come from outside

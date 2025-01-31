@@ -5,6 +5,9 @@ Inspired by [ember-data](https://github.com/emberjs/data) and [js-data](https://
 
 Warning: it is not mobx-orm from npm package
 
+Attention: I drop all decorators, a new decorator (Stage 3) is bad and not user friendly. The field decorator has no access to the class of field, this limit kill any attempt to use it. JS/TS dissapoint me again but I have to use it.
+
+
 Check ./e2e tests for understanding how to use the lib.
 
 
