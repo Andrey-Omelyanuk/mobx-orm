@@ -1,5 +1,5 @@
 import { runInAction } from 'mobx'
-import { Model, model, field, foreign, local } from '../'
+import { Model, model, field, foreign, local } from '../..'
 
 
 describe('Field: foreign', () => {

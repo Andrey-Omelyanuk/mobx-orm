@@ -1,5 +1,5 @@
 import { observe, extendObservable, runInAction, reaction, action } from 'mobx'
-import { Model } from '../model'
+import { Model } from '../../model'
 
 
 function field_one(obj: Model, field_name) {

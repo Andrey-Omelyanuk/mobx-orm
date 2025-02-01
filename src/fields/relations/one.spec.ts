@@ -1,7 +1,7 @@
-import { local } from '../adapters'
+import { local } from '../../adapters'
 import { runInAction } from 'mobx'
-import { Model, model, field, one } from '../'
-import { ID } from '../types'
+import { Model, model, field, one } from '../..'
+import { ID } from '../../types'
 
 
 describe('Field: One', () => {

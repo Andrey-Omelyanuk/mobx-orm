@@ -1,4 +1,4 @@
 export * from './field'
-export * from './foreign'
-export * from './one'
-export * from './many'
+export * from './relations/foreign'
+export * from './relations/one'
+export * from './relations/many'

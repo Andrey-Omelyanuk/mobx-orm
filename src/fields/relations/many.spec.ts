@@ -1,7 +1,7 @@
 import { runInAction } from 'mobx'
-import { local } from '../adapters'
-import { Model, model, field, many } from '../'
-import { ID } from '../types'
+import { local } from '../../adapters'
+import { Model, model, field, many } from '../..'
+import { ID } from '../../types'
 
 
 describe('Field: Many', () => {
