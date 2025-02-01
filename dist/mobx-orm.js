@@ -275,8 +275,199 @@
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    /**
+     *  Base class for the type descriptor
+     * It is used to define the field of the model
+     * It is used to convert the value to the string and back
+     */
+    class TypeDescriptor {
+        constructor() {
+            /**
+             * Configuration of the descriptor
+             */
+            Object.defineProperty(this, "config", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+        }
+    }
+
+    class StringDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super();
+            this.config = props ? props : { maxLength: 255 };
+        }
+        toString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value;
+        }
+        fromString(value) {
+            if (value === undefined)
+                return undefined;
+            else if (value === 'null')
+                return null;
+            else if (value === null)
+                return null;
+            return value;
+        }
+        validate(value) {
+            if (value === null && !this.config.null)
+                throw new Error('Field is required');
+            if (value === '' && this.config.required)
+                throw new Error('Field is required');
+            if (this.config.maxLength && value.length > this.config.maxLength)
+                throw new Error('String is too long');
+        }
+    }
+    function STRING(props) {
+        return new StringDescriptor(props);
+    }
+
+    class NumberDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super();
+            this.config = props ? props : {};
+        }
+        toString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value.toString();
+        }
+        fromString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            if (value === null)
+                return null;
+            const result = parseInt(value);
+            if (isNaN(result))
+                return undefined;
+            return result;
+        }
+        validate(value) {
+            if (value === null && !this.config.null)
+                throw new Error('Field is required');
+            if (this.config.min && value < this.config.min)
+                throw new Error('Number is too small');
+            if (this.config.max && value > this.config.max)
+                throw new Error('Number is too big');
+        }
+    }
+    function NUMBER(props) {
+        return new NumberDescriptor(props);
+    }
+
+    class BooleanDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super();
+            this.config = props;
+        }
+        toString(value) {
+            return value.toString();
+        }
+        fromString(value) {
+            return value === 'true';
+        }
+        validate(value) {
+            var _a;
+            if (((_a = this.config) === null || _a === void 0 ? void 0 : _a.required) && value === undefined)
+                throw new Error('Field is required');
+        }
+    }
+    function BOOLEAN(props) {
+        return new BooleanDescriptor(props);
+    }
+
+    class DateDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super();
+            this.config = props;
+        }
+        toString(value) {
+            return value.toISOString();
+        }
+        fromString(value) {
+            return new Date(value);
+        }
+        validate(value) {
+            if (this.config.min && value < this.config.min)
+                throw new Error('Date is too early');
+            if (this.config.max && value > this.config.max)
+                throw new Error('Date is too late');
+        }
+    }
+    function DATE(props) {
+        return new DateDescriptor(props);
+    }
+
+    class DateTimeDescriptor extends DateDescriptor {
+        toString(value) {
+            return value.toISOString();
+        }
+    }
+    function DATETIME(props) {
+        return new DateTimeDescriptor(props);
+    }
+
+    class ArrayDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super();
+            this.config = props;
+        }
+        toString(value) {
+            return value.map(item => this.config.type.toString(item)).join(',');
+        }
+        fromString(value) {
+            return value.split(',').map(item => this.config.type.fromString(item));
+        }
+        validate(value) {
+            if (this.config.minItems && value.length < this.config.minItems)
+                throw new Error('Array is too short');
+            if (this.config.maxItems && value.length > this.config.maxItems)
+                throw new Error('Array is too long');
+            value.forEach(item => this.config.type.validate(item));
+        }
+    }
+    function ARRAY(props) {
+        return new ArrayDescriptor(props);
+    }
+
     const ASC = true;
     const DESC = false;
+    class OrderByDescriptor extends TypeDescriptor {
+        constructor() {
+            super();
+        }
+        toString(value) {
+            if (!value || !value[0])
+                return undefined;
+            return value[1] ? value[0] : '-' + value[0];
+        }
+        fromString(value) {
+            if (!value)
+                return undefined;
+            return value[0] === '-' ? [value.substring(1), false] : [value, true];
+        }
+        validate(value) {
+            if (!value)
+                throw new Error('Field is required');
+            if (!value[0])
+                throw new Error('Field is required');
+            if (value[1] === undefined)
+                throw new Error('Field is required');
+        }
+    }
+    function ORDER_BY2() {
+        return new OrderByDescriptor();
+    }
 
     var TYPE;
     (function (TYPE) {
@@ -1481,15 +1672,22 @@
         return f; // return new constructor (will override original)
     }
 
-    function field_field(obj, field_name) {
-        // make observable and set default value
-        mobx.extendObservable(obj, { [field_name]: obj[field_name] });
-    }
-    function field(cls, field_name) {
-        let model = cls.constructor;
-        if (model.__fields === undefined)
-            model.__fields = {};
-        model.__fields[field_name] = { decorator: field_field }; // register field 
+    /**
+     * Decorator for fields
+     */
+    function field(typeDescriptor, observable = true) {
+        return (cls, fieldName) => {
+            let model = cls.constructor;
+            if (model.__fields === undefined)
+                model.__fields = {};
+            model.__fields[fieldName] = {
+                decorator: (obj) => {
+                    if (observable)
+                        mobx.extendObservable(obj, { [fieldName]: obj[fieldName] });
+                },
+                typeDescriptor
+            };
+        };
     }
 
     function field_foreign(obj, field_name) {
@@ -2108,19 +2306,27 @@
 
     exports.AND = AND;
     exports.AND_Filter = AND_Filter;
+    exports.ARRAY = ARRAY;
     exports.ASC = ASC;
     exports.Adapter = Adapter;
     exports.ArrayDateInput = ArrayDateInput;
     exports.ArrayDateTimeInput = ArrayDateTimeInput;
+    exports.ArrayDescriptor = ArrayDescriptor;
     exports.ArrayNumberInput = ArrayNumberInput;
     exports.ArrayStringInput = ArrayStringInput;
+    exports.BOOLEAN = BOOLEAN;
+    exports.BooleanDescriptor = BooleanDescriptor;
     exports.BooleanInput = BooleanInput;
     exports.Cache = Cache;
     exports.ComboFilter = ComboFilter;
     exports.ConstantAdapter = ConstantAdapter;
+    exports.DATE = DATE;
+    exports.DATETIME = DATETIME;
     exports.DESC = DESC;
     exports.DISPOSER_AUTOUPDATE = DISPOSER_AUTOUPDATE;
+    exports.DateDescriptor = DateDescriptor;
     exports.DateInput = DateInput;
+    exports.DateTimeDescriptor = DateTimeDescriptor;
     exports.DateTimeInput = DateTimeInput;
     exports.EQ = EQ;
     exports.EQV = EQV;
@@ -2138,9 +2344,13 @@
     exports.MockAdapter = MockAdapter;
     exports.Model = Model;
     exports.NOT_EQ = NOT_EQ;
+    exports.NUMBER = NUMBER;
+    exports.NumberDescriptor = NumberDescriptor;
     exports.NumberInput = NumberInput;
+    exports.ORDER_BY2 = ORDER_BY2;
     exports.ObjectForm = ObjectForm;
     exports.ObjectInput = ObjectInput;
+    exports.OrderByDescriptor = OrderByDescriptor;
     exports.OrderByInput = OrderByInput;
     exports.Query = Query;
     exports.QueryCacheSync = QueryCacheSync;
@@ -2151,13 +2361,15 @@
     exports.QueryStream = QueryStream;
     exports.ReadOnlyAdapter = ReadOnlyAdapter;
     exports.Repository = Repository;
+    exports.STRING = STRING;
     exports.SingleFilter = SingleFilter;
+    exports.StringDescriptor = StringDescriptor;
     exports.StringInput = StringInput;
+    exports.TypeDescriptor = TypeDescriptor;
     exports.autoResetId = autoResetId;
     exports.config = config;
     exports.constant = constant;
     exports.field = field;
-    exports.field_field = field_field;
     exports.foreign = foreign;
     exports.local = local;
     exports.local_store = local_store;

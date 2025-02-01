@@ -1,4 +1,7 @@
 import { Cache, Adapter, Repository, Model ,field, model, Query, Filter } from "."
+import { BOOLEAN } from "./types/boolean"
+import { STRING } from "./types/string"
+import { NUMBER } from "./types/number"
 
 export let obj_a = {id: 0, a: 5, b: 'a', c: true } 
 export let obj_b = {id: 1,       b: 'c', c: false} 
@@ -111,7 +114,7 @@ export function testRepository() {
 @testRepository()
 @model
 export class TestModel extends Model {
-    @field   a ?: number
-    @field   b ?: string
-    @field   c ?: boolean
+    @field(NUMBER())   a ?: number
+    @field(STRING())   b ?: string
+    @field(BOOLEAN())  c ?: boolean
 }

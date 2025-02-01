@@ -1,7 +1,8 @@
-import { local } from '../../adapters'
+import { local } from '../adapters'
 import { runInAction } from 'mobx'
-import { Model, model, field, one } from '../..'
-import { ID } from '../../types'
+import { Model, model, field, one } from '..'
+import { ID } from '../types'
+import { NUMBER } from '../types/number'
 
 
 describe('Field: One', () => {
@@ -10,7 +11,7 @@ describe('Field: One', () => {
 
         it('declare', async () => {
             @local() @model class A extends Model {         b    : B      }
-            @local() @model class B extends Model { @field  a_id : number }
+            @local() @model class B extends Model { @field(NUMBER())  a_id : number }
             one(B, 'a_id')(A, 'b')
             expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()
             expect(A.__relations['b'].settings.remote_model).toBe(B)
@@ -19,7 +20,7 @@ describe('Field: One', () => {
 
         it('declare (auto detect)', async () => {
             @local() @model class A extends Model {         b       : B      }
-            @local() @model class B extends Model { @field  a_id    : number }
+            @local() @model class B extends Model { @field(NUMBER())  a_id    : number }
             one(B)(A, 'b')
             expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()
             expect(A.__relations['b'].settings.remote_model).toBe(B)
@@ -28,11 +29,11 @@ describe('Field: One', () => {
 
         it('cross declare', async () => {
             @local() @model class A extends Model {
-                @field  b_id    : number
+                @field(NUMBER())  b_id    : number
                         b_one   : B
             }
             @local() @model class B extends Model {
-                @field  a_id    : number
+                @field(NUMBER())  a_id    : number
                         a_one   : A
             }
             one(B)(A, 'b_one')
@@ -48,7 +49,7 @@ describe('Field: One', () => {
 
     describe('Usage', () => {
         @local() @model class A extends Model {         b    : B }
-        @local() @model class B extends Model { @field  a_id : ID }
+        @local() @model class B extends Model { @field(NUMBER())  a_id : ID }
         one(B)(A, 'b')
 
         beforeEach(() => {

@@ -12,6 +12,15 @@ export class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
         super()
         this.config = props
     }
+    toString(value: T[]): string {
+        if (!value) return undefined
+        if (!value.length) return undefined
+        return value.map(item => this.config.type.toString(item)).join(',')
+    }
+    fromString(value: string): T[] {
+        if (!value) return [] 
+        return value.split(',').map(item => this.config.type.fromString(item))
+    }
     validate(value: T[]) {
         if (this.config.minItems && value.length < this.config.minItems)
             throw new Error('Array is too short')

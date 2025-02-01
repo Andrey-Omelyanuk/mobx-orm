@@ -7,10 +7,110 @@ declare const config: {
     DEBOUNCE: (func: Function, debounce: number) => any;
 };
 
-type ID = string | number;
+interface TypeDescriptorProps {
+    null?: boolean;
+    required?: boolean;
+}
+/**
+ *  Base class for the type descriptor
+ * It is used to define the field of the model
+ * It is used to convert the value to the string and back
+ */
+declare abstract class TypeDescriptor<T> {
+    /**
+     * Configuration of the descriptor
+     */
+    config: any;
+    /**
+     * Convert value to the string
+     */
+    abstract toString(value: T): string;
+    /**
+     * Convert string to the value
+     */
+    abstract fromString(value: string): T;
+    /**
+     * Check if the value is valid
+     * If not, throw an error
+     */
+    abstract validate(value: T): void;
+}
+
+interface StringDescriptorProps extends TypeDescriptorProps {
+    maxLength?: number;
+}
+declare class StringDescriptor extends TypeDescriptor<string> {
+    constructor(props?: StringDescriptorProps);
+    toString(value: string): string;
+    fromString(value: string): string;
+    validate(value: string): void;
+}
+declare function STRING(props?: StringDescriptorProps): StringDescriptor;
+
+interface NumberDescriptorProps extends TypeDescriptorProps {
+    min?: number;
+    max?: number;
+}
+declare class NumberDescriptor extends TypeDescriptor<number> {
+    constructor(props?: NumberDescriptorProps);
+    toString(value: number): string;
+    fromString(value: string): number;
+    validate(value: number): void;
+}
+declare function NUMBER(props?: NumberDescriptorProps): NumberDescriptor;
+
+interface BooleanDescriptorProps extends TypeDescriptorProps {
+}
+declare class BooleanDescriptor extends TypeDescriptor<boolean> {
+    constructor(props?: BooleanDescriptorProps);
+    toString(value: boolean): string;
+    fromString(value: string): boolean;
+    validate(value: boolean): void;
+}
+declare function BOOLEAN(props?: BooleanDescriptorProps): BooleanDescriptor;
+
+interface DateDescriptorProps extends TypeDescriptorProps {
+    min?: Date;
+    max?: Date;
+}
+declare class DateDescriptor extends TypeDescriptor<Date> {
+    constructor(props?: DateDescriptorProps);
+    toString(value: Date): string;
+    fromString(value: string): Date;
+    validate(value: Date): void;
+}
+declare function DATE(props?: DateDescriptorProps): DateDescriptor;
+
+declare class DateTimeDescriptor extends DateDescriptor {
+    toString(value: Date): string;
+}
+declare function DATETIME(props?: DateDescriptorProps): DateTimeDescriptor;
+
+interface ArrayDescriptorProps<T> extends TypeDescriptorProps {
+    type: TypeDescriptor<T>;
+    minItems?: number;
+    maxItems?: number;
+}
+declare class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
+    constructor(props: ArrayDescriptorProps<T>);
+    toString(value: T[]): string;
+    fromString(value: string): T[];
+    validate(value: T[]): void;
+}
+declare function ARRAY<T>(props?: ArrayDescriptorProps<T>): ArrayDescriptor<T>;
+
 declare const ASC = true;
 declare const DESC = false;
 type ORDER_BY = Map<string, boolean>;
+declare class OrderByDescriptor extends TypeDescriptor<[string, boolean]> {
+    constructor();
+    toString(value: [string, boolean]): string;
+    fromString(value: string): [string, boolean];
+    validate(value: [string, boolean]): void;
+}
+declare function ORDER_BY2(): OrderByDescriptor;
+
+type ID = string | number;
 
 declare abstract class Filter {
     abstract get URLSearchParams(): URLSearchParams;
@@ -318,8 +418,10 @@ declare class Cache<M extends Model> {
     clear(): void;
 }
 
-declare function field_field(obj: any, field_name: any): void;
-declare function field(cls: any, field_name: string): void;
+/**
+ * Decorator for fields
+ */
+declare function field<T>(typeDescriptor?: TypeDescriptor<T>, observable?: boolean): (cls: any, fieldName: string) => void;
 
 declare function foreign(foreign_model: any, foreign_id_name?: string): (cls: any, field_name: string) => void;
 
@@ -414,4 +516,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, ConstantAdapter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, constant, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayDescriptor, ArrayDescriptorProps, ArrayNumberInput, ArrayStringInput, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, BooleanInput, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateInput, DateTimeDescriptor, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, NumberInput, ORDER_BY, ORDER_BY2, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SingleFilter, StringDescriptor, StringDescriptorProps, StringInput, TypeDescriptor, TypeDescriptorProps, autoResetId, config, constant, field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

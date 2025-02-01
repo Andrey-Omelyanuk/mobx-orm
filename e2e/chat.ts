@@ -1,48 +1,54 @@
 ///<reference path="../dist/mobx-orm.d.ts" />
-import { Model, model, local, field, foreign, many } from '../dist/mobx-orm'
+import { Model, model, local, field, foreign, many, NUMBER, STRING, DATE, DATETIME } from '../dist/mobx-orm'
 
 
 describe('e2e: Chat.', () => {
+    @local()
+    @model
+    class User extends Model {
+        // -- Fields ------------------------------------------------
+        @field(STRING({maxLength: 24, required: true}))
+        first_name: string
+        @field(STRING({maxLength: 24, required: true}))
+        last_name : string
+        // -- Many --------------------------------------------------
+        messages: Message[]
 
-    function declare() {
+        get full_name() : string { return `${this.first_name} ${this.last_name}` }
+    }
+    @local()
+    @model
+    class Channel extends Model {
+        // -- Many --------------------------------------------------
+        messages: Message[]
 
-        @local()
-        @model class User extends Model {
-            @field  first_name  : string
-            @field  last_name   : string
-                    messages    : Message[]
-
-            get full_name() : string { return `${this.first_name} ${this.last_name}` }
+        async sendMessage(user: User, text: string) {
+            let message = new Message({channel_id: this.id, user_id: user.id, text: text, created: new Date()})
+            return message.save()
         }
+    }
+    @local()
+    @model
+    class Message extends Model {
+        // -- Fields ------------------------------------------------
+        @field(DATETIME({required: true}))
+        created     : Date
+        @field(STRING({required: true, maxLength: 24}))
+        text        : string
+        @field(NUMBER({required: true}))
+        channel_id  : number
+        @field(NUMBER({required: true}))
+        user_id     : number
+        // -- Foreigns ----------------------------------------------
+        @foreign(Channel)
+        channel     : Channel
+        @foreign(User)
+        user        : User
+    }
+    many(Message, 'user_id'   )(User, 'messages') 
+    many(Message, 'channel_id')(Channel, 'messages') 
 
-        @local()
-        @model class Channel extends Model {
-                messages: Message[]
-
-            async sendMessage(user: User, text: string) {
-                let message = new Message({channel_id: this.id, user_id: user.id, text: text, created: new Date()})
-                return message.save()
-            }
-        }
-
-        @local()
-        @model class Message extends Model {
-            @field created     : Date
-            @field text        : string
-            @field channel_id  : number
-            @field user_id     : number
-
-            @foreign(Channel) channel : Channel
-            @foreign(User)    user    : User
-        }
-        many(Message, 'user_id'   )(User, 'messages') 
-        many(Message, 'channel_id')(Channel, 'messages') 
-
-        return { User: User, Channel: Channel, Message: Message }
-    } 
-
-    it('init', async ()=> {
-        const {User, Channel, Message} = declare()
+    it('...', async ()=> {
         let channelA = new Channel(); await channelA.save()
         let channelB = new Channel(); await channelB.save()
         let userA = new User({first_name: 'A', last_name: 'X'}); await userA.save()
@@ -51,14 +57,6 @@ describe('e2e: Chat.', () => {
         expect(User.repository.cache.store.size).toBe(2)
         expect(Channel.repository.cache.store.size).toBe(2)
         expect(Message.repository.cache.store.size).toBe(0)
-    })
-
-    it('Send messages', async ()=> {
-        const {User, Channel, Message} = declare()
-        let channelA = new Channel(); await channelA.save()
-        let channelB = new Channel(); await channelB.save()
-        let userA = new User({first_name: 'A', last_name: 'X'}); await userA.save()
-        let userB = new User({first_name: 'B', last_name: 'X'}); await userB.save()
 
         await channelA.sendMessage(userA, 'First  message from userA')
         await channelA.sendMessage(userA, 'Second message from userA')

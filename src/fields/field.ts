@@ -1,14 +1,19 @@
 import { extendObservable } from 'mobx'
+import { TypeDescriptor } from '../types/type'
 
 
-export function field_field(obj, field_name) {
-    // make observable and set default value
-    extendObservable(obj, { [field_name]: obj[field_name] })
-}
-
-export function field(cls, field_name: string) {
-    let model = cls.constructor
-    if (model.__fields === undefined) model.__fields = {}
-
-    model.__fields[field_name] = { decorator: field_field }  // register field 
+/**
+ * Decorator for fields 
+ */
+export function field<T>(typeDescriptor?: TypeDescriptor<T>, observable: boolean = true) {
+    return (cls: any, fieldName: string) => {
+        let model = cls.constructor
+        if (model.__fields === undefined) model.__fields = {}
+        model.__fields[fieldName] = {
+            decorator: (obj) => {
+                if (observable) extendObservable(obj, { [fieldName]: obj[fieldName] })
+            },
+            typeDescriptor
+        }
+    }
 }

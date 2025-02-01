@@ -1,5 +1,6 @@
 import { runInAction } from 'mobx'
-import { Model, model, field, foreign, local } from '../..'
+import { Model, model, field, foreign, local } from '..'
+import { NUMBER } from '../types/number'
 
 
 describe('Field: foreign', () => {
@@ -7,7 +8,7 @@ describe('Field: foreign', () => {
         it('declare foreign with single id', async () => {
             @model class A extends Model { }
             @model class B extends Model {
-                @field              a_id: number
+                @field(NUMBER())    a_id: number
                 @foreign(A, 'a_id') a   : A 
             }
             expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
@@ -18,8 +19,8 @@ describe('Field: foreign', () => {
         it('declare foreign with auto detect single id', async () => {
             @model class A extends Model {}
             @model class B extends Model {
-                @field      a_id: number
-                @foreign(A) a   : A 
+                @field(NUMBER()) a_id: number
+                @foreign(A)      a   : A 
             }
             expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
             expect(B.__relations['a'].settings.foreign_model).toBe(A)
@@ -28,12 +29,12 @@ describe('Field: foreign', () => {
 
         it('cross declare', async () => {
             @local() @model class A extends Model {
-                @field  b_id: number
-                        b   : B
+                @field(NUMBER()) b_id: number
+                                 b   : B
             }
             @local() @model class B extends Model {
-                @field      a_id: number
-                @foreign(A) a   : A 
+                @field(NUMBER()) a_id: number
+                @foreign(A)      a   : A 
             }
             foreign(B)(A, 'b') 
             expect(A.__relations['b'].settings.foreign_model).toBe(B)
@@ -48,8 +49,8 @@ describe('Field: foreign', () => {
     describe('Usage', () => {
         @local() @model class A extends Model {}
         @local() @model class B extends Model {
-            @field      a_id: number
-            @foreign(A) a   : A 
+            @field(NUMBER()) a_id: number
+            @foreign(A)      a   : A 
         }
 
         beforeEach(() => {

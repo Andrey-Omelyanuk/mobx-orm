@@ -1,0 +1,6 @@
+
+
+describe('Type: Boolean', () => {
+    it('...', () => {
+    })
+})

@@ -1,6 +1,6 @@
 export interface TypeDescriptorProps {
-    null        ?: boolean
-    blank       ?: boolean
+    null    ?: boolean
+    required?: boolean
 }
 /**
  *  Base class for the type descriptor
@@ -8,26 +8,21 @@ export interface TypeDescriptorProps {
  * It is used to convert the value to the string and back
  */ 
 export abstract class TypeDescriptor<T> {
-    config: any
     /**
-     * Decorator for the field of the model.
+     * Configuration of the descriptor 
      */
+    config: any
     /**
      * Convert value to the string
      */ 
-    // toString(value: T) { return toString(this.type, value) }
+    abstract toString(value: T): string
     /**
      * Convert string to the value
      */ 
-    // fromString(value: string): T { return stringTo(this.type, value) } 
+    abstract fromString(value: string): T
     /**
      * Check if the value is valid
      * If not, throw an error
      */ 
-    validate(value: T) {
-        if (value === null && !this.config.null)
-            throw new Error('Field is required')
-        if (value === '' && !this.config.blank)
-            throw new Error('Field is required')
-    }
+    abstract validate(value: T): void
 }

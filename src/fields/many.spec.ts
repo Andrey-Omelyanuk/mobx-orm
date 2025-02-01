@@ -1,7 +1,8 @@
 import { runInAction } from 'mobx'
-import { local } from '../../adapters'
-import { Model, model, field, many } from '../..'
-import { ID } from '../../types'
+import { local } from '../adapters'
+import { Model, model, field, many } from '..'
+import { ID } from '../types'
+import { NUMBER } from '../types/number'
 
 
 describe('Field: Many', () => {
@@ -10,7 +11,7 @@ describe('Field: Many', () => {
 
         it('declare', async () => {
             @local() @model class A extends Model {        bs  : B[]    }
-            @local() @model class B extends Model { @field a_id: number }
+            @local() @model class B extends Model { @field(NUMBER()) a_id: number }
             many(B, 'a_id')(A, 'bs')
             expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
             expect(A.__relations['bs'].settings.remote_model).toBe(B)
@@ -19,7 +20,7 @@ describe('Field: Many', () => {
 
         it('declare (auto detect)', async () => {
             @local() @model class A extends Model {        bs  : B[]    }
-            @local() @model class B extends Model { @field a_id: number }
+            @local() @model class B extends Model { @field(NUMBER()) a_id: number }
             many(B)(A, 'bs')
             expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
             expect(A.__relations['bs'].settings.remote_model).toBe(B)
@@ -28,11 +29,11 @@ describe('Field: Many', () => {
 
         it('cross declare', async () => {
             @local() @model class A extends Model {
-                @field  b_id : number
+                @field(NUMBER())  b_id : number
                         bs   : B[]
             }
             @local() @model class B extends Model {
-                @field  a_id : number
+                @field(NUMBER())  a_id : number
                         as   : A[]
             }
             many(B)(A, 'bs')
@@ -49,7 +50,7 @@ describe('Field: Many', () => {
 
     describe('Usage', () => {
         @local() @model class A extends Model {        bs   : B[]    }
-        @local() @model class B extends Model { @field a_id : ID }
+        @local() @model class B extends Model { @field(NUMBER()) a_id : ID }
         many(B)(A, 'bs')
 
         beforeEach(() => {
@@ -117,12 +118,12 @@ describe('Field: Many', () => {
 
     it('e2e', async () => {
         @local() @model class Program extends Model {
-            @field name	: string
+            @field(NUMBER()) name	: string
                    sets : ProgramSet []
         }
         @local() @model class ProgramSet extends Model {
-            @field  order       : number
-            @field  program_id  : number
+            @field(NUMBER())  order       : number
+            @field(NUMBER())  program_id  : number
         }
         many(ProgramSet)(Program, 'sets')
 

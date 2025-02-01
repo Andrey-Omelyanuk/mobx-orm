@@ -1,13 +1,18 @@
-import { Model, model, local, field, foreign, one, many } from '../dist/mobx-orm'
+import { DATETIME, NUMBER, STRING,  Model, model, local, field, foreign, one, many } from '../dist/mobx-orm'
 
 
 describe('Other tests: Passports.', () => {
 
     @local()
-    @model class User extends Model {
-        @field  user_name   : string
-                passport    : Passport
-                keys        : Key[]
+    @model
+    class User extends Model {
+        // -- Fields ------------------------------------------------
+        @field(STRING({maxLength: 24, required: true}))
+        user_name: string
+        // -- One ---------------------------------------------------
+        passport : Passport
+        // -- Many --------------------------------------------------
+        keys     : Key[]
 
         async generateNewKey() {
             let new_key = new Key({user_id: this.id})
@@ -28,13 +33,20 @@ describe('Other tests: Passports.', () => {
     }
 
     @local()
-    @model class Passport extends Model {
-        @field  created       : Date
-        @field  user_id       : number
-        @field  first_name    : string
-        @field  last_name     : string
-
-        @foreign(User) user : User
+    @model
+    class Passport extends Model {
+        // -- Fields ------------------------------------------------
+        @field(DATETIME({required: true}))
+        created     : Date
+        @field(NUMBER({required: true}))
+        user_id     : number
+        @field(STRING({required: true, maxLength: 24}))
+        first_name  : string
+        @field(STRING({required: true, maxLength: 24}))
+        last_name   : string
+        // -- Foreigns ----------------------------------------------
+        @foreign(User)
+        user        : User
 
         constructor(init_data?) {
             super(init_data)
@@ -43,15 +55,21 @@ describe('Other tests: Passports.', () => {
     }
     one(Passport, 'user_id')(User, 'passport') 
 
-
     @local()
-    @model class Key extends Model {
-        @field  created : Date
-        @field  private : string
-        @field  public  : string
-        @field  user_id : number
-
-        @foreign(User) user : User
+    @model
+    class Key extends Model {
+        // -- Fields ------------------------------------------------
+        @field(DATETIME({required: true}))
+        created : Date
+        @field(STRING({required: true, maxLength: 24}))
+        private : string
+        @field(STRING({required: true, maxLength: 24}))
+        public  : string
+        @field(NUMBER({required: true}))
+        user_id : number
+        // -- Foreigns ----------------------------------------------
+        @foreign(User)
+        user    : User
 
         constructor(init_data?) {
             super(init_data)
@@ -79,17 +97,28 @@ describe('Other tests: Passports.', () => {
     }
 
     @local()
-    @model class Action extends Model {
-        @field  timestamp   : Date
-        @field  passport_id : number
-        @field  key_id      : number
-        @field  type        : ActionType
-        @field  signer_id   : number
-        @field  sign        : string
-
-        @foreign(Passport) passport: Passport
-        @foreign(Key     ) key     : Key
-        @foreign(Key     ) signer  : Key
+    @model
+    class Action extends Model {
+        // -- Fields ------------------------------------------------
+        @field(DATETIME({required: true}))
+        timestamp   : Date
+        @field(NUMBER({required: true}))
+        passport_id : number
+        @field(NUMBER({required: true}))
+        key_id      : number
+        @field(NUMBER({required: true}))
+        type        : ActionType
+        @field(NUMBER({required: true}))
+        signer_id   : number
+        @field(STRING({required: true, maxLength: 24}))
+        sign        : string
+        // -- Foreigns ----------------------------------------------
+        @foreign(Passport)
+        passport    : Passport
+        @foreign(Key)
+        key         : Key
+        @foreign(Key)
+        signer      : Key
 
         constructor(init_data?) {
             super(init_data)

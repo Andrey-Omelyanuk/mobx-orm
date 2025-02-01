@@ -2,8 +2,8 @@ import { TypeDescriptor, TypeDescriptorProps } from "./type"
 
 
 export interface DateDescriptorProps extends TypeDescriptorProps {
-    min         ?: Date 
-    max         ?: Date 
+    min?: Date 
+    max?: Date 
 }
 
 export class DateDescriptor extends TypeDescriptor<Date> {
@@ -11,8 +11,13 @@ export class DateDescriptor extends TypeDescriptor<Date> {
         super()
         this.config = props
     }
+    toString(value: Date): string {
+        return value.toISOString()
+    }
+    fromString(value: string): Date {
+        return new Date(value)
+    }
     validate(value: Date) {
-        super.validate(value)
         if (this.config.min && value < this.config.min)
             throw new Error('Date is too early')
         if (this.config.max && value > this.config.max)

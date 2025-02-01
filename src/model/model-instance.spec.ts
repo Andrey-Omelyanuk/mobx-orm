@@ -1,24 +1,26 @@
 import { Model, model, field, foreign, one, many, local } from '..'
+import { STRING } from '../types/string'
+import { NUMBER } from '../types/number'
 
 
 describe('Model Instance', () => {
 
     describe('constructor', () => {
         it('empty', () => {
-            @local() @model class A extends Model { @field a }     
+            @local() @model class A extends Model { @field(NUMBER()) a }     
                                                 ; expect(A.repository.cache.store.size).toBe(0)
             let a = new A()                     ; expect(A.repository.cache.store.size).toBe(0)
                                                 ; expect(a).toMatchObject({__init_data: {a: undefined}, id: undefined, a :undefined })
         })
         it('only id', () => {
-            @local() @model class A extends Model { @field a }     
+            @local() @model class A extends Model { @field(NUMBER()) a }     
                                                 ; expect(A.repository.cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
                                                 ; expect(a).toMatchObject({__init_data: {a: undefined}, id: 1, a: undefined})
         })
         it('id + value', () => {
-            @local() @model class A extends Model { @field a }     
+            @local() @model class A extends Model { @field(NUMBER()) a }     
                                                 ; expect(A.repository.cache.store.size).toBe(0)
             let a = new A({id: 1, a: 2})        ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
@@ -26,8 +28,8 @@ describe('Model Instance', () => {
         })
         it('default property', () => {
             @local() @model class A extends Model {
-                @field a : number = 1 
-                @field b : number 
+                @field(NUMBER()) a : number = 1 
+                @field(NUMBER()) b : number 
             }
             let a = new A()                     ; expect(a).toMatchObject({__init_data: {}, id: undefined, a: 1, b: undefined})
         })
@@ -40,16 +42,16 @@ describe('Model Instance', () => {
 
     it('raw_data', () => {
         @local() @model class A extends Model {
-            @field a : number
-            @field b : number 
+            @field(NUMBER()) a : number
+            @field(NUMBER()) b : number 
         }
         let a = new A({a: 1})                   ; expect(a.raw_data).toStrictEqual({a: 1})
     })
 
     it('raw_obj', () => {
         @local() @model class A extends Model {
-            @field a : number
-            @field b : number 
+            @field(NUMBER()) a : number
+            @field(NUMBER()) b : number 
                    c : number   // should not to be in raw_obj
         }
         let a = new A({a: 1})                   ; expect(a.raw_obj).toStrictEqual({id: undefined, a: 1})
@@ -59,8 +61,8 @@ describe('Model Instance', () => {
 
     it('only_changed_raw_data', () => {
         @local() @model class A extends Model {
-            @field a : number
-            @field b : number 
+            @field(NUMBER()) a : number
+            @field(NUMBER()) b : number 
                    c : number   // should be ignored because it isn't a field
         }
         let a = new A({id: 1, a: 2, c: 3})  ; expect(a).toMatchObject({__init_data: {}, id: 1, a: 2, b: undefined, c: undefined})
@@ -73,8 +75,8 @@ describe('Model Instance', () => {
     it('is_changed', () => {
         @local()
         @model class A extends Model {
-            @field a : number
-            @field b : number 
+            @field(NUMBER()) a : number
+            @field(NUMBER()) b : number 
                    c : number   // should be ignored because it isn't a field
         }
         let a
@@ -90,8 +92,8 @@ describe('Model Instance', () => {
 
     it('refresh_init_data', () => {
         @model class A extends Model {
-            @field a : number
-            @field b : number 
+            @field(NUMBER()) a : number
+            @field(NUMBER()) b : number 
         }
         let a = new A({a: 1, b: 1})     ; expect(a.__init_data).toStrictEqual({a: 1, b: 1})
         a.a = 2                         ; expect(a.__init_data).toStrictEqual({a: 1, b: 1})
@@ -102,8 +104,8 @@ describe('Model Instance', () => {
     describe('updateFromRaw', () => {
         it('empty raw_obj', () => {
             @local() @model class A extends Model {
-                @field a : number
-                @field b : number 
+                @field(NUMBER()) a : number
+                @field(NUMBER()) b : number 
             }
             let a = new A({a: 1, b: 1})   
             let raw_obj = {}
@@ -112,8 +114,8 @@ describe('Model Instance', () => {
 
         it('raw_obj with data only (no id)', () => {
             @local() @model class A extends Model {
-                @field a : number
-                @field b : number 
+                @field(NUMBER()) a : number
+                @field(NUMBER()) b : number 
             }
             let a = new A({a: 1, b: 1})   
             let raw_obj = {a: 2, b: 2}
@@ -121,8 +123,8 @@ describe('Model Instance', () => {
         })
         it('raw_obj with id+data ', () => {
             @local() @model class A extends Model {
-                @field a : number
-                @field b : number 
+                @field(NUMBER()) a : number
+                @field(NUMBER()) b : number 
             }
             let a = new A({id: 1, a: 1, b: 1})   
             let raw_obj = {id: 1, a: 2, b: 2}
@@ -131,8 +133,8 @@ describe('Model Instance', () => {
 
         it('raw_obj with id+data  (obj has no id)', () => {
             @local() @model class A extends Model {
-                @field a : number
-                @field b : number 
+                @field(NUMBER()) a : number
+                @field(NUMBER()) b : number 
             }
             let a = new A({a: 1, b: 1})   
             let raw_obj = {id: 1, a: 2, b: 2}
@@ -141,8 +143,8 @@ describe('Model Instance', () => {
 
         it('raw_obj with id+data  (raw_obj has wrong id)', () => {
             @local() @model class A extends Model {
-                @field a : number
-                @field b : number 
+                @field(NUMBER()) a : number
+                @field(NUMBER()) b : number 
             }
             let a = new A({id: 1, a: 1, b: 1})   
             let raw_obj = {id: 2, a: 2, b: 2}
@@ -150,12 +152,12 @@ describe('Model Instance', () => {
         })
 
         it('raw_obj with foreign relations', () => {
-            @local() @model class C extends Model { @field x : string }
-            @local() @model class B extends Model { @field x : string }
+            @local() @model class C extends Model { @field(STRING()) x : string }
+            @local() @model class B extends Model { @field(STRING()) x : string }
             @local() @model class A extends Model {
-                @field a    : number
-                @field b_id : number 
-                @field c_id : number 
+                @field(NUMBER()) a    : number
+                @field(NUMBER()) b_id : number 
+                @field(NUMBER()) c_id : number 
                 @foreign(B) b: B
                 @foreign(C) c: C
             }
@@ -169,7 +171,7 @@ describe('Model Instance', () => {
 
         it('raw_obj with many relations', () => {
             @local() @model class A extends Model { bs: B[] }
-            @local() @model class B extends Model { @field a_id: number; @field x: string }
+            @local() @model class B extends Model { @field(NUMBER()) a_id: number; @field(STRING()) x: string }
             many(B)(A, 'bs')
             let a = new A({})   
             a.updateFromRaw({ id: 1, bs: [
@@ -189,7 +191,7 @@ describe('Model Instance', () => {
 
         it('raw_obj with one relations', () => {
             @local() @model class A extends Model { b: B }
-            @local() @model class B extends Model { @field a_id: number; @field x: string }
+            @local() @model class B extends Model { @field(NUMBER()) a_id: number; @field(STRING()) x: string }
             one(B)(A, 'b')
             let a = new A({})   
 
