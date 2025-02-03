@@ -95,10 +95,10 @@ describe('Model Instance', () => {
             @field(NUMBER()) a : number
             @field(NUMBER()) b : number 
         }
-        let a = new A({a: 1, b: 1})     ; expect(a.__init_data).toStrictEqual({a: 1, b: 1})
-        a.a = 2                         ; expect(a.__init_data).toStrictEqual({a: 1, b: 1})
-        a.b = 2                         ; expect(a.__init_data).toStrictEqual({a: 1, b: 1})
-        a.refreshInitData()             ; expect(a.__init_data).toStrictEqual({a: 2, b: 2})
+        let a = new A({a: 1, b: 1})     ; expect(a.init_data).toStrictEqual({a: 1, b: 1})
+        a.a = 2                         ; expect(a.init_data).toStrictEqual({a: 1, b: 1})
+        a.b = 2                         ; expect(a.init_data).toStrictEqual({a: 1, b: 1})
+        a.refreshInitData()             ; expect(a.init_data).toStrictEqual({a: 2, b: 2})
     })
 
     describe('updateFromRaw', () => {
@@ -206,13 +206,13 @@ describe('Model Instance', () => {
                                                   expect(A.repository.cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
-                                                  expect(a.__disposers.size).toBe(2) // before and after changes observers
+                                                  expect(a.disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: 1})
         })
         it('set later', () => {
             @local() @model class A extends Model {}     
             let a = new A()                     ; expect(A.repository.cache.store.size).toBe(0)
-                                                  expect(a.__disposers.size).toBe(2) // before and after changes observers
+                                                  expect(a.disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: undefined})
             a.id = 1                            ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
@@ -222,7 +222,7 @@ describe('Model Instance', () => {
             @model class A extends Model {}     ; expect(A.repository.cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
-                                                  expect(a.__disposers.size).toBe(2) // before and after changes observers
+                                                  expect(a.disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: 1})
             expect(() => a.id = 2)
                 .toThrow(new Error(`You cannot change id field: 1 to 2`))
@@ -232,7 +232,7 @@ describe('Model Instance', () => {
             @model class A extends Model {}     ; expect(A.repository.cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
-                                                  expect(a.__disposers.size).toBe(2) // before and after changes observers
+                                                  expect(a.disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: 1})
             a.id = undefined                    ; expect(A.repository.cache.store.size).toBe(0)
         })

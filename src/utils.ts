@@ -1,4 +1,5 @@
 import { autorun } from 'mobx'
+import { Model, ModelDescriptor } from './model'
 
 
 export function waitIsTrue(obj: any, field: string) : Promise<Boolean> {

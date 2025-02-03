@@ -1,31 +1,38 @@
 import { action, intercept, makeObservable, observable, observe, runInAction, values } from 'mobx'
-import { Query, QueryProps, QueryPage, QueryRaw, QueryRawPage, QueryCacheSync, QueryDistinct, QueryStream } from '../queries'
+import Model from './model'
+import { ModelDescriptor } from './model-descriptor'
+import models from './models'
 
 
 export default function model(constructor) {
-    var original = constructor
+    const original = constructor
+    const modelName = constructor.name
+
+    // check that class extends Model
+    if (!(original.prototype instanceof Model))
+        throw new Error(`Class "${modelName}" should extends Model!`)
 
     // the new constructor
     let f : any = function (...args) {
         let c : any = class extends original { constructor (...args) { super(...args) } }
             c.__proto__ = original
 
+
         let obj = new c()
         makeObservable(obj)
+
         // id field reactions
-        obj.__disposers.set('before changes',
-            intercept(obj, 'id', (change) => {
-                if (change.newValue !== undefined && obj.id !== undefined)
-                    throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`)
-                if (obj.id !== undefined && change.newValue === undefined)
-                    obj.model.repository.cache.eject(obj)
-                return change
-            }))
-        obj.__disposers.set('after changes',
-            observe(obj, 'id', (change) => {
-                if (obj.id !== undefined)
-                    obj.model.repository.cache.inject(obj)
-            }))
+        // apply id decorators
+        if (Object.keys(this.modelDescription.ids).length === 0) 
+            throw new Error(`Model "${modelName}" should have id field decorator!`)
+        for(const fieldName in this.modelDescription.ids)
+            this.modelDescription.ids[fieldName].decorator(obj, fieldName)
+        // apply field decorators 
+        for(const fieldName in this.modelDescription.fields)
+            this.modelDescription.fields[fieldName].decorator(obj, fieldName)
+        // apply relations decorators
+        for(const fieldName in this.modelDescription.relations)
+            this.modelDescription.relations[fieldName].decorator(obj, fieldName)
 
         // apply fields decorators
         for (let field_name in obj.model.__fields) {
@@ -39,6 +46,10 @@ export default function model(constructor) {
         obj.refreshInitData()
         return obj
     }
+
+    // register model in models map
+    const modelDescription = new ModelDescriptor(f)
+    models.set(original.name, modelDescription)
 
     f.__proto__ = original
     f.prototype = original.prototype   // copy prototype so intanceof operator still works

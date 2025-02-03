@@ -8,4 +8,5 @@ export * from './array'
 export * from './order-by'
 
 
+// only this type support any id field
 export type ID = string | number
