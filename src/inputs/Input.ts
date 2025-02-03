@@ -1,8 +1,7 @@
 import { action, makeObservable, observable, runInAction } from 'mobx'
-import { ORDER_BY } from '../types'
-import { stringTo, toString, TYPE } from '../convert'
 import { syncLocalStorageHandler, syncURLHandler } from './handlers'
 import { config } from '../config'
+import { TypeDescriptor } from '../types'
 
 
 export interface InputConstructorArgs<T> {
@@ -12,12 +11,10 @@ export interface InputConstructorArgs<T> {
     debounce            ?: number
     syncURL             ?: string
     syncLocalStorage    ?: string
-    type                ?: TYPE
 }
 
 export class Input<T> {
-    readonly type: TYPE
-
+    type: TypeDescriptor<T>
     @observable          value               : T
     @observable          isRequired          : boolean
     @observable          isDisabled          : boolean
@@ -29,10 +26,12 @@ export class Input<T> {
                 readonly syncLocalStorage   ?: string
                          __disposers = [] 
     
-    constructor (args?: InputConstructorArgs<T>) {
+    // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
+    // it's look like a bug in the TypeScript
+    constructor (type: TypeDescriptor<T>, args?: InputConstructorArgs<any>) {
         // init all observables before use it in reaction
-        this.value              = args?.value
-        this.type               = args?.type
+        this.type               = type
+        this.value              = args && args.value !== undefined ? args.value : type.default()
         this.isRequired         = !!args?.required
         this.isDisabled         = !!args?.disabled
         this.isDebouncing       = false 
@@ -80,74 +79,9 @@ export class Input<T> {
     }
 
     setFromString(value: string) {
-        this.set(stringTo(this.type, value))
+        this.set(this.type.fromString(value))
     }
     toString() {
-        return toString(this.type, this.value)
+        return this.type.toString(this.value)
     }
-}
-
-// export class StringInput        extends Input<string>   { readonly type = TYPE.STRING }
-export const StringInput = (args?: InputConstructorArgs<string>) : Input<string> => {
-    if (!args) args = {}
-    args.type = TYPE.STRING
-    return new Input<string>(args)
-}
-// export class NumberInput        extends Input<number>   { readonly type = TYPE.NUMBER }
-export const NumberInput = (args?: InputConstructorArgs<number>) : Input<number> => {
-    if (!args) args = {}
-    args.type = TYPE.NUMBER
-    return new Input<number>(args)
-}
-// export class DateInput          extends Input<Date>     { readonly type = TYPE.DATE }
-export const DateInput = (args?: InputConstructorArgs<Date>) : Input<Date> => {
-    if (!args) args = {}
-    args.type = TYPE.DATE
-    return new Input<Date>(args)
-}
-// export class DateTimeInput      extends Input<Date>     { readonly type = TYPE.DATETIME }
-export const DateTimeInput = (args?: InputConstructorArgs<Date>) : Input<Date> => {
-    if (!args) args = {}
-    args.type = TYPE.DATETIME
-    return new Input<Date>(args)
-}
-// export class BooleanInput       extends Input<boolean>  { readonly type = TYPE.BOOLEAN }
-export const BooleanInput = (args?: InputConstructorArgs<boolean>) : Input<boolean> => {
-    if (!args) args = {}
-    args.type = TYPE.BOOLEAN
-    return new Input<boolean>(args)
-}
-// export class OrderByInput       extends Input<ORDER_BY> { readonly type = TYPE.ORDER_BY }
-export const OrderByInput = (args?: InputConstructorArgs<ORDER_BY>) : Input<ORDER_BY> => {
-    if (!args) args = {}
-    args.type = TYPE.ORDER_BY
-    return new Input<ORDER_BY>(args)
-}
-// export class ArrayStringInput   extends ArrayInput<string[]> { readonly type = TYPE.ARRAY_STRING }
-export const ArrayStringInput = (args?: InputConstructorArgs<string[]>) : Input<string[]> => {
-    if (args === undefined || args.value === undefined )
-        args = { ...args, value: [] }
-    args.type = TYPE.ARRAY_STRING
-    return new Input<string[]>(args)
-}
-// export class ArrayNumberInput   extends ArrayInput<number[]> { readonly type = TYPE.ARRAY_NUMBER }
-export const ArrayNumberInput = (args?: InputConstructorArgs<number[]>) : Input<number[]> => {
-    if (args === undefined || args.value === undefined )
-        args = { ...args, value: [] }
-    args.type = TYPE.ARRAY_NUMBER
-    return new Input<number[]>(args)
-}
-// export class ArrayDateInput     extends ArrayInput<Date[]>   { readonly type = TYPE.ARRAY_DATE }
-export const ArrayDateInput = (args?: InputConstructorArgs<Date[]>) : Input<Date[]> => {
-    if (args === undefined || args.value === undefined )
-        args = { ...args, value: [] }
-    args.type = TYPE.ARRAY_DATE
-    return new Input<Date[]>(args)
-}
-// export class ArrayDateTimeInput extends ArrayInput<Date[]>   { readonly type = TYPE.ARRAY_DATETIME }
-export const ArrayDateTimeInput = (args?: InputConstructorArgs<Date[]>) : Input<Date[]> => {
-    if (args === undefined || args.value === undefined )
-        args = { ...args, value: [] }
-    args.type = TYPE.ARRAY_DATETIME
-    return new Input<Date[]>(args)
 }

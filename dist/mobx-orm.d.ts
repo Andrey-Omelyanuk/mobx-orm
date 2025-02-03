@@ -34,6 +34,7 @@ declare abstract class TypeDescriptor<T> {
      * If not, throw an error
      */
     abstract validate(value: T): void;
+    abstract default(): T;
 }
 
 interface StringDescriptorProps extends TypeDescriptorProps {
@@ -44,6 +45,7 @@ declare class StringDescriptor extends TypeDescriptor<string> {
     toString(value: string): string;
     fromString(value: string): string;
     validate(value: string): void;
+    default(): string;
 }
 declare function STRING(props?: StringDescriptorProps): StringDescriptor;
 
@@ -56,6 +58,7 @@ declare class NumberDescriptor extends TypeDescriptor<number> {
     toString(value: number): string;
     fromString(value: string): number;
     validate(value: number): void;
+    default(): number;
 }
 declare function NUMBER(props?: NumberDescriptorProps): NumberDescriptor;
 
@@ -66,6 +69,7 @@ declare class BooleanDescriptor extends TypeDescriptor<boolean> {
     toString(value: boolean): string;
     fromString(value: string): boolean;
     validate(value: boolean): void;
+    default(): boolean;
 }
 declare function BOOLEAN(props?: BooleanDescriptorProps): BooleanDescriptor;
 
@@ -78,6 +82,7 @@ declare class DateDescriptor extends TypeDescriptor<Date> {
     toString(value: Date): string;
     fromString(value: string): Date;
     validate(value: Date): void;
+    default(): Date;
 }
 declare function DATE(props?: DateDescriptorProps): DateDescriptor;
 
@@ -86,29 +91,28 @@ declare class DateTimeDescriptor extends DateDescriptor {
 }
 declare function DATETIME(props?: DateDescriptorProps): DateTimeDescriptor;
 
-interface ArrayDescriptorProps<T> extends TypeDescriptorProps {
-    type: TypeDescriptor<T>;
+interface ArrayDescriptorProps extends TypeDescriptorProps {
     minItems?: number;
     maxItems?: number;
 }
 declare class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
-    constructor(props: ArrayDescriptorProps<T>);
+    constructor(type: TypeDescriptor<T>, props?: ArrayDescriptorProps);
     toString(value: T[]): string;
     fromString(value: string): T[];
     validate(value: T[]): void;
+    default(): T[];
 }
-declare function ARRAY<T>(props?: ArrayDescriptorProps<T>): ArrayDescriptor<T>;
+declare function ARRAY<T>(type: TypeDescriptor<T>, props?: ArrayDescriptorProps): ArrayDescriptor<T>;
 
 declare const ASC = true;
 declare const DESC = false;
-type ORDER_BY = Map<string, boolean>;
 declare class OrderByDescriptor extends TypeDescriptor<[string, boolean]> {
-    constructor();
     toString(value: [string, boolean]): string;
     fromString(value: string): [string, boolean];
     validate(value: [string, boolean]): void;
+    default(): [string, boolean];
 }
-declare function ORDER_BY2(): OrderByDescriptor;
+declare function ORDER_BY(): OrderByDescriptor;
 
 type ID = string | number;
 
@@ -118,21 +122,6 @@ declare abstract class Filter {
     abstract get isReady(): boolean;
 }
 
-declare enum TYPE {
-    ID = "id",
-    STRING = "string",
-    NUMBER = "number",
-    DATE = "date",
-    DATETIME = "datetime",
-    BOOLEAN = "boolean",
-    ARRAY_ID = "array-id",
-    ARRAY_STRING = "array-string",
-    ARRAY_NUMBER = "array-number",
-    ARRAY_DATE = "array-date",
-    ARRAY_DATETIME = "array-datetime",
-    ORDER_BY = "order-by"
-}
-
 interface InputConstructorArgs<T> {
     value?: T;
     required?: boolean;
@@ -140,10 +129,9 @@ interface InputConstructorArgs<T> {
     debounce?: number;
     syncURL?: string;
     syncLocalStorage?: string;
-    type?: TYPE;
 }
 declare class Input<T> {
-    readonly type: TYPE;
+    type: TypeDescriptor<T>;
     value: T;
     isRequired: boolean;
     isDisabled: boolean;
@@ -154,7 +142,7 @@ declare class Input<T> {
     readonly syncURL?: string;
     readonly syncLocalStorage?: string;
     __disposers: any[];
-    constructor(args?: InputConstructorArgs<T>);
+    constructor(type: TypeDescriptor<T>, args?: InputConstructorArgs<any>);
     destroy(): void;
     private stopDebouncing;
     set(value: T): void;
@@ -162,16 +150,6 @@ declare class Input<T> {
     setFromString(value: string): void;
     toString(): string;
 }
-declare const StringInput: (args?: InputConstructorArgs<string>) => Input<string>;
-declare const NumberInput: (args?: InputConstructorArgs<number>) => Input<number>;
-declare const DateInput: (args?: InputConstructorArgs<Date>) => Input<Date>;
-declare const DateTimeInput: (args?: InputConstructorArgs<Date>) => Input<Date>;
-declare const BooleanInput: (args?: InputConstructorArgs<boolean>) => Input<boolean>;
-declare const OrderByInput: (args?: InputConstructorArgs<ORDER_BY>) => Input<ORDER_BY>;
-declare const ArrayStringInput: (args?: InputConstructorArgs<string[]>) => Input<string[]>;
-declare const ArrayNumberInput: (args?: InputConstructorArgs<number[]>) => Input<number[]>;
-declare const ArrayDateInput: (args?: InputConstructorArgs<Date[]>) => Input<Date[]>;
-declare const ArrayDateTimeInput: (args?: InputConstructorArgs<Date[]>) => Input<Date[]>;
 
 declare class SingleFilter extends Filter {
     readonly field: string;
@@ -239,16 +217,16 @@ declare function repository(adapter: any, cache?: any): (cls: any) => void;
 
 interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
     options?: Query<M>;
-    autoReset?: (input: ObjectInput<M>) => void;
+    autoReset?: (input: ObjectInput<T, M>) => void;
 }
-declare class ObjectInput<M extends Model> extends Input<ID> {
+declare class ObjectInput<T, M extends Model> extends Input<T> {
     readonly options?: Query<M>;
-    constructor(args?: ObjectInputConstructorArgs<ID, M>);
+    constructor(type: TypeDescriptor<T>, args?: ObjectInputConstructorArgs<T, M>);
     get isReady(): boolean;
     destroy(): void;
 }
 
-declare function autoResetId(input: ObjectInput<any>): void;
+declare function autoResetId(input: ObjectInput<any, any>): void;
 
 declare const syncURLHandler: (paramName: string, input: Input<any>) => void;
 
@@ -258,7 +236,7 @@ declare const DISPOSER_AUTOUPDATE = "__autoupdate";
 interface QueryProps<M extends Model> {
     repository?: Repository<M>;
     filter?: Filter;
-    orderBy?: Input<ORDER_BY>;
+    orderBy?: Input<[string, boolean][]>;
     offset?: Input<number>;
     limit?: Input<number>;
     relations?: Input<string[]>;
@@ -269,7 +247,7 @@ interface QueryProps<M extends Model> {
 declare class Query<M extends Model> {
     readonly repository: Repository<M>;
     readonly filter: Filter;
-    readonly orderBy: Input<ORDER_BY>;
+    readonly orderBy: Input<[string, boolean][]>;
     readonly offset: Input<number>;
     readonly limit: Input<number>;
     readonly relations: Input<string[]>;
@@ -516,4 +494,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayDescriptor, ArrayDescriptorProps, ArrayNumberInput, ArrayStringInput, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, BooleanInput, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateInput, DateTimeDescriptor, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, NumberInput, ORDER_BY, ORDER_BY2, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SingleFilter, StringDescriptor, StringDescriptorProps, StringInput, TypeDescriptor, TypeDescriptorProps, autoResetId, config, constant, field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, config, constant, field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

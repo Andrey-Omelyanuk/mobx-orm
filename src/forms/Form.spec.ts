@@ -1,5 +1,5 @@
 import { runInAction } from 'mobx'
-import { StringInput, config } from '..'
+import { Input, STRING, config } from '..'
 import { Form } from "./Form"
 
 describe('Form', () => {
@@ -7,8 +7,8 @@ describe('Form', () => {
     it('constructor', async ()=> {
         const submit = async () => {}
         const cancel = () => {}
-        const inputA = StringInput()
-        const inputB = StringInput()
+        const inputA = new Input(STRING())
+        const inputB = new Input(STRING())
         const form = new Form({a: inputA, b: inputB}, submit, cancel)
 
         expect(form).toMatchObject({
@@ -22,9 +22,9 @@ describe('Form', () => {
 
     describe('isReady', () => {
         const form = new Form({ 
-            a: StringInput(),
-            b: StringInput(), 
-            c: StringInput(),
+            a: new Input(STRING()),
+            b: new Input(STRING()), 
+            c: new Input(STRING()),
         }, async () => {}, () => {} )
 
         // it('all inputs are ready', async ()=> {
@@ -57,9 +57,9 @@ describe('Form', () => {
 
     describe('isError', () => {
         const form = new Form({ 
-            a: StringInput(),
-            b: StringInput(), 
-            c: StringInput(),
+            a: new Input(STRING()),
+            b: new Input(STRING()), 
+            c: new Input(STRING()),
         }, async () => {}, () => {} )
 
         afterEach(() => {
@@ -103,9 +103,9 @@ describe('Form', () => {
 
     describe('submit', () => {
         const inputs = {
-            a: StringInput(),
-            b: StringInput(), 
-            c: StringInput(),
+            a: new Input(STRING()),
+            b: new Input(STRING()), 
+            c: new Input(STRING()),
         }
         it('good request', (done)=> {
             const submit = jest.fn(async () => {})

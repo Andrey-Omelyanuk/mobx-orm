@@ -1,7 +1,7 @@
 import { ObjectInput } from '../ObjectInput'
 
 
-export function autoResetId(input: ObjectInput<any>) {
+export function autoResetId(input: ObjectInput<any, any>) {
     // if value still in options, do nothing
     for (const item of input.options.items) {
         if (item.id === input.value) {

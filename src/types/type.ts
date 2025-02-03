@@ -25,4 +25,6 @@ export abstract class TypeDescriptor<T> {
      * If not, throw an error
      */ 
     abstract validate(value: T): void
+
+    abstract default(): T
 }

@@ -33,6 +33,9 @@ export class StringDescriptor extends TypeDescriptor<string> {
         if (this.config.maxLength && value.length > this.config.maxLength)
             throw new Error('String is too long')
     }
+    default(): string {
+        return ''
+    }
 }
 
 

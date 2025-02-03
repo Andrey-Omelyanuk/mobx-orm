@@ -2,7 +2,8 @@ import _ from 'lodash'
 import { reaction } from 'mobx'
 import { TestAdapter } from '../test.utils'
 import { 
-    model, Model, EQ, StringInput, local, Repository, OrderByInput, NumberInput, ArrayStringInput,
+    model, Model, EQ, local, Repository,
+    Input, STRING, ORDER_BY, NUMBER, ARRAY,
     Query, DISPOSER_AUTOUPDATE, DESC, ObjectInput,
     autoResetId,
     constant,
@@ -44,13 +45,15 @@ describe('Query', () => {
             expect((query as any).disposers.length).toBe(1)
         })
         it('some values', async ()=> {
-            const filter    = EQ('name', StringInput({value: 'test'}))
-            const orderBy   = OrderByInput({value: new Map([['asc', DESC]])})
-            const offset    = NumberInput({value: 100})
-            const limit     = NumberInput({value: 500})
-            const relations = ArrayStringInput({value: ['rel_a', 'rel_b']})
-            const fields    = ArrayStringInput({value: ['field_a', 'field_b']})
-            const omit      = ArrayStringInput({value: ['omit_a', 'omit_b']})
+            const filter    = EQ('name', new Input(STRING(), {value: 'test'}))
+            const _ORDER_BY  = ORDER_BY()
+            const _ARRAY_ORDER_BY = () => ARRAY(_ORDER_BY)
+            const orderBy   = new Input(ARRAY(ORDER_BY()), {value: [['asc', DESC]]})
+            const offset    = new Input(NUMBER(), {value: 100})
+            const limit     = new Input(NUMBER(), {value: 500})
+            const relations = new Input(ARRAY(STRING()), {value: ['rel_a', 'rel_b']})
+            const fields    = new Input(ARRAY(STRING()), {value: ['field_a', 'field_b']})
+            const omit      = new Input(ARRAY(STRING()), {value: ['omit_a', 'omit_b']})
             const query     = new Query<A>({
                 repository  : A.repository,
                 filter      : filter,
@@ -165,7 +168,7 @@ describe('Query', () => {
 
         it('in action', async () => {
             const options = new Query<A>({repository: A.repository})
-            const input   = new ObjectInput({value: 'test', options})
+            const input   = new ObjectInput(STRING(), {value: 'test', options})
             const query   = new Query<A>({repository: A.repository, filter: EQ('name', input), autoupdate: true})
 
                                         expect(options.isNeedToUpdate   ).toBe(true)
@@ -220,7 +223,7 @@ describe('Query', () => {
             @constant(bData) @model class B extends Model {}
 
             const aQuery = A.getQuery({ autoupdate: true });
-            const aInput = new ObjectInput({
+            const aInput = new ObjectInput(NUMBER(), {
                 syncURL     : 'a-test',
                 required    :true,
                 options     : aQuery,
@@ -231,7 +234,7 @@ describe('Query', () => {
                 filter: EQ('a_id', aInput),
                 autoupdate: true
             }) 
-            const bInput = new ObjectInput({
+            const bInput = new ObjectInput(NUMBER(), {
                 syncURL     : 'b-test',
                 required    :true,
                 options     : bQuery,

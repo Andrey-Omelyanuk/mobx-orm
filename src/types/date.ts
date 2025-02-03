@@ -23,6 +23,9 @@ export class DateDescriptor extends TypeDescriptor<Date> {
         if (this.config.max && value > this.config.max)
             throw new Error('Date is too late')
     }
+    default(): Date {
+        return new Date()
+    }
 }
 
 export function DATE(props?: DateDescriptorProps) {

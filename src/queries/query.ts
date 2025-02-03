@@ -3,9 +3,9 @@ import { Repository } from '../repository'
 import { Model } from '../model'
 import { Filter } from '../filters/Filter'
 import { waitIsFalse } from '../utils'
-import { OrderByInput, NumberInput, ArrayStringInput, Input } from '../inputs'
-import { ORDER_BY } from '../types'
+import { Input } from '../inputs'
 import { config } from '../config'
+import { ARRAY, NUMBER, STRING, ORDER_BY } from '../types'
 
 
 export const DISPOSER_AUTOUPDATE = "__autoupdate"
@@ -14,7 +14,7 @@ export interface QueryProps<M extends Model> {
     repository                  ?: Repository<M>
     //
     filter                      ?: Filter
-    orderBy                     ?: Input<ORDER_BY>
+    orderBy                     ?: Input<[string, boolean][]>
     // pagination
     offset                      ?: Input<number>
     limit                       ?: Input<number>
@@ -50,7 +50,7 @@ export class Query <M extends Model> {
 
     readonly repository: Repository<M>
     readonly filter    : Filter
-    readonly orderBy   : Input<ORDER_BY>
+    readonly orderBy   : Input<[string, boolean][]>
     readonly offset    : Input<number>
     readonly limit     : Input<number>
     readonly relations : Input<string[]>
@@ -79,12 +79,12 @@ export class Query <M extends Model> {
 
         this.repository = repository 
         this.filter    = filter
-        this.orderBy   = orderBy    ? orderBy   : OrderByInput() 
-        this.offset    = offset     ? offset    : NumberInput() 
-        this.limit     = limit      ? limit     : NumberInput() 
-        this.relations = relations  ? relations : ArrayStringInput()
-        this.fields    = fields     ? fields    : ArrayStringInput()
-        this.omit      = omit       ? omit      : ArrayStringInput()
+        this.orderBy   = orderBy    ? orderBy   : new Input(ARRAY(ORDER_BY()))
+        this.offset    = offset     ? offset    : new Input(NUMBER())
+        this.limit     = limit      ? limit     : new Input(NUMBER())
+        this.relations = relations  ? relations : new Input(ARRAY(STRING()))
+        this.fields    = fields     ? fields    : new Input(ARRAY(STRING()))
+        this.omit      = omit       ? omit      : new Input(ARRAY(STRING()))
         this.autoupdate = autoupdate
         makeObservable(this)
 

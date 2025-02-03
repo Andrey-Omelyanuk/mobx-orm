@@ -1,23 +1,20 @@
 import { reaction, runInAction } from 'mobx'
 import { Query } from '../queries'
 import { Model } from '../model'
-import { ID } from '../types'
-import { TYPE } from '../convert'
 import { Input, InputConstructorArgs } from './Input'
+import { TypeDescriptor } from '../types'
 
 
 export interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
     options   ?: Query<M>
-    autoReset ?: (input: ObjectInput<M>) => void
+    autoReset ?: (input: ObjectInput<T, M>) => void
 }
 
-export class ObjectInput<M extends Model> extends Input<ID> {
+export class ObjectInput<T, M extends Model> extends Input<T> {
     readonly options?: Query<M>
 
-    constructor (args?: ObjectInputConstructorArgs<ID, M>) {
-        if (!args) args = {}
-        args.type = TYPE.ID
-        super(args as InputConstructorArgs<ID>)
+    constructor (type: TypeDescriptor<T>, args?: ObjectInputConstructorArgs<T, M>) {
+        super(type, args)
         this.options = args.options
         if (this.options) {
             this.__disposers.push(reaction(

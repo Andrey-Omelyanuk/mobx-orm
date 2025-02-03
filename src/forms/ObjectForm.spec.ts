@@ -1,4 +1,4 @@
-import { model, Model, local, NumberInput, ObjectForm, StringInput } from '..'
+import { model, Model, local, Input, NUMBER, STRING, ObjectForm } from '..'
 
 describe('ObjectForm', () => {
 
@@ -14,16 +14,16 @@ describe('ObjectForm', () => {
     })
 
     it('constructor', async ()=> {
-        const inputA = StringInput()
-        const inputB = NumberInput()
+        const inputA = new Input(STRING())
+        const inputB = new Input(NUMBER()) 
         const inputs = { a: inputA, b: inputB }
         const form = new ObjectForm(inputs)
         expect(form.inputs).toBe(inputs)
     })
 
     it('submit', (done)=> {
-        const inputA = StringInput()
-        const inputB = NumberInput()
+        const inputA = new Input(STRING())
+        const inputB = new Input(NUMBER()) 
         const onSubmitted = (obj: A) => {
             expect(obj.a).toBe('a')
             expect(obj.b).toBe(1)
@@ -53,8 +53,8 @@ describe('ObjectForm', () => {
     })
 
     it('submit without match fields between form and object', async ()=> {
-        const inputA = StringInput()
-        const inputB = NumberInput()
+        const inputA = new Input(STRING())
+        const inputB = new Input(NUMBER()) 
         const form = new ObjectForm<A>({a: inputA, X: inputB})
         form.obj = new A({})
         await expect(form.submit())

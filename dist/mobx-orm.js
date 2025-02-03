@@ -275,314 +275,6 @@
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    /**
-     *  Base class for the type descriptor
-     * It is used to define the field of the model
-     * It is used to convert the value to the string and back
-     */
-    class TypeDescriptor {
-        constructor() {
-            /**
-             * Configuration of the descriptor
-             */
-            Object.defineProperty(this, "config", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-        }
-    }
-
-    class StringDescriptor extends TypeDescriptor {
-        constructor(props) {
-            super();
-            this.config = props ? props : { maxLength: 255 };
-        }
-        toString(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === null)
-                return 'null';
-            return value;
-        }
-        fromString(value) {
-            if (value === undefined)
-                return undefined;
-            else if (value === 'null')
-                return null;
-            else if (value === null)
-                return null;
-            return value;
-        }
-        validate(value) {
-            if (value === null && !this.config.null)
-                throw new Error('Field is required');
-            if (value === '' && this.config.required)
-                throw new Error('Field is required');
-            if (this.config.maxLength && value.length > this.config.maxLength)
-                throw new Error('String is too long');
-        }
-    }
-    function STRING(props) {
-        return new StringDescriptor(props);
-    }
-
-    class NumberDescriptor extends TypeDescriptor {
-        constructor(props) {
-            super();
-            this.config = props ? props : {};
-        }
-        toString(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === null)
-                return 'null';
-            return value.toString();
-        }
-        fromString(value) {
-            if (value === undefined)
-                return undefined;
-            if (value === 'null')
-                return null;
-            if (value === null)
-                return null;
-            const result = parseInt(value);
-            if (isNaN(result))
-                return undefined;
-            return result;
-        }
-        validate(value) {
-            if (value === null && !this.config.null)
-                throw new Error('Field is required');
-            if (this.config.min && value < this.config.min)
-                throw new Error('Number is too small');
-            if (this.config.max && value > this.config.max)
-                throw new Error('Number is too big');
-        }
-    }
-    function NUMBER(props) {
-        return new NumberDescriptor(props);
-    }
-
-    class BooleanDescriptor extends TypeDescriptor {
-        constructor(props) {
-            super();
-            this.config = props;
-        }
-        toString(value) {
-            return value.toString();
-        }
-        fromString(value) {
-            return value === 'true';
-        }
-        validate(value) {
-            var _a;
-            if (((_a = this.config) === null || _a === void 0 ? void 0 : _a.required) && value === undefined)
-                throw new Error('Field is required');
-        }
-    }
-    function BOOLEAN(props) {
-        return new BooleanDescriptor(props);
-    }
-
-    class DateDescriptor extends TypeDescriptor {
-        constructor(props) {
-            super();
-            this.config = props;
-        }
-        toString(value) {
-            return value.toISOString();
-        }
-        fromString(value) {
-            return new Date(value);
-        }
-        validate(value) {
-            if (this.config.min && value < this.config.min)
-                throw new Error('Date is too early');
-            if (this.config.max && value > this.config.max)
-                throw new Error('Date is too late');
-        }
-    }
-    function DATE(props) {
-        return new DateDescriptor(props);
-    }
-
-    class DateTimeDescriptor extends DateDescriptor {
-        toString(value) {
-            return value.toISOString();
-        }
-    }
-    function DATETIME(props) {
-        return new DateTimeDescriptor(props);
-    }
-
-    class ArrayDescriptor extends TypeDescriptor {
-        constructor(props) {
-            super();
-            this.config = props;
-        }
-        toString(value) {
-            return value.map(item => this.config.type.toString(item)).join(',');
-        }
-        fromString(value) {
-            return value.split(',').map(item => this.config.type.fromString(item));
-        }
-        validate(value) {
-            if (this.config.minItems && value.length < this.config.minItems)
-                throw new Error('Array is too short');
-            if (this.config.maxItems && value.length > this.config.maxItems)
-                throw new Error('Array is too long');
-            value.forEach(item => this.config.type.validate(item));
-        }
-    }
-    function ARRAY(props) {
-        return new ArrayDescriptor(props);
-    }
-
-    const ASC = true;
-    const DESC = false;
-    class OrderByDescriptor extends TypeDescriptor {
-        constructor() {
-            super();
-        }
-        toString(value) {
-            if (!value || !value[0])
-                return undefined;
-            return value[1] ? value[0] : '-' + value[0];
-        }
-        fromString(value) {
-            if (!value)
-                return undefined;
-            return value[0] === '-' ? [value.substring(1), false] : [value, true];
-        }
-        validate(value) {
-            if (!value)
-                throw new Error('Field is required');
-            if (!value[0])
-                throw new Error('Field is required');
-            if (value[1] === undefined)
-                throw new Error('Field is required');
-        }
-    }
-    function ORDER_BY2() {
-        return new OrderByDescriptor();
-    }
-
-    var TYPE;
-    (function (TYPE) {
-        TYPE["ID"] = "id";
-        TYPE["STRING"] = "string";
-        TYPE["NUMBER"] = "number";
-        TYPE["DATE"] = "date";
-        TYPE["DATETIME"] = "datetime";
-        TYPE["BOOLEAN"] = "boolean";
-        TYPE["ARRAY_ID"] = "array-id";
-        TYPE["ARRAY_STRING"] = "array-string";
-        TYPE["ARRAY_NUMBER"] = "array-number";
-        TYPE["ARRAY_DATE"] = "array-date";
-        TYPE["ARRAY_DATETIME"] = "array-datetime";
-        TYPE["ORDER_BY"] = "order-by";
-    })(TYPE || (TYPE = {}));
-    const ARRAYS = [TYPE.ARRAY_STRING, TYPE.ARRAY_NUMBER, TYPE.ARRAY_DATE, TYPE.ARRAY_DATETIME, TYPE.ORDER_BY];
-    const arrayToString = (type, value) => {
-        let result = [];
-        // if (value === null) return undefined
-        if (value) {
-            for (const i of value) {
-                let v = toString(type, i);
-                if (v !== undefined)
-                    result.push(v);
-            }
-        }
-        return result.length ? result.join(',') : undefined;
-    };
-    const stringToArray = (type, value) => {
-        let result = [];
-        if (value) {
-            for (const i of value.split(',')) {
-                let v = stringTo(type, i);
-                if (v !== undefined) {
-                    result.push(v);
-                }
-            }
-        }
-        return result;
-    };
-    const toString = (valueType, value) => {
-        if (value === undefined)
-            return undefined;
-        if (value === null && !ARRAYS.includes(valueType))
-            return 'null';
-        switch (valueType) {
-            case TYPE.NUMBER: return '' + value;
-            case TYPE.ID: return '' + value;
-            case TYPE.STRING: return value;
-            case TYPE.DATE: return value instanceof Date ? value.toISOString().split('T')[0] : "";
-            case TYPE.DATETIME: return value instanceof Date ? value.toISOString() : "";
-            case TYPE.BOOLEAN: return !!value ? 'true' : 'false';
-            case TYPE.ARRAY_STRING: return arrayToString(TYPE.STRING, value);
-            case TYPE.ARRAY_NUMBER: return arrayToString(TYPE.NUMBER, value);
-            case TYPE.ARRAY_DATE: return arrayToString(TYPE.DATE, value);
-            case TYPE.ARRAY_DATETIME: return arrayToString(TYPE.DATETIME, value);
-            case TYPE.ORDER_BY:
-                if (value) {
-                    let result = '';
-                    for (const [key, val] of value) {
-                        if (result)
-                            result += ',';
-                        if (val === DESC)
-                            result += '-';
-                        result += key.replace(/\./g, '__');
-                    }
-                    return result ? result : undefined;
-                }
-                return undefined;
-        }
-    };
-    const stringTo = (valueType, value, enumType) => {
-        let result;
-        if (!ARRAYS.includes(valueType)) {
-            if (value === undefined)
-                return undefined;
-            else if (value === 'null')
-                return null;
-            else if (value === null)
-                return null;
-        }
-        switch (valueType) {
-            case TYPE.NUMBER:
-                result = parseInt(value);
-                if (isNaN(result))
-                    return undefined;
-                return result;
-            case TYPE.ID:
-                result = parseInt(value);
-                if (isNaN(result))
-                    return value;
-                return result;
-            case TYPE.STRING: return value;
-            case TYPE.DATE: return new Date(value);
-            case TYPE.DATETIME: return new Date(value);
-            case TYPE.BOOLEAN: return value === 'true' ? true : value === 'false' ? false : undefined;
-            case TYPE.ARRAY_STRING: return stringToArray(TYPE.STRING, value);
-            case TYPE.ARRAY_NUMBER: return stringToArray(TYPE.NUMBER, value);
-            case TYPE.ARRAY_DATE: return stringToArray(TYPE.DATE, value);
-            case TYPE.ARRAY_DATETIME: return stringToArray(TYPE.DATETIME, value);
-            case TYPE.ORDER_BY:
-                result = new Map();
-                if (value) {
-                    for (const item of value.split(',')) {
-                        if (item[0] === '-')
-                            result.set(item.slice(1), DESC);
-                        else
-                            result.set(item, ASC);
-                    }
-                }
-                return result;
-        }
-    };
-
     const syncURLHandler = (paramName, input) => {
         const searchParams = new URLSearchParams(window.location.search);
         // init from URL Search Params
@@ -635,7 +327,9 @@
     };
 
     class Input {
-        constructor(args) {
+        // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
+        // it's look like a bug in the TypeScript
+        constructor(type, args) {
             Object.defineProperty(this, "type", {
                 enumerable: true,
                 configurable: true,
@@ -709,8 +403,8 @@
                 value: void 0
             });
             // init all observables before use it in reaction
-            this.value = args === null || args === void 0 ? void 0 : args.value;
-            this.type = args === null || args === void 0 ? void 0 : args.type;
+            this.type = type;
+            this.value = args && args.value !== undefined ? args.value : type.default();
             this.isRequired = !!(args === null || args === void 0 ? void 0 : args.required);
             this.isDisabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
             this.isDebouncing = false;
@@ -747,10 +441,10 @@
                 || this.isRequired && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)));
         }
         setFromString(value) {
-            this.set(stringTo(this.type, value));
+            this.set(this.type.fromString(value));
         }
         toString() {
-            return toString(this.type, this.value);
+            return this.type.toString(this.value);
         }
     }
     __decorate([
@@ -783,83 +477,10 @@
         __metadata("design:paramtypes", [Object]),
         __metadata("design:returntype", void 0)
     ], Input.prototype, "set", null);
-    // export class StringInput        extends Input<string>   { readonly type = TYPE.STRING }
-    const StringInput = (args) => {
-        if (!args)
-            args = {};
-        args.type = TYPE.STRING;
-        return new Input(args);
-    };
-    // export class NumberInput        extends Input<number>   { readonly type = TYPE.NUMBER }
-    const NumberInput = (args) => {
-        if (!args)
-            args = {};
-        args.type = TYPE.NUMBER;
-        return new Input(args);
-    };
-    // export class DateInput          extends Input<Date>     { readonly type = TYPE.DATE }
-    const DateInput = (args) => {
-        if (!args)
-            args = {};
-        args.type = TYPE.DATE;
-        return new Input(args);
-    };
-    // export class DateTimeInput      extends Input<Date>     { readonly type = TYPE.DATETIME }
-    const DateTimeInput = (args) => {
-        if (!args)
-            args = {};
-        args.type = TYPE.DATETIME;
-        return new Input(args);
-    };
-    // export class BooleanInput       extends Input<boolean>  { readonly type = TYPE.BOOLEAN }
-    const BooleanInput = (args) => {
-        if (!args)
-            args = {};
-        args.type = TYPE.BOOLEAN;
-        return new Input(args);
-    };
-    // export class OrderByInput       extends Input<ORDER_BY> { readonly type = TYPE.ORDER_BY }
-    const OrderByInput = (args) => {
-        if (!args)
-            args = {};
-        args.type = TYPE.ORDER_BY;
-        return new Input(args);
-    };
-    // export class ArrayStringInput   extends ArrayInput<string[]> { readonly type = TYPE.ARRAY_STRING }
-    const ArrayStringInput = (args) => {
-        if (args === undefined || args.value === undefined)
-            args = Object.assign(Object.assign({}, args), { value: [] });
-        args.type = TYPE.ARRAY_STRING;
-        return new Input(args);
-    };
-    // export class ArrayNumberInput   extends ArrayInput<number[]> { readonly type = TYPE.ARRAY_NUMBER }
-    const ArrayNumberInput = (args) => {
-        if (args === undefined || args.value === undefined)
-            args = Object.assign(Object.assign({}, args), { value: [] });
-        args.type = TYPE.ARRAY_NUMBER;
-        return new Input(args);
-    };
-    // export class ArrayDateInput     extends ArrayInput<Date[]>   { readonly type = TYPE.ARRAY_DATE }
-    const ArrayDateInput = (args) => {
-        if (args === undefined || args.value === undefined)
-            args = Object.assign(Object.assign({}, args), { value: [] });
-        args.type = TYPE.ARRAY_DATE;
-        return new Input(args);
-    };
-    // export class ArrayDateTimeInput extends ArrayInput<Date[]>   { readonly type = TYPE.ARRAY_DATETIME }
-    const ArrayDateTimeInput = (args) => {
-        if (args === undefined || args.value === undefined)
-            args = Object.assign(Object.assign({}, args), { value: [] });
-        args.type = TYPE.ARRAY_DATETIME;
-        return new Input(args);
-    };
 
     class ObjectInput extends Input {
-        constructor(args) {
-            if (!args)
-                args = {};
-            args.type = TYPE.ID;
-            super(args);
+        constructor(type, args) {
+            super(type, args);
             Object.defineProperty(this, "options", {
                 enumerable: true,
                 configurable: true,
@@ -900,6 +521,222 @@
         }
         // otherwise set first available id or undefined
         input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
+    }
+
+    /**
+     *  Base class for the type descriptor
+     * It is used to define the field of the model
+     * It is used to convert the value to the string and back
+     */
+    class TypeDescriptor {
+        constructor() {
+            /**
+             * Configuration of the descriptor
+             */
+            Object.defineProperty(this, "config", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+        }
+    }
+
+    class StringDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super();
+            this.config = props ? props : { maxLength: 255 };
+        }
+        toString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value;
+        }
+        fromString(value) {
+            if (value === undefined)
+                return undefined;
+            else if (value === 'null')
+                return null;
+            else if (value === null)
+                return null;
+            return value;
+        }
+        validate(value) {
+            if (value === null && !this.config.null)
+                throw new Error('Field is required');
+            if (value === '' && this.config.required)
+                throw new Error('Field is required');
+            if (this.config.maxLength && value.length > this.config.maxLength)
+                throw new Error('String is too long');
+        }
+        default() {
+            return '';
+        }
+    }
+    function STRING(props) {
+        return new StringDescriptor(props);
+    }
+
+    class NumberDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super();
+            this.config = props ? props : {};
+        }
+        toString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return value.toString();
+        }
+        fromString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null')
+                return null;
+            if (value === null)
+                return null;
+            const result = parseInt(value);
+            if (isNaN(result))
+                return undefined;
+            return result;
+        }
+        validate(value) {
+            if (value === null && !this.config.null)
+                throw new Error('Field is required');
+            if (this.config.min && value < this.config.min)
+                throw new Error('Number is too small');
+            if (this.config.max && value > this.config.max)
+                throw new Error('Number is too big');
+        }
+        default() {
+            return undefined;
+        }
+    }
+    function NUMBER(props) {
+        return new NumberDescriptor(props);
+    }
+
+    class BooleanDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super();
+            this.config = props;
+        }
+        toString(value) {
+            return value.toString();
+        }
+        fromString(value) {
+            return value === 'true';
+        }
+        validate(value) {
+            var _a;
+            if (((_a = this.config) === null || _a === void 0 ? void 0 : _a.required) && value === undefined)
+                throw new Error('Field is required');
+        }
+        default() {
+            return false;
+        }
+    }
+    function BOOLEAN(props) {
+        return new BooleanDescriptor(props);
+    }
+
+    class DateDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super();
+            this.config = props;
+        }
+        toString(value) {
+            return value.toISOString();
+        }
+        fromString(value) {
+            return new Date(value);
+        }
+        validate(value) {
+            if (this.config.min && value < this.config.min)
+                throw new Error('Date is too early');
+            if (this.config.max && value > this.config.max)
+                throw new Error('Date is too late');
+        }
+        default() {
+            return new Date();
+        }
+    }
+    function DATE(props) {
+        return new DateDescriptor(props);
+    }
+
+    class DateTimeDescriptor extends DateDescriptor {
+        toString(value) {
+            return value.toISOString();
+        }
+    }
+    function DATETIME(props) {
+        return new DateTimeDescriptor(props);
+    }
+
+    class ArrayDescriptor extends TypeDescriptor {
+        constructor(type, props) {
+            super();
+            this.config = props ? props : {};
+            this.config.type = type;
+        }
+        toString(value) {
+            if (!value)
+                return undefined;
+            if (!value.length)
+                return undefined;
+            return value.map(item => this.config.type.toString(item)).join(',');
+        }
+        fromString(value) {
+            if (!value)
+                return [];
+            return value.split(',').map(item => this.config.type.fromString(item));
+        }
+        validate(value) {
+            if (this.config.minItems && value.length < this.config.minItems)
+                throw new Error('Array is too short');
+            if (this.config.maxItems && value.length > this.config.maxItems)
+                throw new Error('Array is too long');
+            value.forEach(item => this.config.type.validate(item));
+        }
+        default() {
+            return [];
+        }
+    }
+    function ARRAY(type, props) {
+        return new ArrayDescriptor(type, props);
+    }
+
+    const ASC = true;
+    const DESC = false;
+    class OrderByDescriptor extends TypeDescriptor {
+        toString(value) {
+            if (!value || !value[0])
+                return undefined;
+            return value[1] ? value[0] : '-' + value[0];
+        }
+        fromString(value) {
+            if (!value)
+                return undefined;
+            return value[0] === '-' ? [value.substring(1), false] : [value, true];
+        }
+        validate(value) {
+            if (!value)
+                throw new Error('Field is required');
+            if (!value[0])
+                throw new Error('Field is required');
+            if (value[1] === undefined)
+                throw new Error('Field is required');
+        }
+        default() {
+            return [undefined, ASC];
+        }
+    }
+    function ORDER_BY() {
+        return new OrderByDescriptor();
     }
 
     const DISPOSER_AUTOUPDATE = "__autoupdate";
@@ -1042,12 +879,12 @@
             let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = false } = props;
             this.repository = repository;
             this.filter = filter;
-            this.orderBy = orderBy ? orderBy : OrderByInput();
-            this.offset = offset ? offset : NumberInput();
-            this.limit = limit ? limit : NumberInput();
-            this.relations = relations ? relations : ArrayStringInput();
-            this.fields = fields ? fields : ArrayStringInput();
-            this.omit = omit ? omit : ArrayStringInput();
+            this.orderBy = orderBy ? orderBy : new Input(ARRAY(ORDER_BY()));
+            this.offset = offset ? offset : new Input(NUMBER());
+            this.limit = limit ? limit : new Input(NUMBER());
+            this.relations = relations ? relations : new Input(ARRAY(STRING()));
+            this.fields = fields ? fields : new Input(ARRAY(STRING()));
+            this.omit = omit ? omit : new Input(ARRAY(STRING()));
             this.autoupdate = autoupdate;
             mobx.makeObservable(this);
             this.disposers.push(mobx.reaction(
@@ -1298,7 +1135,7 @@
         }
         get items() {
             let __items = this.__items.map(x => x); // copy __items (not deep)
-            if (this.orderBy.value && this.orderBy.value.size) {
+            if (this.orderBy.value && this.orderBy.value.length) {
                 let compare = (a, b) => {
                     for (const [key, value] of this.orderBy.value) {
                         if (value === ASC) {
@@ -2309,14 +2146,9 @@
     exports.ARRAY = ARRAY;
     exports.ASC = ASC;
     exports.Adapter = Adapter;
-    exports.ArrayDateInput = ArrayDateInput;
-    exports.ArrayDateTimeInput = ArrayDateTimeInput;
     exports.ArrayDescriptor = ArrayDescriptor;
-    exports.ArrayNumberInput = ArrayNumberInput;
-    exports.ArrayStringInput = ArrayStringInput;
     exports.BOOLEAN = BOOLEAN;
     exports.BooleanDescriptor = BooleanDescriptor;
-    exports.BooleanInput = BooleanInput;
     exports.Cache = Cache;
     exports.ComboFilter = ComboFilter;
     exports.ConstantAdapter = ConstantAdapter;
@@ -2325,9 +2157,7 @@
     exports.DESC = DESC;
     exports.DISPOSER_AUTOUPDATE = DISPOSER_AUTOUPDATE;
     exports.DateDescriptor = DateDescriptor;
-    exports.DateInput = DateInput;
     exports.DateTimeDescriptor = DateTimeDescriptor;
-    exports.DateTimeInput = DateTimeInput;
     exports.EQ = EQ;
     exports.EQV = EQV;
     exports.Filter = Filter;
@@ -2346,12 +2176,10 @@
     exports.NOT_EQ = NOT_EQ;
     exports.NUMBER = NUMBER;
     exports.NumberDescriptor = NumberDescriptor;
-    exports.NumberInput = NumberInput;
-    exports.ORDER_BY2 = ORDER_BY2;
+    exports.ORDER_BY = ORDER_BY;
     exports.ObjectForm = ObjectForm;
     exports.ObjectInput = ObjectInput;
     exports.OrderByDescriptor = OrderByDescriptor;
-    exports.OrderByInput = OrderByInput;
     exports.Query = Query;
     exports.QueryCacheSync = QueryCacheSync;
     exports.QueryDistinct = QueryDistinct;
@@ -2364,7 +2192,6 @@
     exports.STRING = STRING;
     exports.SingleFilter = SingleFilter;
     exports.StringDescriptor = StringDescriptor;
-    exports.StringInput = StringInput;
     exports.TypeDescriptor = TypeDescriptor;
     exports.autoResetId = autoResetId;
     exports.config = config;

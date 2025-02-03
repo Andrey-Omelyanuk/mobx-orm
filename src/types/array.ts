@@ -1,16 +1,16 @@
 import { TypeDescriptor, TypeDescriptorProps } from "./type"
 
 
-export interface ArrayDescriptorProps<T> extends TypeDescriptorProps {
-    type: TypeDescriptor<T> 
+export interface ArrayDescriptorProps extends TypeDescriptorProps {
     minItems?: number
     maxItems?: number
 }
 
 export class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
-    constructor(props: ArrayDescriptorProps<T>) {
+    constructor(type: TypeDescriptor<T>, props?: ArrayDescriptorProps) {
         super()
-        this.config = props
+        this.config = props ? props : {}
+        this.config.type = type
     }
     toString(value: T[]): string {
         if (!value) return undefined
@@ -18,7 +18,7 @@ export class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
         return value.map(item => this.config.type.toString(item)).join(',')
     }
     fromString(value: string): T[] {
-        if (!value) return [] 
+        if (!value) return []
         return value.split(',').map(item => this.config.type.fromString(item))
     }
     validate(value: T[]) {
@@ -28,8 +28,11 @@ export class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
             throw new Error('Array is too long')
         value.forEach(item => this.config.type.validate(item))
     }
+    default(): T[] {
+        return []
+    }
 }
 
-export function ARRAY<T>(props?: ArrayDescriptorProps<T>) {
-    return new ArrayDescriptor(props)
+export function ARRAY<T>(type: TypeDescriptor<T>, props?: ArrayDescriptorProps) {
+    return new ArrayDescriptor(type, props)
 }

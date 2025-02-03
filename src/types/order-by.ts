@@ -3,14 +3,8 @@ import { TypeDescriptor } from "./type"
 
 export const ASC = true 
 export const DESC = false 
-// DEPRIECATED
-export type ORDER_BY = Map<string, boolean>
-
 
 export class OrderByDescriptor extends TypeDescriptor<[string, boolean]>{
-    constructor() {
-        super()
-    }
     toString(value: [string, boolean]): string {
         if (!value || !value[0]) return undefined
         return value[1] ? value[0] : '-' + value[0]
@@ -27,8 +21,11 @@ export class OrderByDescriptor extends TypeDescriptor<[string, boolean]>{
         if (value[1] === undefined)
             throw new Error('Field is required')
     }
+    default(): [string, boolean] {
+        return [undefined, ASC]
+    }
 }
 
-export function ORDER_BY2() {
+export function ORDER_BY() {
     return new OrderByDescriptor()
 }

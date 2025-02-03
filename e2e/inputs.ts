@@ -1,4 +1,4 @@
-import { field, ILIKE, Input, Model, model, ORDER_BY2, STRING, ARRAY } from "../dist/mobx-orm"
+import { field, ILIKE, Input, Model, model, ORDER_BY, STRING, ARRAY, DESC } from "../dist/mobx-orm"
 
 
 describe('Other tests: Inputs.', () => {
@@ -10,12 +10,12 @@ describe('Other tests: Inputs.', () => {
     }
 
     it('...', async ()=> {
-        // const input = new Input(STRING(), { syncURL: 'search', debounce: 400 })
-        // const filesQuery = File.getQuery({
-        //     filter      : ILIKE('title', input),
-        //     orderBy     : new Input(ARRAY({type: ORDER_BY2()}), {value: [['uploaded_at', DESC]]}),
-        //     relations   : new Input(ARRAY({type: STRING()})   , {value: ['versions', ]}),
-        //     autoupdate  : false
-        // })
+        const input = new Input(STRING(), { syncURL: 'search', debounce: 400 })
+        const filesQuery = File.getQuery({
+            filter      : ILIKE('title', input),
+            orderBy     : new Input(ARRAY(ORDER_BY()), {value: [['uploaded_at', DESC]]}),
+            relations   : new Input(ARRAY(STRING())   , {value: ['versions', ]}),
+            autoupdate  : false
+        })
     })
 })

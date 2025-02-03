@@ -21,6 +21,9 @@ export class BooleanDescriptor extends TypeDescriptor<boolean>{
         if (this.config?.required && value === undefined)
             throw new Error('Field is required')
     }
+    default(): boolean {
+        return false
+    }
 }
 
 

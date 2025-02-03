@@ -36,6 +36,9 @@ export class NumberDescriptor extends TypeDescriptor<number> {
         if (this.config.max && value > this.config.max)
             throw new Error('Number is too big')
     }
+    default(): number {
+        return undefined
+    }
 }
 
 

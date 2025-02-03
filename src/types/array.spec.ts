@@ -5,9 +5,9 @@ import { ASC, DESC, OrderByDescriptor } from './order-by'
 
 
 describe('ArrayDescriptor', () => {
-    const descStr = new ArrayDescriptor({type: new StringDescriptor()})
-    const descNum = new ArrayDescriptor({type: new NumberDescriptor()})
-    const descOrder = new ArrayDescriptor({type: new OrderByDescriptor()})
+    const descStr = new ArrayDescriptor(new StringDescriptor())
+    const descNum = new ArrayDescriptor(new NumberDescriptor())
+    const descOrder = new ArrayDescriptor(new OrderByDescriptor())
     describe('toString', () => {
         it('null => undefined'          , () => { expect(descStr.toString(null)).toBe(undefined) })
         it('undefined => undefined'     , () => { expect(descStr.toString(undefined)).toBe(undefined) })
@@ -28,6 +28,18 @@ describe('ArrayDescriptor', () => {
         it('"1,2,3" => [1, 2, 3]'       , () => { expect(descNum.fromString('1,2,3')).toEqual([1, 2, 3]) })
         it('"a,-b" => [["a", ASC], ["b", DESC]]',
             () => { expect(descOrder.fromString('a,-b')).toEqual([["a", ASC], ["b", DESC]]) })
+    })
+
+    describe('constructor', () => {
+
+        it('default', () => {
+            const desc = new ArrayDescriptor(new StringDescriptor())
+            expect(desc.config).toEqual({ type: new StringDescriptor() })
+        })
+        it('props', () => {
+            const desc = new ArrayDescriptor(new StringDescriptor(), { minItems: 1, maxItems: 10 })
+            expect(desc.config).toEqual({ type: new StringDescriptor(), minItems: 1, maxItems: 10 })
+        })
     })
 
     // TODO: test validate
