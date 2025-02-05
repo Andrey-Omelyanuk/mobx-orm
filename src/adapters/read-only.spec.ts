@@ -3,12 +3,21 @@ import { Filter } from '../filters'
 import { Repository } from '../repository'
 import { model, Model } from '../model'
 import { ReadOnlyAdapter } from './read-only'
+import { ID, NUMBER } from '../types'
+import { id } from '../fields/id'
 
 
 class TestReadOnlyAdapter<M extends Model> extends ReadOnlyAdapter<M> {
-    async create() { return super.create() }
-    async update() { return super.update() } 
-    async delete() { return super.delete() } 
+
+    async create (raw_data: any, controller?: AbortController): Promise<Object> {
+        return super.create(raw_data)
+    }
+    async update (ids: ID[], only_changed_raw_data: any, controller?: AbortController): Promise<any> {
+        return super.update(ids, only_changed_raw_data)
+    } 
+    async delete (ids: ID[], controller?: AbortController): Promise<void> {
+        return super.delete(ids)
+    } 
     // next methods just to avoid abstract class
     async get    (obj_id: any, controller?: AbortController): Promise<any> { return 'get' }
     async action (obj_id: any, name: string, kwargs: Object, controller?: AbortController) : Promise<any> { return 'action' }
@@ -21,15 +30,14 @@ class TestReadOnlyAdapter<M extends Model> extends ReadOnlyAdapter<M> {
 
 export function read_only() {
     return (cls: any) => {
-        let repository = new Repository(cls, new TestReadOnlyAdapter()) 
-        cls.__proto__.repository = repository
+        cls.getModelDescriptor().defaultRepository.adapter = new TestReadOnlyAdapter()
     }
 }
 
 describe('Read Only Adapter', () => {
 
     @read_only()
-    @model class A extends Model {}
+    @model class A extends Model { @id(NUMBER()) id: number }
 
     it('create', (done) => {
         let a = new A()
@@ -49,13 +57,6 @@ describe('Read Only Adapter', () => {
         let a = new A()
         a.delete().catch((e) => {
             expect(e).toBe(`You cannot delete using READ ONLY adapter.`)
-            done()
-        })
-    })
-    it('save', (done) => {
-        let a = new A()
-        a.save().catch((e) => {
-            expect(e).toBe(`You cannot create using READ ONLY adapter.`)
             done()
         })
     })

@@ -1,40 +1,44 @@
-import { Cache, Adapter, Repository, Model ,field, model, Query, Filter } from "."
-import { BOOLEAN } from "./types/boolean"
-import { STRING } from "./types/string"
-import { NUMBER } from "./types/number"
+import { Cache, Adapter, Repository, Model , Query, Filter, ID } from "."
 
+/**
+ * Data set for testing.
+ */
 export let obj_a = {id: 0, a: 5, b: 'a', c: true } 
 export let obj_b = {id: 1,       b: 'c', c: false} 
 export let obj_c = {id: 2, a: 2,         c: false} 
 export let obj_d = {id: 3, a: 2, b: 'f'          } 
 export let obj_e = {id: 4, a: 1, b: 'a', c: true } 
-
 export let data_set = [ obj_a, obj_b, obj_c, obj_d, obj_e ]
 
+/**
+ * TestCache for testing.
+ * Use it when you neet to count how many times the method was called. 
+ */
 export class TestCache<M extends Model> extends Cache<M> {
-    constructor(model: any, name?: string) { super(model, name) }
 
-    get     (id: any): M|undefined { return super.get(id) }
+    get     (ID: string): M|undefined { return super.get(ID) }
     inject  (obj: M) { return super.inject(obj) }
     eject   (obj: M) { return super.eject(obj) }
-    update  (raw_obj: any): M { return super.update(raw_obj) }
     clear   () { return super.clear() }
 
     static mockClear() {
         (TestCache.prototype.get    as jest.Mock).mockClear(); 
         (TestCache.prototype.inject as jest.Mock).mockClear(); 
         (TestCache.prototype.eject  as jest.Mock).mockClear(); 
-        (TestCache.prototype.update as jest.Mock).mockClear(); 
     }
 }
 TestCache.prototype.get     = jest.fn(TestCache.prototype.get)
 TestCache.prototype.inject  = jest.fn(TestCache.prototype.inject)
 TestCache.prototype.eject   = jest.fn(TestCache.prototype.eject)
-TestCache.prototype.update  = jest.fn(TestCache.prototype.update)
 
 
+/**
+ * TestAdapter for testing.
+ * Use it when you neet to count how many times the method was called.
+ */
 export class TestAdapter<M extends Model> extends Adapter<M> {
-    async create  (raw_data, controllerr) {}
+
+    async create  (raw_data: any, controller?: AbortController): Promise<Object> { return {}}
     async get     (obj_id, controller?) { return {} }
     async update  () {}
     async delete  (obj_id, controller?) {}
@@ -68,13 +72,17 @@ TestAdapter.prototype.getTotalCount = jest.fn(TestAdapter.prototype.getTotalCoun
 TestAdapter.prototype.getDistinct   = jest.fn(TestAdapter.prototype.getDistinct)
 
 
+/**
+ * TestRepository for testing.
+ * Use it when you neet to count how many times the method was called.
+ */
 export class  TestRepository<M extends Model> extends Repository<M> {
     constructor(model: any, adapter: any, cache?: any) { super(model, adapter, cache) }
 
+    async get(ids: ID[], controller?: AbortController): Promise<M> { return super.get(ids, controller) }
     async create(obj: M, controller?: AbortController) : Promise<M> { return super.create(obj, controller) }
-    async get(obj_id: number, controller?: AbortController): Promise<M> { return super.get(obj_id, controller) }
-    async update(obj: M, controller?: AbortController) : Promise<M> { return super.update(obj, controller) }
-    async delete(obj: M, controller?: AbortController) : Promise<M> { return super.delete(obj, controller) }
+    async update(obj: M, controller?: AbortController) : Promise<void> { return super.update(obj, controller) }
+    async delete(obj: M, controller?: AbortController) : Promise<void> { return super.delete(obj, controller) }
     async action(obj: M, name: string, kwargs: Object, controller?: AbortController) : Promise<any> { return super.action(obj, name, kwargs, controller) }
     async find(query: Query<M>, controller?: AbortController): Promise<M> { return super.find(query, controller) }
     async load(query: Query<M>, controller?: AbortController):Promise<M[]> { return super.load(query, controller) }
@@ -102,19 +110,3 @@ TestRepository.prototype.find          = jest.fn(TestRepository.prototype.find)
 TestRepository.prototype.load          = jest.fn(TestRepository.prototype.load)
 TestRepository.prototype.getTotalCount = jest.fn(TestRepository.prototype.getTotalCount)
 TestRepository.prototype.getDistinct   = jest.fn(TestRepository.prototype.getDistinct)
-
-
-export function testRepository() {
-    return (cls: any) => {
-        let repository = new TestRepository(cls, new TestAdapter(), new TestCache(cls)) 
-        cls.__proto__.repository = repository
-    }
-}
-
-@testRepository()
-@model
-export class TestModel extends Model {
-    @field(NUMBER())   a ?: number
-    @field(STRING())   b ?: string
-    @field(BOOLEAN())  c ?: boolean
-}

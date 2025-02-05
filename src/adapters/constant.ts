@@ -1,5 +1,4 @@
 import { Model } from '../model'
-import { Repository }  from '../repository'
 import { Adapter } from './adapter'
 
 
@@ -50,14 +49,12 @@ export class ConstantAdapter<M extends Model> extends Adapter<M> {
 
     getURLSearchParams(): URLSearchParams {
         return new URLSearchParams()
-        // throw new Error('ConstantAdapter.getURLSearchParams should not be used.')
     }
 }
 
 // model decorator
 export function constant (constant: any[]) {
     return (cls: any) => {
-        let repository = new Repository(cls, new ConstantAdapter(constant)) 
-        cls.__proto__.repository = repository
+        cls.getModelDescriptor().defaultRepository.adapter = new ConstantAdapter(constant)
     }
 }

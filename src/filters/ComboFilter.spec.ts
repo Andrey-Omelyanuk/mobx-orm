@@ -1,11 +1,11 @@
-import { Model, Query, Input, NUMBER } from '..'
+import { Model, Query, Input, NUMBER, model, id } from '..'
 import { EQ } from './SingleFilter'
 import { ComboFilter, AND } from './ComboFilter'
 
 
 describe('ComboFilter', () => {
 
-    class TestModel extends Model {}
+    @model class TestModel extends Model { @id(NUMBER()) id: number }
     class TestComboFilter extends ComboFilter {
         isMatch(obj: any) : boolean {
             return true 

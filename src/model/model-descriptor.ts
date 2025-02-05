@@ -7,8 +7,8 @@ import Model from './model'
  */
 export class ModelFieldDescriptor<T, F> {
     decorator   : (obj: T) => void
-    type        : TypeDescriptor<F>
-    settings    : any
+    type       ?: TypeDescriptor<F>
+    settings   ?: any
 }
 
 /**
@@ -55,6 +55,20 @@ export class ModelDescriptor<T extends Model> {
             const id = this.ids[fieldName].type.toString(obj[fieldName])
             if (id === undefined) return undefined
             ids.push(id)
+        }
+        return ids.join("=")
+    }
+    
+    /**
+     * Calculate ID from values based on Model config.
+     */
+    getIDByValues(values: ID[]): string | undefined {
+        const ids = []
+        const configs = Object.values(this.ids)
+        for (let i = 0; i < values.length; i++) {
+            const value = configs[i].type.toString(values[i])
+            if (value === undefined) return undefined
+            ids.push(value)
         }
         return ids.join("=")
     }

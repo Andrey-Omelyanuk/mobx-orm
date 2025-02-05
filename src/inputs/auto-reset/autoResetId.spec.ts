@@ -1,10 +1,11 @@
-import { Model } from '../../model'
+import { model, Model } from '../../model'
 import { ObjectInput } from '../ObjectInput'
 import { autoResetId } from './autoResetId'
 import { NUMBER } from '../../types'
+import { id } from '../../fields'
 
 describe('autoResetId', () => {
-    class TestModel extends Model { }
+    @model class TestModel extends Model { @id(NUMBER()) id: number}
     it('value still in options, do nothing', async () => {
     })
     it('value not in options, reset to first element', async () => {

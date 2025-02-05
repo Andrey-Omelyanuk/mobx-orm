@@ -1,66 +1,102 @@
 import { runInAction } from 'mobx'
-import { Model, model, field, foreign, local } from '..'
+import { Model, model, field, foreign, local, models, id } from '..'
 import { NUMBER } from '../types/number'
 
 
 describe('Field: foreign', () => {
     describe('Declaration', () => {
+        beforeEach(() => {
+            models.clear()
+        })
+
         it('declare foreign with single id', async () => {
-            @model class A extends Model { }
-            @model class B extends Model {
-                @field(NUMBER())    a_id: number
-                @foreign(A, 'a_id') a   : A 
+            @model class A extends Model {
+                @id(NUMBER()) id: number
             }
-            expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
-            expect(B.__relations['a'].settings.foreign_model).toBe(A)
-            expect(B.__relations['a'].settings.foreign_id_name).toBe('a_id')
+            @model class B extends Model {
+                @id(NUMBER())           id: number
+                @field(NUMBER())      a_id: number
+                @foreign(A, ['a_id']) a   : A 
+            }
+            expect(B.getModelDescriptor().relations['a']).toEqual({
+                decorator: expect.any(Function),
+                settings: {
+                    foreign_model: A,
+                    foreign_ids: ['a_id']
+                }
+            })
         })
 
         it('declare foreign with auto detect single id', async () => {
-            @model class A extends Model {}
+            @model class A extends Model {
+                @id(NUMBER()) id: number
+            }
             @model class B extends Model {
+                @id(NUMBER())   id: number
                 @field(NUMBER()) a_id: number
                 @foreign(A)      a   : A 
             }
-            expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
-            expect(B.__relations['a'].settings.foreign_model).toBe(A)
-            expect(B.__relations['a'].settings.foreign_id_name).toBe('a_id')
+            expect(B.getModelDescriptor().relations['a']).toEqual({
+                decorator: expect.any(Function),
+                settings: {
+                    foreign_model: A,
+                    foreign_ids: ['a_id']
+                }
+            })
         })
 
         it('cross declare', async () => {
-            @local() @model class A extends Model {
+            @model class A extends Model {
+                @id   (NUMBER())   id: number
                 @field(NUMBER()) b_id: number
                                  b   : B
             }
-            @local() @model class B extends Model {
+            @model class B extends Model {
+                @id   (NUMBER())   id: number
                 @field(NUMBER()) a_id: number
                 @foreign(A)      a   : A 
             }
             foreign(B)(A, 'b') 
-            expect(A.__relations['b'].settings.foreign_model).toBe(B)
-            expect(A.__relations['b'].settings.foreign_id_name).toBe('b_id')
-            expect(A.__relations['b'].decorator instanceof Function).toBeTruthy()
-            expect(B.__relations['a'].settings.foreign_model).toBe(A)
-            expect(B.__relations['a'].settings.foreign_id_name).toEqual('a_id')
-            expect(B.__relations['a'].decorator instanceof Function).toBeTruthy()
+            expect(A.getModelDescriptor().relations['b']).toEqual({
+                decorator: expect.any(Function),
+                settings: {
+                    foreign_model: B,
+                    foreign_ids: ['b_id']
+                }
+            })
+            expect(B.getModelDescriptor().relations['a']).toEqual({
+                decorator: expect.any(Function),
+                settings: {
+                    foreign_model: A,
+                    foreign_ids: ['a_id']
+                }
+            })
         })
     })
 
     describe('Usage', () => {
-        @local() @model class A extends Model {}
-        @local() @model class B extends Model {
+        @model class A extends Model {
+            @id(NUMBER()) id: number
+        }
+        @model class B extends Model {
+            @id   (NUMBER())   id: number
             @field(NUMBER()) a_id: number
             @foreign(A)      a   : A 
         }
 
         beforeEach(() => {
-            A.repository.cache.clear() 
-            B.repository.cache.clear() 
+            A.getModelDescriptor().defaultRepository.cache.clear() 
+            B.getModelDescriptor().defaultRepository.cache.clear() 
+        })
+
+        afterAll(() => {
+            models.clear()
         })
 
         it('foreign obj create before', async () => {
             let a = new A({id: 1         }) 
-            let b = new B({id: 2, a_id: 1})     ; expect(b.a).toBe(a)
+            let b = new B({id: 2, a_id: 1})
+            expect(b.a).toBe(a)
         })
 
         it('foreign obj create after', async () => {

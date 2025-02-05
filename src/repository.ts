@@ -40,7 +40,7 @@ export class  Repository<M extends Model> {
      * @returns 
      */
     async create(obj: M, controller?: AbortController) : Promise<M> {
-        let raw_obj = await this.adapter.create(obj.raw_data, controller)
+        let raw_obj = await this.adapter.create(obj.rawData, controller)
         const rawObjID = this.modelDescriptor.getID(raw_obj)
         const cachedObj = this.cache.get(rawObjID)
         if (cachedObj) obj = cachedObj

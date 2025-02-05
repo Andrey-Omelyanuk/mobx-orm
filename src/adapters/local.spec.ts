@@ -1,11 +1,11 @@
-import { model, Model, LocalAdapter, local, local_store } from '../'
+import { model, Model, LocalAdapter, local, local_store, id, NUMBER } from '../'
 import { data_set  } from '../test.utils' 
 
 
 describe('LocalAdapter', () => {
 
-    @local() @model class A extends Model {}
-    const adapter = A.repository.adapter as LocalAdapter<A> 
+    @local() @model class A extends Model { @id(NUMBER()) id: number }
+    const adapter = A.getModelDescriptor().defaultRepository.adapter as LocalAdapter<A> 
 
     afterEach(async () => {
         local_store['A'] = {} // clean the store
@@ -18,8 +18,8 @@ describe('LocalAdapter', () => {
         })
 
         it('decorate the model', async ()=> {
-            @local() @model class A2 extends Model {}
-            expect((A2.repository.adapter as LocalAdapter<A2>).store_name).toBe('A2')
+            @local() @model class A2 extends Model { @id(NUMBER()) id: number }
+            expect((A2.getModelDescriptor().defaultRepository.adapter as LocalAdapter<A2>).store_name).toBe('A2')
         })
     })
 

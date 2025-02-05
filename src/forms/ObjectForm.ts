@@ -25,7 +25,7 @@ export class ObjectForm<M extends Model> extends Form {
                 for (let fieldName of Object.keys(inputs)) {
                     this.obj[fieldName] = inputs[fieldName].value
                 }
-                const response = await this.obj.save()
+                const response = await this.obj.create() as M
                 if (onSubmitted)
                     onSubmitted(response)
             },

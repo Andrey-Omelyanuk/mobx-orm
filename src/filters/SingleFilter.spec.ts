@@ -1,12 +1,11 @@
 import { runInAction } from 'mobx'
-import { Model, Input, NUMBER, local } from '..'
+import { Model, Input, NUMBER, local, model, id } from '..'
 import { ObjectInput } from '../inputs' 
 import { SingleFilter, EQ, EQV, NOT_EQ, GT, GTE, LT, LTE, LIKE, ILIKE, IN } from './SingleFilter'
 
 
 describe('SingleFilter', () => {
-    @local()
-    class TestModel extends Model {}
+    @model class TestModel extends Model { @id(NUMBER()) id: number}
 
     it('isReady', () => {
         const options = TestModel.getQuery({})

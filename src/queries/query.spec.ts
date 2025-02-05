@@ -7,26 +7,30 @@ import {
     Query, DISPOSER_AUTOUPDATE, DESC, ObjectInput,
     autoResetId,
     constant,
+    id,
+    ModelDescriptor,
 } from '../'
 
 
 jest.useFakeTimers()
 
 describe('Query', () => {
-    @local() @model class A extends Model {}
-    @local() @model class B extends Model {}
+    @local() @model class A extends Model { @id(NUMBER()) id: number }
+    @local() @model class B extends Model { @id(NUMBER()) id: number }
+    const repositoryA = A.getModelDescriptor().defaultRepository as Repository<A>
+    const repositoryB = B.getModelDescriptor().defaultRepository as Repository<B>
 
     afterEach(async () => {
-        A.repository.cache.clear() 
-        B.repository.cache.clear() 
+        repositoryA.cache.clear() 
+        repositoryB.cache.clear() 
         jest.clearAllMocks()
     })
 
     describe('Constructor', () => {
         it('default', async ()=> {
-            const query = new Query<A>({repository: A.repository})
+            const query = new Query<A>({repository: repositoryA})
             expect(query).toMatchObject({
-                repository      : A.repository,
+                repository      : repositoryA,
                 filter          : undefined,
 
                 items           : [],
@@ -55,7 +59,7 @@ describe('Query', () => {
             const fields    = new Input(ARRAY(STRING()), {value: ['field_a', 'field_b']})
             const omit      = new Input(ARRAY(STRING()), {value: ['omit_a', 'omit_b']})
             const query     = new Query<A>({
-                repository  : A.repository,
+                repository  : repositoryA,
                 filter      : filter,
                 orderBy     : orderBy, 
                 offset      : offset,
@@ -65,7 +69,7 @@ describe('Query', () => {
                 omit        : omit, 
             })
             expect(query).toMatchObject({
-                repository      : A.repository,
+                repository      : repositoryA,
                 filter          : filter,
                 orderBy         : orderBy,
                 limit           : limit,
@@ -87,7 +91,7 @@ describe('Query', () => {
 
     describe('Destructor', () => {
         it('default', async ()=> {
-            const query = new Query<A>({repository: A.repository}) as any
+            const query = new Query<A>({repository: repositoryA}) as any
             query.disposers.push(        reaction(() => query.isLoading, () => null));  expect(query.disposers.length).toBe(2)
             query.disposerObjects['x'] = reaction(() => query.isLoading, () => null );  expect(Object.keys(query.disposerObjects).length).toBe(1)
             query.destroy();                                                            expect(query.disposers.length).toBe(0)
@@ -97,14 +101,14 @@ describe('Query', () => {
 
     describe('Load', () => {
         it('isLoading', (done) => {
-            const query = new Query<A>({repository: A.repository});     expect(query.isLoading).toBe(false)
+            const query = new Query<A>({repository: repositoryA});     expect(query.isLoading).toBe(false)
             query.load().finally(()=> {                                 expect(query.isLoading).toBe(false)
                 done()
             });                                                         expect(query.isLoading).toBe(true)
         })
 
         it('need_to_update should set to false', (done) => {
-            const query = new Query<A>({repository: A.repository});     expect(query.isNeedToUpdate).toBe(true)
+            const query = new Query<A>({repository: repositoryA});     expect(query.isNeedToUpdate).toBe(true)
             query.load().finally(()=> {                                 expect(query.isNeedToUpdate).toBe(false)
                 done()                                                  // it set to false as loading started
             });                                                         expect(query.isNeedToUpdate).toBe(false)
@@ -115,7 +119,7 @@ describe('Query', () => {
             //       and it can be the same in the same tick 
             //       in this case we should increase the timestamp by 1
             let timestamp
-            const query = new Query<A>({repository: A.repository});     expect(query.timestamp === undefined).toBe(true)
+            const query = new Query<A>({repository: repositoryA});     expect(query.timestamp === undefined).toBe(true)
             await query.load();                                         expect(query.timestamp !== undefined).toBe(true)
             timestamp = query.timestamp
             await query.load();                                         expect(query.timestamp).toBe(timestamp+1)
@@ -127,7 +131,7 @@ describe('Query', () => {
                     throw new Error('error')
                 }
             }
-            const repository = new Repository<A>(A, new ErrorAdapter<A>())
+            const repository = new Repository<A>((() => {}) as any, new ErrorAdapter<A>())
             const query = new Query<A>({repository: repository})
             await query.load()
             expect(query.error).toBe('error')
@@ -139,7 +143,8 @@ describe('Query', () => {
                     throw new Error('canceled')
                 }
             }
-            const repository = new Repository<A>(A, new ErrorAdapter<A>())
+
+            const repository = new Repository<A>(new ModelDescriptor((()=>{}) as any), new ErrorAdapter<A>())
             const query = new Query<A>({repository: repository})
             await query.load()
             expect(query.error).toBe(undefined)
@@ -147,7 +152,7 @@ describe('Query', () => {
         })
 
         it('shadow load don`t trigger is_loading flag', (done) => {
-            const query = new Query<A>({repository: A.repository});     expect(query.isLoading).toBe(false)
+            const query = new Query<A>({repository: repositoryA});     expect(query.isLoading).toBe(false)
             query.shadowLoad().finally(()=> {                           expect(query.isLoading).toBe(false)
                 done()
             });                                                         expect(query.isLoading).toBe(false)
@@ -156,7 +161,7 @@ describe('Query', () => {
 
     describe('autoupdate', () => {
         it('on/off', () => {
-            const query = new Query<A>({repository: A.repository}) as any
+            const query = new Query<A>({repository: repositoryA}) as any
                                         expect(query.autoupdate).toBe(false)
                                         expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).toBe(undefined)
             query.autoupdate = true                    
@@ -167,9 +172,9 @@ describe('Query', () => {
         })
 
         it('in action', async () => {
-            const options = new Query<A>({repository: A.repository})
+            const options = new Query<A>({repository: repositoryA})
             const input   = new ObjectInput(STRING(), {value: 'test', options})
-            const query   = new Query<A>({repository: A.repository, filter: EQ('name', input), autoupdate: true})
+            const query   = new Query<A>({repository: repositoryA, filter: EQ('name', input), autoupdate: true})
 
                                         expect(options.isNeedToUpdate   ).toBe(true)
                                         expect(options.isReady          ).toBe(false)

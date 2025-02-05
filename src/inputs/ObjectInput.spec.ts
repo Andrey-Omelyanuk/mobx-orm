@@ -3,13 +3,14 @@ import { model, Model } from '../model'
 import { NUMBER } from '../types'
 import { ObjectInput } from './ObjectInput'
 import { autoResetId } from './auto-reset'
+import { id } from '../fields'
 
 
 jest.useFakeTimers()
 
 describe('ObjectInput', () => {
     @model
-    class TestModel extends Model { }
+    class TestModel extends Model { @id(NUMBER()) id: number } 
 
     beforeEach(() => {
     })

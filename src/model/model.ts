@@ -7,46 +7,42 @@ import { Repository } from '../repository'
 import { ARRAY, ID, STRING } from '../types'
 import models from './models'
 import { ModelDescriptor } from './model-descriptor'
-import { getId } from '@/utils'
 
 
 export default abstract class Model {
-
-    // Original Class will be decorated by model decorator,
-    // use this flag to detect original class 
-    static readonly isOriginalClass = true
-
     /**
-     * Name of the model in the models map. 
-     * Each instance have to have this field. Some decorators use it.
+     * Static version initializes in the id decorator.
+     * Instance version initializes in the constructor that declare in model decorator.
+     * It is used for registering the model in the models map.
+     * It is used for get the model descriptor from the models map.
      */
-    static modelName: string
+    static   modelName: string
+    readonly modelName: string
     /**
      * @returns {ModelDescriptor} - model description
      */
-    static getModelDescription<T extends typeof Model>(this: T): ModelDescriptor<InstanceType<T>> {
-        return models.get(this.modelName)
+    static getModelDescriptor<T extends Model>(): ModelDescriptor<T> {
+        return models.get(this.modelName) as ModelDescriptor<T>
     }
     /**
      * @param init - initial data of the object 
      */
     constructor (init?: {}) {}
     /**
-     * @returns {ModelDescriptor} - model description
+     * @returns {ModelDescriptor} - model descriptor
      */
     get modelDescriptor(): ModelDescriptor<Model> {
         return models.get(this.modelName)
     }
-    get modelName(): string {
-        return (this.constructor as typeof Model).modelName
-    }
+
+
     /**
      * ID is string based on join ids. 
      * It's base for using in the lib.
      */
     @computed({ keepAlive: true })
     get ID(): string | undefined {
-        return getId(this.modelDescriptor, this)
+        return this.modelDescriptor.getID(this)
     }
 
     /**
@@ -56,7 +52,7 @@ export default abstract class Model {
     /**
      * disposers for mobx reactions and interceptors, you can add your own disposers
      */
-    readonly disposers = new Map()
+    disposers = new Map()
 
     /**
      * Destructor of the object.
@@ -79,22 +75,30 @@ export default abstract class Model {
         return (<any>this.constructor).__proto__
     }
 
-    // data only from fields (no ids)
-    get raw_data() : any {
-        let raw_data: any = {}
-        for(let field_name in this.model.__fields) {
-            if(this[field_name] !== undefined) {
-                raw_data[field_name] = this[field_name]
+    /**
+     * @returns {Object} - data only from fields (no ids)
+     */
+    get rawData() : any {
+        let rawData: any = {}
+        for (const fieldName in this.modelDescriptor.ids) {
+            if(this[fieldName] !== undefined) {
+                rawData[fieldName] = this[fieldName]
             }
         }
-        return raw_data
+        return rawData
     }
 
-    // it is raw_data + id
-    get raw_obj() : any {
-        let raw_obj: any = this.raw_data
-        raw_obj.id = this.id
-        return raw_obj
+    /**
+     * @returns {Object} - it is rawData + ids fields
+     */
+    get rawObj() : any {
+        let rawObj: any = this.rawData
+        for (const fieldName in this.modelDescriptor.ids) {
+            if(this[fieldName] !== undefined) {
+                rawObj[fieldName] = this[fieldName] 
+            }
+        }
+        return rawObj
     }
 
     get only_changed_raw_data() : any {
@@ -175,48 +179,51 @@ export default abstract class Model {
         }
     }
 
-    // --------------------------------------------------------------
+    // --------------------------------------------------------------------------------------------
     // helper instance functions
+    // --------------------------------------------------------------------------------------------
+
     async action(name: string, kwargs: Object) { return await this.model.repository.action(this, name, kwargs) }
-    async create() { return await this.modelDescriptor.defaultRepository.create(this) }
+    async create<T extends Model>(): Promise<T> { return await this.modelDescriptor.defaultRepository.create(this) as T }
     async update() { return await this.modelDescriptor.defaultRepository.update(this) }
     async delete() { return await this.modelDescriptor.defaultRepository.delete(this) }
-    // update the object from the server
     async refresh() { return await this.modelDescriptor.defaultRepository.get(this.modelDescriptor.getIds(this)) }
 
-    // --------------------------------------------------------------
+    // --------------------------------------------------------------------------------------------
     // helper class functions
+    // --------------------------------------------------------------------------------------------
+
     static getQuery<T extends Model>(props: QueryProps<T>): Query<T> {
-        return new Query<T>({...props, repository: this.getModelDescription().defaultRepository as Repository<T> })
+        return new Query<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
     }
     static getQueryPage<T extends Model>(props: QueryProps<T>): QueryPage<T> {
-        return new QueryPage<T>({...props, repository: this.getModelDescription().defaultRepository as Repository<T> })
+        return new QueryPage<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
     }
     static getQueryRaw<T extends Model>(props: QueryProps<T>): QueryRaw<T> {
-        return new QueryRaw<T>({...props, repository: this.getModelDescription().defaultRepository as Repository<T> })
+        return new QueryRaw<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
     }
     static getQueryRawPage<T extends Model>(props: QueryProps<T>): QueryRawPage<T> {
-        return new QueryRawPage<T>({...props, repository: this.getModelDescription().defaultRepository as Repository<T> })
+        return new QueryRawPage<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
     }
     static getQueryCacheSync<T extends Model>(props: QueryProps<T>): QueryCacheSync<T> {
-        return new QueryCacheSync<T>({...props, repository: this.getModelDescription().defaultRepository as Repository<T> })
+        return new QueryCacheSync<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
     }
     static getQueryStream<T extends Model>(props: QueryProps<T>): QueryStream<T> {
-        return new QueryStream<T>({...props, repository: this.getModelDescription().defaultRepository as Repository<T> })
+        return new QueryStream<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
     }
     static getQueryDistinct<T extends Model>(field: string, props: QueryProps<T>): QueryDistinct {
-        return new QueryDistinct(field, {...props, repository: this.getModelDescription().defaultRepository as Repository<T> })
+        return new QueryDistinct(field, {...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
     }
     static get<T extends Model>(ID: string): T {
-        let repository = this.getModelDescription().defaultRepository as Repository<T>
+        let repository = this.getModelDescriptor().defaultRepository as Repository<T>
         return repository.cache.get(ID)
     }
-    static async findById<T extends Model>(ID: ID) : Promise<T> {
-        let repository = this.getModelDescription().defaultRepository as Repository<T>
-        return repository.get(ID)
+    static async findById<T extends Model>(ids: ID[]) : Promise<T> {
+    let repository = this.getModelDescriptor().defaultRepository as Repository<T>
+        return repository.get(ids)
     }
     static async find<T extends Model>(query: Query<T>) : Promise<T> {
-        let repository = this.getModelDescription().defaultRepository as Repository<T>
+        let repository = this.getModelDescriptor().defaultRepository as Repository<T>
         return repository.find(query)
     }
 }

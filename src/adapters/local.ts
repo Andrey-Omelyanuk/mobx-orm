@@ -1,17 +1,20 @@
 import { Model } from '../model'
 import { Query } from '../queries/query'
-import { Repository }  from '../repository'
 import { Filter } from '../filters/Filter'
 import { Adapter } from './adapter'
 import { timeout } from '../utils'
-
-/*
-You can use this adapter for mock data or for unit test
-*/
+import { ID } from '../types'
 
 
+/**
+ * Local storage. 
+ */
 export let local_store: {string?: {any: Model}} = {}
 
+/**
+ * LocalAdapter connects to the local storage.
+ * You can use this adapter for mock data or for unit test
+ */
 export class LocalAdapter<M extends Model> implements Adapter<M> {
 
     readonly    store_name  : string
@@ -30,7 +33,9 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         local_store[this.store_name] = {}
     }
 
-    async action(obj_id: number, name: string, kwargs: Object) : Promise<any> {
+
+    async action (ids: ID[], name: string, kwargs: Object, controller?: AbortController) : Promise<any> {
+        throw(`Not implemented`)
     }
 
     async create(raw_data: any) : Promise<any> {
@@ -53,8 +58,10 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         return raw_obj
     }
 
-    async update(obj_id: number, only_changed_raw_data: any) : Promise<any> {
+
+    async update (ids: ID[], only_changed_raw_data: any, controller?: AbortController): Promise<any> {
         if (this.delay) await timeout(this.delay) 
+        const obj_id = ids.join("-")
         let raw_obj = local_store[this.store_name][obj_id] 
         for(let field of Object.keys(only_changed_raw_data)) {
             raw_obj[field] = only_changed_raw_data[field]
@@ -62,8 +69,9 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         return raw_obj 
     }
 
-    async delete(obj_id: number) : Promise<void> {
+    async delete (ids: ID[], controller?: AbortController): Promise<void> {
         if (this.delay) await timeout(this.delay) 
+        const obj_id = ids.join("-")
         delete local_store[this.store_name][obj_id]
     }
 
@@ -119,7 +127,6 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
 // model decorator
 export function local() {
     return (cls: any) => {
-        let repository = new Repository(cls, new LocalAdapter(cls.name)) 
-        cls.__proto__.repository = repository
+        cls.getModelDescriptor().defaultRepository.adapter = new LocalAdapter(cls.modelName)
     }
 }

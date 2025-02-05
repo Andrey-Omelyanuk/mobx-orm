@@ -1,26 +1,27 @@
-import { Model, model, local} from '..'
+import { Model, model, local, id, NUMBER, Repository} from '..'
 import { QueryPage } from './query-page'
 
 
 describe('QueryPage', () => {
 
-    @local() @model class A extends Model {}
+    @local() @model class A extends Model { @id(NUMBER()) id: number }
+    const repository = A.getModelDescriptor().defaultRepository as Repository<A>
     let query: QueryPage<A>
 
     beforeEach(async () => {
-        query = new QueryPage<A>({repository: A.repository})
+        query = new QueryPage<A>({repository})
     })
 
     afterEach(async () => {
         query.destroy()
-        A.repository.cache.clear() 
+        repository.cache.clear()
         jest.clearAllMocks()
     })
 
     describe('Constructor', () => {
         it('default', async () => {
             expect(query).toMatchObject({
-                repository      : A.repository,
+                repository,   
                 items           : [],
                 total           : undefined,
             })
@@ -33,7 +34,7 @@ describe('QueryPage', () => {
         it('default', async () => {
             await query.load()
             expect(query).toMatchObject({
-                repository      : A.repository,
+                repository,
                 items           : [],
                 total           : 0,        // empty data set, 0 is a proof that load is done correctly
             })

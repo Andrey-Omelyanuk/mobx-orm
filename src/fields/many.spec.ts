@@ -1,85 +1,126 @@
 import { runInAction } from 'mobx'
-import { local } from '../adapters'
-import { Model, model, field, many } from '..'
-import { ID } from '../types'
-import { NUMBER } from '../types/number'
+import { Model, model, field, many, id, models } from '..'
+import { ID, NUMBER } from '../types'
 
 
 describe('Field: Many', () => {
 
     describe('Declaration', () => {
+        beforeEach(() => {
+            models.clear()
+        })
 
         it('declare', async () => {
-            @local() @model class A extends Model {        bs  : B[]    }
-            @local() @model class B extends Model { @field(NUMBER()) a_id: number }
-            many(B, 'a_id')(A, 'bs')
-            expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
-            expect(A.__relations['bs'].settings.remote_model).toBe(B)
-            expect(A.__relations['bs'].settings.remote_foreign_id_name).toEqual('a_id')
+            @model class A extends Model {
+                @id(NUMBER()) id: number
+                              bs: B[]
+            }
+            @model class B extends Model {
+                @id   (NUMBER())   id: number
+                @field(NUMBER()) a_id: number
+            }
+            many(B, ['a_id'])(A, 'bs')
+            expect(A.getModelDescriptor().relations['bs']).toEqual({
+                decorator: expect.any(Function),
+                settings: {
+                    remote_model: B,
+                    remote_foreign_ids: ['a_id']
+                }
+            })
         })
 
         it('declare (auto detect)', async () => {
-            @local() @model class A extends Model {        bs  : B[]    }
-            @local() @model class B extends Model { @field(NUMBER()) a_id: number }
+            @model class A extends Model {
+                @id(NUMBER()) id: number
+                              bs: B[]
+            }
+            @model class B extends Model {
+                @id   (NUMBER())   id: number
+                @field(NUMBER()) a_id: number
+            }
             many(B)(A, 'bs')
-            expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
-            expect(A.__relations['bs'].settings.remote_model).toBe(B)
-            expect(A.__relations['bs'].settings.remote_foreign_id_name).toEqual('a_id')
+            expect(A.getModelDescriptor().relations['bs']).toEqual({
+                decorator: expect.any(Function),
+                settings: {
+                    remote_model: B,
+                    remote_foreign_ids: ['a_id']
+                }
+            })
         })
 
         it('cross declare', async () => {
-            @local() @model class A extends Model {
-                @field(NUMBER())  b_id : number
-                        bs   : B[]
+            @model class A extends Model {
+                @id   (NUMBER())   id : number
+                @field(NUMBER()) b_id : number
+                                 bs   : B[]
             }
-            @local() @model class B extends Model {
-                @field(NUMBER())  a_id : number
-                        as   : A[]
+            @model class B extends Model {
+                @id   (NUMBER())   id : number
+                @field(NUMBER()) a_id : number
+                                 as   : A[]
             }
             many(B)(A, 'bs')
             many(A)(B, 'as')
 
-            expect(A.__relations['bs'].decorator instanceof Function).toBeTruthy()
-            expect(A.__relations['bs'].settings.remote_model).toBe(B)
-            expect(A.__relations['bs'].settings.remote_foreign_id_name).toEqual('a_id')
-            expect(B.__relations['as'].decorator instanceof Function).toBeTruthy()
-            expect(B.__relations['as'].settings.remote_model).toBe(A)
-            expect(B.__relations['as'].settings.remote_foreign_id_name).toEqual('b_id')
+            expect(A.getModelDescriptor().relations['bs']).toEqual({
+                decorator: expect.any(Function),
+                settings: {
+                    remote_model: B,
+                    remote_foreign_ids: ['a_id']
+                }
+            })
+            expect(B.getModelDescriptor().relations['as']).toEqual({
+                decorator: expect.any(Function),
+                settings: {
+                    remote_model: A,
+                    remote_foreign_ids: ['b_id']
+                }
+            })
         })
     })
 
     describe('Usage', () => {
-        @local() @model class A extends Model {        bs   : B[]    }
-        @local() @model class B extends Model { @field(NUMBER()) a_id : ID }
+        @model class A extends Model {
+            @id(NUMBER()) id : ID
+                          bs : B[]
+        }
+        @model class B extends Model {
+            @id   (NUMBER())   id : ID
+            @field(NUMBER()) a_id : ID
+        }
         many(B)(A, 'bs')
 
         beforeEach(() => {
-            A.repository.cache.clear()
-            B.repository.cache.clear()
+            A.getModelDescriptor().defaultRepository.cache.clear()
+            B.getModelDescriptor().defaultRepository.cache.clear()
         })
 
         it('should be [] by default', async () => {
-            let a = new A()                             ; expect(a.bs).toEqual([])
+            let a = new A()
+            expect(a.bs).toEqual([])
         })
 
         it('should contain a remote object if the object is exist in cache', async () => {
             let a = new A({id: 1})
-            let b = new B({id: 2, a_id: 1})             ; expect(a.bs).toEqual([b])
+            let b = new B({id: 2, a_id: 1})
+            expect(a.bs).toEqual([b])
         })
 
         it('should contain [] if the object is not in the cache', async () => {
             let a = new A()
-            let b = new B({id: 2, a_id: 1})             ; expect(a.bs).toEqual([])
+            let b = new B({id: 2, a_id: 1})
+            expect(a.bs).toEqual([])
         })
 
         it('should contain [] if the remote object is not in the cache', async () => {
             let a = new A({id: 1})
-            let b = new B({a_id: 1})                    ; expect(a.bs).toEqual([])
+            let b = new B({a_id: 1})
+            expect(a.bs).toEqual([])
         })
 
         it('remote object create later', async () => {
-            let a = new A({id: 1         })             ; expect(a.bs).toEqual([])
-            let b = new B({id: 2, a_id: 1})             ; expect(a.bs).toEqual([b])
+            let a = new A({id: 1         });  expect(a.bs).toEqual([])
+            let b = new B({id: 2, a_id: 1});  expect(a.bs).toEqual([b])
         })
 
         it('remote object delete later', async () => {
@@ -104,24 +145,25 @@ describe('Field: Many', () => {
             let a1 = new A({id: 1})
             let a2 = new A({id: 2})
             let b = new B({id: 3, a_id: 1})
-                                            expect(b.a_id).toBe(a1.id)
-                                            expect(a1.bs).toEqual([b])
-                                            expect(a2.bs).toEqual([])
-            runInAction(() => {
-                b.a_id = a2.id;
-            })
-                                            expect(b.a_id).toBe(a2.id)
-                                            expect(a1.bs).toEqual([])
-                                            expect(a2.bs).toEqual([b])
+            expect(b.a_id).toBe(a1.id)
+            expect(a1.bs).toEqual([b])
+            expect(a2.bs).toEqual([])
+
+            runInAction(() => { b.a_id = a2.id })
+            expect(b.a_id).toBe(a2.id)
+            expect(a1.bs).toEqual([])
+            expect(a2.bs).toEqual([b])
         })
     })
 
     it('e2e', async () => {
-        @local() @model class Program extends Model {
-            @field(NUMBER()) name	: string
-                   sets : ProgramSet []
+        @model class Program extends Model {
+            @id   (NUMBER()) id	  : number
+            @field(NUMBER()) name : string
+                             sets : ProgramSet []
         }
-        @local() @model class ProgramSet extends Model {
+        @model class ProgramSet extends Model {
+            @id   (NUMBER())  id          : number
             @field(NUMBER())  order       : number
             @field(NUMBER())  program_id  : number
         }
