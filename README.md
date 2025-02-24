@@ -1,3 +1,6 @@
+Moved into [MobX-Model-UI](https://github.com/Andrey-Omelyanuk/mobx-model-ui)
+===
+
 MobX-ORM
 ===
 Reactive ORM based on [mobx](https://github.com/mobxjs/mobx)
